@@ -19,21 +19,17 @@ CO values **reset on every reboot** for safety.
 | Codename | Generation | Status |
 |----------|-----------|--------|
 | Raphael / Dragon Range | Zen 4 (Ryzen 7000 desktop / 7045HX mobile) | Tested |
-| Vermeer | Zen 3 (Ryzen 5000 desktop) | Untested, commented out |
-| Cezanne | Zen 3 APU (Ryzen 5000G) | Untested, commented out |
-| Phoenix | Zen 4 APU (Ryzen 7040) | Untested, commented out |
-| Granite Ridge | Zen 5 (Ryzen 9000 desktop) | Untested, commented out |
+| Phoenix | Zen 4 APU (Ryzen 7040) | Enabled (validated at startup) |
+| Hawk Point | Zen 4 refresh (Ryzen 8000 mobile) | Enabled (validated at startup) |
+| Vermeer | Zen 3 (Ryzen 5000 desktop) | Enabled (validated at startup) |
+| Cezanne | Zen 3 APU (Ryzen 5000G) | Enabled (validated at startup) |
+| Rembrandt | Zen 3+ APU (Ryzen 6000 mobile) | Enabled (validated at startup) |
+| Granite Ridge | Zen 5 (Ryzen 9000 desktop) | Enabled (validated at startup) |
+| Strix Point | Zen 5 mobile (Ryzen AI 300) | Enabled (validated at startup) |
+| Strix Halo | Zen 5 (Ryzen AI 300 HX) | Enabled (validated at startup) |
 
-Commented-out codenames can be enabled in `src/Platform/Linux/RyzenSmu.cs` after
-testing on real hardware. The driver itself supports many more CPU families, but
-CO command IDs vary by generation and must be verified before enabling.
-
-### Not yet added (driver supports, awaiting command verification)
-
-- Hawk Point (Ryzen 8000 mobile, Zen 4 refresh)
-- Strix Point (Ryzen AI 300, Zen 5 mobile)
-- Strix Halo (Ryzen AI 300 HX)
-- Rembrandt (Ryzen 6000 APU, Zen 3+)
+All codenames are protected by a startup validation probe - if the SMU rejects
+the read-only test command, CO disables itself before any writes happen.
 
 ## How it works
 
