@@ -162,7 +162,7 @@ public class ModeControl
 
             AutoPower(mode);
 
-            // Ryzen CO undervolt (independent of auto_apply_power — uses its own auto_uv flag)
+            // Ryzen CO undervolt (independent of auto_apply_power - uses its own auto_uv flag)
             AutoRyzen();
 
             // CPU Boost override

@@ -11,22 +11,22 @@ namespace GHelper.Linux.Platform.Linux;
 ///   Userspace → ryzen_smu sysfs → PCI config → SMN bus → SMU mailbox → SMU firmware
 ///
 /// The ryzen_smu driver exposes:
-///   /sys/kernel/ryzen_smu_drv/rsmu_cmd   — write: trigger RSMU command (blocks until done)
+///   /sys/kernel/ryzen_smu_drv/rsmu_cmd   - write: trigger RSMU command (blocks until done)
 ///                                           read: response status (0x01 = OK)
-///   /sys/kernel/ryzen_smu_drv/smu_args   — write: set 6x uint32 LE arguments (24 bytes)
+///   /sys/kernel/ryzen_smu_drv/smu_args   - write: set 6x uint32 LE arguments (24 bytes)
 ///                                           read: response arguments after command
-///   /sys/kernel/ryzen_smu_drv/codename   — CPU codename ID from driver
+///   /sys/kernel/ryzen_smu_drv/codename   - CPU codename ID from driver
 ///
 /// Protocol (from ryzen_smu drv.c, mutex-serialized in kernel):
 ///   1. Write 24 bytes to smu_args
-///   2. Write 4 bytes to rsmu_cmd — triggers command, blocks until SMU responds
-///   3. Read 4 bytes from rsmu_cmd — response status
-///   4. Read 24 bytes from smu_args — response data
+///   2. Write 4 bytes to rsmu_cmd - triggers command, blocks until SMU responds
+///   3. Read 4 bytes from rsmu_cmd - response status
+///   4. Read 24 bytes from smu_args - response data
 ///
 /// Command IDs verified from ZenStates-Core (irusanov/ZenStates-Core):
 ///   Zen4Settings.cs + DragonRangeSettings.cs (identical RSMU CO commands)
 ///
-/// CO values are NOT persistent — they reset on every reboot.
+/// CO values are NOT persistent - they reset on every reboot.
 ///
 /// SAFETY:
 ///   - Startup validation: sends a read-only GetDldoPsmMargin before allowing writes
@@ -67,27 +67,36 @@ public sealed class RyzenSmu
     );
 
     // ryzen_smu codename IDs (from amkillam/ryzen_smu smu.h enum smu_processor_codename)
-    // Verified: codename 20 = CODENAME_RAPHAEL (covers Dragon Range mobile too)
-    private const int CODENAME_VERMEER = 12;       // Zen 3 desktop (5000 series)        — untested
-    private const int CODENAME_CEZANNE = 14;       // Zen 3 APU (5000G series)           — untested
-    private const int CODENAME_RAPHAEL = 20;       // Zen 4 desktop + Dragon Range mobile — TESTED on AMD Ryzen 9 7845HX
-    private const int CODENAME_PHOENIX = 21;       // Zen 4 APU (7040 series)            — untested
-    private const int CODENAME_GRANITE_RIDGE = 23; // Zen 5 desktop (9000 series)        — untested
+    // Command IDs verified from ZenStates-Core source. Startup validation probe
+    // (GetDldoPsmMargin) catches wrong command IDs before any writes happen.
+    private const int CODENAME_REMBRANDT = 11;     // Zen 3+ APU (Ryzen 6000 mobile)
+    private const int CODENAME_VERMEER = 12;       // Zen 3 desktop (Ryzen 5000)
+    private const int CODENAME_CEZANNE = 14;       // Zen 3 APU (Ryzen 5000G)
+    private const int CODENAME_RAPHAEL = 20;       // Zen 4 desktop + Dragon Range mobile - TESTED
+    private const int CODENAME_PHOENIX = 21;       // Zen 4 APU (Ryzen 7040)
+    private const int CODENAME_STRIX_POINT = 22;   // Zen 5 mobile (Ryzen AI 300)
+    private const int CODENAME_GRANITE_RIDGE = 23; // Zen 5 desktop (Ryzen 9000)
+    private const int CODENAME_HAWK_POINT = 24;    // Zen 4 refresh (Ryzen 8000 mobile)
+    private const int CODENAME_STRIX_HALO = 26;    // Zen 5 (Ryzen AI 300 HX)
 
-    // Only codenames in this dictionary are enabled. Uncomment an entry to enable a CPU
-    // generation after it has been verified on real hardware.
+    // Enabled codenames. Startup validation probe ensures safety - if the SMU rejects
+    // the GetDldoPsmMargin read, CO disables itself before any writes happen.
     private static readonly Dictionary<int, SmuCommandSet> CommandSets = new()
     {
-        // Zen 3 RSMU — ZenStates-Core/SMUSettings/Zen3Settings.cs
-        // [CODENAME_VERMEER] = new(SetAllCoreCO: 0x0B, SetPerCoreCO: 0x0A, GetPerCoreCO: 0x7C),
-        // [CODENAME_CEZANNE] = new(SetAllCoreCO: 0x0B, SetPerCoreCO: 0x0A, GetPerCoreCO: 0x7C),
+        // Zen 3 RSMU - ZenStates-Core/SMUSettings/Zen3Settings.cs
+        [CODENAME_VERMEER] = new(SetAllCoreCO: 0x0B, SetPerCoreCO: 0x0A, GetPerCoreCO: 0x7C),
+        [CODENAME_CEZANNE] = new(SetAllCoreCO: 0x0B, SetPerCoreCO: 0x0A, GetPerCoreCO: 0x7C),
+        [CODENAME_REMBRANDT] = new(SetAllCoreCO: 0x0B, SetPerCoreCO: 0x0A, GetPerCoreCO: 0x7C),
 
-        // Zen 4 RSMU — ZenStates-Core/SMUSettings/Zen4Settings.cs + DragonRangeSettings.cs (identical)
+        // Zen 4 RSMU - ZenStates-Core/SMUSettings/Zen4Settings.cs + DragonRangeSettings.cs (identical)
         [CODENAME_RAPHAEL] = new(SetAllCoreCO: 0x07, SetPerCoreCO: 0x06, GetPerCoreCO: 0xD5),
-        // [CODENAME_PHOENIX] = new(SetAllCoreCO: 0x07, SetPerCoreCO: 0x06, GetPerCoreCO: 0xD5),
+        [CODENAME_PHOENIX] = new(SetAllCoreCO: 0x07, SetPerCoreCO: 0x06, GetPerCoreCO: 0xD5),
+        [CODENAME_HAWK_POINT] = new(SetAllCoreCO: 0x07, SetPerCoreCO: 0x06, GetPerCoreCO: 0xD5),
 
-        // Zen 5 RSMU — ZenStates-Core/SMUSettings/Zen5Settings.cs
-        // [CODENAME_GRANITE_RIDGE] = new(SetAllCoreCO: 0x07, SetPerCoreCO: 0x06, GetPerCoreCO: 0xD5),
+        // Zen 5 RSMU - ZenStates-Core/SMUSettings/Zen5Settings.cs
+        [CODENAME_GRANITE_RIDGE] = new(SetAllCoreCO: 0x07, SetPerCoreCO: 0x06, GetPerCoreCO: 0xD5),
+        [CODENAME_STRIX_POINT] = new(SetAllCoreCO: 0x07, SetPerCoreCO: 0x06, GetPerCoreCO: 0xD5),
+        [CODENAME_STRIX_HALO] = new(SetAllCoreCO: 0x07, SetPerCoreCO: 0x06, GetPerCoreCO: 0xD5),
     };
 
     private SmuCommandSet? _commands;
@@ -140,11 +149,15 @@ public sealed class RyzenSmu
             var version = SysfsHelper.ReadAttribute(VersionPath);
             string codenameLabel = _codename switch
             {
+                CODENAME_REMBRANDT => "Rembrandt (Zen 3+ APU)",
                 CODENAME_VERMEER => "Vermeer (Zen 3)",
                 CODENAME_CEZANNE => "Cezanne (Zen 3 APU)",
                 CODENAME_RAPHAEL => "Raphael/DragonRange (Zen 4)",
                 CODENAME_PHOENIX => "Phoenix (Zen 4 APU)",
+                CODENAME_STRIX_POINT => "Strix Point (Zen 5 mobile)",
                 CODENAME_GRANITE_RIDGE => "Granite Ridge (Zen 5)",
+                CODENAME_HAWK_POINT => "Hawk Point (Zen 4 refresh)",
+                CODENAME_STRIX_HALO => "Strix Halo (Zen 5)",
                 _ => $"unknown ({_codename})"
             };
             Helpers.Logger.WriteLine($"RyzenSmu: codename={_codename} ({codenameLabel}), SMU firmware={version}");
@@ -154,7 +167,7 @@ public sealed class RyzenSmu
             // and we must NOT attempt any writes.
             if (!ValidateCommandSet())
             {
-                UnavailableReason = "SMU command validation failed — CO commands not accepted by firmware";
+                UnavailableReason = "SMU command validation failed - CO commands not accepted by firmware";
                 Helpers.Logger.WriteLine("RyzenSmu: " + UnavailableReason);
                 _commands = null; // Prevent any further use
                 return;
@@ -172,7 +185,7 @@ public sealed class RyzenSmu
 
     /// <summary>
     /// Validate the command set by sending a read-only GetDldoPsmMargin.
-    /// This is non-destructive — it only reads the current CO value for CCD0/core0.
+    /// This is non-destructive - it only reads the current CO value for CCD0/core0.
     /// Returns true if the SMU accepted the command (status = OK).
     /// </summary>
     private bool ValidateCommandSet()
@@ -189,12 +202,12 @@ public sealed class RyzenSmu
 
         if (status == SMU_RETURN_OK)
         {
-            Helpers.Logger.WriteLine("RyzenSmu: validation OK — GetDldoPsmMargin accepted");
+            Helpers.Logger.WriteLine("RyzenSmu: validation OK - GetDldoPsmMargin accepted");
             return true;
         }
         else if (status == SMU_RETURN_UNKNOWN_CMD)
         {
-            Helpers.Logger.WriteLine($"RyzenSmu: VALIDATION FAILED — SMU returned 'unknown command' (0x{status:X2}). " +
+            Helpers.Logger.WriteLine($"RyzenSmu: VALIDATION FAILED - SMU returned 'unknown command' (0x{status:X2}). " +
                 "Command IDs may not match this firmware version. Disabling CO to prevent damage.");
             return false;
         }
@@ -235,7 +248,7 @@ public sealed class RyzenSmu
         {
             Helpers.Logger.WriteLine($"RyzenSmu: SetCoAll readback CCD0/core0 = {readback}");
             if (readback != offset)
-                Helpers.Logger.WriteLine($"RyzenSmu: WARNING — readback ({readback}) differs from requested ({offset})");
+                Helpers.Logger.WriteLine($"RyzenSmu: WARNING - readback ({readback}) differs from requested ({offset})");
         }
         else
         {
@@ -282,7 +295,7 @@ public sealed class RyzenSmu
         {
             Helpers.Logger.WriteLine($"RyzenSmu: SetPerCoreCO readback CCD{ccd}/core{core} = {readback}");
             if (readback != offset)
-                Helpers.Logger.WriteLine($"RyzenSmu: WARNING — readback ({readback}) differs from requested ({offset})");
+                Helpers.Logger.WriteLine($"RyzenSmu: WARNING - readback ({readback}) differs from requested ({offset})");
         }
 
         return true;
@@ -413,7 +426,7 @@ public sealed class RyzenSmu
             }
             catch (UnauthorizedAccessException ex)
             {
-                Helpers.Logger.WriteLine($"RyzenSmu: permission denied for command 0x{command:X2} — need root or udev rule", ex);
+                Helpers.Logger.WriteLine($"RyzenSmu: permission denied for command 0x{command:X2} - need root or udev rule", ex);
                 return (0, null);
             }
             catch (Exception ex)

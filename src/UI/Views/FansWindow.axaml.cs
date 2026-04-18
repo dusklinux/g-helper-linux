@@ -533,7 +533,7 @@ public partial class FansWindow : Window
 
         panelUV.IsVisible = true;
 
-        // Suppress ValueChanged/Checked handlers while programmatically populating controls —
+        // Suppress ValueChanged/Checked handlers while programmatically populating controls -
         // otherwise setting checkApplyUV.IsChecked would call AutoRyzen and apply UV to
         // hardware just because the user opened the window.
         _updatingUV = true;
