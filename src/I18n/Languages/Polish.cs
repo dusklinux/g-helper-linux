@@ -306,7 +306,7 @@ public static class Polish
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (eksperymentalny)",
-        ["undervolt_desc"] = "Przesunięcie Curve Optimizer. Bardziej ujemne = niższe napięcie. Zbyt niskie wartości mogą powodować niestabilność lub uszkodzenie danych. Zacznij od małych. Resetuje się po restarcie.",
+        ["undervolt_desc"] = "Przesunięcie Curve Optimizer. Bardziej ujemne = niższe napięcie. Zbyt niskie wartości mogą powodować niestabilność lub uszkodzenie danych. Zacznij od małych wartości. Resetuje się po restarcie.",
         ["undervolt_cpu"] = "CPU",
         ["undervolt_auto_apply"] = "Automatycznie stosuj przy zmianie trybu",
 

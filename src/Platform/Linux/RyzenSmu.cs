@@ -330,7 +330,7 @@ public sealed class RyzenSmu
     private static uint EncodeCOMargin(int margin)
     {
         if (margin < 0)
-            return (uint)((0x100000 + margin) & 0xFFFF);
+            return (uint)((0x10000 + margin) & 0xFFFF);
         return (uint)(margin & 0xFFFF);
     }
 

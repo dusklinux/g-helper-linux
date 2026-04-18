@@ -306,7 +306,7 @@ public static class Czech
 
         // UNDERVOLTING
         ["undervolt_header"] = "Podpětí (experimentální)",
-        ["undervolt_desc"] = "Offset Curve Optimizeru. Více záporné = nižší napětí. Příliš nízké hodnoty mohou způsobit nestabilitu nebo poškození dat. Začněte s malými. Resetuje se při restartu.",
+        ["undervolt_desc"] = "Offset Curve Optimizeru. Více záporné = nižší napětí. Příliš nízké hodnoty mohou způsobit nestabilitu nebo poškození dat. Začněte s malými hodnotami. Resetuje se při restartu.",
         ["undervolt_cpu"] = "CPU",
         ["undervolt_auto_apply"] = "Automaticky použít při změně režimu",
 

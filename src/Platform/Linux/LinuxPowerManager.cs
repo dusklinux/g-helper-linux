@@ -203,7 +203,7 @@ public class LinuxPowerManager : IPowerManager
             return -1;
         return SysfsHelper.ReadInt(Path.Combine(_batteryDir, "capacity"), -1);
     }
-    
+
     public int GetBatteryDrainRate()
     {
         if (_batteryDir == null)
@@ -221,7 +221,7 @@ public class LinuxPowerManager : IPowerManager
         {
             long currentUa = SysfsHelper.ReadInt(Path.Combine(_batteryDir, "current_now"), 0);
             long voltageUv = SysfsHelper.ReadInt(Path.Combine(_batteryDir, "voltage_now"), 0);
-            powerMw = (int) ((currentUa * voltageUv) / 1_000_000_000L);
+            powerMw = (int)((currentUa * voltageUv) / 1_000_000_000L);
         }
 
         var status = SysfsHelper.ReadAttribute(Path.Combine(_batteryDir, "status"));
