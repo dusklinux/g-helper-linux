@@ -10,6 +10,7 @@ using Avalonia.Threading;
 using GHelper.Linux.Gpu;
 using GHelper.Linux.I18n;
 using GHelper.Linux.Platform.Linux;
+using GHelper.Linux.Helpers;
 using GHelper.Linux.USB;
 
 namespace GHelper.Linux.UI.Views;
@@ -281,6 +282,7 @@ public partial class MainWindow : Window
             _fansWindow = new FansWindow();
             if (Helpers.AppConfig.Is("topmost"))
                 _fansWindow.Topmost = true;
+            WindowPositioner.LeftOf(_fansWindow, this);
             _fansWindow.Show();
         }
         else

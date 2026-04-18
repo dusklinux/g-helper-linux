@@ -367,7 +367,7 @@ public partial class UpdatesWindow : Window
             // Bare-binary mode: also download companion native libs so the new binary
             // doesn't load stale libSkiaSharp.so / libHarfBuzzSharp.so next to it after
             // a Skia/HarfBuzz version bump. AppImage ships libs inside the bundle.
-            // Downloaded before the swap — any failure leaves the existing install untouched.
+            // Downloaded before the swap - any failure leaves the existing install untouched.
             var libTmpPaths = new List<(string name, string tmp)>();
             if (!IsAppImage)
             {
@@ -398,15 +398,7 @@ public partial class UpdatesWindow : Window
                 File.Move(targetPath, backupPath);  // rename running file → .bak (allowed)
                 File.Move(tmpPath, targetPath);      // place new file at original path
 
-                // Place native libs next to the new binary (.so files are mmap'd;
-                // overwrite is safe while the old process is still running).
                 var binaryDir = Path.GetDirectoryName(targetPath);
-                if (binaryDir != null)
-                {
-                    foreach (var (libName, libTmp) in libTmpPaths)
-                        File.Move(libTmp, Path.Combine(binaryDir, libName), overwrite: true);
-                }
-
                 var restartPath = targetPath;
 
                 Dispatcher.UIThread.Post(() =>
@@ -416,6 +408,17 @@ public partial class UpdatesWindow : Window
                     btn.Click -= null!; // clear old handlers
                     btn.Click += (_, _) =>
                     {
+                        // Move native libs right before restart - replacing them earlier
+                        // causes a segfault because the old process still has them mmap'd.
+                        if (binaryDir != null)
+                        {
+                            foreach (var (libName, libTmp) in libTmpPaths)
+                            {
+                                var dest = Path.Combine(binaryDir, libName);
+                                Helpers.Logger.WriteLine($"Self-update: moving {libTmp} → {dest}");
+                                File.Move(libTmp, dest, overwrite: true);
+                            }
+                        }
                         Helpers.Logger.WriteLine($"Self-update: restarting via {restartPath}");
                         Process.Start(new ProcessStartInfo(restartPath) { UseShellExecute = false });
                         Environment.Exit(0);

@@ -146,6 +146,7 @@ public class App : Application
             // Show main window on startup unless "Start minimized to tray" is enabled
             if (!AppConfig.Is("silent_start"))
             {
+                WindowPositioner.BottomRight(MainWindowInstance);
                 desktop.MainWindow = MainWindowInstance;
             }
 
@@ -816,6 +817,7 @@ public class App : Application
             MainWindowInstance = new MainWindow();
             if (AppConfig.Is("topmost"))
                 MainWindowInstance.Topmost = true;
+            WindowPositioner.BottomRight(MainWindowInstance);
             MainWindowInstance.Show();
             MainWindowInstance.Activate();
             return;
@@ -827,6 +829,7 @@ public class App : Application
         }
         else
         {
+            WindowPositioner.BottomRight(MainWindowInstance);
             MainWindowInstance.Show();
             MainWindowInstance.Activate();
         }
