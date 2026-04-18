@@ -17,6 +17,8 @@
 
     <!-- Trim aggressively -->
     <TrimMode>full</TrimMode>
+    <!-- HidSharpCore uses reflection but we preserve all its types in TrimmerRoots.xml -->
+    <NoWarn>$(NoWarn);IL2104</NoWarn>
     <OptimizationPreference>Size</OptimizationPreference>
 
     <!-- App metadata -->

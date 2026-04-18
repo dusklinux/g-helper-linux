@@ -18,7 +18,7 @@ namespace GHelper.Linux.Helpers;
 public static class WindowPositioner
 {
     private const int EdgeInset = 10;
-    private const int BottomExtraInset = 2;
+    private const int BottomExtraInset = 4;
     private const int DockGap = 5;
     // Avalonia on Linux uses client-side decorations (CSD) - the title bar is drawn
     // by Avalonia, not the compositor. ClientSize excludes it, FrameSize includes it.

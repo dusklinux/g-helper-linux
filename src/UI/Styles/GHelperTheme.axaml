@@ -61,6 +61,12 @@
         <Setter Property="Background" Value="#454545" />
     </Style>
 
+    <!-- Wrap long translated labels inside mode buttons -->
+    <Style Selector="Button.ghelper-tall TextBlock">
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="TextAlignment" Value="Center" />
+    </Style>
+
     <!-- Gold coin donate button -->
     <Style Selector="Button.ghelper-coin">
         <Setter Property="Background" Value="#FFD700" />
