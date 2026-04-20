@@ -366,8 +366,15 @@
                                Text="Kernel: --" Margin="0,4,0,0" />
                     <TextBlock x:Name="labelAsusWmi" Classes="label-dim"
                                Text="asus-wmi: --" Margin="0,4,0,0" />
-                    <TextBlock x:Name="labelFeatures" Classes="label-dim"
-                               Text="" Margin="0,4,0,0" TextWrapping="Wrap" />
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                        <TextBlock Grid.Column="0" x:Name="labelFeatures" Classes="label-dim"
+                                   Text="" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" x:Name="buttonSystemInfo" Classes="ghelper"
+                                Height="28" VerticalAlignment="Center"
+                                Click="ButtonSystemInfo_Click">
+                            <TextBlock x:Name="labelSystemInfoMore" Text="More..." FontSize="11" />
+                        </Button>
+                    </Grid>
                 </StackPanel>
             </Border>
 

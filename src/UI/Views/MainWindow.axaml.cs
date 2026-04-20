@@ -1547,6 +1547,25 @@ public partial class MainWindow : Window
         _coinTransform.X = ShakeOffsets[_coinShakeFrame++];
     }
 
+    // Monitor
+
+    private MonitorWindow? _monitorWindow;
+
+    private void ButtonMonitor_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_monitorWindow == null || !_monitorWindow.IsVisible)
+        {
+            _monitorWindow = new MonitorWindow();
+            if (Helpers.AppConfig.Is("topmost"))
+                _monitorWindow.Topmost = true;
+            _monitorWindow.Show();
+        }
+        else
+        {
+            _monitorWindow.Activate();
+        }
+    }
+
     // Updates + Quit
 
     private UpdatesWindow? _updatesWindow;

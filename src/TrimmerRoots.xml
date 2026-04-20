@@ -3,4 +3,8 @@
   <assembly fullname="HidSharpCore" preserve="all"/>
   <!-- Preserve Avalonia XAML-related types -->
   <assembly fullname="Avalonia.Themes.Fluent" preserve="all"/>
+  <!-- LiveCharts2 uses reflection for data binding and type mapping -->
+  <assembly fullname="LiveChartsCore" preserve="all"/>
+  <assembly fullname="LiveChartsCore.SkiaSharpView" preserve="all"/>
+  <assembly fullname="LiveChartsCore.SkiaSharpView.Avalonia" preserve="all"/>
 </linker>

@@ -153,6 +153,7 @@ public partial class ExtraWindow : Window
 
         // System Info
         headerSystemInfo.Text = Labels.Get("system_info_header");
+        labelSystemInfoMore.Text = Labels.Get("details");
 
         // Advanced
         headerAdvanced.Text = Labels.Get("advanced_header");
@@ -988,6 +989,7 @@ public partial class ExtraWindow : Window
     }
 
     private BatteryInfoWindow? _batteryInfoWindow;
+    private SystemInfoWindow? _systemInfoWindow;
 
     private void ButtonBatteryInfo_Click(object? sender, RoutedEventArgs e)
     {
@@ -1001,6 +1003,21 @@ public partial class ExtraWindow : Window
         else
         {
             _batteryInfoWindow.Activate();
+        }
+    }
+
+    private void ButtonSystemInfo_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_systemInfoWindow == null || !_systemInfoWindow.IsVisible)
+        {
+            _systemInfoWindow = new SystemInfoWindow();
+            if (Helpers.AppConfig.Is("topmost"))
+                _systemInfoWindow.Topmost = true;
+            _systemInfoWindow.Show();
+        }
+        else
+        {
+            _systemInfoWindow.Activate();
         }
     }
 
