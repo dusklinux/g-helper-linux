@@ -391,6 +391,7 @@ public static class ChineseSimplified
         ["arcade_retry"] = "按 ENTER 重试",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "监控",
         ["monitor_title"] = "硬件监控",
         ["monitor_temperature"] = "温度 (°C)",
         ["monitor_fan_speed"] = "风扇转速 (RPM)",

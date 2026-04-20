@@ -234,7 +234,8 @@ public static class SystemInfoCollector
             foreach (var card in cards)
             {
                 string deviceDir = Path.Combine(card, "device");
-                if (!Directory.Exists(deviceDir)) continue;
+                if (!Directory.Exists(deviceDir))
+                    continue;
 
                 string vendor = ReadFileOneLine(Path.Combine(deviceDir, "vendor")) ?? "";
                 string device = ReadFileOneLine(Path.Combine(deviceDir, "device")) ?? "";
@@ -244,7 +245,8 @@ public static class SystemInfoCollector
                 string driverLink = Path.Combine(deviceDir, "driver");
                 if (Directory.Exists(driverLink))
                 {
-                    try { driver = Path.GetFileName(Directory.ResolveLinkTarget(driverLink, true)?.FullName ?? ""); }
+                    try
+                    { driver = Path.GetFileName(Directory.ResolveLinkTarget(driverLink, true)?.FullName ?? ""); }
                     catch { }
                 }
 
@@ -270,17 +272,20 @@ public static class SystemInfoCollector
             foreach (string line in lines)
             {
                 string trimmed = line.Trim();
-                if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith("major")) continue;
+                if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith("major"))
+                    continue;
 
                 string[] parts = trimmed.Split(Array.Empty<char>(), StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length < 4) continue;
+                if (parts.Length < 4)
+                    continue;
 
                 string name = parts[3];
                 // Only whole drives: sd[a-z], nvme[0-9]n[0-9], mmcblk[0-9]
                 if (!Regex.IsMatch(name, @"^(sd[a-z]+|nvme\d+n\d+|mmcblk\d+)$"))
                     continue;
 
-                if (!long.TryParse(parts[2], out long blocks)) continue;
+                if (!long.TryParse(parts[2], out long blocks))
+                    continue;
                 double sizeGiB = blocks / (1024.0 * 1024.0); // blocks are 1KB each
 
                 // Model name
@@ -297,12 +302,14 @@ public static class SystemInfoCollector
                     desc += model.Trim();
                 if (sizeGiB > 0)
                 {
-                    if (desc.Length > 0) desc += ", ";
+                    if (desc.Length > 0)
+                        desc += ", ";
                     desc += sizeGiB >= 1024 ? $"{sizeGiB / 1024:F1} TiB" : $"{sizeGiB:F1} GiB";
                 }
                 if (!string.IsNullOrEmpty(type))
                 {
-                    if (desc.Length > 0) desc += ", ";
+                    if (desc.Length > 0)
+                        desc += ", ";
                     desc += type;
                 }
 
@@ -326,7 +333,8 @@ public static class SystemInfoCollector
 
             foreach (string? iface in interfaces)
             {
-                if (iface == null) continue;
+                if (iface == null)
+                    continue;
                 string ifDir = Path.Combine(NetSysfsPath, iface);
 
                 // Driver from device/uevent
@@ -366,9 +374,11 @@ public static class SystemInfoCollector
                 string ifType = isWifi ? "WiFi" : "Ethernet";
 
                 var descParts = new List<string>();
-                if (!string.IsNullOrEmpty(driver)) descParts.Add(driver);
+                if (!string.IsNullOrEmpty(driver))
+                    descParts.Add(driver);
                 descParts.Add(state);
-                if (!string.IsNullOrEmpty(speed)) descParts.Add(speed);
+                if (!string.IsNullOrEmpty(speed))
+                    descParts.Add(speed);
                 descParts.Add(ifType);
 
                 entries.Add(new(iface, string.Join(", ", descParts)));
@@ -417,12 +427,14 @@ public static class SystemInfoCollector
         var entries = new List<InfoEntry>();
         try
         {
-            if (!Directory.Exists(PowerSupplyPath)) return new("sysinfo_battery_header", entries);
+            if (!Directory.Exists(PowerSupplyPath))
+                return new("sysinfo_battery_header", entries);
 
             foreach (string dir in Directory.GetDirectories(PowerSupplyPath))
             {
                 string type = ReadFileOneLine(Path.Combine(dir, "type")) ?? "";
-                if (type != "Battery") continue;
+                if (type != "Battery")
+                    continue;
 
                 string name = Path.GetFileName(dir);
 
@@ -470,14 +482,16 @@ public static class SystemInfoCollector
         var entries = new List<InfoEntry>();
         try
         {
-            if (!Directory.Exists(UsbDevicesPath)) return new("sysinfo_usb_header", entries);
+            if (!Directory.Exists(UsbDevicesPath))
+                return new("sysinfo_usb_header", entries);
 
             foreach (string dir in Directory.GetDirectories(UsbDevicesPath))
             {
                 string dirName = Path.GetFileName(dir);
 
                 // Skip interfaces (contain ':'), root hubs are handled by product check
-                if (dirName.Contains(':')) continue;
+                if (dirName.Contains(':'))
+                    continue;
 
                 // Need a product or manufacturer to be interesting
                 string product = ReadFileOneLine(Path.Combine(dir, "product")) ?? "";
@@ -485,7 +499,8 @@ public static class SystemInfoCollector
 
                 // Skip USB hubs (bDeviceClass 09)
                 string devClass = ReadFileOneLine(Path.Combine(dir, "bDeviceClass")) ?? "";
-                if (devClass == "09") continue;
+                if (devClass == "09")
+                    continue;
 
                 // Skip devices with no useful name
                 if (string.IsNullOrEmpty(product) && string.IsNullOrEmpty(manufacturer))
@@ -534,7 +549,8 @@ public static class SystemInfoCollector
 
         try
         {
-            if (!File.Exists("/proc/cpuinfo")) return default;
+            if (!File.Exists("/proc/cpuinfo"))
+                return default;
 
             foreach (string line in File.ReadLines("/proc/cpuinfo"))
             {
@@ -573,17 +589,25 @@ public static class SystemInfoCollector
 
         try
         {
-            if (!File.Exists("/proc/meminfo")) return new(0, 0, 0, 0, 0);
+            if (!File.Exists("/proc/meminfo"))
+                return new(0, 0, 0, 0, 0);
 
             foreach (string line in File.ReadLines("/proc/meminfo"))
             {
-                if (line.StartsWith("MemTotal:")) total = ParseMeminfoValue(line);
-                else if (line.StartsWith("MemAvailable:")) available = ParseMeminfoValue(line);
-                else if (line.StartsWith("MemFree:")) free = ParseMeminfoValue(line);
-                else if (line.StartsWith("Buffers:")) buffers = ParseMeminfoValue(line);
-                else if (line.StartsWith("Cached:")) cached = ParseMeminfoValue(line);
-                else if (line.StartsWith("SwapTotal:")) swapTotal = ParseMeminfoValue(line);
-                else if (line.StartsWith("SwapFree:")) swapFree = ParseMeminfoValue(line);
+                if (line.StartsWith("MemTotal:"))
+                    total = ParseMeminfoValue(line);
+                else if (line.StartsWith("MemAvailable:"))
+                    available = ParseMeminfoValue(line);
+                else if (line.StartsWith("MemFree:"))
+                    free = ParseMeminfoValue(line);
+                else if (line.StartsWith("Buffers:"))
+                    buffers = ParseMeminfoValue(line);
+                else if (line.StartsWith("Cached:"))
+                    cached = ParseMeminfoValue(line);
+                else if (line.StartsWith("SwapTotal:"))
+                    swapTotal = ParseMeminfoValue(line);
+                else if (line.StartsWith("SwapFree:"))
+                    swapFree = ParseMeminfoValue(line);
             }
         }
         catch { }
@@ -617,7 +641,8 @@ public static class SystemInfoCollector
             foreach (string cpuDir in cpuDirs)
             {
                 string cachePath = Path.Combine(cpuDir, "cache");
-                if (!Directory.Exists(cachePath)) continue;
+                if (!Directory.Exists(cachePath))
+                    continue;
 
                 foreach (string indexDir in Directory.GetDirectories(cachePath, "index*"))
                 {
@@ -626,14 +651,17 @@ public static class SystemInfoCollector
                     string sizeStr = ReadFileOneLine(Path.Combine(indexDir, "size")) ?? "";
                     string sharedCpus = ReadFileOneLine(Path.Combine(indexDir, "shared_cpu_list")) ?? "";
 
-                    if (string.IsNullOrEmpty(levelStr) || string.IsNullOrEmpty(sizeStr)) continue;
+                    if (string.IsNullOrEmpty(levelStr) || string.IsNullOrEmpty(sizeStr))
+                        continue;
 
                     // Build key: "L1d", "L1i", "L2", "L3"
                     string key = $"L{levelStr}";
                     if (levelStr == "1")
                     {
-                        if (typeStr.StartsWith("Data", StringComparison.OrdinalIgnoreCase)) key = "L1d";
-                        else if (typeStr.StartsWith("Instruction", StringComparison.OrdinalIgnoreCase)) key = "L1i";
+                        if (typeStr.StartsWith("Data", StringComparison.OrdinalIgnoreCase))
+                            key = "L1d";
+                        else if (typeStr.StartsWith("Instruction", StringComparison.OrdinalIgnoreCase))
+                            key = "L1i";
                     }
 
                     // Skip if we've already counted this shared set
@@ -643,7 +671,8 @@ public static class SystemInfoCollector
                         continue; // duplicate shared set
 
                     long bytes = ParseCacheSize(sizeStr);
-                    if (bytes <= 0) continue;
+                    if (bytes <= 0)
+                        continue;
 
                     levelSizes[key] = levelSizes.GetValueOrDefault(key) + bytes;
                 }
@@ -651,7 +680,8 @@ public static class SystemInfoCollector
         }
         catch { }
 
-        if (levelSizes.Count == 0) return "";
+        if (levelSizes.Count == 0)
+            return "";
 
         var parts = new List<string>();
         foreach (string level in new[] { "L1d", "L1i", "L2", "L3" })
@@ -667,7 +697,8 @@ public static class SystemInfoCollector
     {
         // Format: "512K", "32M", "36864K"
         var match = Regex.Match(s, @"(\d+)\s*([KMG])?", RegexOptions.IgnoreCase);
-        if (!match.Success || !long.TryParse(match.Groups[1].Value, out long val)) return 0;
+        if (!match.Success || !long.TryParse(match.Groups[1].Value, out long val))
+            return 0;
         return match.Groups[2].Value.ToUpperInvariant() switch
         {
             "K" => val * 1024,
@@ -679,13 +710,17 @@ public static class SystemInfoCollector
 
     private static string DetectDriveType(string name)
     {
-        if (name.StartsWith("nvme")) return "NVMe SSD";
-        if (name.StartsWith("mmcblk")) return "eMMC";
+        if (name.StartsWith("nvme"))
+            return "NVMe SSD";
+        if (name.StartsWith("mmcblk"))
+            return "eMMC";
 
         // Check rotation for SATA
         int rotation = ReadIntFromFile(Path.Combine(BlockSysfsPath, name, "queue", "rotational"));
-        if (rotation == 0) return "SSD";
-        if (rotation == 1) return "HDD";
+        if (rotation == 0)
+            return "SSD";
+        if (rotation == 1)
+            return "HDD";
 
         return "";
     }
@@ -699,7 +734,8 @@ public static class SystemInfoCollector
             foreach (string procDir in Directory.GetDirectories("/proc"))
             {
                 string dirName = Path.GetFileName(procDir);
-                if (!int.TryParse(dirName, out _)) continue;
+                if (!int.TryParse(dirName, out _))
+                    continue;
 
                 string comm = ReadFileOneLine(Path.Combine(procDir, "comm")) ?? "";
                 if (comm == "pipewire" && !servers.Contains("PipeWire"))
@@ -717,7 +753,8 @@ public static class SystemInfoCollector
 
     private static Dictionary<string, LspciDevice> GetLspciDevices()
     {
-        if (_lspciCache != null) return _lspciCache;
+        if (_lspciCache != null)
+            return _lspciCache;
         _lspciCache = new Dictionary<string, LspciDevice>();
 
         try
@@ -730,7 +767,8 @@ public static class SystemInfoCollector
             };
 
             using var proc = System.Diagnostics.Process.Start(psi);
-            if (proc == null) return _lspciCache;
+            if (proc == null)
+                return _lspciCache;
 
             string output = proc.StandardOutput.ReadToEnd();
             proc.WaitForExit(5000);
@@ -749,17 +787,28 @@ public static class SystemInfoCollector
                 }
 
                 int colonIdx = line.IndexOf(':');
-                if (colonIdx < 0) continue;
+                if (colonIdx < 0)
+                    continue;
                 string key = line[..colonIdx].Trim();
                 string val = line[(colonIdx + 1)..].Trim();
 
                 switch (key)
                 {
-                    case "Slot": slot = val; break;
-                    case "Class": cls = val; break;
-                    case "Vendor": vendor = val; break;
-                    case "Device": device = val; break;
-                    case "Driver": driver = val; break;
+                    case "Slot":
+                        slot = val;
+                        break;
+                    case "Class":
+                        cls = val;
+                        break;
+                    case "Vendor":
+                        vendor = val;
+                        break;
+                    case "Device":
+                        device = val;
+                        break;
+                    case "Driver":
+                        driver = val;
+                        break;
                 }
             }
             // Last block
@@ -782,7 +831,8 @@ public static class SystemInfoCollector
     {
         try
         {
-            if (!File.Exists(path)) return null;
+            if (!File.Exists(path))
+                return null;
             string content = File.ReadAllText(path).Trim();
             return string.IsNullOrEmpty(content) ? null : content;
         }
@@ -799,7 +849,8 @@ public static class SystemInfoCollector
     {
         try
         {
-            if (!File.Exists("/etc/os-release")) return "";
+            if (!File.Exists("/etc/os-release"))
+                return "";
             foreach (string line in File.ReadLines("/etc/os-release"))
             {
                 if (line.StartsWith("PRETTY_NAME="))
@@ -815,18 +866,23 @@ public static class SystemInfoCollector
 
     private static string FormatKB(long kb)
     {
-        if (kb <= 0) return "0";
+        if (kb <= 0)
+            return "0";
         double gib = kb / (1024.0 * 1024.0);
-        if (gib >= 1.0) return $"{gib:F1} GiB";
+        if (gib >= 1.0)
+            return $"{gib:F1} GiB";
         double mib = kb / 1024.0;
         return $"{mib:F0} MiB";
     }
 
     private static string FormatBytes(long bytes)
     {
-        if (bytes >= 1024L * 1024 * 1024) return $"{bytes / (1024.0 * 1024 * 1024):F0} GiB";
-        if (bytes >= 1024L * 1024) return $"{bytes / (1024.0 * 1024):F0} MiB";
-        if (bytes >= 1024) return $"{bytes / 1024.0:F0} KiB";
+        if (bytes >= 1024L * 1024 * 1024)
+            return $"{bytes / (1024.0 * 1024 * 1024):F0} GiB";
+        if (bytes >= 1024L * 1024)
+            return $"{bytes / (1024.0 * 1024):F0} MiB";
+        if (bytes >= 1024)
+            return $"{bytes / 1024.0:F0} KiB";
         return $"{bytes} B";
     }
 }

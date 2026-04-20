@@ -391,6 +391,7 @@ public static class Serbian
         ["arcade_retry"] = "ENTER за поновни покушај",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Монитор",
         ["monitor_title"] = "Монитор хардвера",
         ["monitor_temperature"] = "Температура (°C)",
         ["monitor_fan_speed"] = "Брзина вентилатора (RPM)",

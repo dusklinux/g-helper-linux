@@ -51,10 +51,30 @@ public partial class FansWindow : Window
         Closing += (_, _) => _sensorTimer.Stop();
     }
 
+    // Monitor
+
+    private MonitorWindow? _monitorWindow;
+
+    private void ButtonMonitor_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_monitorWindow == null || !_monitorWindow.IsVisible)
+        {
+            _monitorWindow = new MonitorWindow();
+            if (Helpers.AppConfig.Is("topmost"))
+                _monitorWindow.Topmost = true;
+            _monitorWindow.Show();
+        }
+        else
+        {
+            _monitorWindow.Activate();
+        }
+    }
+
     private void ApplyLabels()
     {
         Title = Labels.Get("fans_title");
         headerFanCurves.Text = Labels.Get("fan_curves");
+        labelMonitorButton.Text = Labels.Get("monitor_button");
         buttonApplyFans.Content = Labels.Get("apply");
         buttonReset.Content = Labels.Get("reset");
         buttonDisable.Content = Labels.Get("disable");

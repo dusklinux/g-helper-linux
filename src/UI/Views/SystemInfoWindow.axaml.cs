@@ -123,7 +123,8 @@ public partial class SystemInfoWindow : Window
 
     private async void ButtonCopy_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        if (_cachedSections == null) return;
+        if (_cachedSections == null)
+            return;
 
         try
         {

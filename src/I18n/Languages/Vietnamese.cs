@@ -388,6 +388,7 @@ public static class Vietnamese
         ["arcade_retry"] = "ENTER để thử lại",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Giám sát",
         ["monitor_title"] = "Giám sát phần cứng",
         ["monitor_temperature"] = "Nhiệt độ (°C)",
         ["monitor_fan_speed"] = "Tốc độ quạt (RPM)",

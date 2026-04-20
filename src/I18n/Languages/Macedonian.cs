@@ -391,6 +391,7 @@ public static class Macedonian
         ["arcade_retry"] = "ENTER за повторување",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Монитор",
         ["monitor_title"] = "Монитор на хардвер",
         ["monitor_temperature"] = "Температура (°C)",
         ["monitor_fan_speed"] = "Брзина на вентилатор (RPM)",

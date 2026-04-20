@@ -391,6 +391,7 @@ public static class Japanese
         ["arcade_retry"] = "ENTER でリトライ",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "モニター",
         ["monitor_title"] = "ハードウェアモニター",
         ["monitor_temperature"] = "温度 (°C)",
         ["monitor_fan_speed"] = "ファン速度 (RPM)",

@@ -388,6 +388,7 @@ public static class Russian
         ["arcade_retry"] = "ENTER для повтора",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Монитор",
         ["monitor_title"] = "Монитор оборудования",
         ["monitor_temperature"] = "Температура (°C)",
         ["monitor_fan_speed"] = "Скорость вент. (об/мин)",

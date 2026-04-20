@@ -391,6 +391,7 @@ public static class Arabic
         ["arcade_retry"] = "ENTER لإعادة المحاولة",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "مراقب",
         ["monitor_title"] = "مراقب الأجهزة",
         ["monitor_temperature"] = "درجة الحرارة (°C)",
         ["monitor_fan_speed"] = "سرعة المراوح (RPM)",

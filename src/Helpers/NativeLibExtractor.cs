@@ -164,7 +164,9 @@ public static class NativeLibExtractor
                 {
                     // Version changed — delete all cached files so fresh extraction occurs
                     foreach (var file in Directory.GetFiles(CacheDir))
-                        try { File.Delete(file); } catch { }
+                        try
+                        { File.Delete(file); }
+                        catch { }
                 }
                 else
                 {

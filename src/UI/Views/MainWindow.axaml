@@ -297,8 +297,8 @@
                     <TextBlock x:Name="labelVersion" Classes="label-dim" Cursor="Hand"
                                Text="G-Helper Linux v1.0.0" FontSize="12" Margin="0,0,0,6" />
 
-                    <!-- Donate + Monitor + Updates + Quit -->
-                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+                    <!-- Donate + Updates + Quit -->
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                         <Button Grid.Column="0" x:Name="buttonDonate" Classes="ghelper-coin"
                                 Margin="0,0,6,0" Height="36" MinWidth="140"
                                 Click="ButtonDonate_Click">
@@ -332,15 +332,7 @@
                                 </Border>
                             </Grid>
                         </Button>
-                        <Button Grid.Column="2" x:Name="buttonMonitor" Classes="ghelper"
-                                Margin="0,0,4,0" Height="32"
-                                Click="ButtonMonitor_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <Image Source="avares://ghelper/UI/Assets/Icons/bolt.png" Width="14" Height="14" RenderOptions.BitmapInterpolationMode="HighQuality" VerticalAlignment="Center" />
-                                <TextBlock Text="Monitor" FontSize="11" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-                        <Button Grid.Column="3" x:Name="buttonUpdates" Classes="ghelper"
+                        <Button Grid.Column="2" x:Name="buttonUpdates" Classes="ghelper"
                                 Margin="0,0,4,0" Height="32"
                                 Click="ButtonUpdates_Click">
                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -348,7 +340,7 @@
                                 <TextBlock Text="Updates" FontSize="11" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
-                        <Button Grid.Column="4" x:Name="buttonQuit" Classes="ghelper"
+                        <Button Grid.Column="3" x:Name="buttonQuit" Classes="ghelper"
                                 Height="32"
                                 Click="ButtonQuit_Click">
                             <StackPanel Orientation="Horizontal" Spacing="4">

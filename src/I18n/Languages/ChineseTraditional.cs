@@ -391,6 +391,7 @@ public static class ChineseTraditional
         ["arcade_retry"] = "按 ENTER 重試",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "監控",
         ["monitor_title"] = "硬體監控",
         ["monitor_temperature"] = "溫度 (°C)",
         ["monitor_fan_speed"] = "風扇轉速 (RPM)",

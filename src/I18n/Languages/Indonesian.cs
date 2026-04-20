@@ -391,6 +391,7 @@ public static class Indonesian
         ["arcade_retry"] = "ENTER untuk coba lagi",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
         ["monitor_title"] = "Monitor Perangkat Keras",
         ["monitor_temperature"] = "Suhu (°C)",
         ["monitor_fan_speed"] = "Kecepatan Kipas (RPM)",

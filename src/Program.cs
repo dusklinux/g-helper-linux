@@ -1,6 +1,6 @@
 using Avalonia;
-using Avalonia.X11;
 using Avalonia.Skia;
+using Avalonia.X11;
 using GHelper.Linux;
 using GHelper.Linux.Helpers;
 

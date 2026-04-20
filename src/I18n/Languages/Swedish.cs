@@ -391,6 +391,7 @@ public static class Swedish
         ["arcade_retry"] = "ENTER för att försöka igen",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Övervakning",
         ["monitor_title"] = "Hårdvaruövervakning",
         ["monitor_temperature"] = "Temperatur (°C)",
         ["monitor_fan_speed"] = "Fläkthastighet (RPM)",

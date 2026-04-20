@@ -388,6 +388,7 @@ public static class Italian
         ["arcade_retry"] = "INVIO per riprovare",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
         ["monitor_title"] = "Monitor hardware",
         ["monitor_temperature"] = "Temperatura (°C)",
         ["monitor_fan_speed"] = "Velocità ventole (RPM)",

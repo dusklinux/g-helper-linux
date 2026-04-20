@@ -388,6 +388,7 @@ public static class Romanian
         ["arcade_retry"] = "ENTER pentru a reîncerca",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
         ["monitor_title"] = "Monitor hardware",
         ["monitor_temperature"] = "Temperatură (°C)",
         ["monitor_fan_speed"] = "Viteză ventilatoare (RPM)",

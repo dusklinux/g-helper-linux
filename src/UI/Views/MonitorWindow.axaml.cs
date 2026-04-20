@@ -5,12 +5,12 @@ using GHelper.Linux.Helpers;
 using GHelper.Linux.I18n;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
+using LiveChartsCore.Drawing;
 using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using LiveChartsCore.SkiaSharpView.Painting.Effects;
 using LiveChartsCore.SkiaSharpView.VisualElements;
-using LiveChartsCore.Drawing;
 using SkiaSharp;
 
 namespace GHelper.Linux.UI.Views;
@@ -50,21 +50,21 @@ public partial class MonitorWindow : Window
     private LineSeries<ObservableValue> _batteryPowerSeries = null!;
 
     // G-Helper palette
-    private static readonly SKColor BlueCpu   = SKColor.Parse("#3AAEEF");
-    private static readonly SKColor RedGpu    = SKColor.Parse("#FF6B6B");
-    private static readonly SKColor GreenMid  = SKColor.Parse("#50C878");
+    private static readonly SKColor BlueCpu = SKColor.Parse("#3AAEEF");
+    private static readonly SKColor RedGpu = SKColor.Parse("#FF6B6B");
+    private static readonly SKColor GreenMid = SKColor.Parse("#50C878");
     private static readonly SKColor Turquoise = SKColor.Parse("#00CED1");
-    private static readonly SKColor Orange    = SKColor.Parse("#FFA500");
-    private static readonly SKColor Gold      = SKColor.Parse("#FFD700");
+    private static readonly SKColor Orange = SKColor.Parse("#FFA500");
+    private static readonly SKColor Gold = SKColor.Parse("#FFD700");
 
     // Shared dark theme paints
     private static readonly SKTypeface SansSerif = SKTypeface.FromFamilyName("sans-serif");
     private static readonly SolidColorPaint LegendText = new(SKColors.LightGray) { SKTypeface = SansSerif };
-    private static readonly SolidColorPaint LegendBg   = new(SKColors.Transparent);
+    private static readonly SolidColorPaint LegendBg = new(SKColors.Transparent);
     private static readonly SolidColorPaint TooltipText = new(SKColors.White) { SKTypeface = SansSerif };
-    private static readonly SolidColorPaint TooltipBg   = new(new SKColor(50, 50, 50));
-    private static readonly SolidColorPaint AxisLabels  = new(new SKColor(160, 160, 160)) { SKTypeface = SansSerif };
-    private static readonly SolidColorPaint GridLines   = new(new SKColor(60, 60, 60))
+    private static readonly SolidColorPaint TooltipBg = new(new SKColor(50, 50, 50));
+    private static readonly SolidColorPaint AxisLabels = new(new SKColor(160, 160, 160)) { SKTypeface = SansSerif };
+    private static readonly SolidColorPaint GridLines = new(new SKColor(60, 60, 60))
     {
         StrokeThickness = 1,
         PathEffect = new DashEffect([3, 3]),

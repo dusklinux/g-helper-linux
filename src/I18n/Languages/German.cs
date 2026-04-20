@@ -388,6 +388,7 @@ public static class German
         ["arcade_retry"] = "ENTER zum Neustarten",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
         ["monitor_title"] = "Hardware-Monitor",
         ["monitor_temperature"] = "Temperatur (°C)",
         ["monitor_fan_speed"] = "Lüfterdrehzahl (RPM)",

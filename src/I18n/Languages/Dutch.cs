@@ -388,6 +388,7 @@ public static class Dutch
         ["arcade_retry"] = "ENTER om opnieuw te proberen",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
         ["monitor_title"] = "Hardware-monitor",
         ["monitor_temperature"] = "Temperatuur (°C)",
         ["monitor_fan_speed"] = "Ventilatorsnelheid (RPM)",

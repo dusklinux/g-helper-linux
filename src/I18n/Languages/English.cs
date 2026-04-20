@@ -393,6 +393,7 @@ public static class English
         ["arcade_retry"] = "ENTER to retry",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
         ["monitor_title"] = "Hardware Monitor",
         ["monitor_temperature"] = "Temperature (°C)",
         ["monitor_fan_speed"] = "Fan Speed (RPM)",

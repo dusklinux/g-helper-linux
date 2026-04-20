@@ -388,6 +388,7 @@ public static class Czech
         ["arcade_retry"] = "ENTER pro opakování",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
         ["monitor_title"] = "Monitor hardwaru",
         ["monitor_temperature"] = "Teplota (°C)",
         ["monitor_fan_speed"] = "Otáčky ventilátorů (RPM)",

@@ -391,6 +391,7 @@ public static class Greek
         ["arcade_retry"] = "ENTER για επανάληψη",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Παρακολούθηση",
         ["monitor_title"] = "Παρακολούθηση υλικού",
         ["monitor_temperature"] = "Θερμοκρασία (°C)",
         ["monitor_fan_speed"] = "Ταχύτητα ανεμιστήρων (RPM)",

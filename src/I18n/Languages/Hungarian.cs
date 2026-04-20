@@ -388,6 +388,7 @@ public static class Hungarian
         ["arcade_retry"] = "ENTER az újrapróbáláshoz",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
         ["monitor_title"] = "Hardverfigyelő",
         ["monitor_temperature"] = "Hőmérséklet (°C)",
         ["monitor_fan_speed"] = "Ventilátorsebesség (RPM)",

@@ -391,6 +391,7 @@ public static class Thai
         ["arcade_retry"] = "ENTER เพื่อลองอีกครั้ง",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "มอนิเตอร์",
         ["monitor_title"] = "ตรวจสอบฮาร์ดแวร์",
         ["monitor_temperature"] = "อุณหภูมิ (°C)",
         ["monitor_fan_speed"] = "ความเร็วพัดลม (RPM)",

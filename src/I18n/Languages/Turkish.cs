@@ -388,6 +388,7 @@ public static class Turkish
         ["arcade_retry"] = "Tekrar denemek için ENTER",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Monitör",
         ["monitor_title"] = "Donanım Monitörü",
         ["monitor_temperature"] = "Sıcaklık (°C)",
         ["monitor_fan_speed"] = "Fan Hızı (RPM)",

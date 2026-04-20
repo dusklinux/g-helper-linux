@@ -391,6 +391,7 @@ public static class Finnish
         ["arcade_retry"] = "ENTER yrittääksesi uudelleen",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Seuranta",
         ["monitor_title"] = "Laitteiston seuranta",
         ["monitor_temperature"] = "Lämpötila (°C)",
         ["monitor_fan_speed"] = "Tuulettimen nopeus (RPM)",

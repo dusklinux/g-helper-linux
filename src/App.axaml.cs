@@ -816,29 +816,36 @@ public class App : Application
 
     private void ToggleMainWindow()
     {
-        // Window may have been disposed by closing (KDE logout, user clicking X).
-        // Recreate it if needed - app stays alive via ShutdownMode.OnExplicitShutdown.
+        if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+            return;
+
+        // Snapshot: Close() modifies the Windows collection during iteration
+        var visibleWindows = desktop.Windows.Where(w => w.IsVisible).ToList();
+
+        // Any window visible → close them all (child windows get recreated on demand)
+        if (visibleWindows.Count > 0)
+        {
+            foreach (var w in visibleWindows)
+            {
+                try
+                { w.Close(); }
+                catch { }
+            }
+            return;
+        }
+
+        // Nothing visible → show main window only
         if (MainWindowInstance == null || MainWindowInstance.PlatformImpl == null)
         {
             MainWindowInstance = new MainWindow();
             if (AppConfig.Is("topmost"))
                 MainWindowInstance.Topmost = true;
-            WindowPositioner.BottomRight(MainWindowInstance);
-            MainWindowInstance.Show();
-            MainWindowInstance.Activate();
-            return;
+            desktop.MainWindow = MainWindowInstance;
         }
 
-        if (MainWindowInstance.IsVisible)
-        {
-            MainWindowInstance.Hide();
-        }
-        else
-        {
-            WindowPositioner.BottomRight(MainWindowInstance);
-            MainWindowInstance.Show();
-            MainWindowInstance.Activate();
-        }
+        WindowPositioner.BottomRight(MainWindowInstance);
+        MainWindowInstance.Show();
+        MainWindowInstance.Activate();
     }
 
     /// <summary>

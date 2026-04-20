@@ -388,6 +388,7 @@ public static class Ukrainian
         ["arcade_retry"] = "ENTER щоб спробувати знову",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Монітор",
         ["monitor_title"] = "Монітор обладнання",
         ["monitor_temperature"] = "Температура (°C)",
         ["monitor_fan_speed"] = "Швидкість вент. (об/хв)",

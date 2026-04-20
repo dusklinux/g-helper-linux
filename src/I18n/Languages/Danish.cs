@@ -391,6 +391,7 @@ public static class Danish
         ["arcade_retry"] = "ENTER for at prøve igen",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Overvågning",
         ["monitor_title"] = "Hardwareovervågning",
         ["monitor_temperature"] = "Temperatur (°C)",
         ["monitor_fan_speed"] = "Blæserhastighed (RPM)",

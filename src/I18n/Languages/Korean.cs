@@ -391,6 +391,7 @@ public static class Korean
         ["arcade_retry"] = "ENTER로 재시도",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "모니터",
         ["monitor_title"] = "하드웨어 모니터",
         ["monitor_temperature"] = "온도 (°C)",
         ["monitor_fan_speed"] = "팬 속도 (RPM)",

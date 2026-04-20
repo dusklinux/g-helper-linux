@@ -391,6 +391,7 @@ public static class Norwegian
         ["arcade_retry"] = "ENTER for å prøve igjen",
 
         // HARDWARE MONITOR
+        ["monitor_button"] = "Overvåking",
         ["monitor_title"] = "Maskinvareovervåking",
         ["monitor_temperature"] = "Temperatur (°C)",
         ["monitor_fan_speed"] = "Viftehastighet (RPM)",
