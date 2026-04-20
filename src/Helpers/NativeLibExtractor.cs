@@ -6,9 +6,13 @@ namespace GHelper.Linux.Helpers;
 /// <summary>
 /// Ensures native libraries (libSkiaSharp.so, libHarfBuzzSharp.so) can be found at runtime.
 /// 
+/// Native .so files are embedded in the binary (stripped, added by build.sh from NuGet cache).
+/// On first launch they are extracted to ~/.cache/ghelper/libs/ and cached until the binary
+/// version changes.
+/// 
 /// Search order:
-///   1. Same directory as the binary (normal case when installed to /opt/ghelper/)
-///   2. ~/.cache/ghelper/libs/ (extracted from embedded resources)
+///   1. Same directory as the binary (AppImage / dev builds with loose .so files)
+///   2. ~/.cache/ghelper/libs/ (extracted from embedded resources — primary path)
 ///   3. System library paths (LD_LIBRARY_PATH, /usr/lib, etc.)
 /// 
 /// Must be called BEFORE any SkiaSharp/Avalonia code runs.
@@ -31,6 +35,9 @@ public static class NativeLibExtractor
     {
         // Determine where the binary lives
         var exeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? ".";
+
+        // Invalidate cache if binary version changed — prevents stale .so from breaking new binary
+        InvalidateStaleCacheIfNeeded();
 
         foreach (var lib in NativeLibs)
         {
@@ -137,6 +144,38 @@ public static class NativeLibExtractor
         catch { }
 
         return null;
+    }
+
+    /// <summary>
+    /// Clear cached .so files if the binary version changed (e.g. after self-update).
+    /// Writes a VERSION stamp to the cache dir so subsequent launches skip re-extraction.
+    /// </summary>
+    private static void InvalidateStaleCacheIfNeeded()
+    {
+        try
+        {
+            var versionFile = Path.Combine(CacheDir, "VERSION");
+            var currentVersion = AppConfig.AppVersion;
+
+            if (Directory.Exists(CacheDir))
+            {
+                var cachedVersion = File.Exists(versionFile) ? File.ReadAllText(versionFile).Trim() : "";
+                if (cachedVersion != currentVersion)
+                {
+                    // Version changed — delete all cached files so fresh extraction occurs
+                    foreach (var file in Directory.GetFiles(CacheDir))
+                        try { File.Delete(file); } catch { }
+                }
+                else
+                {
+                    return; // Cache is current, nothing to do
+                }
+            }
+
+            Directory.CreateDirectory(CacheDir);
+            File.WriteAllText(versionFile, currentVersion);
+        }
+        catch { }
     }
 
     private static IntPtr ResolveNativeLib(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)

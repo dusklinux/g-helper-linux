@@ -11,7 +11,8 @@ class Program
     public static void Main(string[] args)
     {
         // Extract and preload embedded native libraries (libSkiaSharp.so, libHarfBuzzSharp.so)
-        // before any Avalonia/SkiaSharp code runs.
+        // from the binary's embedded resources to ~/.cache/ghelper/libs/ before any
+        // Avalonia/SkiaSharp code runs. Cached across launches, invalidated on version change.
         NativeLibExtractor.ExtractAndLoad();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);

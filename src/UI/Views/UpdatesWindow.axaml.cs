@@ -364,28 +364,6 @@ public partial class UpdatesWindow : Window
                 UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
 #pragma warning restore CA1416
 
-            // Bare-binary mode: also download companion native libs so the new binary
-            // doesn't load stale libSkiaSharp.so / libHarfBuzzSharp.so next to it after
-            // a Skia/HarfBuzz version bump. AppImage ships libs inside the bundle.
-            // Downloaded before the swap - any failure leaves the existing install untouched.
-            var libTmpPaths = new List<(string name, string tmp)>();
-            if (!IsAppImage)
-            {
-                var urlBase = downloadUrl.Substring(0, downloadUrl.LastIndexOf('/') + 1);
-                Helpers.Logger.WriteLine($"Self-update: downloading 2 native libs from {urlBase}");
-                foreach (var libName in new[] { "libSkiaSharp.so", "libHarfBuzzSharp.so" })
-                {
-                    var libTmp = Path.Combine(Path.GetTempPath(), "ghelper-update-" + libName);
-                    using (var resp = await http.GetAsync(urlBase + libName, HttpCompletionOption.ResponseHeadersRead))
-                    {
-                        resp.EnsureSuccessStatusCode();
-                        using var s = await resp.Content.ReadAsStreamAsync();
-                        using var fs = File.Create(libTmp);
-                        await s.CopyToAsync(fs);
-                    }
-                    libTmpPaths.Add((libName, libTmp));
-                }
-            }
 
             if (targetPath != null && File.Exists(targetPath))
             {
@@ -408,17 +386,6 @@ public partial class UpdatesWindow : Window
                     btn.Click -= null!; // clear old handlers
                     btn.Click += (_, _) =>
                     {
-                        // Move native libs right before restart - replacing them earlier
-                        // causes a segfault because the old process still has them mmap'd.
-                        if (binaryDir != null)
-                        {
-                            foreach (var (libName, libTmp) in libTmpPaths)
-                            {
-                                var dest = Path.Combine(binaryDir, libName);
-                                Helpers.Logger.WriteLine($"Self-update: moving {libTmp} → {dest}");
-                                File.Move(libTmp, dest, overwrite: true);
-                            }
-                        }
                         Helpers.Logger.WriteLine($"Self-update: restarting via {restartPath}");
                         Process.Start(new ProcessStartInfo(restartPath) { UseShellExecute = false });
                         Environment.Exit(0);
@@ -426,8 +393,7 @@ public partial class UpdatesWindow : Window
                 });
 
                 var mode = IsAppImage ? "AppImage" : "binary";
-                var libSuffix = libTmpPaths.Count > 0 ? $" (+{libTmpPaths.Count} native libs)" : "";
-                Helpers.Logger.WriteLine($"Self-update: downloaded and replaced {mode} at {targetPath}{libSuffix}. Restart required.");
+                Helpers.Logger.WriteLine($"Self-update: downloaded and replaced {mode} at {targetPath}. Restart required.");
             }
             else
             {

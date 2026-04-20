@@ -323,7 +323,7 @@ trap 'rm -rf "$WORK_DIR"' EXIT
 _step 1 "DOWNLOADING PAYLOADS FROM REMOTE"
 
 if [[ "$MODE" == "install" ]]; then
-    BINARIES=(ghelper libSkiaSharp.so libHarfBuzzSharp.so)
+    BINARIES=(ghelper)
 else
     BINARIES=()
 fi
@@ -372,8 +372,6 @@ if [[ "$MODE" == "install" ]]; then
     mkdir -p "$INSTALL_DIR"
 
     _install_file "$WORK_DIR/ghelper"             "$INSTALL_DIR/ghelper"             755 "ghelper binary" || true
-    _install_file "$WORK_DIR/libSkiaSharp.so"     "$INSTALL_DIR/libSkiaSharp.so"     755 "libSkiaSharp.so" || true
-    _install_file "$WORK_DIR/libHarfBuzzSharp.so" "$INSTALL_DIR/libHarfBuzzSharp.so" 755 "libHarfBuzzSharp.so" || true
 
     # Symlink (ln -sf is already idempotent but we report status)
     if [[ "$(readlink -f /usr/local/bin/ghelper 2>/dev/null)" == "$INSTALL_DIR/ghelper" ]]; then

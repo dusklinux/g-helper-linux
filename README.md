@@ -236,13 +236,13 @@ chmod +x GHelper-x86_64.AppImage
 
 ```bash
 # Ubuntu/Debian
-sudo apt install dotnet-sdk-10.0 clang zlib1g-dev
+sudo apt install dotnet-sdk-10.0 clang zlib1g-dev upx-ucl
 
 # Fedora
-sudo dnf install dotnet-sdk-10.0 clang zlib-devel
+sudo dnf install dotnet-sdk-10.0 clang zlib-devel upx
 
 # Arch
-sudo pacman -S dotnet-sdk clang
+sudo pacman -S dotnet-sdk clang upx
 ```
 
 ```bash
