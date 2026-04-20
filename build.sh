@@ -82,7 +82,7 @@ if ! dotnet restore "$SRC_DIR" --runtime linux-x64 -q; then
     exit 1
 fi
 
-# Prepare native .so for embedding: strip + gzip from NuGet cache
+# Prepare native .so for embedding
 EMBED_DIR="$SCRIPT_DIR/build/embedded"
 rm -rf "$EMBED_DIR"
 mkdir -p "$EMBED_DIR"

@@ -1,4 +1,6 @@
 using Avalonia;
+using Avalonia.X11;
+using Avalonia.Skia;
 using GHelper.Linux;
 using GHelper.Linux.Helpers;
 
@@ -20,6 +22,8 @@ class Program
 
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
-            .UsePlatformDetect()
+            .UseX11()
+            .UseSkia()
+            .UseHarfBuzz()
             .LogToTrace();
 }
