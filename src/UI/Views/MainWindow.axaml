@@ -30,7 +30,7 @@
                 <StackPanel>
                     <!-- Title row: icon + label left, sensor info right -->
                     <Grid ColumnDefinitions="Auto,*,Auto" Margin="2,0,2,8">
-                        <PathIcon Grid.Column="0" Data="{StaticResource IconBoltBold}" Foreground="{StaticResource IconForegroundBrush}"
+                        <PathIcon Grid.Column="0" Data="{StaticResource IconLightningBold}" Foreground="{StaticResource IconForegroundBrush}"
                                   Width="18" Height="18"
                                   VerticalAlignment="Center" Margin="0,0,8,0" />
                         <TextBlock Grid.Column="1" x:Name="labelPerf" Classes="header"
@@ -51,7 +51,7 @@
                         <Button x:Name="buttonBalanced" Classes="ghelper-tall"
                                 Margin="3,0" Click="ButtonBalanced_Click">
                             <StackPanel HorizontalAlignment="Center" Spacing="4">
-                                <Path Classes="icon" Data="{StaticResource IconBalance}" Width="20" Height="20" HorizontalAlignment="Center" />
+                                <Path Classes="icon" Data="{StaticResource IconScale}" Width="20" Height="20" HorizontalAlignment="Center" />
                                 <TextBlock Text="Balanced" HorizontalAlignment="Center" FontSize="11" />
                             </StackPanel>
                         </Button>
@@ -65,7 +65,7 @@
                         <Button x:Name="buttonFans" Classes="ghelper-tall"
                                 Margin="3,0,0,0" Click="ButtonFans_Click">
                             <StackPanel HorizontalAlignment="Center" Spacing="4">
-                                <Path Classes="icon" Data="{StaticResource IconCyclone}" Width="20" Height="20" HorizontalAlignment="Center" />
+                                <Path Classes="icon" Data="{StaticResource IconPropeller}" Width="20" Height="20" HorizontalAlignment="Center" />
                                 <TextBlock Text="Fans + Power" HorizontalAlignment="Center" FontSize="11" />
                             </StackPanel>
                         </Button>
@@ -77,7 +77,7 @@
             <Border x:Name="panelGPU" Classes="panel">
                 <StackPanel>
                     <Grid ColumnDefinitions="Auto,*,Auto" Margin="2,0,2,8">
-                        <PathIcon Grid.Column="0" Data="{StaticResource IconGamepadBold}" Foreground="{StaticResource IconForegroundBrush}"
+                        <PathIcon Grid.Column="0" Data="{StaticResource IconGameControllerBold}" Foreground="{StaticResource IconForegroundBrush}"
                                   Width="18" Height="18"
                                   VerticalAlignment="Center" Margin="0,0,8,0" />
                         <TextBlock Grid.Column="1" x:Name="labelGPU" Classes="header"
@@ -91,21 +91,21 @@
                         <Button x:Name="buttonEco" Classes="ghelper-tall"
                                 Margin="0,0,3,0" Click="ButtonEco_Click">
                             <StackPanel HorizontalAlignment="Center" Spacing="4">
-                                <Path Classes="icon" Data="{StaticResource IconHerb}" Width="20" Height="20" HorizontalAlignment="Center" />
+                                <Path Classes="icon" Data="{StaticResource IconSeedling}" Width="20" Height="20" HorizontalAlignment="Center" />
                                 <TextBlock Text="Eco" HorizontalAlignment="Center" FontSize="11" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="buttonStandard" Classes="ghelper-tall"
                                 Margin="3,0" Click="ButtonStandard_Click">
                             <StackPanel HorizontalAlignment="Center" Spacing="4">
-                                <Path Classes="icon" Data="{StaticResource IconDesktop}" Width="20" Height="20" HorizontalAlignment="Center" />
+                                <Path Classes="icon" Data="{StaticResource IconDeviceDesktop}" Width="20" Height="20" HorizontalAlignment="Center" />
                                 <TextBlock Text="Standard" HorizontalAlignment="Center" FontSize="11" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="buttonUltimate" Classes="ghelper-tall"
                                 Margin="3,0" Click="ButtonUltimate_Click">
                             <StackPanel HorizontalAlignment="Center" Spacing="4">
-                                <Path Classes="icon" Data="{StaticResource IconGamepad}" Width="20" Height="20" HorizontalAlignment="Center" />
+                                <Path Classes="icon" Data="{StaticResource IconDeviceGamepad2}" Width="20" Height="20" HorizontalAlignment="Center" />
                                 <TextBlock Text="Ultimate" HorizontalAlignment="Center" FontSize="11" />
                             </StackPanel>
                         </Button>
@@ -188,7 +188,7 @@
                                 Margin="3,0,0,0" Click="ButtonExtra_Click"
                                 Height="36">
                             <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
-                                <Path Classes="icon" Data="{StaticResource IconGear}" Width="12" Height="12" VerticalAlignment="Center" />
+                                <Path Classes="icon" Data="{StaticResource IconSettings}" Width="12" Height="12" VerticalAlignment="Center" />
                                 <TextBlock Text="Extra" FontSize="11" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
@@ -227,7 +227,7 @@
             <Border Classes="panel">
                 <StackPanel>
                     <Grid ColumnDefinitions="Auto,*,Auto" Margin="2,0,2,4">
-                        <PathIcon Grid.Column="0" Data="{StaticResource IconBatteryBold}" Foreground="{StaticResource IconForegroundBrush}"
+                        <PathIcon Grid.Column="0" Data="{StaticResource IconBatteryFullBold}" Foreground="{StaticResource IconForegroundBrush}"
                                   Width="18" Height="18"
                                   VerticalAlignment="Center" Margin="0,0,8,0" />
                         <TextBlock Grid.Column="1" x:Name="labelBattery" Classes="header"

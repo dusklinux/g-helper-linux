@@ -533,7 +533,7 @@ public partial class MainWindow : Window
 
         var titleIcon = new Avalonia.Controls.Shapes.Path
         {
-            Data = (Geometry)Avalonia.Application.Current!.FindResource("IconWarning")!,
+            Data = (Geometry)Avalonia.Application.Current!.FindResource("IconAlertTriangle")!,
             Stroke = (IBrush)Avalonia.Application.Current!.FindResource("IconForegroundBrush")!,
             StrokeThickness = 2,
             StrokeLineCap = PenLineCap.Round,
