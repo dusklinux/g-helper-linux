@@ -4,9 +4,9 @@
 >
     <!--
         Icon set is split between two sources:
-          * Tabler Icons,
+          * Tabler Icons (IconBolt, IconLeaf, IconBalance, IconRocket, IconCyclone, IconGamepad, IconHerb, IconDesktop, IconBulb, IconKeyboard, IconGear, IconBattery, IconPackage, IconPower, IconWarning),
             Source: https://github.com/tabler/tabler-icons/tree/main/icons/outline
-          * Phosphor Icons,
+          * Phosphor Icons (IconBoltBold, IconGamepadBold, IconDesktopBold, IconKeyboardBold, IconBatteryBold),
             Source: https://github.com/phosphor-icons/core/tree/main/assets/bold
     -->
 
