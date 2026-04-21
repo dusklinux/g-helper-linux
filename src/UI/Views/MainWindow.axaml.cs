@@ -531,16 +531,20 @@ public partial class MainWindow : Window
             Margin = new Avalonia.Thickness(0, 0, 0, 18),
         };
 
-        var titleIcon = new Avalonia.Controls.Image
+        var titleIcon = new Avalonia.Controls.Shapes.Path
         {
-            Source = new Avalonia.Media.Imaging.Bitmap(
-                Avalonia.Platform.AssetLoader.Open(new Uri("avares://ghelper/UI/Assets/Icons/warning.png"))),
+            Data = (Geometry)Avalonia.Application.Current!.FindResource("IconWarning")!,
+            Stroke = (IBrush)Avalonia.Application.Current!.FindResource("IconForegroundBrush")!,
+            StrokeThickness = 2,
+            StrokeLineCap = PenLineCap.Round,
+            StrokeJoin = PenLineJoin.Round,
+            Fill = Brushes.Transparent,
+            Stretch = Stretch.Uniform,
             Width = 22,
             Height = 22,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
             Margin = new Avalonia.Thickness(0, 0, 10, 0),
         };
-        Avalonia.Media.RenderOptions.SetBitmapInterpolationMode(titleIcon, Avalonia.Media.Imaging.BitmapInterpolationMode.HighQuality);
 
         var titleText = new TextBlock
         {
