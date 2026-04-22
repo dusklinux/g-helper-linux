@@ -38,9 +38,9 @@ public static class Korean
         ["fans_power"] = "팬 + 전력",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "에코",
+        ["gpu_standard"] = "표준",
+        ["gpu_ultimate"] = "최고",
         ["gpu_optimized"] = "최적화",
         ["gpu_unknown"] = "알 수 없음",
         ["gpu_mode_prefix"] = "GPU 모드: {0}",

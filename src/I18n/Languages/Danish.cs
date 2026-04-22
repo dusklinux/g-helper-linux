@@ -38,9 +38,9 @@ public static class Danish
         ["fans_power"] = "Blæsere + Strøm",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
+        ["gpu_eco"] = "Øko",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Ultimativ",
         ["gpu_optimized"] = "Optimeret",
         ["gpu_unknown"] = "Ukendt",
         ["gpu_mode_prefix"] = "GPU-tilstand: {0}",

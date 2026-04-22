@@ -35,9 +35,9 @@ public static class Ukrainian
         ["fans_power"] = "Вентилятори + Живлення",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Еко",
+        ["gpu_standard"] = "Стандарт",
+        ["gpu_ultimate"] = "Максимум",
         ["gpu_optimized"] = "Оптимізований",
         ["gpu_unknown"] = "Невідомий",
         ["gpu_mode_prefix"] = "Режим GPU: {0}",

@@ -38,9 +38,9 @@ public static class Greek
         ["fans_power"] = "Ανεμιστήρες + Ισχύς",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Οικολογικό",
+        ["gpu_standard"] = "Τυπικό",
+        ["gpu_ultimate"] = "Απόλυτο",
         ["gpu_optimized"] = "Βελτιστοποιημένο",
         ["gpu_unknown"] = "Άγνωστο",
         ["gpu_mode_prefix"] = "Λειτουργία GPU: {0}",

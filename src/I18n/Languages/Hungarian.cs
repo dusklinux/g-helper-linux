@@ -35,9 +35,9 @@ public static class Hungarian
         ["fans_power"] = "Ventilátorok + Teljesítmény",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
+        ["gpu_eco"] = "Öko",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Extrém",
         ["gpu_optimized"] = "Optimalizált",
         ["gpu_unknown"] = "Ismeretlen",
         ["gpu_mode_prefix"] = "GPU mód: {0}",

@@ -38,9 +38,9 @@ public static class Macedonian
         ["fans_power"] = "Вентилатори + Напојување",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Еко",
+        ["gpu_standard"] = "Стандарден",
+        ["gpu_ultimate"] = "Врвен",
         ["gpu_optimized"] = "Оптимизиран",
         ["gpu_unknown"] = "Непознат",
         ["gpu_mode_prefix"] = "GPU режим: {0}",

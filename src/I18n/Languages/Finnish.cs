@@ -38,9 +38,9 @@ public static class Finnish
         ["fans_power"] = "Tuulettimet + Teho",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
+        ["gpu_eco"] = "Eko",
         ["gpu_standard"] = "Standardi",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Huippu",
         ["gpu_optimized"] = "Optimoitu",
         ["gpu_unknown"] = "Tuntematon",
         ["gpu_mode_prefix"] = "GPU-tila: {0}",

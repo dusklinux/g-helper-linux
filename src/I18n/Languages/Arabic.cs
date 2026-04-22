@@ -38,9 +38,9 @@ public static class Arabic
         ["fans_power"] = "المراوح + الطاقة",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "بيئي",
+        ["gpu_standard"] = "قياسي",
+        ["gpu_ultimate"] = "فائق",
         ["gpu_optimized"] = "مُحسَّن",
         ["gpu_unknown"] = "غير معروف",
         ["gpu_mode_prefix"] = "وضع GPU: {0}",

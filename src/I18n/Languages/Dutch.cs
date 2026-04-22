@@ -36,8 +36,8 @@ public static class Dutch
 
         // GPU MODES
         ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_standard"] = "Standaard",
+        ["gpu_ultimate"] = "Ultiem",
         ["gpu_optimized"] = "Geoptimaliseerd",
         ["gpu_unknown"] = "Onbekend",
         ["gpu_mode_prefix"] = "GPU-modus: {0}",

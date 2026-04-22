@@ -38,9 +38,9 @@ public static class Thai
         ["fans_power"] = "พัดลม + พลังงาน",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "ประหยัด",
+        ["gpu_standard"] = "มาตรฐาน",
+        ["gpu_ultimate"] = "สูงสุด",
         ["gpu_optimized"] = "ปรับแต่งอัตโนมัติ",
         ["gpu_unknown"] = "ไม่ทราบ",
         ["gpu_mode_prefix"] = "โหมด GPU: {0}",

@@ -35,9 +35,9 @@ public static class Czech
         ["fans_power"] = "Ventilátory + Napájení",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
+        ["gpu_eco"] = "Eko",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Ultimátní",
         ["gpu_optimized"] = "Optimalizovaný",
         ["gpu_unknown"] = "Neznámý",
         ["gpu_mode_prefix"] = "Režim GPU: {0}",

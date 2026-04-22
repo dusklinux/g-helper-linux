@@ -35,9 +35,9 @@ public static class Polish
         ["fans_power"] = "Wentylatory + Zasilanie",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Eko",
+        ["gpu_standard"] = "Standardowy",
+        ["gpu_ultimate"] = "Maksymalny",
         ["gpu_optimized"] = "Zoptymalizowany",
         ["gpu_unknown"] = "Nieznany",
         ["gpu_mode_prefix"] = "Tryb GPU: {0}",

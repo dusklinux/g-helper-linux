@@ -35,9 +35,9 @@ public static class German
         ["fans_power"] = "Lüfter + Leistung",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
+        ["gpu_eco"] = "Öko",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Ultimativ",
         ["gpu_optimized"] = "Optimiert",
         ["gpu_unknown"] = "Unbekannt",
         ["gpu_mode_prefix"] = "GPU-Modus: {0}",

@@ -37,7 +37,7 @@ public static class Romanian
         // GPU MODES
         ["gpu_eco"] = "Eco",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Maxim",
         ["gpu_optimized"] = "Optimizat",
         ["gpu_unknown"] = "Necunoscut",
         ["gpu_mode_prefix"] = "Mod GPU: {0}",

@@ -35,9 +35,9 @@ public static class Turkish
         ["fans_power"] = "Fanlar + Güç",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Eko",
+        ["gpu_standard"] = "Standart",
+        ["gpu_ultimate"] = "Maksimum",
         ["gpu_optimized"] = "Optimize",
         ["gpu_unknown"] = "Bilinmiyor",
         ["gpu_mode_prefix"] = "GPU Modu: {0}",

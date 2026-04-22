@@ -38,9 +38,9 @@ public static class Norwegian
         ["fans_power"] = "Vifter + Strøm",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
+        ["gpu_eco"] = "Øko",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Ultimat",
         ["gpu_optimized"] = "Optimalisert",
         ["gpu_unknown"] = "Ukjent",
         ["gpu_mode_prefix"] = "GPU-modus: {0}",

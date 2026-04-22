@@ -38,9 +38,9 @@ public static class Serbian
         ["fans_power"] = "Вентилатори + Напајање",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Еко",
+        ["gpu_standard"] = "Стандард",
+        ["gpu_ultimate"] = "Максимум",
         ["gpu_optimized"] = "Оптимизован",
         ["gpu_unknown"] = "Непознат",
         ["gpu_mode_prefix"] = "GPU режим: {0}",

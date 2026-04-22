@@ -37,7 +37,7 @@ public static class Italian
         // GPU MODES
         ["gpu_eco"] = "Eco",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Massimo",
         ["gpu_optimized"] = "Ottimizzato",
         ["gpu_unknown"] = "Sconosciuto",
         ["gpu_mode_prefix"] = "Modalità GPU: {0}",

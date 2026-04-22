@@ -38,9 +38,9 @@ public static class Indonesian
         ["fans_power"] = "Kipas + Daya",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Hemat",
+        ["gpu_standard"] = "Standar",
+        ["gpu_ultimate"] = "Maksimal",
         ["gpu_optimized"] = "Dioptimalkan",
         ["gpu_unknown"] = "Tidak diketahui",
         ["gpu_mode_prefix"] = "Mode GPU: {0}",

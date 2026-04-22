@@ -38,9 +38,9 @@ public static class Swedish
         ["fans_power"] = "Fläktar + Kraft",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
+        ["gpu_eco"] = "Eko",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Ultimat",
         ["gpu_optimized"] = "Optimerad",
         ["gpu_unknown"] = "Okänt",
         ["gpu_mode_prefix"] = "GPU-läge: {0}",

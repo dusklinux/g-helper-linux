@@ -38,9 +38,9 @@ public static class Japanese
         ["fans_power"] = "ファン + 電力",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "エコ",
+        ["gpu_standard"] = "標準",
+        ["gpu_ultimate"] = "最高",
         ["gpu_optimized"] = "最適化",
         ["gpu_unknown"] = "不明",
         ["gpu_mode_prefix"] = "GPU モード: {0}",

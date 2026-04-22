@@ -35,9 +35,9 @@ public static class French
         ["fans_power"] = "Ventilateurs + Alimentation",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
+        ["gpu_eco"] = "Éco",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Ultime",
         ["gpu_optimized"] = "Optimisé",
         ["gpu_unknown"] = "Inconnu",
         ["gpu_mode_prefix"] = "Mode GPU : {0}",

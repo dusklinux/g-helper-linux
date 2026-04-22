@@ -35,9 +35,9 @@ public static class Russian
         ["fans_power"] = "Вентиляторы + Питание",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Эко",
+        ["gpu_standard"] = "Стандарт",
+        ["gpu_ultimate"] = "Максимум",
         ["gpu_optimized"] = "Оптимизированный",
         ["gpu_unknown"] = "Неизвестно",
         ["gpu_mode_prefix"] = "Режим GPU: {0}",

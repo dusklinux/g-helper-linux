@@ -35,9 +35,9 @@ public static class Vietnamese
         ["fans_power"] = "Quạt + Nguồn",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Tiết kiệm",
+        ["gpu_standard"] = "Tiêu chuẩn",
+        ["gpu_ultimate"] = "Tối đa",
         ["gpu_optimized"] = "Tối ưu",
         ["gpu_unknown"] = "Không xác định",
         ["gpu_mode_prefix"] = "Chế độ GPU: {0}",

@@ -38,9 +38,9 @@ public static class ChineseTraditional
         ["fans_power"] = "風扇 + 功率",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "節能",
+        ["gpu_standard"] = "標準",
+        ["gpu_ultimate"] = "極致",
         ["gpu_optimized"] = "最佳化",
         ["gpu_unknown"] = "未知",
         ["gpu_mode_prefix"] = "GPU 模式：{0}",
