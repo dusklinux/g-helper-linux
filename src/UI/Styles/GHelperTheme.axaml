@@ -91,6 +91,8 @@
         <Setter Property="Background" Value="#373737" />
         <Setter Property="Foreground" Value="#F0F0F0" />
         <Setter Property="CornerRadius" Value="5" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
 
     <!-- Slider styling -->
@@ -143,6 +145,18 @@
 
     <Style Selector="TabItem:selected">
         <Setter Property="Foreground" Value="#F0F0F0" />
+    </Style>
+
+    <!-- Shared style for Tabler-sourced vector icons rendered via <Path>.
+         Strokes match Tabler's native SVG attributes (width=2, round cap/join).
+         Stretch=Uniform scales the 24-unit viewBox to the Path's Width/Height. -->
+    <Style Selector="Path.icon">
+        <Setter Property="Stroke" Value="{StaticResource IconForegroundBrush}" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="StrokeLineCap" Value="Round" />
+        <Setter Property="StrokeJoin" Value="Round" />
+        <Setter Property="Fill" Value="Transparent" />
+        <Setter Property="Stretch" Value="Uniform" />
     </Style>
 
 </Styles>

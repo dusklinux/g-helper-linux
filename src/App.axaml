@@ -3,6 +3,14 @@
              x:Class="GHelper.Linux.App"
              RequestedThemeVariant="Dark">
 
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://ghelper/UI/Styles/Icons.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://ghelper/UI/Styles/GHelperTheme.axaml" />
