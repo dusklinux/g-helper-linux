@@ -289,6 +289,10 @@ public static class Macedonian
         ["language_header"] = "Јазик",
         ["language_auto"] = "Авто (системски)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Изглед",
+        ["icon_set_label"] = "Сет на икони",
+
         // FANS WINDOW
         ["fans_title"] = "Вентилатори и напојување",
         ["fan_curves"] = "Криви на вентилатори",

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Custom power icon (Noto set has no power-symbol emoji).
+     IEC 5009 power symbol rendered in red to match the
+     original power.png that shipped before this change. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <g fill="none" stroke="#ea4e4e" stroke-width="10"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 64 22 V 58"/>
+    <path d="M 38 40 A 36 36 0 1 0 90 40"/>
+  </g>
+</svg>

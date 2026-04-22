@@ -289,6 +289,10 @@ public static class Japanese
         ["language_header"] = "言語",
         ["language_auto"] = "自動（システム設定）",
 
+        // APPEARANCE
+        ["appearance_header"] = "外観",
+        ["icon_set_label"] = "アイコンセット",
+
         // FANS WINDOW
         ["fans_title"] = "ファン & 電力",
         ["fan_curves"] = "ファンカーブ",

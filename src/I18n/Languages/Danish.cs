@@ -289,6 +289,10 @@ public static class Danish
         ["language_header"] = "Sprog",
         ["language_auto"] = "Auto (system)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Udseende",
+        ["icon_set_label"] = "Ikonsæt",
+
         // FANS WINDOW
         ["fans_title"] = "Blæsere og strøm",
         ["fan_curves"] = "Blæserkurver",

@@ -286,6 +286,10 @@ public static class Russian
         ["language_header"] = "Язык",
         ["language_auto"] = "Авто (системный)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Внешний вид",
+        ["icon_set_label"] = "Набор значков",
+
         // FANS WINDOW
         ["fans_title"] = "Вентиляторы и питание",
         ["fan_curves"] = "Кривые вентиляторов",

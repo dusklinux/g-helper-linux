@@ -291,6 +291,10 @@ public static class English
         ["language_header"] = "Language",
         ["language_auto"] = "Auto (system)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Appearance",
+        ["icon_set_label"] = "Icon Set",
+
         // FANS WINDOW
         ["fans_title"] = "Fans & Power",
         ["fan_curves"] = "Fan Curves",

@@ -289,6 +289,10 @@ public static class ChineseSimplified
         ["language_header"] = "语言",
         ["language_auto"] = "自动（跟随系统）",
 
+        // APPEARANCE
+        ["appearance_header"] = "外观",
+        ["icon_set_label"] = "图标集",
+
         // FANS WINDOW
         ["fans_title"] = "风扇与功率",
         ["fan_curves"] = "风扇曲线",

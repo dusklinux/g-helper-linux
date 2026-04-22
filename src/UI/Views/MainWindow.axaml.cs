@@ -533,15 +533,9 @@ public partial class MainWindow : Window
             Margin = new Avalonia.Thickness(0, 0, 0, 18),
         };
 
-        var titleIcon = new Avalonia.Controls.Shapes.Path
+        var titleIcon = new GHelper.Linux.UI.Controls.Icon
         {
-            Data = (Geometry)Avalonia.Application.Current!.FindResource("IconAlertTriangle")!,
-            Stroke = (IBrush)Avalonia.Application.Current!.FindResource("IconForegroundBrush")!,
-            StrokeThickness = 2,
-            StrokeLineCap = PenLineCap.Round,
-            StrokeJoin = PenLineJoin.Round,
-            Fill = Brushes.Transparent,
-            Stretch = Stretch.Uniform,
+            IconName = "warning",
             Width = 22,
             Height = 22,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,

@@ -289,6 +289,10 @@ public static class Finnish
         ["language_header"] = "Kieli",
         ["language_auto"] = "Auto (järjestelmä)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Ulkoasu",
+        ["icon_set_label"] = "Kuvakesarja",
+
         // FANS WINDOW
         ["fans_title"] = "Tuulettimet ja teho",
         ["fan_curves"] = "Tuuletinkäyrät",

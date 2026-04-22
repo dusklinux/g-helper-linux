@@ -286,6 +286,10 @@ public static class PortugueseBR
         ["language_header"] = "Idioma",
         ["language_auto"] = "Auto (sistema)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Aparência",
+        ["icon_set_label"] = "Conjunto de ícones",
+
         // FANS WINDOW
         ["fans_title"] = "Ventoinhas e energia",
         ["fan_curves"] = "Curvas de ventoinhas",

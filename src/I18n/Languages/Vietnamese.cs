@@ -286,6 +286,10 @@ public static class Vietnamese
         ["language_header"] = "Ngôn ngữ",
         ["language_auto"] = "Tự động (hệ thống)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Giao diện",
+        ["icon_set_label"] = "Bộ biểu tượng",
+
         // FANS WINDOW
         ["fans_title"] = "Quạt & Nguồn",
         ["fan_curves"] = "Đường cong quạt",

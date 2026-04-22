@@ -36,6 +36,34 @@ public class App : Application
     public static MainWindow? MainWindowInstance { get; set; }
     public static TrayIcon? TrayIconInstance { get; set; }
 
+    /// <summary>
+    /// Active icon set slug. Read from AppConfig at startup; may be hot-swapped
+    /// at runtime via the Extra window dropdown. Setting this fires
+    /// <see cref="IconSetChanged"/> so all live <c>Icon</c> controls rebuild.
+    /// Values are normalized through <see cref="UI.Controls.IconSets.Normalize"/>
+    /// so unknown slugs silently fall back to the default set.
+    /// </summary>
+    public static string IconSet
+    {
+        get => _iconSet;
+        set
+        {
+            var normalized = UI.Controls.IconSets.Normalize(value);
+            if (_iconSet == normalized)
+                return;
+            _iconSet = normalized;
+            IconSetChanged?.Invoke(null, EventArgs.Empty);
+        }
+    }
+    private static string _iconSet = UI.Controls.IconSets.Default;
+
+    /// <summary>
+    /// Raised on the UI thread whenever <see cref="IconSet"/> changes.
+    /// <c>Icon</c> controls subscribe in their <c>AttachedToVisualTree</c>
+    /// handler and unsubscribe in <c>DetachedFromVisualTree</c>.
+    /// </summary>
+    public static event EventHandler? IconSetChanged;
+
     // Single-instance lock that prevents duplicate tray icons
     private static FileStream? _lockFile;
 
@@ -116,6 +144,14 @@ public class App : Application
 
     public override void Initialize()
     {
+        // Read active icon-set slug once, before any view is loaded.
+        // The setter normalizes unknown slugs (corrupted config, or sets that
+        // have since been removed) to the default set. Assigning through the
+        // public setter is safe here - no Icon controls exist yet to receive
+        // the change event.
+        IconSet = AppConfig.GetString("icon_set", UI.Controls.IconSets.Default)
+                  ?? UI.Controls.IconSets.Default;
+
         AvaloniaXamlLoader.Load(this);
     }
 

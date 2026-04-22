@@ -289,6 +289,10 @@ public static class ChineseTraditional
         ["language_header"] = "語言",
         ["language_auto"] = "自動（系統）",
 
+        // APPEARANCE
+        ["appearance_header"] = "外觀",
+        ["icon_set_label"] = "圖示集",
+
         // FANS WINDOW
         ["fans_title"] = "風扇與功率",
         ["fan_curves"] = "風扇曲線",

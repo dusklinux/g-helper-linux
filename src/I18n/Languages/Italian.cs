@@ -286,6 +286,10 @@ public static class Italian
         ["language_header"] = "Lingua",
         ["language_auto"] = "Auto (sistema)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Aspetto",
+        ["icon_set_label"] = "Set di icone",
+
         // FANS WINDOW
         ["fans_title"] = "Ventole e alimentazione",
         ["fan_curves"] = "Curve delle ventole",

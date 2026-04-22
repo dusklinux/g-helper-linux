@@ -286,6 +286,10 @@ public static class Polish
         ["language_header"] = "Język",
         ["language_auto"] = "Auto (systemowy)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Wygląd",
+        ["icon_set_label"] = "Zestaw ikon",
+
         // FANS WINDOW
         ["fans_title"] = "Wentylatory i zasilanie",
         ["fan_curves"] = "Krzywe wentylatorów",

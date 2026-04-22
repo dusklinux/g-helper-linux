@@ -289,6 +289,10 @@ public static class Thai
         ["language_header"] = "ภาษา",
         ["language_auto"] = "อัตโนมัติ (ระบบ)",
 
+        // APPEARANCE
+        ["appearance_header"] = "รูปลักษณ์",
+        ["icon_set_label"] = "ชุดไอคอน",
+
         // FANS WINDOW
         ["fans_title"] = "พัดลมและพลังงาน",
         ["fan_curves"] = "กราฟพัดลม",

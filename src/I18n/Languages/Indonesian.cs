@@ -289,6 +289,10 @@ public static class Indonesian
         ["language_header"] = "Bahasa",
         ["language_auto"] = "Otomatis (sistem)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Tampilan",
+        ["icon_set_label"] = "Set Ikon",
+
         // FANS WINDOW
         ["fans_title"] = "Kipas & Daya",
         ["fan_curves"] = "Kurva Kipas",

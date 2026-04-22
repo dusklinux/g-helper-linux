@@ -286,6 +286,10 @@ public static class German
         ["language_header"] = "Sprache",
         ["language_auto"] = "Auto (System)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Darstellung",
+        ["icon_set_label"] = "Symbolsatz",
+
         // FANS WINDOW
         ["fans_title"] = "Lüfter & Leistung",
         ["fan_curves"] = "Lüfterkurven",

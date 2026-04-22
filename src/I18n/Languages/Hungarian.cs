@@ -286,6 +286,10 @@ public static class Hungarian
         ["language_header"] = "Nyelv",
         ["language_auto"] = "Auto (rendszer)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Megjelenés",
+        ["icon_set_label"] = "Ikonkészlet",
+
         // FANS WINDOW
         ["fans_title"] = "Ventilátorok és teljesítmény",
         ["fan_curves"] = "Ventilátor görbék",

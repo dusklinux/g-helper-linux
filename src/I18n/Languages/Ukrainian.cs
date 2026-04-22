@@ -286,6 +286,10 @@ public static class Ukrainian
         ["language_header"] = "Мова",
         ["language_auto"] = "Авто (системна)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Вигляд",
+        ["icon_set_label"] = "Набір іконок",
+
         // FANS WINDOW
         ["fans_title"] = "Вентилятори та живлення",
         ["fan_curves"] = "Криві вентиляторів",

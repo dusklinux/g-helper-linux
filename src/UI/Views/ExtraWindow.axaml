@@ -29,6 +29,23 @@
                 </StackPanel>
             </Border>
 
+            <!-- APPEARANCE -->
+            <Border Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock x:Name="labelAppearanceHeader" Classes="header" Text="Appearance" />
+                    </Border>
+                    <Grid ColumnDefinitions="120,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelIconSetLabel" Text="Icon Set"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <!-- Items populated at runtime from IconSets.AvailableSlugs -->
+                        <ComboBox Grid.Column="1" x:Name="comboIconSet"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ComboIconSet_Changed" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
             <!-- KEYBOARD BACKLIGHT -->
             <Border Classes="panel">
                 <StackPanel>

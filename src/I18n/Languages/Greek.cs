@@ -289,6 +289,10 @@ public static class Greek
         ["language_header"] = "Γλώσσα",
         ["language_auto"] = "Auto (σύστημα)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Εμφάνιση",
+        ["icon_set_label"] = "Σετ εικονιδίων",
+
         // FANS WINDOW
         ["fans_title"] = "Ανεμιστήρες και ισχύς",
         ["fan_curves"] = "Καμπύλες ανεμιστήρων",

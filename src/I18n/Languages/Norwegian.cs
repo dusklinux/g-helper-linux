@@ -289,6 +289,10 @@ public static class Norwegian
         ["language_header"] = "Språk",
         ["language_auto"] = "Auto (system)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Utseende",
+        ["icon_set_label"] = "Ikonsett",
+
         // FANS WINDOW
         ["fans_title"] = "Vifter og strøm",
         ["fan_curves"] = "Viftekurver",

@@ -286,6 +286,10 @@ public static class Spanish
         ["language_header"] = "Idioma",
         ["language_auto"] = "Auto (sistema)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Apariencia",
+        ["icon_set_label"] = "Conjunto de iconos",
+
         // FANS WINDOW
         ["fans_title"] = "Ventiladores y energía",
         ["fan_curves"] = "Curvas de ventiladores",

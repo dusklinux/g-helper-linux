@@ -286,6 +286,10 @@ public static class Czech
         ["language_header"] = "Jazyk",
         ["language_auto"] = "Auto (systémový)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Vzhled",
+        ["icon_set_label"] = "Sada ikon",
+
         // FANS WINDOW
         ["fans_title"] = "Ventilátory a napájení",
         ["fan_curves"] = "Křivky ventilátorů",

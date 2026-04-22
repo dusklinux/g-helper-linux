@@ -289,6 +289,10 @@ public static class Arabic
         ["language_header"] = "اللغة",
         ["language_auto"] = "تلقائي (النظام)",
 
+        // APPEARANCE
+        ["appearance_header"] = "المظهر",
+        ["icon_set_label"] = "مجموعة الرموز",
+
         // FANS WINDOW
         ["fans_title"] = "المراوح والطاقة",
         ["fan_curves"] = "منحنيات المروحة",

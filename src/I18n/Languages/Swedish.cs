@@ -289,6 +289,10 @@ public static class Swedish
         ["language_header"] = "Språk",
         ["language_auto"] = "Auto (system)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Utseende",
+        ["icon_set_label"] = "Ikonuppsättning",
+
         // FANS WINDOW
         ["fans_title"] = "Fläktar & Kraft",
         ["fan_curves"] = "Fläktkurvor",

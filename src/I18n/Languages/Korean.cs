@@ -289,6 +289,10 @@ public static class Korean
         ["language_header"] = "언어",
         ["language_auto"] = "자동 (시스템)",
 
+        // APPEARANCE
+        ["appearance_header"] = "모양",
+        ["icon_set_label"] = "아이콘 세트",
+
         // FANS WINDOW
         ["fans_title"] = "팬 & 전력",
         ["fan_curves"] = "팬 곡선",

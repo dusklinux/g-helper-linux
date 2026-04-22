@@ -289,6 +289,10 @@ public static class Serbian
         ["language_header"] = "Језик",
         ["language_auto"] = "Ауто (системски)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Изглед",
+        ["icon_set_label"] = "Сет икона",
+
         // FANS WINDOW
         ["fans_title"] = "Вентилатори и напајање",
         ["fan_curves"] = "Криве вентилатора",

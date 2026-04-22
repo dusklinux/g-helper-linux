@@ -286,6 +286,10 @@ public static class Romanian
         ["language_header"] = "Limbă",
         ["language_auto"] = "Auto (sistem)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Aspect",
+        ["icon_set_label"] = "Set de pictograme",
+
         // FANS WINDOW
         ["fans_title"] = "Ventilatoare și alimentare",
         ["fan_curves"] = "Curbe ventilatoare",

@@ -286,6 +286,10 @@ public static class Dutch
         ["language_header"] = "Taal",
         ["language_auto"] = "Auto (systeem)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Uiterlijk",
+        ["icon_set_label"] = "Pictogrammenset",
+
         // FANS WINDOW
         ["fans_title"] = "Ventilatoren & Vermogen",
         ["fan_curves"] = "Ventilatorcurves",

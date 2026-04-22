@@ -25,8 +25,7 @@
                         Margin="4,0" Height="30"
                         Click="ButtonMonitor_Click">
                     <StackPanel Orientation="Horizontal" Spacing="4">
-                        <Image Source="avares://ghelper/UI/Assets/Icons/bolt.png" Width="14" Height="14"
-                               RenderOptions.BitmapInterpolationMode="HighQuality" VerticalAlignment="Center" />
+                        <controls:Icon IconName="bolt" Width="14" Height="14" VerticalAlignment="Center" />
                         <TextBlock x:Name="labelMonitorButton" Text="Monitor" FontSize="11" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>

@@ -286,6 +286,10 @@ public static class Turkish
         ["language_header"] = "Dil",
         ["language_auto"] = "Otomatik (sistem)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Görünüm",
+        ["icon_set_label"] = "Simge Seti",
+
         // FANS WINDOW
         ["fans_title"] = "Fanlar ve Güç",
         ["fan_curves"] = "Fan Eğrileri",
