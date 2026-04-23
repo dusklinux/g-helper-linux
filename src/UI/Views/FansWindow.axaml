@@ -11,26 +11,34 @@
         Background="#1C1C1C"
         Icon="avares://ghelper/UI/Assets/standard.ico">
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,*,Auto,Auto">
 
         <!-- HEADER -->
         <Border Grid.Row="0" Classes="panel-header" Margin="10,10,10,5">
-            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto">
                 <StackPanel Grid.Column="0">
                     <TextBlock x:Name="headerFanCurves" Classes="header" Text="Fan Curves" FontSize="14" />
                     <TextBlock x:Name="labelMode" Classes="label-dim"
                                Text="Mode: Balanced" />
                 </StackPanel>
-                <Button Grid.Column="1" x:Name="buttonApplyFans" Classes="ghelper"
+                <Button Grid.Column="1" x:Name="buttonMonitor" Classes="ghelper"
+                        Margin="4,0" Height="30"
+                        Click="ButtonMonitor_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <controls:Icon IconName="bolt" Width="14" Height="14" VerticalAlignment="Center" />
+                        <TextBlock x:Name="labelMonitorButton" Text="Monitor" FontSize="11" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="2" x:Name="buttonApplyFans" Classes="ghelper"
                         Content="Apply" Margin="4,0"
                         Click="ButtonApplyFans_Click" />
-                <Button Grid.Column="2" x:Name="buttonReset" Classes="ghelper"
+                <Button Grid.Column="3" x:Name="buttonReset" Classes="ghelper"
                         Content="Reset" Margin="4,0"
                         Click="ButtonReset_Click" />
-                <Button Grid.Column="3" x:Name="buttonDisable" Classes="ghelper"
+                <Button Grid.Column="4" x:Name="buttonDisable" Classes="ghelper"
                         Content="Disable" Margin="4,0"
                         Click="ButtonDisable_Click" />
-                <CheckBox Grid.Column="4" x:Name="checkApplyFans"
+                <CheckBox Grid.Column="5" x:Name="checkApplyFans"
                           Content="Auto-apply" Margin="8,0,0,0"
                           VerticalAlignment="Center"
                           IsCheckedChanged="CheckApplyFans_Changed" />
@@ -126,6 +134,40 @@
                 <!-- Sensor readings -->
                 <TextBlock x:Name="labelSensors" Classes="label-dim"
                            Text="" Margin="0,8,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- Undervolting (Ryzen CO) -->
+        <Border Grid.Row="3" x:Name="panelUV" Classes="panel" Margin="10,0,10,10" IsVisible="False">
+            <StackPanel>
+                <TextBlock x:Name="headerUndervolt" Classes="header" Text="Undervolting (Experimental)" Margin="0,0,0,4" />
+                <TextBlock x:Name="labelUndervoltDesc" Classes="label-dim" TextWrapping="Wrap" Margin="0,0,0,8"
+                           Text="Curve Optimizer offset. More negative = lower voltage. Too-low values can cause instability or data corruption. Start small. Resets on reboot." />
+
+                <Grid ColumnDefinitions="120,*,50" Margin="0,4">
+                    <TextBlock Grid.Column="0" x:Name="labelUndervoltCpu" Text="CPU"
+                               Classes="label-dim" VerticalAlignment="Center" />
+                    <!-- Slider is positive 0..40 (intensity) so the fill bar grows
+                         left-to-right with UV strength; value is negated when stored. -->
+                    <Slider Grid.Column="1" x:Name="sliderCpuUV"
+                            Minimum="0" Maximum="40" Value="0"
+                            TickFrequency="1" IsSnapToTickEnabled="True"
+                            ValueChanged="SliderCpuUV_ValueChanged" />
+                    <TextBlock Grid.Column="2" x:Name="labelCpuUV" Classes="value"
+                               Text="0" HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                    <Button x:Name="buttonApplyUV" Classes="ghelper"
+                            Content="Apply" Click="ButtonApplyUV_Click" />
+                    <Button x:Name="buttonResetUV" Classes="ghelper"
+                            Content="Reset" Click="ButtonResetUV_Click" />
+                    <CheckBox x:Name="checkApplyUV"
+                              Content="Auto-apply on mode change"
+                              VerticalAlignment="Center"
+                              IsCheckedChanged="CheckApplyUV_Changed" />
+                </StackPanel>
             </StackPanel>
         </Border>
 

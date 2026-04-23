@@ -36,8 +36,8 @@ public static class Spanish
 
         // GPU MODES
         ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_standard"] = "Estándar",
+        ["gpu_ultimate"] = "Extremo",
         ["gpu_optimized"] = "Optimizado",
         ["gpu_unknown"] = "Desconocido",
         ["gpu_mode_prefix"] = "Modo GPU: {0}",
@@ -286,6 +286,10 @@ public static class Spanish
         ["language_header"] = "Idioma",
         ["language_auto"] = "Auto (sistema)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Apariencia",
+        ["icon_set_label"] = "Conjunto de iconos",
+
         // FANS WINDOW
         ["fans_title"] = "Ventiladores y energía",
         ["fan_curves"] = "Curvas de ventiladores",
@@ -303,6 +307,12 @@ public static class Spanish
         ["auto_apply_power_limits"] = "Aplicar automáticamente los límites de potencia al cambiar de modo",
         ["firmware_control"] = "Control de firmware",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Carga: {2}   Central: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Undervolting (Experimental)",
+        ["undervolt_desc"] = "Offset de Curve Optimizer. Más negativo = menor voltaje. Valores demasiado bajos pueden causar inestabilidad o corrupción de datos. Empieza con poco. Se restablece al reiniciar.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Aplicar automáticamente al cambiar de modo",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Información de la batería",
@@ -381,6 +391,16 @@ public static class Spanish
         ["arcade_new_highscore"] = "¡NUEVO RÉCORD!",
         ["arcade_retry"] = "ENTER para reintentar",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
+        ["monitor_title"] = "Monitor de hardware",
+        ["monitor_temperature"] = "Temperatura (°C)",
+        ["monitor_fan_speed"] = "Velocidad ventiladores (RPM)",
+        ["monitor_power_load"] = "Potencia y carga",
+        ["monitor_gpu_load"] = "Carga GPU %",
+        ["monitor_gpu_power"] = "Potencia GPU W",
+        ["monitor_battery_power"] = "Batería W",
+
         // AURA MODES
         ["aura_static"] = "Estático",
         ["aura_breathe"] = "Respiración",
@@ -400,6 +420,43 @@ public static class Spanish
         ["speed_slow"] = "Lento",
         ["speed_normal"] = "Normal",
         ["speed_fast"] = "Rápido",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Información del sistema",
+        ["sysinfo_copy"] = "Copiar al portapapeles",
+        ["sysinfo_system_header"] = "Sistema",
+        ["sysinfo_cpu_header"] = "Procesador",
+        ["sysinfo_memory_header"] = "Memoria",
+        ["sysinfo_graphics_header"] = "Gráficos",
+        ["sysinfo_storage_header"] = "Almacenamiento",
+        ["sysinfo_network_header"] = "Red",
+        ["sysinfo_audio_header"] = "Audio",
+        ["sysinfo_battery_header"] = "Batería",
+        ["sysinfo_usb_header"] = "Dispositivos USB",
+        ["sysinfo_product"] = "Producto",
+        ["sysinfo_vendor"] = "Fabricante",
+        ["sysinfo_board"] = "Placa base",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Kernel",
+        ["sysinfo_os"] = "Sistema operativo",
+        ["sysinfo_desktop"] = "Escritorio",
+        ["sysinfo_session"] = "Sesión",
+        ["sysinfo_cpu_model"] = "Modelo",
+        ["sysinfo_cores_threads"] = "Núcleos / Hilos",
+        ["sysinfo_arch"] = "Arquitectura",
+        ["sysinfo_frequency"] = "Frecuencia",
+        ["sysinfo_cache"] = "Caché",
+        ["sysinfo_governor"] = "Gobernador",
+        ["sysinfo_total"] = "Total",
+        ["sysinfo_used"] = "Usado",
+        ["sysinfo_available"] = "Disponible",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "usado",
+        ["sysinfo_sound_server"] = "Servidor de sonido",
+        ["sysinfo_status"] = "Estado",
+        ["sysinfo_health"] = "Salud",
+        ["sysinfo_power"] = "Potencia",
+        ["sysinfo_cycles"] = "Ciclos",
 
         // MISC
         ["ghelper"] = "G-Helper",

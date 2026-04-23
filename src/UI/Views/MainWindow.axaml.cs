@@ -8,6 +8,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using GHelper.Linux.Gpu;
+using GHelper.Linux.Helpers;
 using GHelper.Linux.I18n;
 using GHelper.Linux.Platform.Linux;
 using GHelper.Linux.USB;
@@ -281,6 +282,7 @@ public partial class MainWindow : Window
             _fansWindow = new FansWindow();
             if (Helpers.AppConfig.Is("topmost"))
                 _fansWindow.Topmost = true;
+            WindowPositioner.LeftOf(_fansWindow, this);
             _fansWindow.Show();
         }
         else
@@ -531,16 +533,14 @@ public partial class MainWindow : Window
             Margin = new Avalonia.Thickness(0, 0, 0, 18),
         };
 
-        var titleIcon = new Avalonia.Controls.Image
+        var titleIcon = new GHelper.Linux.UI.Controls.Icon
         {
-            Source = new Avalonia.Media.Imaging.Bitmap(
-                Avalonia.Platform.AssetLoader.Open(new Uri("avares://ghelper/UI/Assets/Icons/warning.png"))),
+            IconName = "warning",
             Width = 22,
             Height = 22,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
             Margin = new Avalonia.Thickness(0, 0, 10, 0),
         };
-        Avalonia.Media.RenderOptions.SetBitmapInterpolationMode(titleIcon, Avalonia.Media.Imaging.BitmapInterpolationMode.HighQuality);
 
         var titleText = new TextBlock
         {

@@ -38,9 +38,9 @@ public static class Greek
         ["fans_power"] = "Ανεμιστήρες + Ισχύς",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Οικολογικό",
+        ["gpu_standard"] = "Τυπικό",
+        ["gpu_ultimate"] = "Απόλυτο",
         ["gpu_optimized"] = "Βελτιστοποιημένο",
         ["gpu_unknown"] = "Άγνωστο",
         ["gpu_mode_prefix"] = "Λειτουργία GPU: {0}",
@@ -289,6 +289,10 @@ public static class Greek
         ["language_header"] = "Γλώσσα",
         ["language_auto"] = "Auto (σύστημα)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Εμφάνιση",
+        ["icon_set_label"] = "Σετ εικονιδίων",
+
         // FANS WINDOW
         ["fans_title"] = "Ανεμιστήρες και ισχύς",
         ["fan_curves"] = "Καμπύλες ανεμιστήρων",
@@ -306,6 +310,12 @@ public static class Greek
         ["auto_apply_power_limits"] = "Αυτόματη εφαρμογή ορίων ισχύος κατά την αλλαγή λειτουργίας",
         ["firmware_control"] = "Έλεγχος firmware",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Φορτίο: {2}   Μεσαίος: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Undervolting (Πειραματικό)",
+        ["undervolt_desc"] = "Αντιστάθμιση Curve Optimizer. Πιο αρνητικό = χαμηλότερη τάση. Πολύ χαμηλές τιμές μπορεί να προκαλέσουν αστάθεια ή καταστροφή δεδομένων. Ξεκινήστε με μικρές τιμές. Επαναφέρεται στην επανεκκίνηση.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Αυτόματη εφαρμογή στην αλλαγή λειτουργίας",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Πληροφορίες μπαταρίας",
@@ -384,6 +394,16 @@ public static class Greek
         ["arcade_new_highscore"] = "ΝΕΟ ΡΕΚΟΡ!",
         ["arcade_retry"] = "ENTER για επανάληψη",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Παρακολούθηση",
+        ["monitor_title"] = "Παρακολούθηση υλικού",
+        ["monitor_temperature"] = "Θερμοκρασία (°C)",
+        ["monitor_fan_speed"] = "Ταχύτητα ανεμιστήρων (RPM)",
+        ["monitor_power_load"] = "Ισχύς & φορτίο",
+        ["monitor_gpu_load"] = "Φορτίο GPU %",
+        ["monitor_gpu_power"] = "Ισχύς GPU W",
+        ["monitor_battery_power"] = "Μπαταρία W",
+
         // AURA MODES
         ["aura_static"] = "Στατικό",
         ["aura_breathe"] = "Αναπνοή",
@@ -403,6 +423,43 @@ public static class Greek
         ["speed_slow"] = "Αργό",
         ["speed_normal"] = "Κανονικό",
         ["speed_fast"] = "Γρήγορο",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Πληροφορίες συστήματος",
+        ["sysinfo_copy"] = "Αντιγραφή στο πρόχειρο",
+        ["sysinfo_system_header"] = "Σύστημα",
+        ["sysinfo_cpu_header"] = "Επεξεργαστής",
+        ["sysinfo_memory_header"] = "Μνήμη",
+        ["sysinfo_graphics_header"] = "Γραφικά",
+        ["sysinfo_storage_header"] = "Αποθήκευση",
+        ["sysinfo_network_header"] = "Δίκτυο",
+        ["sysinfo_audio_header"] = "Ήχος",
+        ["sysinfo_battery_header"] = "Μπαταρία",
+        ["sysinfo_usb_header"] = "Συσκευές USB",
+        ["sysinfo_product"] = "Προϊόν",
+        ["sysinfo_vendor"] = "Κατασκευαστής",
+        ["sysinfo_board"] = "Μητρική πλακέτα",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Πυρήνας",
+        ["sysinfo_os"] = "Λειτουργικό σύστημα",
+        ["sysinfo_desktop"] = "Επιφάνεια εργασίας",
+        ["sysinfo_session"] = "Συνεδρία",
+        ["sysinfo_cpu_model"] = "Μοντέλο",
+        ["sysinfo_cores_threads"] = "Πυρήνες / Νήματα",
+        ["sysinfo_arch"] = "Αρχιτεκτονική",
+        ["sysinfo_frequency"] = "Συχνότητα",
+        ["sysinfo_cache"] = "Κρυφή μνήμη",
+        ["sysinfo_governor"] = "Ρυθμιστής",
+        ["sysinfo_total"] = "Σύνολο",
+        ["sysinfo_used"] = "Σε χρήση",
+        ["sysinfo_available"] = "Διαθέσιμη",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "σε χρήση",
+        ["sysinfo_sound_server"] = "Εξυπηρετητής ήχου",
+        ["sysinfo_status"] = "Κατάσταση",
+        ["sysinfo_health"] = "Υγεία",
+        ["sysinfo_power"] = "Ισχύς",
+        ["sysinfo_cycles"] = "Κύκλοι",
 
         // MISC
         ["ghelper"] = "G-Helper",

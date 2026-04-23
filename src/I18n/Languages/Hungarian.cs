@@ -35,9 +35,9 @@ public static class Hungarian
         ["fans_power"] = "Ventilátorok + Teljesítmény",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
+        ["gpu_eco"] = "Öko",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Extrém",
         ["gpu_optimized"] = "Optimalizált",
         ["gpu_unknown"] = "Ismeretlen",
         ["gpu_mode_prefix"] = "GPU mód: {0}",
@@ -286,6 +286,10 @@ public static class Hungarian
         ["language_header"] = "Nyelv",
         ["language_auto"] = "Auto (rendszer)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Megjelenés",
+        ["icon_set_label"] = "Ikonkészlet",
+
         // FANS WINDOW
         ["fans_title"] = "Ventilátorok és teljesítmény",
         ["fan_curves"] = "Ventilátor görbék",
@@ -303,6 +307,12 @@ public static class Hungarian
         ["auto_apply_power_limits"] = "Teljesítmény korlátok automatikus alkalmazása mód váltáskor",
         ["firmware_control"] = "Firmware vezérlés",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Terhelés: {2}   Közép: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Alulfeszültség (kísérleti)",
+        ["undervolt_desc"] = "Curve Optimizer eltolás. Negatívabb = alacsonyabb feszültség. Túl alacsony értékek instabilitást vagy adatsérülést okozhatnak. Kis értékkel kezdje. Újraindításkor visszaáll.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Automatikus alkalmazás módváltáskor",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Akkumulátor információ",
@@ -381,6 +391,16 @@ public static class Hungarian
         ["arcade_new_highscore"] = "ÚJ LEGJOBB PONTSZÁM!",
         ["arcade_retry"] = "ENTER az újrapróbáláshoz",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
+        ["monitor_title"] = "Hardverfigyelő",
+        ["monitor_temperature"] = "Hőmérséklet (°C)",
+        ["monitor_fan_speed"] = "Ventilátorsebesség (RPM)",
+        ["monitor_power_load"] = "Teljesítmény és terhelés",
+        ["monitor_gpu_load"] = "GPU terhelés %",
+        ["monitor_gpu_power"] = "GPU teljesítmény W",
+        ["monitor_battery_power"] = "Akkumulátor W",
+
         // AURA MODES
         ["aura_static"] = "Statikus",
         ["aura_breathe"] = "Lélegzés",
@@ -400,6 +420,43 @@ public static class Hungarian
         ["speed_slow"] = "Lassú",
         ["speed_normal"] = "Normál",
         ["speed_fast"] = "Gyors",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Rendszerinformáció",
+        ["sysinfo_copy"] = "Másolás vágólapra",
+        ["sysinfo_system_header"] = "Rendszer",
+        ["sysinfo_cpu_header"] = "Processzor",
+        ["sysinfo_memory_header"] = "Memória",
+        ["sysinfo_graphics_header"] = "Grafika",
+        ["sysinfo_storage_header"] = "Tárhely",
+        ["sysinfo_network_header"] = "Hálózat",
+        ["sysinfo_audio_header"] = "Hang",
+        ["sysinfo_battery_header"] = "Akkumulátor",
+        ["sysinfo_usb_header"] = "USB-eszközök",
+        ["sysinfo_product"] = "Termék",
+        ["sysinfo_vendor"] = "Gyártó",
+        ["sysinfo_board"] = "Alaplap",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Kernel",
+        ["sysinfo_os"] = "Operációs rendszer",
+        ["sysinfo_desktop"] = "Asztal",
+        ["sysinfo_session"] = "Munkamenet",
+        ["sysinfo_cpu_model"] = "Modell",
+        ["sysinfo_cores_threads"] = "Magok / Szálak",
+        ["sysinfo_arch"] = "Architektúra",
+        ["sysinfo_frequency"] = "Frekvencia",
+        ["sysinfo_cache"] = "Gyorsítótár",
+        ["sysinfo_governor"] = "Szabályozó",
+        ["sysinfo_total"] = "Összesen",
+        ["sysinfo_used"] = "Használt",
+        ["sysinfo_available"] = "Elérhető",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "használt",
+        ["sysinfo_sound_server"] = "Hangszerver",
+        ["sysinfo_status"] = "Állapot",
+        ["sysinfo_health"] = "Egészség",
+        ["sysinfo_power"] = "Teljesítmény",
+        ["sysinfo_cycles"] = "Ciklusok",
 
         // MISC
         ["ghelper"] = "G-Helper",

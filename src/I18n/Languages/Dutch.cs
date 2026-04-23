@@ -36,8 +36,8 @@ public static class Dutch
 
         // GPU MODES
         ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_standard"] = "Standaard",
+        ["gpu_ultimate"] = "Ultiem",
         ["gpu_optimized"] = "Geoptimaliseerd",
         ["gpu_unknown"] = "Onbekend",
         ["gpu_mode_prefix"] = "GPU-modus: {0}",
@@ -286,6 +286,10 @@ public static class Dutch
         ["language_header"] = "Taal",
         ["language_auto"] = "Auto (systeem)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Uiterlijk",
+        ["icon_set_label"] = "Pictogrammenset",
+
         // FANS WINDOW
         ["fans_title"] = "Ventilatoren & Vermogen",
         ["fan_curves"] = "Ventilatorcurves",
@@ -303,6 +307,12 @@ public static class Dutch
         ["auto_apply_power_limits"] = "Vermogenslimieten automatisch toepassen bij moduswissel",
         ["firmware_control"] = "Firmwarebesturing",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Belasting: {2}   Midden: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Undervolting (Experimenteel)",
+        ["undervolt_desc"] = "Curve Optimizer-offset. Negatiever = lagere spanning. Te lage waarden kunnen instabiliteit of datacorruptie veroorzaken. Begin klein. Wordt gereset bij herstart.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Automatisch toepassen bij moduswissel",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Accu-informatie",
@@ -381,6 +391,16 @@ public static class Dutch
         ["arcade_new_highscore"] = "NIEUWE TOPSCORE!",
         ["arcade_retry"] = "ENTER om opnieuw te proberen",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
+        ["monitor_title"] = "Hardware-monitor",
+        ["monitor_temperature"] = "Temperatuur (°C)",
+        ["monitor_fan_speed"] = "Ventilatorsnelheid (RPM)",
+        ["monitor_power_load"] = "Vermogen & belasting",
+        ["monitor_gpu_load"] = "GPU-belasting %",
+        ["monitor_gpu_power"] = "GPU-vermogen W",
+        ["monitor_battery_power"] = "Accu W",
+
         // AURA MODES
         ["aura_static"] = "Statisch",
         ["aura_breathe"] = "Ademhaling",
@@ -400,6 +420,43 @@ public static class Dutch
         ["speed_slow"] = "Langzaam",
         ["speed_normal"] = "Normaal",
         ["speed_fast"] = "Snel",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Systeeminformatie",
+        ["sysinfo_copy"] = "Kopiëren naar klembord",
+        ["sysinfo_system_header"] = "Systeem",
+        ["sysinfo_cpu_header"] = "Processor",
+        ["sysinfo_memory_header"] = "Geheugen",
+        ["sysinfo_graphics_header"] = "Grafisch",
+        ["sysinfo_storage_header"] = "Opslag",
+        ["sysinfo_network_header"] = "Netwerk",
+        ["sysinfo_audio_header"] = "Audio",
+        ["sysinfo_battery_header"] = "Accu",
+        ["sysinfo_usb_header"] = "USB-apparaten",
+        ["sysinfo_product"] = "Product",
+        ["sysinfo_vendor"] = "Fabrikant",
+        ["sysinfo_board"] = "Moederbord",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Kernel",
+        ["sysinfo_os"] = "Besturingssysteem",
+        ["sysinfo_desktop"] = "Bureaublad",
+        ["sysinfo_session"] = "Sessie",
+        ["sysinfo_cpu_model"] = "Model",
+        ["sysinfo_cores_threads"] = "Kernen / Threads",
+        ["sysinfo_arch"] = "Architectuur",
+        ["sysinfo_frequency"] = "Frequentie",
+        ["sysinfo_cache"] = "Cache",
+        ["sysinfo_governor"] = "Governor",
+        ["sysinfo_total"] = "Totaal",
+        ["sysinfo_used"] = "Gebruikt",
+        ["sysinfo_available"] = "Beschikbaar",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "gebruikt",
+        ["sysinfo_sound_server"] = "Geluidsserver",
+        ["sysinfo_status"] = "Status",
+        ["sysinfo_health"] = "Gezondheid",
+        ["sysinfo_power"] = "Vermogen",
+        ["sysinfo_cycles"] = "Cycli",
 
         // MISC
         ["ghelper"] = "G-Helper",

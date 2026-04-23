@@ -37,7 +37,7 @@ public static class Italian
         // GPU MODES
         ["gpu_eco"] = "Eco",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Massimo",
         ["gpu_optimized"] = "Ottimizzato",
         ["gpu_unknown"] = "Sconosciuto",
         ["gpu_mode_prefix"] = "Modalità GPU: {0}",
@@ -286,6 +286,10 @@ public static class Italian
         ["language_header"] = "Lingua",
         ["language_auto"] = "Auto (sistema)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Aspetto",
+        ["icon_set_label"] = "Set di icone",
+
         // FANS WINDOW
         ["fans_title"] = "Ventole e alimentazione",
         ["fan_curves"] = "Curve delle ventole",
@@ -303,6 +307,12 @@ public static class Italian
         ["auto_apply_power_limits"] = "Applica automaticamente i limiti di potenza al cambio modalità",
         ["firmware_control"] = "Controllo firmware",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Carico: {2}   Centrale: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Undervolting (Sperimentale)",
+        ["undervolt_desc"] = "Offset Curve Optimizer. Più negativo = voltaggio più basso. Valori troppo bassi possono causare instabilità o corruzione dei dati. Inizia con valori piccoli. Si azzera al riavvio.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Applica automaticamente al cambio modalità",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Informazioni batteria",
@@ -381,6 +391,16 @@ public static class Italian
         ["arcade_new_highscore"] = "NUOVO RECORD!",
         ["arcade_retry"] = "INVIO per riprovare",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
+        ["monitor_title"] = "Monitor hardware",
+        ["monitor_temperature"] = "Temperatura (°C)",
+        ["monitor_fan_speed"] = "Velocità ventole (RPM)",
+        ["monitor_power_load"] = "Potenza e carico",
+        ["monitor_gpu_load"] = "Carico GPU %",
+        ["monitor_gpu_power"] = "Potenza GPU W",
+        ["monitor_battery_power"] = "Batteria W",
+
         // AURA MODES
         ["aura_static"] = "Statico",
         ["aura_breathe"] = "Respiro",
@@ -400,6 +420,43 @@ public static class Italian
         ["speed_slow"] = "Lento",
         ["speed_normal"] = "Normale",
         ["speed_fast"] = "Veloce",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Informazioni di sistema",
+        ["sysinfo_copy"] = "Copia negli appunti",
+        ["sysinfo_system_header"] = "Sistema",
+        ["sysinfo_cpu_header"] = "Processore",
+        ["sysinfo_memory_header"] = "Memoria",
+        ["sysinfo_graphics_header"] = "Grafica",
+        ["sysinfo_storage_header"] = "Archiviazione",
+        ["sysinfo_network_header"] = "Rete",
+        ["sysinfo_audio_header"] = "Audio",
+        ["sysinfo_battery_header"] = "Batteria",
+        ["sysinfo_usb_header"] = "Dispositivi USB",
+        ["sysinfo_product"] = "Prodotto",
+        ["sysinfo_vendor"] = "Produttore",
+        ["sysinfo_board"] = "Scheda madre",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Kernel",
+        ["sysinfo_os"] = "Sistema operativo",
+        ["sysinfo_desktop"] = "Desktop",
+        ["sysinfo_session"] = "Sessione",
+        ["sysinfo_cpu_model"] = "Modello",
+        ["sysinfo_cores_threads"] = "Core / Thread",
+        ["sysinfo_arch"] = "Architettura",
+        ["sysinfo_frequency"] = "Frequenza",
+        ["sysinfo_cache"] = "Cache",
+        ["sysinfo_governor"] = "Governor",
+        ["sysinfo_total"] = "Totale",
+        ["sysinfo_used"] = "Usata",
+        ["sysinfo_available"] = "Disponibile",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "usato",
+        ["sysinfo_sound_server"] = "Server audio",
+        ["sysinfo_status"] = "Stato",
+        ["sysinfo_health"] = "Salute",
+        ["sysinfo_power"] = "Potenza",
+        ["sysinfo_cycles"] = "Cicli",
 
         // MISC
         ["ghelper"] = "G-Helper",

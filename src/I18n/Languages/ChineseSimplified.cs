@@ -38,9 +38,9 @@ public static class ChineseSimplified
         ["fans_power"] = "风扇 + 功率",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "节能",
+        ["gpu_standard"] = "标准",
+        ["gpu_ultimate"] = "极致",
         ["gpu_optimized"] = "优化",
         ["gpu_unknown"] = "未知",
         ["gpu_mode_prefix"] = "GPU 模式：{0}",
@@ -289,6 +289,10 @@ public static class ChineseSimplified
         ["language_header"] = "语言",
         ["language_auto"] = "自动（跟随系统）",
 
+        // APPEARANCE
+        ["appearance_header"] = "外观",
+        ["icon_set_label"] = "图标集",
+
         // FANS WINDOW
         ["fans_title"] = "风扇与功率",
         ["fan_curves"] = "风扇曲线",
@@ -306,6 +310,12 @@ public static class ChineseSimplified
         ["auto_apply_power_limits"] = "切换模式时自动应用功率限制",
         ["firmware_control"] = "固件控制",
         ["fan_sensor_format"] = "CPU：{0} / GPU：{1} 负载：{2}   中间：{3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "降压（实验性）",
+        ["undervolt_desc"] = "Curve Optimizer 偏移。值越负 = 电压越低。值过低可能导致不稳定或数据损坏。从小值开始。重启后重置。",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "模式切换时自动应用",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "电池信息",
@@ -384,6 +394,16 @@ public static class ChineseSimplified
         ["arcade_new_highscore"] = "新最高分！",
         ["arcade_retry"] = "按 ENTER 重试",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "监控",
+        ["monitor_title"] = "硬件监控",
+        ["monitor_temperature"] = "温度 (°C)",
+        ["monitor_fan_speed"] = "风扇转速 (RPM)",
+        ["monitor_power_load"] = "功率与负载",
+        ["monitor_gpu_load"] = "GPU 负载 %",
+        ["monitor_gpu_power"] = "GPU 功率 W",
+        ["monitor_battery_power"] = "电池 W",
+
         // AURA MODES
         ["aura_static"] = "静态",
         ["aura_breathe"] = "呼吸",
@@ -403,6 +423,43 @@ public static class ChineseSimplified
         ["speed_slow"] = "慢",
         ["speed_normal"] = "正常",
         ["speed_fast"] = "快",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "系统信息",
+        ["sysinfo_copy"] = "复制到剪贴板",
+        ["sysinfo_system_header"] = "系统",
+        ["sysinfo_cpu_header"] = "处理器",
+        ["sysinfo_memory_header"] = "内存",
+        ["sysinfo_graphics_header"] = "显卡",
+        ["sysinfo_storage_header"] = "存储",
+        ["sysinfo_network_header"] = "网络",
+        ["sysinfo_audio_header"] = "音频",
+        ["sysinfo_battery_header"] = "电池",
+        ["sysinfo_usb_header"] = "USB 设备",
+        ["sysinfo_product"] = "产品",
+        ["sysinfo_vendor"] = "制造商",
+        ["sysinfo_board"] = "主板",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "内核",
+        ["sysinfo_os"] = "操作系统",
+        ["sysinfo_desktop"] = "桌面环境",
+        ["sysinfo_session"] = "会话",
+        ["sysinfo_cpu_model"] = "型号",
+        ["sysinfo_cores_threads"] = "核心 / 线程",
+        ["sysinfo_arch"] = "架构",
+        ["sysinfo_frequency"] = "频率",
+        ["sysinfo_cache"] = "缓存",
+        ["sysinfo_governor"] = "调度器",
+        ["sysinfo_total"] = "总计",
+        ["sysinfo_used"] = "已用",
+        ["sysinfo_available"] = "可用",
+        ["sysinfo_swap"] = "交换空间",
+        ["sysinfo_swap_used"] = "已用",
+        ["sysinfo_sound_server"] = "音频服务器",
+        ["sysinfo_status"] = "状态",
+        ["sysinfo_health"] = "健康度",
+        ["sysinfo_power"] = "功率",
+        ["sysinfo_cycles"] = "循环次数",
 
         // MISC
         ["ghelper"] = "G-Helper",

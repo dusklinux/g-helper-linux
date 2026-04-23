@@ -291,6 +291,10 @@ public static class English
         ["language_header"] = "Language",
         ["language_auto"] = "Auto (system)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Appearance",
+        ["icon_set_label"] = "Icon Set",
+
         // FANS WINDOW
         ["fans_title"] = "Fans & Power",
         ["fan_curves"] = "Fan Curves",
@@ -308,6 +312,12 @@ public static class English
         ["auto_apply_power_limits"] = "Auto-apply power limits on mode change",
         ["firmware_control"] = "Firmware control",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Load: {2}   Mid: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Undervolting (Experimental)",
+        ["undervolt_desc"] = "Curve Optimizer offset. More negative = lower voltage. Too-low values can cause instability or data corruption. Start small. Resets on reboot.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Auto-apply on mode change",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Battery Information",
@@ -386,6 +396,16 @@ public static class English
         ["arcade_new_highscore"] = "NEW HIGH SCORE!",
         ["arcade_retry"] = "ENTER to retry",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
+        ["monitor_title"] = "Hardware Monitor",
+        ["monitor_temperature"] = "Temperature (°C)",
+        ["monitor_fan_speed"] = "Fan Speed (RPM)",
+        ["monitor_power_load"] = "Power & Load",
+        ["monitor_gpu_load"] = "GPU Load %",
+        ["monitor_gpu_power"] = "GPU Power W",
+        ["monitor_battery_power"] = "Battery W",
+
         // AURA MODES
         ["aura_static"] = "Static",
         ["aura_breathe"] = "Breathe",
@@ -405,6 +425,49 @@ public static class English
         ["speed_slow"] = "Slow",
         ["speed_normal"] = "Normal",
         ["speed_fast"] = "Fast",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "System Information",
+        ["sysinfo_copy"] = "Copy to Clipboard",
+
+        ["sysinfo_system_header"] = "System",
+        ["sysinfo_cpu_header"] = "Processor",
+        ["sysinfo_memory_header"] = "Memory",
+        ["sysinfo_graphics_header"] = "Graphics",
+        ["sysinfo_storage_header"] = "Storage",
+        ["sysinfo_network_header"] = "Network",
+        ["sysinfo_audio_header"] = "Audio",
+        ["sysinfo_battery_header"] = "Battery",
+        ["sysinfo_usb_header"] = "USB Devices",
+
+        ["sysinfo_product"] = "Product",
+        ["sysinfo_vendor"] = "Vendor",
+        ["sysinfo_board"] = "Board",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Kernel",
+        ["sysinfo_os"] = "OS",
+        ["sysinfo_desktop"] = "Desktop",
+        ["sysinfo_session"] = "Session",
+
+        ["sysinfo_cpu_model"] = "Model",
+        ["sysinfo_cores_threads"] = "Cores / Threads",
+        ["sysinfo_arch"] = "Architecture",
+        ["sysinfo_frequency"] = "Frequency",
+        ["sysinfo_cache"] = "Cache",
+        ["sysinfo_governor"] = "Governor",
+
+        ["sysinfo_total"] = "Total",
+        ["sysinfo_used"] = "Used",
+        ["sysinfo_available"] = "Available",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "used",
+
+        ["sysinfo_sound_server"] = "Sound Server",
+
+        ["sysinfo_status"] = "Status",
+        ["sysinfo_health"] = "Health",
+        ["sysinfo_power"] = "Power",
+        ["sysinfo_cycles"] = "Cycles",
 
         // MISC
         ["ghelper"] = "G-Helper",

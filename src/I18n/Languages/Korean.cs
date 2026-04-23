@@ -38,9 +38,9 @@ public static class Korean
         ["fans_power"] = "팬 + 전력",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "에코",
+        ["gpu_standard"] = "표준",
+        ["gpu_ultimate"] = "최고",
         ["gpu_optimized"] = "최적화",
         ["gpu_unknown"] = "알 수 없음",
         ["gpu_mode_prefix"] = "GPU 모드: {0}",
@@ -289,6 +289,10 @@ public static class Korean
         ["language_header"] = "언어",
         ["language_auto"] = "자동 (시스템)",
 
+        // APPEARANCE
+        ["appearance_header"] = "모양",
+        ["icon_set_label"] = "아이콘 세트",
+
         // FANS WINDOW
         ["fans_title"] = "팬 & 전력",
         ["fan_curves"] = "팬 곡선",
@@ -306,6 +310,12 @@ public static class Korean
         ["auto_apply_power_limits"] = "모드 변경 시 전력 제한 자동 적용",
         ["firmware_control"] = "펌웨어 제어",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} 부하: {2}   중간: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "언더볼팅 (실험적)",
+        ["undervolt_desc"] = "Curve Optimizer 오프셋. 더 음수 = 더 낮은 전압. 너무 낮은 값은 불안정 또는 데이터 손상을 일으킬 수 있습니다. 작은 값부터 시작하세요. 재부팅 시 초기화됩니다.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "모드 변경 시 자동 적용",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "배터리 정보",
@@ -384,6 +394,16 @@ public static class Korean
         ["arcade_new_highscore"] = "새 최고 점수!",
         ["arcade_retry"] = "ENTER로 재시도",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "모니터",
+        ["monitor_title"] = "하드웨어 모니터",
+        ["monitor_temperature"] = "온도 (°C)",
+        ["monitor_fan_speed"] = "팬 속도 (RPM)",
+        ["monitor_power_load"] = "전력 및 부하",
+        ["monitor_gpu_load"] = "GPU 부하 %",
+        ["monitor_gpu_power"] = "GPU 전력 W",
+        ["monitor_battery_power"] = "배터리 W",
+
         // AURA MODES
         ["aura_static"] = "정적",
         ["aura_breathe"] = "호흡",
@@ -403,6 +423,43 @@ public static class Korean
         ["speed_slow"] = "느림",
         ["speed_normal"] = "보통",
         ["speed_fast"] = "빠름",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "시스템 정보",
+        ["sysinfo_copy"] = "클립보드에 복사",
+        ["sysinfo_system_header"] = "시스템",
+        ["sysinfo_cpu_header"] = "프로세서",
+        ["sysinfo_memory_header"] = "메모리",
+        ["sysinfo_graphics_header"] = "그래픽",
+        ["sysinfo_storage_header"] = "저장소",
+        ["sysinfo_network_header"] = "네트워크",
+        ["sysinfo_audio_header"] = "오디오",
+        ["sysinfo_battery_header"] = "배터리",
+        ["sysinfo_usb_header"] = "USB 장치",
+        ["sysinfo_product"] = "제품",
+        ["sysinfo_vendor"] = "제조사",
+        ["sysinfo_board"] = "메인보드",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "커널",
+        ["sysinfo_os"] = "운영체제",
+        ["sysinfo_desktop"] = "데스크톱",
+        ["sysinfo_session"] = "세션",
+        ["sysinfo_cpu_model"] = "모델",
+        ["sysinfo_cores_threads"] = "코어 / 스레드",
+        ["sysinfo_arch"] = "아키텍처",
+        ["sysinfo_frequency"] = "주파수",
+        ["sysinfo_cache"] = "캐시",
+        ["sysinfo_governor"] = "거버너",
+        ["sysinfo_total"] = "전체",
+        ["sysinfo_used"] = "사용 중",
+        ["sysinfo_available"] = "사용 가능",
+        ["sysinfo_swap"] = "스왑",
+        ["sysinfo_swap_used"] = "사용 중",
+        ["sysinfo_sound_server"] = "사운드 서버",
+        ["sysinfo_status"] = "상태",
+        ["sysinfo_health"] = "건강",
+        ["sysinfo_power"] = "전력",
+        ["sysinfo_cycles"] = "사이클",
 
         // MISC
         ["ghelper"] = "G-Helper",

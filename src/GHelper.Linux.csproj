@@ -17,7 +17,19 @@
 
     <!-- Trim aggressively -->
     <TrimMode>full</TrimMode>
+    <!-- HidSharpCore uses reflection but we preserve all its types in TrimmerRoots.xml -->
+    <NoWarn>$(NoWarn);IL2104</NoWarn>
     <OptimizationPreference>Size</OptimizationPreference>
+
+    <!-- AOT size reduction: disable diagnostic features we don't use -->
+    <StackTraceSupport>false</StackTraceSupport>
+    <EventSourceSupport>false</EventSourceSupport>
+    <MetricsSupport>false</MetricsSupport>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <DebuggerSupport>false</DebuggerSupport>
+    <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+    <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+    <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
 
     <!-- App metadata -->
     <AssemblyName>ghelper</AssemblyName>
@@ -32,9 +44,16 @@
     <PackageReference Include="Avalonia" Version="12.0.1" />
     <PackageReference Include="Avalonia.Desktop" Version="12.0.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.1" />
+    <PackageReference Include="Avalonia.X11" Version="12.0.1" />
+    <PackageReference Include="Avalonia.Skia" Version="12.0.1" />
+    <PackageReference Include="Avalonia.HarfBuzz" Version="12.0.1" />
 
     <!-- HID communication (cross-platform, used by G-Helper) -->
     <PackageReference Include="HidSharpCore" Version="1.3.0" />
+
+    <!-- Real-time monitoring charts -->
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.1.0-dev-292" />
+    <PackageReference Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.4" />
   </ItemGroup>
 
   <!-- Embed all assets -->
@@ -55,13 +74,176 @@
   -->
   <Target Name="EmbedNativeLibraries" BeforeTargets="PrepareForBuild">
     <ItemGroup>
-      <!-- SkiaSharp/HarfBuzz native libs are auto-included by the NuGet packages
-           and extracted by NativeLibExtractor at runtime. No manual embed needed. -->
+      <!-- Native .so libraries: decompressed at first launch
+           by NativeLibExtractor to ~/.cache/ghelper/libs/ -->
+      <EmbeddedResource Include="../build/embedded/libSkiaSharp.so" Condition="Exists('../build/embedded/libSkiaSharp.so')" LogicalName="libSkiaSharp.so" />
+      <EmbeddedResource Include="../build/embedded/libHarfBuzzSharp.so" Condition="Exists('../build/embedded/libHarfBuzzSharp.so')" LogicalName="libHarfBuzzSharp.so" />
       <!-- wlr-randr: Wayland display tool (vendored v0.5.0, MIT license).
            Built by build.sh before dotnet publish. Only embedded if the binary exists. -->
-      <EmbeddedResource Include="../vendor/wlr-randr/wlr-randr"
-                        Condition="Exists('../vendor/wlr-randr/wlr-randr')"
-                        LogicalName="wlr-randr" />
+      <EmbeddedResource Include="../vendor/wlr-randr/wlr-randr" Condition="Exists('../vendor/wlr-randr/wlr-randr')" LogicalName="wlr-randr" />
+    </ItemGroup>
+  </Target>
+
+  <!--
+    Build-time validator for icon sets. Fails the build on:
+      (1) Set symmetry  - any Icons/<set>/ folder missing an SVG that exists
+                          in the reference set (noto). Bold variants exempt.
+      (2) Reference use - any IconName="..." literal in .axaml/.cs that has
+                          no matching noto/<name>.svg (typo protection).
+
+    Dynamic assignments (IconName = variable) are not checked - regex-only.
+    Runs before CoreCompile, costs <100 ms.
+  -->
+  <UsingTask TaskName="ValidateIcons" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <IconsDir ParameterType="System.String" Required="true" />
+      <ReferenceSet ParameterType="System.String" Required="true" />
+      <SourceDir ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System" />
+      <Using Namespace="System.Collections.Generic" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        var refDir = Path.Combine(IconsDir, ReferenceSet);
+        if (!Directory.Exists(refDir))
+        {
+            Log.LogError($"Reference icon set '{ReferenceSet}' not found: {refDir}");
+            return false;
+        }
+
+        // Canonical list: base SVG names (no -bold suffix) in the reference set
+        var required = Directory.EnumerateFiles(refDir, "*.svg")
+            .Select(Path.GetFileNameWithoutExtension)
+            .Where(n => !n.EndsWith("-bold"))
+            .OrderBy(n => n, StringComparer.Ordinal)
+            .ToList();
+
+        // Layer 1: every set folder must contain every base icon
+        foreach (var setDir in Directory.EnumerateDirectories(IconsDir))
+        {
+            var setName = Path.GetFileName(setDir);
+            foreach (var icon in required)
+            {
+                var p = Path.Combine(setDir, icon + ".svg");
+                if (!File.Exists(p))
+                    Log.LogError($"Icon '{icon}.svg' missing from set '{setName}' (required by reference set '{ReferenceSet}')");
+            }
+        }
+
+        // Layer 2: every IconName="..." literal must resolve in the reference set
+        var rx = new Regex("IconName\\s*=\\s*\"([^\"]+)\"", RegexOptions.Compiled);
+        var referenced = new Dictionary<string, string>(StringComparer.Ordinal);
+        var files = Directory.EnumerateFiles(SourceDir, "*.axaml", SearchOption.AllDirectories)
+            .Concat(Directory.EnumerateFiles(SourceDir, "*.cs", SearchOption.AllDirectories));
+
+        foreach (var f in files)
+        {
+            string text;
+            try { text = File.ReadAllText(f); } catch { continue; }
+            foreach (Match m in rx.Matches(text))
+            {
+                var name = m.Groups[1].Value;
+                if (!referenced.ContainsKey(name))
+                    referenced[name] = f;
+            }
+        }
+
+        foreach (var kv in referenced)
+        {
+            if (!File.Exists(Path.Combine(refDir, kv.Key + ".svg")))
+                Log.LogError($"IconName=\"{kv.Key}\" in {kv.Value} has no {ReferenceSet}/{kv.Key}.svg");
+        }
+
+        if (!Log.HasLoggedErrors)
+        {
+            var setCount = Directory.EnumerateDirectories(IconsDir).Count();
+            Log.LogMessage(MessageImportance.High,
+                $"Icon validation OK: {required.Count} base icons, {setCount} sets, {referenced.Count} referenced names");
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="ValidateIconsTarget" BeforeTargets="CoreCompile">
+    <ValidateIcons IconsDir="$(MSBuildProjectDirectory)/UI/Assets/Icons" ReferenceSet="noto" SourceDir="$(MSBuildProjectDirectory)" />
+  </Target>
+
+  <!--
+    Emits a generated C# file containing the alphabetically sorted list of
+    icon set slugs (one folder per slug under UI/Assets/Icons/). The output
+    lands in the intermediate obj/ directory and is added to the compile
+    items so IconSetsGenerated.Slugs is visible to the rest of the code.
+
+    Keeping set discovery at compile time means zero runtime enumeration
+    (AOT-safe, no reflection), and "add a folder, rebuild" is the only step
+    to register a new set.
+  -->
+  <UsingTask TaskName="GenerateIconSets" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <IconsDir ParameterType="System.String" Required="true" />
+      <OutputPath ParameterType="System.String" Required="true" />
+      <RootNamespace ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Text" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        if (!Directory.Exists(IconsDir))
+        {
+            Log.LogError($"Icons directory not found: {IconsDir}");
+            return false;
+        }
+
+        var slugs = Directory.EnumerateDirectories(IconsDir)
+            .Select(Path.GetFileName)
+            .OrderBy(s => s, StringComparer.Ordinal)
+            .ToList();
+
+        var sb = new StringBuilder();
+        sb.AppendLine("// <auto-generated>");
+        sb.AppendLine("//   Emitted by GenerateIconSets MSBuild task. Do not edit.");
+        sb.AppendLine("//   Regenerated on every build from UI/Assets/Icons/ folder list.");
+        sb.AppendLine("// </auto-generated>");
+        sb.AppendLine("#nullable enable");
+        sb.AppendLine();
+        sb.AppendLine($"namespace {RootNamespace}.UI.Controls;");
+        sb.AppendLine();
+        sb.AppendLine("internal static class IconSetsGenerated");
+        sb.AppendLine("{");
+        sb.AppendLine("    internal static readonly string[] Slugs = new[]");
+        sb.AppendLine("    {");
+        foreach (var s in slugs)
+            sb.AppendLine($"        \"{s}\",");
+        sb.AppendLine("    };");
+        sb.AppendLine("}");
+
+        var dir = Path.GetDirectoryName(OutputPath);
+        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            Directory.CreateDirectory(dir);
+
+        // Only write when content changes so MSBuild's up-to-date check
+        // keeps unrelated builds incremental.
+        var newContent = sb.ToString();
+        var unchanged = File.Exists(OutputPath) && File.ReadAllText(OutputPath) == newContent;
+        if (!unchanged)
+        {
+            File.WriteAllText(OutputPath, newContent);
+            Log.LogMessage(MessageImportance.High,
+                $"Generated IconSetsGenerated.g.cs with {slugs.Count} slugs: {string.Join(", ", slugs)}");
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="GenerateIconSetsTarget" BeforeTargets="CoreCompile">
+    <GenerateIconSets IconsDir="$(MSBuildProjectDirectory)/UI/Assets/Icons" OutputPath="$(IntermediateOutputPath)IconSetsGenerated.g.cs" RootNamespace="$(RootNamespace)" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)IconSetsGenerated.g.cs" />
     </ItemGroup>
   </Target>
 

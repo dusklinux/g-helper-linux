@@ -364,6 +364,7 @@ public partial class UpdatesWindow : Window
                 UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
 #pragma warning restore CA1416
 
+
             if (targetPath != null && File.Exists(targetPath))
             {
                 // Rename-then-place: Linux allows renaming a running executable
@@ -375,6 +376,7 @@ public partial class UpdatesWindow : Window
                 File.Move(targetPath, backupPath);  // rename running file → .bak (allowed)
                 File.Move(tmpPath, targetPath);      // place new file at original path
 
+                var binaryDir = Path.GetDirectoryName(targetPath);
                 var restartPath = targetPath;
 
                 Dispatcher.UIThread.Post(() =>

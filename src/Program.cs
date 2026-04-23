@@ -1,4 +1,6 @@
 using Avalonia;
+using Avalonia.Skia;
+using Avalonia.X11;
 using GHelper.Linux;
 using GHelper.Linux.Helpers;
 
@@ -11,7 +13,8 @@ class Program
     public static void Main(string[] args)
     {
         // Extract and preload embedded native libraries (libSkiaSharp.so, libHarfBuzzSharp.so)
-        // before any Avalonia/SkiaSharp code runs.
+        // from the binary's embedded resources to ~/.cache/ghelper/libs/ before any
+        // Avalonia/SkiaSharp code runs. Cached across launches, invalidated on version change.
         NativeLibExtractor.ExtractAndLoad();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
@@ -19,6 +22,8 @@ class Program
 
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
-            .UsePlatformDetect()
+            .UseX11()
+            .UseSkia()
+            .UseHarfBuzz()
             .LogToTrace();
 }

@@ -38,9 +38,9 @@ public static class Arabic
         ["fans_power"] = "المراوح + الطاقة",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "بيئي",
+        ["gpu_standard"] = "قياسي",
+        ["gpu_ultimate"] = "فائق",
         ["gpu_optimized"] = "مُحسَّن",
         ["gpu_unknown"] = "غير معروف",
         ["gpu_mode_prefix"] = "وضع GPU: {0}",
@@ -289,6 +289,10 @@ public static class Arabic
         ["language_header"] = "اللغة",
         ["language_auto"] = "تلقائي (النظام)",
 
+        // APPEARANCE
+        ["appearance_header"] = "المظهر",
+        ["icon_set_label"] = "مجموعة الرموز",
+
         // FANS WINDOW
         ["fans_title"] = "المراوح والطاقة",
         ["fan_curves"] = "منحنيات المروحة",
@@ -306,6 +310,12 @@ public static class Arabic
         ["auto_apply_power_limits"] = "تطبيق حدود الطاقة تلقائياً عند تغيير الوضع",
         ["firmware_control"] = "التحكم بالبرنامج الثابت",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} الحمل: {2}   الوسطى: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "خفض الجهد (تجريبي)",
+        ["undervolt_desc"] = "إزاحة Curve Optimizer. القيم الأكثر سلبية = جهد أقل. القيم المنخفضة جداً قد تسبب عدم استقرار أو تلف البيانات. ابدأ بقيم صغيرة. يُعاد الضبط عند إعادة التشغيل.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "تطبيق تلقائي عند تغيير الوضع",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "معلومات البطارية",
@@ -384,6 +394,16 @@ public static class Arabic
         ["arcade_new_highscore"] = "أعلى نتيجة جديدة!",
         ["arcade_retry"] = "ENTER لإعادة المحاولة",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "مراقب",
+        ["monitor_title"] = "مراقب الأجهزة",
+        ["monitor_temperature"] = "درجة الحرارة (°C)",
+        ["monitor_fan_speed"] = "سرعة المراوح (RPM)",
+        ["monitor_power_load"] = "الطاقة والحمل",
+        ["monitor_gpu_load"] = "حمل GPU %",
+        ["monitor_gpu_power"] = "طاقة GPU W",
+        ["monitor_battery_power"] = "البطارية W",
+
         // AURA MODES
         ["aura_static"] = "ثابت",
         ["aura_breathe"] = "تنفس",
@@ -403,6 +423,43 @@ public static class Arabic
         ["speed_slow"] = "بطيء",
         ["speed_normal"] = "عادي",
         ["speed_fast"] = "سريع",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "معلومات النظام",
+        ["sysinfo_copy"] = "نسخ إلى الحافظة",
+        ["sysinfo_system_header"] = "النظام",
+        ["sysinfo_cpu_header"] = "المعالج",
+        ["sysinfo_memory_header"] = "الذاكرة",
+        ["sysinfo_graphics_header"] = "الرسوميات",
+        ["sysinfo_storage_header"] = "التخزين",
+        ["sysinfo_network_header"] = "الشبكة",
+        ["sysinfo_audio_header"] = "الصوت",
+        ["sysinfo_battery_header"] = "البطارية",
+        ["sysinfo_usb_header"] = "أجهزة USB",
+        ["sysinfo_product"] = "المنتج",
+        ["sysinfo_vendor"] = "الشركة المصنعة",
+        ["sysinfo_board"] = "اللوحة الأم",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "النواة",
+        ["sysinfo_os"] = "نظام التشغيل",
+        ["sysinfo_desktop"] = "سطح المكتب",
+        ["sysinfo_session"] = "الجلسة",
+        ["sysinfo_cpu_model"] = "الطراز",
+        ["sysinfo_cores_threads"] = "الأنوية / الخيوط",
+        ["sysinfo_arch"] = "البنية",
+        ["sysinfo_frequency"] = "التردد",
+        ["sysinfo_cache"] = "الذاكرة المؤقتة",
+        ["sysinfo_governor"] = "المنظم",
+        ["sysinfo_total"] = "الإجمالي",
+        ["sysinfo_used"] = "مستخدم",
+        ["sysinfo_available"] = "متاح",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "مستخدم",
+        ["sysinfo_sound_server"] = "خادم الصوت",
+        ["sysinfo_status"] = "الحالة",
+        ["sysinfo_health"] = "الصحة",
+        ["sysinfo_power"] = "الطاقة",
+        ["sysinfo_cycles"] = "الدورات",
 
         // MISC
         ["ghelper"] = "G-Helper",

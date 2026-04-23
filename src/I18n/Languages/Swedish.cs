@@ -38,9 +38,9 @@ public static class Swedish
         ["fans_power"] = "Fläktar + Kraft",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
+        ["gpu_eco"] = "Eko",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Ultimat",
         ["gpu_optimized"] = "Optimerad",
         ["gpu_unknown"] = "Okänt",
         ["gpu_mode_prefix"] = "GPU-läge: {0}",
@@ -289,6 +289,10 @@ public static class Swedish
         ["language_header"] = "Språk",
         ["language_auto"] = "Auto (system)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Utseende",
+        ["icon_set_label"] = "Ikonuppsättning",
+
         // FANS WINDOW
         ["fans_title"] = "Fläktar & Kraft",
         ["fan_curves"] = "Fläktkurvor",
@@ -306,6 +310,12 @@ public static class Swedish
         ["auto_apply_power_limits"] = "Auto-tillämpa effektgränser vid lägsbyte",
         ["firmware_control"] = "Firmware-styrning",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Last: {2}   Mitt: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Undervolting (experimentellt)",
+        ["undervolt_desc"] = "Curve Optimizer-förskjutning. Mer negativ = lägre spänning. För låga värden kan orsaka instabilitet eller datakorruption. Börja smått. Återställs vid omstart.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Tillämpa automatiskt vid lägesändring",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Batteriinformation",
@@ -384,6 +394,16 @@ public static class Swedish
         ["arcade_new_highscore"] = "NYTT REKORD!",
         ["arcade_retry"] = "ENTER för att försöka igen",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Övervakning",
+        ["monitor_title"] = "Hårdvaruövervakning",
+        ["monitor_temperature"] = "Temperatur (°C)",
+        ["monitor_fan_speed"] = "Fläkthastighet (RPM)",
+        ["monitor_power_load"] = "Effekt och belastning",
+        ["monitor_gpu_load"] = "GPU-belastning %",
+        ["monitor_gpu_power"] = "GPU-effekt W",
+        ["monitor_battery_power"] = "Batteri W",
+
         // AURA MODES
         ["aura_static"] = "Statisk",
         ["aura_breathe"] = "Andning",
@@ -403,6 +423,43 @@ public static class Swedish
         ["speed_slow"] = "Långsam",
         ["speed_normal"] = "Normal",
         ["speed_fast"] = "Snabb",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Systeminformation",
+        ["sysinfo_copy"] = "Kopiera till urklipp",
+        ["sysinfo_system_header"] = "System",
+        ["sysinfo_cpu_header"] = "Processor",
+        ["sysinfo_memory_header"] = "Minne",
+        ["sysinfo_graphics_header"] = "Grafik",
+        ["sysinfo_storage_header"] = "Lagring",
+        ["sysinfo_network_header"] = "Nätverk",
+        ["sysinfo_audio_header"] = "Ljud",
+        ["sysinfo_battery_header"] = "Batteri",
+        ["sysinfo_usb_header"] = "USB-enheter",
+        ["sysinfo_product"] = "Produkt",
+        ["sysinfo_vendor"] = "Tillverkare",
+        ["sysinfo_board"] = "Moderkort",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Kärna",
+        ["sysinfo_os"] = "Operativsystem",
+        ["sysinfo_desktop"] = "Skrivbord",
+        ["sysinfo_session"] = "Session",
+        ["sysinfo_cpu_model"] = "Modell",
+        ["sysinfo_cores_threads"] = "Kärnor / Trådar",
+        ["sysinfo_arch"] = "Arkitektur",
+        ["sysinfo_frequency"] = "Frekvens",
+        ["sysinfo_cache"] = "Cache",
+        ["sysinfo_governor"] = "Regulator",
+        ["sysinfo_total"] = "Totalt",
+        ["sysinfo_used"] = "Använt",
+        ["sysinfo_available"] = "Tillgängligt",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "använt",
+        ["sysinfo_sound_server"] = "Ljudserver",
+        ["sysinfo_status"] = "Status",
+        ["sysinfo_health"] = "Hälsa",
+        ["sysinfo_power"] = "Effekt",
+        ["sysinfo_cycles"] = "Cykler",
 
         // MISC
         ["ghelper"] = "G-Helper",

@@ -38,9 +38,9 @@ public static class Japanese
         ["fans_power"] = "ファン + 電力",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "エコ",
+        ["gpu_standard"] = "標準",
+        ["gpu_ultimate"] = "最高",
         ["gpu_optimized"] = "最適化",
         ["gpu_unknown"] = "不明",
         ["gpu_mode_prefix"] = "GPU モード: {0}",
@@ -289,6 +289,10 @@ public static class Japanese
         ["language_header"] = "言語",
         ["language_auto"] = "自動（システム設定）",
 
+        // APPEARANCE
+        ["appearance_header"] = "外観",
+        ["icon_set_label"] = "アイコンセット",
+
         // FANS WINDOW
         ["fans_title"] = "ファン & 電力",
         ["fan_curves"] = "ファンカーブ",
@@ -306,6 +310,12 @@ public static class Japanese
         ["auto_apply_power_limits"] = "モード変更時に電力制限を自動適用",
         ["firmware_control"] = "ファームウェア制御",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} 負荷: {2}   中間: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "アンダーボルト（実験的）",
+        ["undervolt_desc"] = "Curve Optimizer オフセット。より負の値 = より低い電圧。値が低すぎると不安定やデータ破損の原因になります。小さな値から始めてください。再起動でリセットされます。",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "モード変更時に自動適用",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "バッテリー情報",
@@ -384,6 +394,16 @@ public static class Japanese
         ["arcade_new_highscore"] = "新ハイスコア！",
         ["arcade_retry"] = "ENTER でリトライ",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "モニター",
+        ["monitor_title"] = "ハードウェアモニター",
+        ["monitor_temperature"] = "温度 (°C)",
+        ["monitor_fan_speed"] = "ファン速度 (RPM)",
+        ["monitor_power_load"] = "電力と負荷",
+        ["monitor_gpu_load"] = "GPU負荷 %",
+        ["monitor_gpu_power"] = "GPU電力 W",
+        ["monitor_battery_power"] = "バッテリー W",
+
         // AURA MODES
         ["aura_static"] = "スタティック",
         ["aura_breathe"] = "ブリージング",
@@ -403,6 +423,43 @@ public static class Japanese
         ["speed_slow"] = "遅い",
         ["speed_normal"] = "普通",
         ["speed_fast"] = "速い",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "システム情報",
+        ["sysinfo_copy"] = "クリップボードにコピー",
+        ["sysinfo_system_header"] = "システム",
+        ["sysinfo_cpu_header"] = "プロセッサ",
+        ["sysinfo_memory_header"] = "メモリ",
+        ["sysinfo_graphics_header"] = "グラフィックス",
+        ["sysinfo_storage_header"] = "ストレージ",
+        ["sysinfo_network_header"] = "ネットワーク",
+        ["sysinfo_audio_header"] = "オーディオ",
+        ["sysinfo_battery_header"] = "バッテリー",
+        ["sysinfo_usb_header"] = "USBデバイス",
+        ["sysinfo_product"] = "製品名",
+        ["sysinfo_vendor"] = "メーカー",
+        ["sysinfo_board"] = "マザーボード",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "カーネル",
+        ["sysinfo_os"] = "OS",
+        ["sysinfo_desktop"] = "デスクトップ",
+        ["sysinfo_session"] = "セッション",
+        ["sysinfo_cpu_model"] = "モデル",
+        ["sysinfo_cores_threads"] = "コア / スレッド",
+        ["sysinfo_arch"] = "アーキテクチャ",
+        ["sysinfo_frequency"] = "周波数",
+        ["sysinfo_cache"] = "キャッシュ",
+        ["sysinfo_governor"] = "ガバナー",
+        ["sysinfo_total"] = "合計",
+        ["sysinfo_used"] = "使用中",
+        ["sysinfo_available"] = "利用可能",
+        ["sysinfo_swap"] = "スワップ",
+        ["sysinfo_swap_used"] = "使用中",
+        ["sysinfo_sound_server"] = "サウンドサーバー",
+        ["sysinfo_status"] = "状態",
+        ["sysinfo_health"] = "健全性",
+        ["sysinfo_power"] = "電力",
+        ["sysinfo_cycles"] = "サイクル",
 
         // MISC
         ["ghelper"] = "G-Helper",

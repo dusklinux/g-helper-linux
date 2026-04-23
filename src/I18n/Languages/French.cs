@@ -35,9 +35,9 @@ public static class French
         ["fans_power"] = "Ventilateurs + Alimentation",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
+        ["gpu_eco"] = "Éco",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Ultime",
         ["gpu_optimized"] = "Optimisé",
         ["gpu_unknown"] = "Inconnu",
         ["gpu_mode_prefix"] = "Mode GPU : {0}",
@@ -286,6 +286,10 @@ public static class French
         ["language_header"] = "Langue",
         ["language_auto"] = "Auto (système)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Apparence",
+        ["icon_set_label"] = "Jeu d'icônes",
+
         // FANS WINDOW
         ["fans_title"] = "Ventilateurs & Alimentation",
         ["fan_curves"] = "Courbes de ventilateurs",
@@ -303,6 +307,12 @@ public static class French
         ["auto_apply_power_limits"] = "Appliquer automatiquement les limites de puissance au changement de mode",
         ["firmware_control"] = "Contrôle firmware",
         ["fan_sensor_format"] = "CPU : {0} / GPU : {1} Charge : {2}   Central : {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Undervolting (Expérimental)",
+        ["undervolt_desc"] = "Décalage Curve Optimizer. Plus négatif = tension plus basse. Des valeurs trop basses peuvent provoquer instabilité ou corruption de données. Commencez petit. Réinitialisé au redémarrage.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Appliquer automatiquement au changement de mode",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Informations batterie",
@@ -381,6 +391,16 @@ public static class French
         ["arcade_new_highscore"] = "NOUVEAU RECORD !",
         ["arcade_retry"] = "ENTRÉE pour réessayer",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Moniteur",
+        ["monitor_title"] = "Moniteur matériel",
+        ["monitor_temperature"] = "Température (°C)",
+        ["monitor_fan_speed"] = "Vitesse ventilateurs (RPM)",
+        ["monitor_power_load"] = "Puissance & charge",
+        ["monitor_gpu_load"] = "Charge GPU %",
+        ["monitor_gpu_power"] = "Puissance GPU W",
+        ["monitor_battery_power"] = "Batterie W",
+
         // AURA MODES
         ["aura_static"] = "Statique",
         ["aura_breathe"] = "Respiration",
@@ -400,6 +420,43 @@ public static class French
         ["speed_slow"] = "Lent",
         ["speed_normal"] = "Normal",
         ["speed_fast"] = "Rapide",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Informations système",
+        ["sysinfo_copy"] = "Copier dans le presse-papiers",
+        ["sysinfo_system_header"] = "Système",
+        ["sysinfo_cpu_header"] = "Processeur",
+        ["sysinfo_memory_header"] = "Mémoire",
+        ["sysinfo_graphics_header"] = "Graphique",
+        ["sysinfo_storage_header"] = "Stockage",
+        ["sysinfo_network_header"] = "Réseau",
+        ["sysinfo_audio_header"] = "Audio",
+        ["sysinfo_battery_header"] = "Batterie",
+        ["sysinfo_usb_header"] = "Périphériques USB",
+        ["sysinfo_product"] = "Produit",
+        ["sysinfo_vendor"] = "Fabricant",
+        ["sysinfo_board"] = "Carte mère",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Noyau",
+        ["sysinfo_os"] = "Système d'exploitation",
+        ["sysinfo_desktop"] = "Bureau",
+        ["sysinfo_session"] = "Session",
+        ["sysinfo_cpu_model"] = "Modèle",
+        ["sysinfo_cores_threads"] = "Coeurs / Threads",
+        ["sysinfo_arch"] = "Architecture",
+        ["sysinfo_frequency"] = "Fréquence",
+        ["sysinfo_cache"] = "Cache",
+        ["sysinfo_governor"] = "Gouverneur",
+        ["sysinfo_total"] = "Total",
+        ["sysinfo_used"] = "Utilisé",
+        ["sysinfo_available"] = "Disponible",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "utilisé",
+        ["sysinfo_sound_server"] = "Serveur audio",
+        ["sysinfo_status"] = "État",
+        ["sysinfo_health"] = "Santé",
+        ["sysinfo_power"] = "Puissance",
+        ["sysinfo_cycles"] = "Cycles",
 
         // MISC
         ["ghelper"] = "G-Helper",

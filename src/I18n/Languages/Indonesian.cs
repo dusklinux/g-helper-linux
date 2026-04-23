@@ -38,9 +38,9 @@ public static class Indonesian
         ["fans_power"] = "Kipas + Daya",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Hemat",
+        ["gpu_standard"] = "Standar",
+        ["gpu_ultimate"] = "Maksimal",
         ["gpu_optimized"] = "Dioptimalkan",
         ["gpu_unknown"] = "Tidak diketahui",
         ["gpu_mode_prefix"] = "Mode GPU: {0}",
@@ -289,6 +289,10 @@ public static class Indonesian
         ["language_header"] = "Bahasa",
         ["language_auto"] = "Otomatis (sistem)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Tampilan",
+        ["icon_set_label"] = "Set Ikon",
+
         // FANS WINDOW
         ["fans_title"] = "Kipas & Daya",
         ["fan_curves"] = "Kurva Kipas",
@@ -306,6 +310,12 @@ public static class Indonesian
         ["auto_apply_power_limits"] = "Terapkan batas daya otomatis saat ganti mode",
         ["firmware_control"] = "Kontrol firmware",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Beban: {2}   Tengah: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Undervolting (Eksperimental)",
+        ["undervolt_desc"] = "Offset Curve Optimizer. Lebih negatif = voltase lebih rendah. Nilai terlalu rendah bisa menyebabkan ketidakstabilan atau kerusakan data. Mulai dari kecil. Direset saat reboot.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Terapkan otomatis saat ganti mode",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Informasi Baterai",
@@ -384,6 +394,16 @@ public static class Indonesian
         ["arcade_new_highscore"] = "SKOR TERTINGGI BARU!",
         ["arcade_retry"] = "ENTER untuk coba lagi",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
+        ["monitor_title"] = "Monitor Perangkat Keras",
+        ["monitor_temperature"] = "Suhu (°C)",
+        ["monitor_fan_speed"] = "Kecepatan Kipas (RPM)",
+        ["monitor_power_load"] = "Daya & Beban",
+        ["monitor_gpu_load"] = "Beban GPU %",
+        ["monitor_gpu_power"] = "Daya GPU W",
+        ["monitor_battery_power"] = "Baterai W",
+
         // AURA MODES
         ["aura_static"] = "Statis",
         ["aura_breathe"] = "Napas",
@@ -403,6 +423,43 @@ public static class Indonesian
         ["speed_slow"] = "Lambat",
         ["speed_normal"] = "Normal",
         ["speed_fast"] = "Cepat",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Informasi Sistem",
+        ["sysinfo_copy"] = "Salin ke Papan Klip",
+        ["sysinfo_system_header"] = "Sistem",
+        ["sysinfo_cpu_header"] = "Prosesor",
+        ["sysinfo_memory_header"] = "Memori",
+        ["sysinfo_graphics_header"] = "Grafis",
+        ["sysinfo_storage_header"] = "Penyimpanan",
+        ["sysinfo_network_header"] = "Jaringan",
+        ["sysinfo_audio_header"] = "Audio",
+        ["sysinfo_battery_header"] = "Baterai",
+        ["sysinfo_usb_header"] = "Perangkat USB",
+        ["sysinfo_product"] = "Produk",
+        ["sysinfo_vendor"] = "Vendor",
+        ["sysinfo_board"] = "Motherboard",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Kernel",
+        ["sysinfo_os"] = "Sistem Operasi",
+        ["sysinfo_desktop"] = "Desktop",
+        ["sysinfo_session"] = "Sesi",
+        ["sysinfo_cpu_model"] = "Model",
+        ["sysinfo_cores_threads"] = "Inti / Thread",
+        ["sysinfo_arch"] = "Arsitektur",
+        ["sysinfo_frequency"] = "Frekuensi",
+        ["sysinfo_cache"] = "Cache",
+        ["sysinfo_governor"] = "Governor",
+        ["sysinfo_total"] = "Total",
+        ["sysinfo_used"] = "Terpakai",
+        ["sysinfo_available"] = "Tersedia",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "terpakai",
+        ["sysinfo_sound_server"] = "Server Suara",
+        ["sysinfo_status"] = "Status",
+        ["sysinfo_health"] = "Kesehatan",
+        ["sysinfo_power"] = "Daya",
+        ["sysinfo_cycles"] = "Siklus",
 
         // MISC
         ["ghelper"] = "G-Helper",

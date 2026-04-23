@@ -38,9 +38,9 @@ public static class Norwegian
         ["fans_power"] = "Vifter + Strøm",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
+        ["gpu_eco"] = "Øko",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Ultimat",
         ["gpu_optimized"] = "Optimalisert",
         ["gpu_unknown"] = "Ukjent",
         ["gpu_mode_prefix"] = "GPU-modus: {0}",
@@ -289,6 +289,10 @@ public static class Norwegian
         ["language_header"] = "Språk",
         ["language_auto"] = "Auto (system)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Utseende",
+        ["icon_set_label"] = "Ikonsett",
+
         // FANS WINDOW
         ["fans_title"] = "Vifter og strøm",
         ["fan_curves"] = "Viftekurver",
@@ -306,6 +310,12 @@ public static class Norwegian
         ["auto_apply_power_limits"] = "Automatisk bruk av effektgrenser ved modusbytte",
         ["firmware_control"] = "Firmware-kontroll",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Last: {2}   Midt: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Undervolting (eksperimentelt)",
+        ["undervolt_desc"] = "Curve Optimizer-forskyvning. Mer negativt = lavere spenning. For lave verdier kan forårsake ustabilitet eller datakorrupsjon. Start lite. Tilbakestilles ved omstart.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Bruk automatisk ved modusendring",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Batteriinformasjon",
@@ -384,6 +394,16 @@ public static class Norwegian
         ["arcade_new_highscore"] = "NY REKORD!",
         ["arcade_retry"] = "ENTER for å prøve igjen",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Overvåking",
+        ["monitor_title"] = "Maskinvareovervåking",
+        ["monitor_temperature"] = "Temperatur (°C)",
+        ["monitor_fan_speed"] = "Viftehastighet (RPM)",
+        ["monitor_power_load"] = "Effekt og belastning",
+        ["monitor_gpu_load"] = "GPU-belastning %",
+        ["monitor_gpu_power"] = "GPU-effekt W",
+        ["monitor_battery_power"] = "Batteri W",
+
         // AURA MODES
         ["aura_static"] = "Statisk",
         ["aura_breathe"] = "Pust",
@@ -403,6 +423,43 @@ public static class Norwegian
         ["speed_slow"] = "Sakte",
         ["speed_normal"] = "Normal",
         ["speed_fast"] = "Rask",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Systeminformasjon",
+        ["sysinfo_copy"] = "Kopier til utklippstavle",
+        ["sysinfo_system_header"] = "System",
+        ["sysinfo_cpu_header"] = "Prosessor",
+        ["sysinfo_memory_header"] = "Minne",
+        ["sysinfo_graphics_header"] = "Grafikk",
+        ["sysinfo_storage_header"] = "Lagring",
+        ["sysinfo_network_header"] = "Nettverk",
+        ["sysinfo_audio_header"] = "Lyd",
+        ["sysinfo_battery_header"] = "Batteri",
+        ["sysinfo_usb_header"] = "USB-enheter",
+        ["sysinfo_product"] = "Produkt",
+        ["sysinfo_vendor"] = "Produsent",
+        ["sysinfo_board"] = "Hovedkort",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Kjerne",
+        ["sysinfo_os"] = "Operativsystem",
+        ["sysinfo_desktop"] = "Skrivebord",
+        ["sysinfo_session"] = "Økt",
+        ["sysinfo_cpu_model"] = "Modell",
+        ["sysinfo_cores_threads"] = "Kjerner / Tråder",
+        ["sysinfo_arch"] = "Arkitektur",
+        ["sysinfo_frequency"] = "Frekvens",
+        ["sysinfo_cache"] = "Hurtigbuffer",
+        ["sysinfo_governor"] = "Regulator",
+        ["sysinfo_total"] = "Totalt",
+        ["sysinfo_used"] = "Brukt",
+        ["sysinfo_available"] = "Tilgjengelig",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "brukt",
+        ["sysinfo_sound_server"] = "Lydserver",
+        ["sysinfo_status"] = "Status",
+        ["sysinfo_health"] = "Helse",
+        ["sysinfo_power"] = "Effekt",
+        ["sysinfo_cycles"] = "Sykluser",
 
         // MISC
         ["ghelper"] = "G-Helper",

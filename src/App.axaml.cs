@@ -25,6 +25,7 @@ public class App : Application
     public static IAudioControl? Audio { get; private set; }
     public static IDisplayControl? Display { get; private set; }
     public static IGpuControl? GpuControl { get; private set; }
+    public static RyzenSmu? Smu { get; private set; }
 
     // GPU mode switching controller (safety checks, driver detection, reboot scheduling)
     public static GpuModeController? GpuModeCtrl { get; private set; }
@@ -34,6 +35,34 @@ public class App : Application
 
     public static MainWindow? MainWindowInstance { get; set; }
     public static TrayIcon? TrayIconInstance { get; set; }
+
+    /// <summary>
+    /// Active icon set slug. Read from AppConfig at startup; may be hot-swapped
+    /// at runtime via the Extra window dropdown. Setting this fires
+    /// <see cref="IconSetChanged"/> so all live <c>Icon</c> controls rebuild.
+    /// Values are normalized through <see cref="UI.Controls.IconSets.Normalize"/>
+    /// so unknown slugs silently fall back to the default set.
+    /// </summary>
+    public static string IconSet
+    {
+        get => _iconSet;
+        set
+        {
+            var normalized = UI.Controls.IconSets.Normalize(value);
+            if (_iconSet == normalized)
+                return;
+            _iconSet = normalized;
+            IconSetChanged?.Invoke(null, EventArgs.Empty);
+        }
+    }
+    private static string _iconSet = UI.Controls.IconSets.Default;
+
+    /// <summary>
+    /// Raised on the UI thread whenever <see cref="IconSet"/> changes.
+    /// <c>Icon</c> controls subscribe in their <c>AttachedToVisualTree</c>
+    /// handler and unsubscribe in <c>DetachedFromVisualTree</c>.
+    /// </summary>
+    public static event EventHandler? IconSetChanged;
 
     // Single-instance lock that prevents duplicate tray icons
     private static FileStream? _lockFile;
@@ -115,6 +144,14 @@ public class App : Application
 
     public override void Initialize()
     {
+        // Read active icon-set slug once, before any view is loaded.
+        // The setter normalizes unknown slugs (corrupted config, or sets that
+        // have since been removed) to the default set. Assigning through the
+        // public setter is safe here - no Icon controls exist yet to receive
+        // the change event.
+        IconSet = AppConfig.GetString("icon_set", UI.Controls.IconSets.Default)
+                  ?? UI.Controls.IconSets.Default;
+
         AvaloniaXamlLoader.Load(this);
     }
 
@@ -146,6 +183,7 @@ public class App : Application
             // Show main window on startup unless "Start minimized to tray" is enabled
             if (!AppConfig.Is("silent_start"))
             {
+                WindowPositioner.BottomRight(MainWindowInstance);
                 desktop.MainWindow = MainWindowInstance;
             }
 
@@ -281,6 +319,11 @@ public class App : Application
         Input = new LinuxInputHandler();
         Audio = new LinuxAudioControl();
         Display = new LinuxDisplayControl();
+
+        Smu = new RyzenSmu();
+        Logger.WriteLine(Smu.IsAvailable
+            ? "Ryzen Curve Optimizer: available via ryzen_smu driver"
+            : $"Ryzen Curve Optimizer: unavailable ({Smu.UnavailableReason})");
 
         // Create mode controller (uses App.Wmi, App.Power, etc.)
         Mode = new ModeControl();
@@ -809,27 +852,36 @@ public class App : Application
 
     private void ToggleMainWindow()
     {
-        // Window may have been disposed by closing (KDE logout, user clicking X).
-        // Recreate it if needed - app stays alive via ShutdownMode.OnExplicitShutdown.
+        if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+            return;
+
+        // Snapshot: Close() modifies the Windows collection during iteration
+        var visibleWindows = desktop.Windows.Where(w => w.IsVisible).ToList();
+
+        // Any window visible → close them all (child windows get recreated on demand)
+        if (visibleWindows.Count > 0)
+        {
+            foreach (var w in visibleWindows)
+            {
+                try
+                { w.Close(); }
+                catch { }
+            }
+            return;
+        }
+
+        // Nothing visible → show main window only
         if (MainWindowInstance == null || MainWindowInstance.PlatformImpl == null)
         {
             MainWindowInstance = new MainWindow();
             if (AppConfig.Is("topmost"))
                 MainWindowInstance.Topmost = true;
-            MainWindowInstance.Show();
-            MainWindowInstance.Activate();
-            return;
+            desktop.MainWindow = MainWindowInstance;
         }
 
-        if (MainWindowInstance.IsVisible)
-        {
-            MainWindowInstance.Hide();
-        }
-        else
-        {
-            MainWindowInstance.Show();
-            MainWindowInstance.Activate();
-        }
+        WindowPositioner.BottomRight(MainWindowInstance);
+        MainWindowInstance.Show();
+        MainWindowInstance.Activate();
     }
 
     /// <summary>

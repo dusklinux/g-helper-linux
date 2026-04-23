@@ -78,6 +78,7 @@ Pull requests and feature requests are welcome!
 │  Screen control            Refresh rate, Panel OD, MiniLED      │
 │  Keyboard backlight        Brightness + RGB color               │
 │  Display                   Brightness, gamma adjustment         │
+│  Undervolting (AMD)        Curve Optimizer via ryzen_smu         │
 │  CPU boost                 Enable/disable turbo boost            │
 │  System tray               Background tray icon + context menu  │
 │  Auto-start                XDG autostart .desktop integration   │
@@ -136,7 +137,11 @@ Switching to Eco while the dGPU driver is active shows a dialog with three optio
 ### `╠══[ RAW WMI MODE (EXPERIMENTAL) ]══╣`
 
 For 2020-2021 laptops without `dgpu_disable` sysfs, G-Helper supports raw ACPI/WMI calls
-via the kernel's debugfs interface. See **[RAW_WMI.md](RAW_WMI.md)** for details.
+via the kernel's debugfs interface. See **[docs/raw-wmi.md](docs/raw-wmi.md)** for details.
+
+### `╠══[ UNDERVOLTING (AMD RYZEN) ]══╣`
+
+Curve Optimizer undervolting for AMD Ryzen CPUs via the [ryzen_smu](https://github.com/amkillam/ryzen_smu) kernel driver. Requires the driver to be installed separately. The feature is hidden unless the driver is loaded and the CPU is supported. See **[docs/amd-undervolting.md](docs/amd-undervolting.md)** for setup, supported CPUs, and details.
 
 ---
 
@@ -231,13 +236,18 @@ chmod +x GHelper-x86_64.AppImage
 
 ```bash
 # Ubuntu/Debian
-sudo apt install dotnet-sdk-10.0 clang zlib1g-dev
+sudo apt install dotnet-sdk-10.0 clang zlib1g-dev upx-ucl
 
 # Fedora
-sudo dnf install dotnet-sdk-10.0 clang zlib-devel
+sudo dnf install dotnet-sdk-10.0 clang zlib-devel upx
 
 # Arch
-sudo pacman -S dotnet-sdk clang
+sudo pacman -S dotnet-sdk clang upx
+```
+
+```bash
+# Check for outdated NuGet packages
+cd src && dotnet list package --outdated
 ```
 
 ```bash
@@ -376,6 +386,7 @@ g-helper-linux/
 - [G-Helper](https://github.com/seerge/g-helper) by seerge
 - [Avalonia UI](https://avaloniaui.net/)
 - [asus-wmi kernel driver](https://github.com/torvalds/linux/tree/master/drivers/platform/x86)
+- [ryzen_smu](https://github.com/amkillam/ryzen_smu) by Leonardo Gates / amkillam
 
 ---
 

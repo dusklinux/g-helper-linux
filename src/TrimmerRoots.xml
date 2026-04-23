@@ -1,6 +1,3 @@
 <linker>
-  <!-- Preserve HidSharp types that use reflection for platform detection -->
-  <assembly fullname="HidSharpCore" preserve="all"/>
-  <!-- Preserve Avalonia XAML-related types -->
-  <assembly fullname="Avalonia.Themes.Fluent" preserve="all"/>
+
 </linker>

@@ -35,9 +35,9 @@ public static class Russian
         ["fans_power"] = "Вентиляторы + Питание",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Эко",
+        ["gpu_standard"] = "Стандарт",
+        ["gpu_ultimate"] = "Максимум",
         ["gpu_optimized"] = "Оптимизированный",
         ["gpu_unknown"] = "Неизвестно",
         ["gpu_mode_prefix"] = "Режим GPU: {0}",
@@ -286,6 +286,10 @@ public static class Russian
         ["language_header"] = "Язык",
         ["language_auto"] = "Авто (системный)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Внешний вид",
+        ["icon_set_label"] = "Набор значков",
+
         // FANS WINDOW
         ["fans_title"] = "Вентиляторы и питание",
         ["fan_curves"] = "Кривые вентиляторов",
@@ -303,6 +307,12 @@ public static class Russian
         ["auto_apply_power_limits"] = "Автоприменение лимитов мощности при смене режима",
         ["firmware_control"] = "Управление прошивкой",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Нагрузка: {2}   Средний: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Андервольтинг (экспериментально)",
+        ["undervolt_desc"] = "Смещение Curve Optimizer. Более отрицательное = меньшее напряжение. Слишком низкие значения могут вызвать нестабильность или повреждение данных. Начинайте с малого. Сбрасывается при перезагрузке.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Автоматически применять при смене режима",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Информация о батарее",
@@ -381,6 +391,16 @@ public static class Russian
         ["arcade_new_highscore"] = "НОВЫЙ РЕКОРД!",
         ["arcade_retry"] = "ENTER для повтора",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Монитор",
+        ["monitor_title"] = "Монитор оборудования",
+        ["monitor_temperature"] = "Температура (°C)",
+        ["monitor_fan_speed"] = "Скорость вент. (об/мин)",
+        ["monitor_power_load"] = "Мощность и нагрузка",
+        ["monitor_gpu_load"] = "Нагрузка GPU %",
+        ["monitor_gpu_power"] = "Мощность GPU Вт",
+        ["monitor_battery_power"] = "Батарея Вт",
+
         // AURA MODES
         ["aura_static"] = "Статичный",
         ["aura_breathe"] = "Дыхание",
@@ -402,6 +422,43 @@ public static class Russian
         ["speed_fast"] = "Быстро",
 
         // MISC
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Информация о системе",
+        ["sysinfo_copy"] = "Копировать в буфер обмена",
+        ["sysinfo_system_header"] = "Система",
+        ["sysinfo_cpu_header"] = "Процессор",
+        ["sysinfo_memory_header"] = "Память",
+        ["sysinfo_graphics_header"] = "Графика",
+        ["sysinfo_storage_header"] = "Хранилище",
+        ["sysinfo_network_header"] = "Сеть",
+        ["sysinfo_audio_header"] = "Аудио",
+        ["sysinfo_battery_header"] = "Батарея",
+        ["sysinfo_usb_header"] = "USB-устройства",
+        ["sysinfo_product"] = "Продукт",
+        ["sysinfo_vendor"] = "Производитель",
+        ["sysinfo_board"] = "Плата",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Ядро",
+        ["sysinfo_os"] = "ОС",
+        ["sysinfo_desktop"] = "Рабочий стол",
+        ["sysinfo_session"] = "Сессия",
+        ["sysinfo_cpu_model"] = "Модель",
+        ["sysinfo_cores_threads"] = "Ядра / Потоки",
+        ["sysinfo_arch"] = "Архитектура",
+        ["sysinfo_frequency"] = "Частота",
+        ["sysinfo_cache"] = "Кэш",
+        ["sysinfo_governor"] = "Регулятор",
+        ["sysinfo_total"] = "Всего",
+        ["sysinfo_used"] = "Использовано",
+        ["sysinfo_available"] = "Доступно",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "использовано",
+        ["sysinfo_sound_server"] = "Звуковой сервер",
+        ["sysinfo_status"] = "Статус",
+        ["sysinfo_health"] = "Здоровье",
+        ["sysinfo_power"] = "Мощность",
+        ["sysinfo_cycles"] = "Циклы",
+
         ["ghelper"] = "G-Helper",
         ["asus_laptop_control"] = "Управление ноутбуком ASUS (Linux)",
     };

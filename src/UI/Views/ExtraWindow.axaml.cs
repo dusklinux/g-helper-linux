@@ -35,6 +35,7 @@ public partial class ExtraWindow : Window
         {
             _suppressEvents = true;
             InitLanguage();
+            InitAppearance();
             InitKeyboardBacklight();
             InitKeyBindings();
             RefreshDisplay();
@@ -91,6 +92,49 @@ public partial class ExtraWindow : Window
             Labels.SetLanguage(code);
     }
 
+    // APPEARANCE (icon set)
+
+    private void InitAppearance()
+    {
+        // Populate dropdown from the compile-time set registry. Items are
+        // ordered by IconSets.AvailableSlugs (alphabetical by slug); display
+        // names are derived via title-casing, no i18n entries required.
+        comboIconSet.Items.Clear();
+        int selected = 0;
+        string saved = UI.Controls.IconSets.Normalize(
+            Helpers.AppConfig.GetString("icon_set", UI.Controls.IconSets.Default));
+        for (int i = 0; i < UI.Controls.IconSets.AvailableSlugs.Count; i++)
+        {
+            string slug = UI.Controls.IconSets.AvailableSlugs[i];
+            comboIconSet.Items.Add(new ComboBoxItem
+            {
+                Content = UI.Controls.IconSets.DisplayName(slug),
+                Tag = slug,
+            });
+            if (slug == saved)
+                selected = i;
+        }
+        comboIconSet.SelectedIndex = selected;
+    }
+
+    private void ComboIconSet_Changed(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        if (comboIconSet.SelectedItem is not ComboBoxItem item)
+            return;
+
+        string newSet = item.Tag as string ?? "noto";
+        if (newSet == App.IconSet)
+            return;
+
+        // Persist for next launch, then flip the static property. The setter
+        // raises IconSetChanged on the UI thread, which every attached Icon
+        // control is listening for - they rebuild their SVG in place.
+        Helpers.AppConfig.Set("icon_set", newSet);
+        App.IconSet = newSet;
+    }
+
     private void ApplyLabels()
     {
         Title = Labels.Get("extra_title");
@@ -98,6 +142,10 @@ public partial class ExtraWindow : Window
         // Language section
         labelLanguageHeader.Text = Labels.Get("language_header");
         labelLanguageLabel.Text = Labels.Get("language_header");
+
+        // Appearance section
+        labelAppearanceHeader.Text = Labels.Get("appearance_header");
+        labelIconSetLabel.Text = Labels.Get("icon_set_label");
 
         // Keyboard Backlight
         headerKbdBacklight.Text = Labels.Get("kbd_backlight_header");
@@ -153,6 +201,7 @@ public partial class ExtraWindow : Window
 
         // System Info
         headerSystemInfo.Text = Labels.Get("system_info_header");
+        labelSystemInfoMore.Text = Labels.Get("details");
 
         // Advanced
         headerAdvanced.Text = Labels.Get("advanced_header");
@@ -988,6 +1037,7 @@ public partial class ExtraWindow : Window
     }
 
     private BatteryInfoWindow? _batteryInfoWindow;
+    private SystemInfoWindow? _systemInfoWindow;
 
     private void ButtonBatteryInfo_Click(object? sender, RoutedEventArgs e)
     {
@@ -1001,6 +1051,21 @@ public partial class ExtraWindow : Window
         else
         {
             _batteryInfoWindow.Activate();
+        }
+    }
+
+    private void ButtonSystemInfo_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_systemInfoWindow == null || !_systemInfoWindow.IsVisible)
+        {
+            _systemInfoWindow = new SystemInfoWindow();
+            if (Helpers.AppConfig.Is("topmost"))
+                _systemInfoWindow.Topmost = true;
+            _systemInfoWindow.Show();
+        }
+        else
+        {
+            _systemInfoWindow.Activate();
         }
     }
 

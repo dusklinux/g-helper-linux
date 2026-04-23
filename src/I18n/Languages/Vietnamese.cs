@@ -35,9 +35,9 @@ public static class Vietnamese
         ["fans_power"] = "Quạt + Nguồn",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Tiết kiệm",
+        ["gpu_standard"] = "Tiêu chuẩn",
+        ["gpu_ultimate"] = "Tối đa",
         ["gpu_optimized"] = "Tối ưu",
         ["gpu_unknown"] = "Không xác định",
         ["gpu_mode_prefix"] = "Chế độ GPU: {0}",
@@ -286,6 +286,10 @@ public static class Vietnamese
         ["language_header"] = "Ngôn ngữ",
         ["language_auto"] = "Tự động (hệ thống)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Giao diện",
+        ["icon_set_label"] = "Bộ biểu tượng",
+
         // FANS WINDOW
         ["fans_title"] = "Quạt & Nguồn",
         ["fan_curves"] = "Đường cong quạt",
@@ -303,6 +307,12 @@ public static class Vietnamese
         ["auto_apply_power_limits"] = "Tự động áp dụng giới hạn công suất khi đổi chế độ",
         ["firmware_control"] = "Điều khiển firmware",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Tải: {2}   Giữa: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Undervolting (thử nghiệm)",
+        ["undervolt_desc"] = "Offset Curve Optimizer. Càng âm = điện áp càng thấp. Giá trị quá thấp có thể gây mất ổn định hoặc hỏng dữ liệu. Bắt đầu từ nhỏ. Đặt lại khi khởi động lại.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Tự động áp dụng khi đổi chế độ",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Thông tin pin",
@@ -381,6 +391,16 @@ public static class Vietnamese
         ["arcade_new_highscore"] = "ĐIỂM CAO MỚI!",
         ["arcade_retry"] = "ENTER để thử lại",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Giám sát",
+        ["monitor_title"] = "Giám sát phần cứng",
+        ["monitor_temperature"] = "Nhiệt độ (°C)",
+        ["monitor_fan_speed"] = "Tốc độ quạt (RPM)",
+        ["monitor_power_load"] = "Công suất và tải",
+        ["monitor_gpu_load"] = "Tải GPU %",
+        ["monitor_gpu_power"] = "Công suất GPU W",
+        ["monitor_battery_power"] = "Pin W",
+
         // AURA MODES
         ["aura_static"] = "Tĩnh",
         ["aura_breathe"] = "Thở",
@@ -400,6 +420,43 @@ public static class Vietnamese
         ["speed_slow"] = "Chậm",
         ["speed_normal"] = "Bình thường",
         ["speed_fast"] = "Nhanh",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Thông tin hệ thống",
+        ["sysinfo_copy"] = "Sao chép vào bộ nhớ tạm",
+        ["sysinfo_system_header"] = "Hệ thống",
+        ["sysinfo_cpu_header"] = "Bộ xử lý",
+        ["sysinfo_memory_header"] = "Bộ nhớ",
+        ["sysinfo_graphics_header"] = "Đồ họa",
+        ["sysinfo_storage_header"] = "Lưu trữ",
+        ["sysinfo_network_header"] = "Mạng",
+        ["sysinfo_audio_header"] = "Âm thanh",
+        ["sysinfo_battery_header"] = "Pin",
+        ["sysinfo_usb_header"] = "Thiết bị USB",
+        ["sysinfo_product"] = "Sản phẩm",
+        ["sysinfo_vendor"] = "Nhà sản xuất",
+        ["sysinfo_board"] = "Bo mạch chủ",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Nhân",
+        ["sysinfo_os"] = "Hệ điều hành",
+        ["sysinfo_desktop"] = "Màn hình nền",
+        ["sysinfo_session"] = "Phiên",
+        ["sysinfo_cpu_model"] = "Model",
+        ["sysinfo_cores_threads"] = "Lõi / Luồng",
+        ["sysinfo_arch"] = "Kiến trúc",
+        ["sysinfo_frequency"] = "Tần số",
+        ["sysinfo_cache"] = "Bộ nhớ đệm",
+        ["sysinfo_governor"] = "Bộ điều chỉnh",
+        ["sysinfo_total"] = "Tổng",
+        ["sysinfo_used"] = "Đã dùng",
+        ["sysinfo_available"] = "Khả dụng",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "đã dùng",
+        ["sysinfo_sound_server"] = "Máy chủ âm thanh",
+        ["sysinfo_status"] = "Trạng thái",
+        ["sysinfo_health"] = "Sức khỏe",
+        ["sysinfo_power"] = "Công suất",
+        ["sysinfo_cycles"] = "Số chu kỳ",
 
         // MISC
         ["ghelper"] = "G-Helper",

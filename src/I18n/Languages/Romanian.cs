@@ -37,7 +37,7 @@ public static class Romanian
         // GPU MODES
         ["gpu_eco"] = "Eco",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Maxim",
         ["gpu_optimized"] = "Optimizat",
         ["gpu_unknown"] = "Necunoscut",
         ["gpu_mode_prefix"] = "Mod GPU: {0}",
@@ -286,6 +286,10 @@ public static class Romanian
         ["language_header"] = "Limbă",
         ["language_auto"] = "Auto (sistem)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Aspect",
+        ["icon_set_label"] = "Set de pictograme",
+
         // FANS WINDOW
         ["fans_title"] = "Ventilatoare și alimentare",
         ["fan_curves"] = "Curbe ventilatoare",
@@ -303,6 +307,12 @@ public static class Romanian
         ["auto_apply_power_limits"] = "Aplică automat limitele de putere la schimbarea modului",
         ["firmware_control"] = "Control firmware",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Încărcare: {2}   Mijloc: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Undervolting (experimental)",
+        ["undervolt_desc"] = "Offset Curve Optimizer. Mai negativ = tensiune mai mică. Valorile prea mici pot cauza instabilitate sau coruperea datelor. Începe cu valori mici. Se resetează la repornire.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Aplică automat la schimbarea modului",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Informații baterie",
@@ -381,6 +391,16 @@ public static class Romanian
         ["arcade_new_highscore"] = "NOU SCOR MAXIM!",
         ["arcade_retry"] = "ENTER pentru a reîncerca",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
+        ["monitor_title"] = "Monitor hardware",
+        ["monitor_temperature"] = "Temperatură (°C)",
+        ["monitor_fan_speed"] = "Viteză ventilatoare (RPM)",
+        ["monitor_power_load"] = "Putere și sarcină",
+        ["monitor_gpu_load"] = "Sarcină GPU %",
+        ["monitor_gpu_power"] = "Putere GPU W",
+        ["monitor_battery_power"] = "Baterie W",
+
         // AURA MODES
         ["aura_static"] = "Static",
         ["aura_breathe"] = "Respirație",
@@ -400,6 +420,43 @@ public static class Romanian
         ["speed_slow"] = "Lent",
         ["speed_normal"] = "Normal",
         ["speed_fast"] = "Rapid",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Informații despre sistem",
+        ["sysinfo_copy"] = "Copiere în clipboard",
+        ["sysinfo_system_header"] = "Sistem",
+        ["sysinfo_cpu_header"] = "Procesor",
+        ["sysinfo_memory_header"] = "Memorie",
+        ["sysinfo_graphics_header"] = "Grafică",
+        ["sysinfo_storage_header"] = "Stocare",
+        ["sysinfo_network_header"] = "Rețea",
+        ["sysinfo_audio_header"] = "Audio",
+        ["sysinfo_battery_header"] = "Baterie",
+        ["sysinfo_usb_header"] = "Dispozitive USB",
+        ["sysinfo_product"] = "Produs",
+        ["sysinfo_vendor"] = "Producător",
+        ["sysinfo_board"] = "Placă de bază",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Kernel",
+        ["sysinfo_os"] = "Sistem de operare",
+        ["sysinfo_desktop"] = "Desktop",
+        ["sysinfo_session"] = "Sesiune",
+        ["sysinfo_cpu_model"] = "Model",
+        ["sysinfo_cores_threads"] = "Nuclee / Fire",
+        ["sysinfo_arch"] = "Arhitectură",
+        ["sysinfo_frequency"] = "Frecvență",
+        ["sysinfo_cache"] = "Cache",
+        ["sysinfo_governor"] = "Governor",
+        ["sysinfo_total"] = "Total",
+        ["sysinfo_used"] = "Utilizat",
+        ["sysinfo_available"] = "Disponibil",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "utilizat",
+        ["sysinfo_sound_server"] = "Server de sunet",
+        ["sysinfo_status"] = "Stare",
+        ["sysinfo_health"] = "Sănătate",
+        ["sysinfo_power"] = "Putere",
+        ["sysinfo_cycles"] = "Cicluri",
 
         // MISC
         ["ghelper"] = "G-Helper",

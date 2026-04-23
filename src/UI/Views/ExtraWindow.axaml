@@ -29,6 +29,23 @@
                 </StackPanel>
             </Border>
 
+            <!-- APPEARANCE -->
+            <Border Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock x:Name="labelAppearanceHeader" Classes="header" Text="Appearance" />
+                    </Border>
+                    <Grid ColumnDefinitions="120,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelIconSetLabel" Text="Icon Set"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <!-- Items populated at runtime from IconSets.AvailableSlugs -->
+                        <ComboBox Grid.Column="1" x:Name="comboIconSet"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ComboIconSet_Changed" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
             <!-- KEYBOARD BACKLIGHT -->
             <Border Classes="panel">
                 <StackPanel>
@@ -366,8 +383,15 @@
                                Text="Kernel: --" Margin="0,4,0,0" />
                     <TextBlock x:Name="labelAsusWmi" Classes="label-dim"
                                Text="asus-wmi: --" Margin="0,4,0,0" />
-                    <TextBlock x:Name="labelFeatures" Classes="label-dim"
-                               Text="" Margin="0,4,0,0" TextWrapping="Wrap" />
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                        <TextBlock Grid.Column="0" x:Name="labelFeatures" Classes="label-dim"
+                                   Text="" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" x:Name="buttonSystemInfo" Classes="ghelper"
+                                Height="28" VerticalAlignment="Center"
+                                Click="ButtonSystemInfo_Click">
+                            <TextBlock x:Name="labelSystemInfoMore" Text="More..." FontSize="11" />
+                        </Button>
+                    </Grid>
                 </StackPanel>
             </Border>
 

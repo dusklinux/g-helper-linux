@@ -5,7 +5,7 @@ set -euo pipefail
 # Packages the dist/ output into a portable AppImage.
 #
 # Prerequisites:
-#   ./build.sh          (produces dist/ghelper + native libs)
+#   ./build.sh          (produces dist/ghelper — single binary with embedded native libs)
 #
 # Usage:
 #   ./build-appimage.sh
@@ -31,14 +31,6 @@ if [[ ! -f "$DIST_DIR/ghelper" ]]; then
     exit 1
 fi
 
-for lib in libSkiaSharp.so libHarfBuzzSharp.so; do
-    if [[ ! -f "$DIST_DIR/$lib" ]]; then
-        echo "ERROR: dist/$lib not found."
-        echo "Run ./build.sh first — native libs should be in dist/."
-        exit 1
-    fi
-done
-
 # ── Download appimagetool if needed ───────────────────────────────────────────
 
 if [[ ! -x "$APPIMAGETOOL" ]]; then
@@ -58,10 +50,8 @@ rm -rf "$APPDIR"
 mkdir -p "$APPDIR/usr/bin"
 mkdir -p "$APPDIR/usr/lib"
 
-# Binary + native libs (next to binary so NativeLibExtractor Strategy 1 finds them)
+# Binary only — native .so libs are embedded and extracted at runtime
 cp "$DIST_DIR/ghelper"             "$APPDIR/usr/bin/"
-cp "$DIST_DIR/libSkiaSharp.so"     "$APPDIR/usr/bin/"
-cp "$DIST_DIR/libHarfBuzzSharp.so" "$APPDIR/usr/bin/"
 chmod +x "$APPDIR/usr/bin/ghelper"
 
 # Desktop entry (required by appimagetool at AppDir root + standard path for validation)

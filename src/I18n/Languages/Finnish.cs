@@ -38,9 +38,9 @@ public static class Finnish
         ["fans_power"] = "Tuulettimet + Teho",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
+        ["gpu_eco"] = "Eko",
         ["gpu_standard"] = "Standardi",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Huippu",
         ["gpu_optimized"] = "Optimoitu",
         ["gpu_unknown"] = "Tuntematon",
         ["gpu_mode_prefix"] = "GPU-tila: {0}",
@@ -289,6 +289,10 @@ public static class Finnish
         ["language_header"] = "Kieli",
         ["language_auto"] = "Auto (järjestelmä)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Ulkoasu",
+        ["icon_set_label"] = "Kuvakesarja",
+
         // FANS WINDOW
         ["fans_title"] = "Tuulettimet ja teho",
         ["fan_curves"] = "Tuuletinkäyrät",
@@ -306,6 +310,12 @@ public static class Finnish
         ["auto_apply_power_limits"] = "Ota tehorajat automaattisesti käyttöön tilan vaihtuessa",
         ["firmware_control"] = "Firmware-ohjaus",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Kuorma: {2}   Keski: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Alijännite (kokeellinen)",
+        ["undervolt_desc"] = "Curve Optimizer -siirtymä. Negatiivisempi = matalampi jännite. Liian matalat arvot voivat aiheuttaa epävakautta tai tietojen vioittumista. Aloita pienestä. Palautuu uudelleenkäynnistyksessä.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Käytä automaattisesti tilan vaihtuessa",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Akkutiedot",
@@ -384,6 +394,16 @@ public static class Finnish
         ["arcade_new_highscore"] = "UUSI ENNÄTYS!",
         ["arcade_retry"] = "ENTER yrittääksesi uudelleen",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Seuranta",
+        ["monitor_title"] = "Laitteiston seuranta",
+        ["monitor_temperature"] = "Lämpötila (°C)",
+        ["monitor_fan_speed"] = "Tuulettimen nopeus (RPM)",
+        ["monitor_power_load"] = "Teho ja kuorma",
+        ["monitor_gpu_load"] = "GPU-kuorma %",
+        ["monitor_gpu_power"] = "GPU-teho W",
+        ["monitor_battery_power"] = "Akku W",
+
         // AURA MODES
         ["aura_static"] = "Staattinen",
         ["aura_breathe"] = "Hengitys",
@@ -403,6 +423,43 @@ public static class Finnish
         ["speed_slow"] = "Hidas",
         ["speed_normal"] = "Normaali",
         ["speed_fast"] = "Nopea",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Järjestelmätiedot",
+        ["sysinfo_copy"] = "Kopioi leikepöydälle",
+        ["sysinfo_system_header"] = "Järjestelmä",
+        ["sysinfo_cpu_header"] = "Suoritin",
+        ["sysinfo_memory_header"] = "Muisti",
+        ["sysinfo_graphics_header"] = "Näytönohjain",
+        ["sysinfo_storage_header"] = "Tallennustila",
+        ["sysinfo_network_header"] = "Verkko",
+        ["sysinfo_audio_header"] = "Ääni",
+        ["sysinfo_battery_header"] = "Akku",
+        ["sysinfo_usb_header"] = "USB-laitteet",
+        ["sysinfo_product"] = "Tuote",
+        ["sysinfo_vendor"] = "Valmistaja",
+        ["sysinfo_board"] = "Emolevy",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Ydin",
+        ["sysinfo_os"] = "Käyttöjärjestelmä",
+        ["sysinfo_desktop"] = "Työpöytä",
+        ["sysinfo_session"] = "Istunto",
+        ["sysinfo_cpu_model"] = "Malli",
+        ["sysinfo_cores_threads"] = "Ytimet / Säikeet",
+        ["sysinfo_arch"] = "Arkkitehtuuri",
+        ["sysinfo_frequency"] = "Taajuus",
+        ["sysinfo_cache"] = "Välimuisti",
+        ["sysinfo_governor"] = "Säätäjä",
+        ["sysinfo_total"] = "Yhteensä",
+        ["sysinfo_used"] = "Käytetty",
+        ["sysinfo_available"] = "Saatavilla",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "käytetty",
+        ["sysinfo_sound_server"] = "Äänipalvelin",
+        ["sysinfo_status"] = "Tila",
+        ["sysinfo_health"] = "Kunto",
+        ["sysinfo_power"] = "Teho",
+        ["sysinfo_cycles"] = "Jaksot",
 
         // MISC
         ["ghelper"] = "G-Helper",

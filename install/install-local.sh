@@ -299,9 +299,8 @@ fi
 if [[ "$MODE" == "install" ]]; then
     _step 1 "SCANNING LOCAL BUILD ARTIFACTS"
 
-    # Binary + native libs are all required — loader expects the two .so files
-    # next to the binary, or it falls back to stale cache / system libs.
-    for f in ghelper libSkiaSharp.so libHarfBuzzSharp.so; do
+    # Single binary — native .so libs are embedded and extracted at runtime.
+    for f in ghelper; do
         if [[ ! -f "$DIST_DIR/$f" ]]; then
             echo ""
             echo "${RED}${BOLD}  ╔══[ BUILD NOT FOUND ]═════════════════════════════════╗${RESET}"
@@ -331,8 +330,6 @@ if [[ "$MODE" == "install" ]]; then
     mkdir -p "$INSTALL_DIR"
 
     _install_file "$DIST_DIR/ghelper"             "$INSTALL_DIR/ghelper"             755 "ghelper binary" || true
-    _install_file "$DIST_DIR/libSkiaSharp.so"     "$INSTALL_DIR/libSkiaSharp.so"     755 "libSkiaSharp.so" || true
-    _install_file "$DIST_DIR/libHarfBuzzSharp.so" "$INSTALL_DIR/libHarfBuzzSharp.so" 755 "libHarfBuzzSharp.so" || true
 
     # Symlink (ln -sf is already idempotent but we report status)
     if [[ "$(readlink -f /usr/local/bin/ghelper 2>/dev/null)" == "$INSTALL_DIR/ghelper" ]]; then

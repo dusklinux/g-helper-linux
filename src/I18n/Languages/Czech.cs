@@ -35,9 +35,9 @@ public static class Czech
         ["fans_power"] = "Ventilátory + Napájení",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
+        ["gpu_eco"] = "Eko",
         ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_ultimate"] = "Ultimátní",
         ["gpu_optimized"] = "Optimalizovaný",
         ["gpu_unknown"] = "Neznámý",
         ["gpu_mode_prefix"] = "Režim GPU: {0}",
@@ -286,6 +286,10 @@ public static class Czech
         ["language_header"] = "Jazyk",
         ["language_auto"] = "Auto (systémový)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Vzhled",
+        ["icon_set_label"] = "Sada ikon",
+
         // FANS WINDOW
         ["fans_title"] = "Ventilátory a napájení",
         ["fan_curves"] = "Křivky ventilátorů",
@@ -303,6 +307,12 @@ public static class Czech
         ["auto_apply_power_limits"] = "Automaticky použít limity výkonu při změně režimu",
         ["firmware_control"] = "Ovládání firmwaru",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Zátěž: {2}   Střed.: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Podpětí (experimentální)",
+        ["undervolt_desc"] = "Offset Curve Optimizeru. Více záporné = nižší napětí. Příliš nízké hodnoty mohou způsobit nestabilitu nebo poškození dat. Začněte s malými hodnotami. Resetuje se při restartu.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Automaticky použít při změně režimu",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Informace o baterii",
@@ -381,6 +391,16 @@ public static class Czech
         ["arcade_new_highscore"] = "NOVÉ NEJLEPŠÍ SKÓRE!",
         ["arcade_retry"] = "ENTER pro opakování",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Monitor",
+        ["monitor_title"] = "Monitor hardwaru",
+        ["monitor_temperature"] = "Teplota (°C)",
+        ["monitor_fan_speed"] = "Otáčky ventilátorů (RPM)",
+        ["monitor_power_load"] = "Výkon a zátěž",
+        ["monitor_gpu_load"] = "Zátěž GPU %",
+        ["monitor_gpu_power"] = "Výkon GPU W",
+        ["monitor_battery_power"] = "Baterie W",
+
         // AURA MODES
         ["aura_static"] = "Statický",
         ["aura_breathe"] = "Dýchání",
@@ -400,6 +420,43 @@ public static class Czech
         ["speed_slow"] = "Pomalý",
         ["speed_normal"] = "Normální",
         ["speed_fast"] = "Rychlý",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Informace o systému",
+        ["sysinfo_copy"] = "Kopírovat do schránky",
+        ["sysinfo_system_header"] = "Systém",
+        ["sysinfo_cpu_header"] = "Procesor",
+        ["sysinfo_memory_header"] = "Paměť",
+        ["sysinfo_graphics_header"] = "Grafika",
+        ["sysinfo_storage_header"] = "Úložiště",
+        ["sysinfo_network_header"] = "Síť",
+        ["sysinfo_audio_header"] = "Zvuk",
+        ["sysinfo_battery_header"] = "Baterie",
+        ["sysinfo_usb_header"] = "USB zařízení",
+        ["sysinfo_product"] = "Produkt",
+        ["sysinfo_vendor"] = "Výrobce",
+        ["sysinfo_board"] = "Základní deska",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Jádro",
+        ["sysinfo_os"] = "Operační systém",
+        ["sysinfo_desktop"] = "Pracovní plocha",
+        ["sysinfo_session"] = "Relace",
+        ["sysinfo_cpu_model"] = "Model",
+        ["sysinfo_cores_threads"] = "Jádra / Vlákna",
+        ["sysinfo_arch"] = "Architektura",
+        ["sysinfo_frequency"] = "Frekvence",
+        ["sysinfo_cache"] = "Mezipaměť",
+        ["sysinfo_governor"] = "Regulátor",
+        ["sysinfo_total"] = "Celkem",
+        ["sysinfo_used"] = "Použito",
+        ["sysinfo_available"] = "Dostupné",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "použito",
+        ["sysinfo_sound_server"] = "Zvukový server",
+        ["sysinfo_status"] = "Stav",
+        ["sysinfo_health"] = "Zdraví",
+        ["sysinfo_power"] = "Výkon",
+        ["sysinfo_cycles"] = "Cykly",
 
         // MISC
         ["ghelper"] = "G-Helper",

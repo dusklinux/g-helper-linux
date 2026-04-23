@@ -35,9 +35,9 @@ public static class Turkish
         ["fans_power"] = "Fanlar + Güç",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Eko",
+        ["gpu_standard"] = "Standart",
+        ["gpu_ultimate"] = "Maksimum",
         ["gpu_optimized"] = "Optimize",
         ["gpu_unknown"] = "Bilinmiyor",
         ["gpu_mode_prefix"] = "GPU Modu: {0}",
@@ -286,6 +286,10 @@ public static class Turkish
         ["language_header"] = "Dil",
         ["language_auto"] = "Otomatik (sistem)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Görünüm",
+        ["icon_set_label"] = "Simge Seti",
+
         // FANS WINDOW
         ["fans_title"] = "Fanlar ve Güç",
         ["fan_curves"] = "Fan Eğrileri",
@@ -303,6 +307,12 @@ public static class Turkish
         ["auto_apply_power_limits"] = "Mod değişikliğinde güç limitlerini otomatik uygula",
         ["firmware_control"] = "Firmware kontrolü",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Yük: {2}   Orta: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Undervolting (Deneysel)",
+        ["undervolt_desc"] = "Curve Optimizer ofseti. Daha negatif = daha düşük voltaj. Çok düşük değerler kararsızlığa veya veri bozulmasına yol açabilir. Küçük başlayın. Yeniden başlatmada sıfırlanır.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Mod değişiminde otomatik uygula",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Batarya Bilgisi",
@@ -381,6 +391,16 @@ public static class Turkish
         ["arcade_new_highscore"] = "YENİ EN YÜKSEK SKOR!",
         ["arcade_retry"] = "Tekrar denemek için ENTER",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Monitör",
+        ["monitor_title"] = "Donanım Monitörü",
+        ["monitor_temperature"] = "Sıcaklık (°C)",
+        ["monitor_fan_speed"] = "Fan Hızı (RPM)",
+        ["monitor_power_load"] = "Güç ve Yük",
+        ["monitor_gpu_load"] = "GPU Yükü %",
+        ["monitor_gpu_power"] = "GPU Gücü W",
+        ["monitor_battery_power"] = "Pil W",
+
         // AURA MODES
         ["aura_static"] = "Statik",
         ["aura_breathe"] = "Nefes",
@@ -400,6 +420,43 @@ public static class Turkish
         ["speed_slow"] = "Yavaş",
         ["speed_normal"] = "Normal",
         ["speed_fast"] = "Hızlı",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Sistem Bilgileri",
+        ["sysinfo_copy"] = "Panoya Kopyala",
+        ["sysinfo_system_header"] = "Sistem",
+        ["sysinfo_cpu_header"] = "İşlemci",
+        ["sysinfo_memory_header"] = "Bellek",
+        ["sysinfo_graphics_header"] = "Grafik",
+        ["sysinfo_storage_header"] = "Depolama",
+        ["sysinfo_network_header"] = "Ağ",
+        ["sysinfo_audio_header"] = "Ses",
+        ["sysinfo_battery_header"] = "Pil",
+        ["sysinfo_usb_header"] = "USB Aygıtları",
+        ["sysinfo_product"] = "Ürün",
+        ["sysinfo_vendor"] = "Üretici",
+        ["sysinfo_board"] = "Anakart",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Çekirdek",
+        ["sysinfo_os"] = "İşletim Sistemi",
+        ["sysinfo_desktop"] = "Masaüstü",
+        ["sysinfo_session"] = "Oturum",
+        ["sysinfo_cpu_model"] = "Model",
+        ["sysinfo_cores_threads"] = "Çekirdek / İş Parçacığı",
+        ["sysinfo_arch"] = "Mimari",
+        ["sysinfo_frequency"] = "Frekans",
+        ["sysinfo_cache"] = "Önbellek",
+        ["sysinfo_governor"] = "Regülatör",
+        ["sysinfo_total"] = "Toplam",
+        ["sysinfo_used"] = "Kullanılan",
+        ["sysinfo_available"] = "Kullanılabilir",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "kullanılan",
+        ["sysinfo_sound_server"] = "Ses Sunucusu",
+        ["sysinfo_status"] = "Durum",
+        ["sysinfo_health"] = "Sağlık",
+        ["sysinfo_power"] = "Güç",
+        ["sysinfo_cycles"] = "Döngü",
 
         // MISC
         ["ghelper"] = "G-Helper",

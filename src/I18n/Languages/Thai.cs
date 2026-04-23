@@ -38,9 +38,9 @@ public static class Thai
         ["fans_power"] = "พัดลม + พลังงาน",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "ประหยัด",
+        ["gpu_standard"] = "มาตรฐาน",
+        ["gpu_ultimate"] = "สูงสุด",
         ["gpu_optimized"] = "ปรับแต่งอัตโนมัติ",
         ["gpu_unknown"] = "ไม่ทราบ",
         ["gpu_mode_prefix"] = "โหมด GPU: {0}",
@@ -289,6 +289,10 @@ public static class Thai
         ["language_header"] = "ภาษา",
         ["language_auto"] = "อัตโนมัติ (ระบบ)",
 
+        // APPEARANCE
+        ["appearance_header"] = "รูปลักษณ์",
+        ["icon_set_label"] = "ชุดไอคอน",
+
         // FANS WINDOW
         ["fans_title"] = "พัดลมและพลังงาน",
         ["fan_curves"] = "กราฟพัดลม",
@@ -306,6 +310,12 @@ public static class Thai
         ["auto_apply_power_limits"] = "นำขีดจำกัดพลังงานไปใช้อัตโนมัติเมื่อเปลี่ยนโหมด",
         ["firmware_control"] = "ควบคุมเฟิร์มแวร์",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} โหลด: {2}   กลาง: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Undervolting (ทดลอง)",
+        ["undervolt_desc"] = "ออฟเซ็ต Curve Optimizer ค่ายิ่งลบ = แรงดันยิ่งต่ำ ค่าที่ต่ำเกินไปอาจทำให้ระบบไม่เสถียรหรือข้อมูลเสียหาย เริ่มจากค่าน้อยก่อน รีเซ็ตเมื่อรีบูต",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "ใช้อัตโนมัติเมื่อเปลี่ยนโหมด",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "ข้อมูลแบตเตอรี่",
@@ -384,6 +394,16 @@ public static class Thai
         ["arcade_new_highscore"] = "คะแนนสูงสุดใหม่!",
         ["arcade_retry"] = "ENTER เพื่อลองอีกครั้ง",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "มอนิเตอร์",
+        ["monitor_title"] = "ตรวจสอบฮาร์ดแวร์",
+        ["monitor_temperature"] = "อุณหภูมิ (°C)",
+        ["monitor_fan_speed"] = "ความเร็วพัดลม (RPM)",
+        ["monitor_power_load"] = "พลังงานและโหลด",
+        ["monitor_gpu_load"] = "โหลด GPU %",
+        ["monitor_gpu_power"] = "พลังงาน GPU W",
+        ["monitor_battery_power"] = "แบตเตอรี่ W",
+
         // AURA MODES
         ["aura_static"] = "คงที่",
         ["aura_breathe"] = "หายใจ",
@@ -403,6 +423,43 @@ public static class Thai
         ["speed_slow"] = "ช้า",
         ["speed_normal"] = "ปกติ",
         ["speed_fast"] = "เร็ว",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "ข้อมูลระบบ",
+        ["sysinfo_copy"] = "คัดลอกไปยังคลิปบอร์ด",
+        ["sysinfo_system_header"] = "ระบบ",
+        ["sysinfo_cpu_header"] = "โปรเซสเซอร์",
+        ["sysinfo_memory_header"] = "หน่วยความจำ",
+        ["sysinfo_graphics_header"] = "กราฟิก",
+        ["sysinfo_storage_header"] = "พื้นที่จัดเก็บ",
+        ["sysinfo_network_header"] = "เครือข่าย",
+        ["sysinfo_audio_header"] = "เสียง",
+        ["sysinfo_battery_header"] = "แบตเตอรี่",
+        ["sysinfo_usb_header"] = "อุปกรณ์ USB",
+        ["sysinfo_product"] = "ผลิตภัณฑ์",
+        ["sysinfo_vendor"] = "ผู้ผลิต",
+        ["sysinfo_board"] = "เมนบอร์ด",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "เคอร์เนล",
+        ["sysinfo_os"] = "ระบบปฏิบัติการ",
+        ["sysinfo_desktop"] = "เดสก์ท็อป",
+        ["sysinfo_session"] = "เซสชัน",
+        ["sysinfo_cpu_model"] = "รุ่น",
+        ["sysinfo_cores_threads"] = "คอร์ / เธรด",
+        ["sysinfo_arch"] = "สถาปัตยกรรม",
+        ["sysinfo_frequency"] = "ความถี่",
+        ["sysinfo_cache"] = "แคช",
+        ["sysinfo_governor"] = "ตัวควบคุม",
+        ["sysinfo_total"] = "ทั้งหมด",
+        ["sysinfo_used"] = "ใช้แล้ว",
+        ["sysinfo_available"] = "พร้อมใช้งาน",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "ใช้แล้ว",
+        ["sysinfo_sound_server"] = "เซิร์ฟเวอร์เสียง",
+        ["sysinfo_status"] = "สถานะ",
+        ["sysinfo_health"] = "สุขภาพ",
+        ["sysinfo_power"] = "พลังงาน",
+        ["sysinfo_cycles"] = "รอบ",
 
         // MISC
         ["ghelper"] = "G-Helper",

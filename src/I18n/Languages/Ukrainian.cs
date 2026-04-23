@@ -35,9 +35,9 @@ public static class Ukrainian
         ["fans_power"] = "Вентилятори + Живлення",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Еко",
+        ["gpu_standard"] = "Стандарт",
+        ["gpu_ultimate"] = "Максимум",
         ["gpu_optimized"] = "Оптимізований",
         ["gpu_unknown"] = "Невідомий",
         ["gpu_mode_prefix"] = "Режим GPU: {0}",
@@ -286,6 +286,10 @@ public static class Ukrainian
         ["language_header"] = "Мова",
         ["language_auto"] = "Авто (системна)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Вигляд",
+        ["icon_set_label"] = "Набір іконок",
+
         // FANS WINDOW
         ["fans_title"] = "Вентилятори та живлення",
         ["fan_curves"] = "Криві вентиляторів",
@@ -303,6 +307,12 @@ public static class Ukrainian
         ["auto_apply_power_limits"] = "Автоматично застосовувати ліміти потужності при зміні режиму",
         ["firmware_control"] = "Контроль прошивки",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Навант.: {2}   Серед.: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Андервольтинг (експериментально)",
+        ["undervolt_desc"] = "Зсув Curve Optimizer. Більш від'ємне = нижча напруга. Надто низькі значення можуть спричинити нестабільність або пошкодження даних. Починайте з малого. Скидається при перезавантаженні.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Автоматично застосовувати при зміні режиму",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Інформація про батарею",
@@ -381,6 +391,16 @@ public static class Ukrainian
         ["arcade_new_highscore"] = "НОВИЙ НАЙВИЩИЙ РАХУНОК!",
         ["arcade_retry"] = "ENTER щоб спробувати знову",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Монітор",
+        ["monitor_title"] = "Монітор обладнання",
+        ["monitor_temperature"] = "Температура (°C)",
+        ["monitor_fan_speed"] = "Швидкість вент. (об/хв)",
+        ["monitor_power_load"] = "Потужність і навантаження",
+        ["monitor_gpu_load"] = "Навантаження GPU %",
+        ["monitor_gpu_power"] = "Потужність GPU Вт",
+        ["monitor_battery_power"] = "Батарея Вт",
+
         // AURA MODES
         ["aura_static"] = "Статичний",
         ["aura_breathe"] = "Дихання",
@@ -400,6 +420,43 @@ public static class Ukrainian
         ["speed_slow"] = "Повільно",
         ["speed_normal"] = "Нормально",
         ["speed_fast"] = "Швидко",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Інформація про систему",
+        ["sysinfo_copy"] = "Копіювати до буфера обміну",
+        ["sysinfo_system_header"] = "Система",
+        ["sysinfo_cpu_header"] = "Процесор",
+        ["sysinfo_memory_header"] = "Пам'ять",
+        ["sysinfo_graphics_header"] = "Графіка",
+        ["sysinfo_storage_header"] = "Сховище",
+        ["sysinfo_network_header"] = "Мережа",
+        ["sysinfo_audio_header"] = "Аудіо",
+        ["sysinfo_battery_header"] = "Батарея",
+        ["sysinfo_usb_header"] = "USB-пристрої",
+        ["sysinfo_product"] = "Продукт",
+        ["sysinfo_vendor"] = "Виробник",
+        ["sysinfo_board"] = "Плата",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Ядро",
+        ["sysinfo_os"] = "ОС",
+        ["sysinfo_desktop"] = "Робочий стіл",
+        ["sysinfo_session"] = "Сесія",
+        ["sysinfo_cpu_model"] = "Модель",
+        ["sysinfo_cores_threads"] = "Ядра / Потоки",
+        ["sysinfo_arch"] = "Архітектура",
+        ["sysinfo_frequency"] = "Частота",
+        ["sysinfo_cache"] = "Кеш",
+        ["sysinfo_governor"] = "Регулятор",
+        ["sysinfo_total"] = "Всього",
+        ["sysinfo_used"] = "Використано",
+        ["sysinfo_available"] = "Доступно",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "використано",
+        ["sysinfo_sound_server"] = "Звуковий сервер",
+        ["sysinfo_status"] = "Статус",
+        ["sysinfo_health"] = "Стан",
+        ["sysinfo_power"] = "Потужність",
+        ["sysinfo_cycles"] = "Цикли",
 
         // MISC
         ["ghelper"] = "G-Helper",

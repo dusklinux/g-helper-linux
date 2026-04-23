@@ -38,9 +38,9 @@ public static class Macedonian
         ["fans_power"] = "Вентилатори + Напојување",
 
         // GPU MODES
-        ["gpu_eco"] = "Eco",
-        ["gpu_standard"] = "Standard",
-        ["gpu_ultimate"] = "Ultimate",
+        ["gpu_eco"] = "Еко",
+        ["gpu_standard"] = "Стандарден",
+        ["gpu_ultimate"] = "Врвен",
         ["gpu_optimized"] = "Оптимизиран",
         ["gpu_unknown"] = "Непознат",
         ["gpu_mode_prefix"] = "GPU режим: {0}",
@@ -289,6 +289,10 @@ public static class Macedonian
         ["language_header"] = "Јазик",
         ["language_auto"] = "Авто (системски)",
 
+        // APPEARANCE
+        ["appearance_header"] = "Изглед",
+        ["icon_set_label"] = "Сет на икони",
+
         // FANS WINDOW
         ["fans_title"] = "Вентилатори и напојување",
         ["fan_curves"] = "Криви на вентилатори",
@@ -306,6 +310,12 @@ public static class Macedonian
         ["auto_apply_power_limits"] = "Авто-примени ограничувања на моќност при промена на режим",
         ["firmware_control"] = "Контрола на фирмвер",
         ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Оптеретување: {2}   Среден: {3} RPM",
+
+        // UNDERVOLTING
+        ["undervolt_header"] = "Андерволтинг (Експериментално)",
+        ["undervolt_desc"] = "Curve Optimizer офсет. Поголема негативна вредност = понизок напон. Премногу ниски вредности може да предизвикаат нестабилност или оштетување на податоци. Почнете со мали вредности. Се ресетира при рестарт.",
+        ["undervolt_cpu"] = "CPU",
+        ["undervolt_auto_apply"] = "Автоматски примени при промена на режим",
 
         // BATTERY INFO WINDOW
         ["battery_info_title"] = "Информации за батерија",
@@ -384,6 +394,16 @@ public static class Macedonian
         ["arcade_new_highscore"] = "НОВ НАЈДОБАР РЕЗУЛТАТ!",
         ["arcade_retry"] = "ENTER за повторување",
 
+        // HARDWARE MONITOR
+        ["monitor_button"] = "Монитор",
+        ["monitor_title"] = "Монитор на хардвер",
+        ["monitor_temperature"] = "Температура (°C)",
+        ["monitor_fan_speed"] = "Брзина на вентилатор (RPM)",
+        ["monitor_power_load"] = "Моќност и оптоварување",
+        ["monitor_gpu_load"] = "Оптоварување GPU %",
+        ["monitor_gpu_power"] = "Моќност GPU W",
+        ["monitor_battery_power"] = "Батерија W",
+
         // AURA MODES
         ["aura_static"] = "Статичен",
         ["aura_breathe"] = "Дишење",
@@ -403,6 +423,43 @@ public static class Macedonian
         ["speed_slow"] = "Бавно",
         ["speed_normal"] = "Нормално",
         ["speed_fast"] = "Брзо",
+
+        // SYSTEM INFO WINDOW
+        ["sysinfo_title"] = "Информации за системот",
+        ["sysinfo_copy"] = "Копирај во привремена меморија",
+        ["sysinfo_system_header"] = "Систем",
+        ["sysinfo_cpu_header"] = "Процесор",
+        ["sysinfo_memory_header"] = "Меморија",
+        ["sysinfo_graphics_header"] = "Графика",
+        ["sysinfo_storage_header"] = "Складирање",
+        ["sysinfo_network_header"] = "Мрежа",
+        ["sysinfo_audio_header"] = "Звук",
+        ["sysinfo_battery_header"] = "Батерија",
+        ["sysinfo_usb_header"] = "USB-уреди",
+        ["sysinfo_product"] = "Производ",
+        ["sysinfo_vendor"] = "Производител",
+        ["sysinfo_board"] = "Матична плоча",
+        ["sysinfo_bios"] = "BIOS",
+        ["sysinfo_kernel"] = "Кернел",
+        ["sysinfo_os"] = "Оперативен систем",
+        ["sysinfo_desktop"] = "Работна површина",
+        ["sysinfo_session"] = "Сесија",
+        ["sysinfo_cpu_model"] = "Модел",
+        ["sysinfo_cores_threads"] = "Јадра / Нишки",
+        ["sysinfo_arch"] = "Архитектура",
+        ["sysinfo_frequency"] = "Фреквенција",
+        ["sysinfo_cache"] = "Кеш",
+        ["sysinfo_governor"] = "Регулатор",
+        ["sysinfo_total"] = "Вкупно",
+        ["sysinfo_used"] = "Искористено",
+        ["sysinfo_available"] = "Достапно",
+        ["sysinfo_swap"] = "Swap",
+        ["sysinfo_swap_used"] = "искористено",
+        ["sysinfo_sound_server"] = "Сервер за звук",
+        ["sysinfo_status"] = "Статус",
+        ["sysinfo_health"] = "Здравје",
+        ["sysinfo_power"] = "Моќност",
+        ["sysinfo_cycles"] = "Циклуси",
 
         // MISC
         ["ghelper"] = "G-Helper",

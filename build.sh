@@ -82,6 +82,25 @@ if ! dotnet restore "$SRC_DIR" --runtime linux-x64 -q; then
     exit 1
 fi
 
+# Prepare native .so for embedding
+EMBED_DIR="$SCRIPT_DIR/build/embedded"
+rm -rf "$EMBED_DIR"
+mkdir -p "$EMBED_DIR"
+
+NUGET_DIR="${NUGET_PACKAGES:-$HOME/.nuget/packages}"
+for lib_spec in \
+    "libSkiaSharp.so:skiasharp.nativeassets.linux:runtimes/linux-x64/native/libSkiaSharp.so" \
+    "libHarfBuzzSharp.so:harfbuzzsharp.nativeassets.linux:runtimes/linux-x64/native/libHarfBuzzSharp.so"; do
+    IFS=':' read -r lib_name pkg_name pkg_path <<< "$lib_spec"
+    # Find the latest version directory for this package
+    pkg_dir=$(find "$NUGET_DIR/$pkg_name" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort -V | tail -1)
+    if [[ -n "$pkg_dir" && -f "$pkg_dir/$pkg_path" ]]; then
+        cp "$pkg_dir/$pkg_path" "$EMBED_DIR/$lib_name"
+        strip --strip-unneeded "$EMBED_DIR/$lib_name" 2>/dev/null || true
+        echo "  Embedded $lib_name: $(du -sh "$EMBED_DIR/$lib_name" | cut -f1) (stripped)"
+    fi
+done
+
 # Publish as native AOT
 echo "[3/4] Compiling native AOT binary (this may take a minute)..."
 dotnet publish "$SRC_DIR" -c Release --no-restore 2>&1 | grep -v "^.*error : Deleting file" || true
@@ -102,12 +121,15 @@ mkdir -p "$DIST_DIR"
 cp "$PUBLISH_DIR/ghelper" "$DIST_DIR/"
 chmod +x "$DIST_DIR/ghelper"
 
-# Copy native .so libraries (required at runtime, loaded from same directory)
-for lib in libSkiaSharp.so libHarfBuzzSharp.so; do
-    if [[ -f "$PUBLISH_DIR/$lib" ]]; then
-        cp "$PUBLISH_DIR/$lib" "$DIST_DIR/"
-    fi
-done
+# UPX compression on main binary (native .so are embedded, UPX compresses everything)
+if command -v upx &>/dev/null; then
+    echo "[5/5] Compressing with UPX..."
+    upx --best --lzma "$DIST_DIR/ghelper" 2>&1 | tail -1 || true
+else
+    echo ""
+    echo "NOTE: upx not found — binary will not be compressed."
+    echo "  Install with: sudo apt install upx-ucl"
+fi
 
 # Clean wlr-randr build artifacts from vendor dir (binary is embedded in ghelper)
 if [[ -n "$WLR_RANDR_BIN" ]]; then
