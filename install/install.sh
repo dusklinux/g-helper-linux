@@ -227,7 +227,7 @@ if [[ "$MODE" == "uninstall" ]]; then
     echo "${RED}${BOLD}  ╚═════════════════════════════════════════════════════════╝${RESET}"
     echo ""
     printf "  ${BOLD}Type ${RED}YES${RESET}${BOLD} to confirm uninstall: ${RESET}"
-    read -r confirm
+    read -r confirm < /dev/tty
     if [[ "$confirm" != "YES" ]]; then
         echo ""
         echo "  ${YELLOW}Aborted.${RESET}"
