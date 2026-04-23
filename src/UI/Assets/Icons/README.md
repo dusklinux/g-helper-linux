@@ -1,6 +1,6 @@
 # Icon sets
 
-G-Helper Linux ships 21 icon sets, switchable at runtime via Extra →
+G-Helper Linux ships 22 icon sets, switchable at runtime via Extra →
 Appearance → Icon Set. The default is `noto`. Selection changes apply live
 across every open window; the chosen slug is persisted in
 `~/.config/ghelper/config.json` under the `icon_set` key.
@@ -338,3 +338,14 @@ icons and several required glyphs are missing):
 - gamepad→`pacman` - Pac-Man silhouette, an iconic gaming symbol.
 - herb→`tree` - no "herb" icon; tree stands in for plant/nature.
 - package→`box-add` - box with plus mark, the closest package-like glyph.
+
+### `emojitwo/`
+
+Fork of the last fully free EmojiOne 2 artwork
+(<https://github.com/EmojiTwo/emojitwo>), licensed CC BY 4.0.
+Originally released as Emojione 2.2 by Ranks.com
+(<https://www.emojione.com>) with contributions from the Emojitwo
+community; pinned to commit 311eff5. 64x64 viewBox, flat cartoon
+style (predecessor of today's Emojione 3+/JoyPixels art). 14 emojis;
+`power.svg` is copied from `noto/` because Emojitwo does not include
+U+23FB.
