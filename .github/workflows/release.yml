@@ -204,6 +204,14 @@ jobs:
             curl -sL https://raw.githubusercontent.com/${{ github.repository }}/master/install/install.sh | sudo bash
             ```
 
+            ### Quick Uninstall
+
+            ```bash
+            curl -sL https://raw.githubusercontent.com/${{ github.repository }}/master/install/install.sh | sudo bash -s -- --uninstall
+            ```
+
+            Removes system files. User config in `~/.config/ghelper` is preserved.
+
             ### AppImage
 
             Download `GHelper-x86_64.AppImage`, make it executable, and run:

@@ -607,6 +607,9 @@ if [[ "$MODE" == "appimage" ]]; then
     echo "${YELLOW}${BOLD}  ╚════════════════════════════════════════════════════════════════╝${RESET}"
     echo ""
     _typeout "${YELLOW}${BOLD}  > HARDWARE ACCESS LAYER READY :: Launch your AppImage now${RESET}" 0.03
+    echo ""
+    echo "  ${DIM}To uninstall:${RESET}"
+    echo "  ${DIM}curl -sL https://raw.githubusercontent.com/utajum/g-helper-linux/master/install/install.sh | sudo bash -s -- --uninstall${RESET}"
 else
     echo "${GREEN}${BOLD}  ╔════════════════════════════════════════════════════════════════╗${RESET}"
     echo "${GREEN}${BOLD}  ║                                                                ║${RESET}"
@@ -628,6 +631,9 @@ else
     echo "${GREEN}${BOLD}  ╚════════════════════════════════════════════════════════════════╝${RESET}"
     echo ""
     _typeout "${GREEN}${BOLD}  > NEURAL LINK ESTABLISHED :: LAUNCH WITH: ghelper${RESET}" 0.03
+    echo ""
+    echo "  ${DIM}To uninstall:${RESET}"
+    echo "  ${DIM}curl -sL https://raw.githubusercontent.com/utajum/g-helper-linux/master/install/install.sh | sudo bash -s -- --uninstall${RESET}"
 fi
 
 echo ""

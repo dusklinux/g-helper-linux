@@ -216,6 +216,14 @@ lsmod | grep asus
 curl -sL https://raw.githubusercontent.com/utajum/g-helper-linux/master/install/install.sh | sudo bash
 ```
 
+### `╠══[ QUICK UNINSTALL ]══╣`
+
+```bash
+curl -sL https://raw.githubusercontent.com/utajum/g-helper-linux/master/install/install.sh | sudo bash -s -- --uninstall
+```
+
+Removes system files + udev rules + desktop entry. User config in `~/.config/ghelper` is preserved.
+
 ### `╠══[ MANUAL DOWNLOAD ]══╣`
 
 ```bash
