@@ -469,8 +469,17 @@ public static class SysfsHelper
     }
 
     /// <summary>
-    /// Find the first battery device in /sys/class/power_supply/ that has type="Battery".
+    /// Find the laptop battery device in /sys/class/power_supply/.
     /// Returns the directory path (e.g., "/sys/class/power_supply/BAT0") or null.
+    ///
+    /// Multiple type=Battery devices can coexist (laptop + wireless keyboard/mouse/headset
+    /// HID batteries). Directory.GetDirectories returns sysfs entries in registration order
+    /// (no sort), so on some kernels (e.g. ROG Flow Z13 2025 with hid_asus loading early)
+    /// a HID device battery wins the first-match race over the ACPI BAT0. Score candidates
+    /// to deterministically prefer the real laptop battery:
+    ///   +100  name starts with "BAT" (ACPI standard: BAT0, BAT1, BATC, BATT)
+    ///   +50   has charge_control_end_threshold attribute (real laptop batteries do)
+    ///   -1000 name starts with "hid-" (excludes wireless peripheral batteries)
     /// </summary>
     public static string? FindBattery()
     {
@@ -479,13 +488,32 @@ public static class SysfsHelper
             if (!Directory.Exists(PowerSupply))
                 return null;
 
+            string? best = null;
+            int bestScore = int.MinValue;
+
             foreach (var psDir in Directory.GetDirectories(PowerSupply))
             {
-                var typePath = Path.Combine(psDir, "type");
-                var type = ReadAttribute(typePath);
-                if (type != null && type.Equals("Battery", StringComparison.OrdinalIgnoreCase))
-                    return psDir;
+                var type = ReadAttribute(Path.Combine(psDir, "type"));
+                if (type == null || !type.Equals("Battery", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var name = Path.GetFileName(psDir);
+                int score = 0;
+                if (name.StartsWith("BAT", StringComparison.Ordinal))
+                    score += 100;
+                if (name.StartsWith("hid-", StringComparison.OrdinalIgnoreCase))
+                    score -= 1000;
+                if (File.Exists(Path.Combine(psDir, "charge_control_end_threshold")))
+                    score += 50;
+
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    best = psDir;
+                }
             }
+
+            return best;
         }
         catch (Exception ex)
         {
