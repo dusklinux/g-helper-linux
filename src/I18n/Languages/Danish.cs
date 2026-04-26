@@ -421,6 +421,10 @@ public static class Danish
         ["aura_ripple"] = "Krusning",
         ["aura_comet"] = "Komet",
         ["aura_flash"] = "Blink",
+        ["aura_heatmap"] = "Varmekort",
+        ["aura_gpu_mode"] = "GPU-tilstand",
+        ["aura_battery"] = "Batteri",
+        ["aura_gradient"] = "Gradient",
         ["aura_no_modes"] = "Ingen tilstande",
 
         // AURA SPEEDS

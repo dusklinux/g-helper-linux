@@ -421,6 +421,10 @@ public static class ChineseTraditional
         ["aura_ripple"] = "漣漪",
         ["aura_comet"] = "彗星",
         ["aura_flash"] = "閃爍",
+        ["aura_heatmap"] = "熱力圖",
+        ["aura_gpu_mode"] = "GPU 模式",
+        ["aura_battery"] = "電池",
+        ["aura_gradient"] = "漸層",
         ["aura_no_modes"] = "無模式",
 
         // AURA SPEEDS

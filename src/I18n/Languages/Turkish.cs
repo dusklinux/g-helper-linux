@@ -418,6 +418,10 @@ public static class Turkish
         ["aura_ripple"] = "Dalga",
         ["aura_comet"] = "Kuyruklu Yıldız",
         ["aura_flash"] = "Flaş",
+        ["aura_heatmap"] = "Isı Haritası",
+        ["aura_gpu_mode"] = "GPU Modu",
+        ["aura_battery"] = "Pil",
+        ["aura_gradient"] = "Gradyan",
         ["aura_no_modes"] = "Mod yok",
 
         // AURA SPEEDS

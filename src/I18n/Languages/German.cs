@@ -418,6 +418,10 @@ public static class German
         ["aura_ripple"] = "Wellen",
         ["aura_comet"] = "Komet",
         ["aura_flash"] = "Blitz",
+        ["aura_heatmap"] = "Heatmap",
+        ["aura_gpu_mode"] = "GPU-Modus",
+        ["aura_battery"] = "Batterie",
+        ["aura_gradient"] = "Verlauf",
         ["aura_no_modes"] = "Keine Modi",
 
         // AURA SPEEDS

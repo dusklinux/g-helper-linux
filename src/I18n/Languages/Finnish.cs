@@ -421,6 +421,10 @@ public static class Finnish
         ["aura_ripple"] = "Aaltoilu",
         ["aura_comet"] = "Komeetta",
         ["aura_flash"] = "Välähdys",
+        ["aura_heatmap"] = "Lämpökartta",
+        ["aura_gpu_mode"] = "GPU-tila",
+        ["aura_battery"] = "Akku",
+        ["aura_gradient"] = "Liukuväri",
         ["aura_no_modes"] = "Ei tiloja",
 
         // AURA SPEEDS

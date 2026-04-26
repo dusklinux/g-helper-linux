@@ -421,6 +421,10 @@ public static class Korean
         ["aura_ripple"] = "파문",
         ["aura_comet"] = "혜성",
         ["aura_flash"] = "플래시",
+        ["aura_heatmap"] = "히트맵",
+        ["aura_gpu_mode"] = "GPU 모드",
+        ["aura_battery"] = "배터리",
+        ["aura_gradient"] = "그라데이션",
         ["aura_no_modes"] = "모드 없음",
 
         // AURA SPEEDS

@@ -418,6 +418,10 @@ public static class Hungarian
         ["aura_ripple"] = "Hullám",
         ["aura_comet"] = "Üstökös",
         ["aura_flash"] = "Villanás",
+        ["aura_heatmap"] = "Hőtérkép",
+        ["aura_gpu_mode"] = "GPU mód",
+        ["aura_battery"] = "Akkumulátor",
+        ["aura_gradient"] = "Színátmenet",
         ["aura_no_modes"] = "Nincs mód",
 
         // AURA SPEEDS

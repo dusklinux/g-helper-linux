@@ -418,6 +418,10 @@ public static class Vietnamese
         ["aura_ripple"] = "Gợn sóng",
         ["aura_comet"] = "Sao chổi",
         ["aura_flash"] = "Lóe sáng",
+        ["aura_heatmap"] = "Bản đồ nhiệt",
+        ["aura_gpu_mode"] = "Chế độ GPU",
+        ["aura_battery"] = "Pin",
+        ["aura_gradient"] = "Chuyển sắc",
         ["aura_no_modes"] = "Không có chế độ",
 
         // AURA SPEEDS

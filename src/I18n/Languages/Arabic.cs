@@ -421,6 +421,10 @@ public static class Arabic
         ["aura_ripple"] = "تموّج",
         ["aura_comet"] = "مذنّب",
         ["aura_flash"] = "وميض سريع",
+        ["aura_heatmap"] = "خريطة الحرارة",
+        ["aura_gpu_mode"] = "وضع GPU",
+        ["aura_battery"] = "البطارية",
+        ["aura_gradient"] = "تدرج",
         ["aura_no_modes"] = "لا توجد أوضاع",
 
         // AURA SPEEDS

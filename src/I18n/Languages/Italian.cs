@@ -418,6 +418,10 @@ public static class Italian
         ["aura_ripple"] = "Increspatura",
         ["aura_comet"] = "Cometa",
         ["aura_flash"] = "Lampo",
+        ["aura_heatmap"] = "Mappa termica",
+        ["aura_gpu_mode"] = "Modalità GPU",
+        ["aura_battery"] = "Batteria",
+        ["aura_gradient"] = "Gradiente",
         ["aura_no_modes"] = "Nessuna modalità",
 
         // AURA SPEEDS

@@ -421,6 +421,10 @@ public static class Swedish
         ["aura_ripple"] = "Krusning",
         ["aura_comet"] = "Komet",
         ["aura_flash"] = "Blixt",
+        ["aura_heatmap"] = "Värmekarta",
+        ["aura_gpu_mode"] = "GPU-läge",
+        ["aura_battery"] = "Batteri",
+        ["aura_gradient"] = "Gradient",
         ["aura_no_modes"] = "Inga lägen",
 
         // AURA SPEEDS

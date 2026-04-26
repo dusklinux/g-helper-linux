@@ -418,6 +418,10 @@ public static class Dutch
         ["aura_ripple"] = "Rimpeling",
         ["aura_comet"] = "Komeet",
         ["aura_flash"] = "Flits",
+        ["aura_heatmap"] = "Heatmap",
+        ["aura_gpu_mode"] = "GPU-modus",
+        ["aura_battery"] = "Batterij",
+        ["aura_gradient"] = "Verloop",
         ["aura_no_modes"] = "Geen modi",
 
         // AURA SPEEDS

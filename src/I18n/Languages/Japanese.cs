@@ -421,6 +421,10 @@ public static class Japanese
         ["aura_ripple"] = "リップル",
         ["aura_comet"] = "コメット",
         ["aura_flash"] = "フラッシュ",
+        ["aura_heatmap"] = "ヒートマップ",
+        ["aura_gpu_mode"] = "GPU モード",
+        ["aura_battery"] = "バッテリー",
+        ["aura_gradient"] = "グラデーション",
         ["aura_no_modes"] = "モードなし",
 
         // AURA SPEEDS

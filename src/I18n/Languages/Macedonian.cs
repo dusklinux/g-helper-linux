@@ -421,6 +421,10 @@ public static class Macedonian
         ["aura_ripple"] = "Бранување",
         ["aura_comet"] = "Комета",
         ["aura_flash"] = "Блесок",
+        ["aura_heatmap"] = "Топлинска мапа",
+        ["aura_gpu_mode"] = "GPU режим",
+        ["aura_battery"] = "Батерија",
+        ["aura_gradient"] = "Градиент",
         ["aura_no_modes"] = "Нема режими",
 
         // AURA SPEEDS

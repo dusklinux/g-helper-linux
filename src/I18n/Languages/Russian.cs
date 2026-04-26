@@ -418,6 +418,10 @@ public static class Russian
         ["aura_ripple"] = "Рябь",
         ["aura_comet"] = "Комета",
         ["aura_flash"] = "Вспышка",
+        ["aura_heatmap"] = "Тепловая карта",
+        ["aura_gpu_mode"] = "Режим GPU",
+        ["aura_battery"] = "Батарея",
+        ["aura_gradient"] = "Градиент",
         ["aura_no_modes"] = "Нет режимов",
 
         // AURA SPEEDS

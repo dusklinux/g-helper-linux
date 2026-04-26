@@ -421,6 +421,10 @@ public static class Greek
         ["aura_ripple"] = "Κυματισμός",
         ["aura_comet"] = "Κομήτης",
         ["aura_flash"] = "Αναλαμπή",
+        ["aura_heatmap"] = "Θερμικός χάρτης",
+        ["aura_gpu_mode"] = "Λειτουργία GPU",
+        ["aura_battery"] = "Μπαταρία",
+        ["aura_gradient"] = "Διαβάθμιση",
         ["aura_no_modes"] = "Χωρίς λειτουργίες",
 
         // AURA SPEEDS

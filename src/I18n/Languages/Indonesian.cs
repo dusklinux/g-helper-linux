@@ -421,6 +421,10 @@ public static class Indonesian
         ["aura_ripple"] = "Riak",
         ["aura_comet"] = "Komet",
         ["aura_flash"] = "Kilat",
+        ["aura_heatmap"] = "Peta Panas",
+        ["aura_gpu_mode"] = "Mode GPU",
+        ["aura_battery"] = "Baterai",
+        ["aura_gradient"] = "Gradien",
         ["aura_no_modes"] = "Tidak ada mode",
 
         // AURA SPEEDS

@@ -418,6 +418,10 @@ public static class PortugueseBR
         ["aura_ripple"] = "Ondulação",
         ["aura_comet"] = "Cometa",
         ["aura_flash"] = "Flash",
+        ["aura_heatmap"] = "Mapa de calor",
+        ["aura_gpu_mode"] = "Modo GPU",
+        ["aura_battery"] = "Bateria",
+        ["aura_gradient"] = "Gradiente",
         ["aura_no_modes"] = "Sem modos",
 
         // AURA SPEEDS

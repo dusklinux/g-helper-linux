@@ -197,7 +197,25 @@ public class GpuModeController
         try
         {
             Logger.WriteLine($"GpuModeController: RequestModeSwitch → {target}");
-            return ComputeAndExecute(target);
+            var result = ComputeAndExecute(target);
+
+            // If the user has the AURA "GPU Mode" color effect selected,
+            // refresh the keyboard so the new GPU mode color is visible
+            // immediately. Failure here is non-fatal - log and continue.
+            if (result == GpuSwitchResult.Applied || result == GpuSwitchResult.AlreadySet)
+            {
+                try
+                {
+                    if ((USB.AuraMode)AppConfig.Get("aura_mode") == USB.AuraMode.GpuMode)
+                        USB.CustomRgb.ApplyGpuColor();
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteLine($"GpuModeController: AURA GpuMode refresh failed: {ex.Message}");
+                }
+            }
+
+            return result;
         }
         catch (Exception ex)
         {

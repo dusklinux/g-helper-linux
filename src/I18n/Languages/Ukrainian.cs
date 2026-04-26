@@ -418,6 +418,10 @@ public static class Ukrainian
         ["aura_ripple"] = "Хвиля",
         ["aura_comet"] = "Комета",
         ["aura_flash"] = "Спалах",
+        ["aura_heatmap"] = "Теплова карта",
+        ["aura_gpu_mode"] = "Режим GPU",
+        ["aura_battery"] = "Акумулятор",
+        ["aura_gradient"] = "Градієнт",
         ["aura_no_modes"] = "Немає режимів",
 
         // AURA SPEEDS

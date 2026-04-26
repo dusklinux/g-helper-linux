@@ -418,6 +418,10 @@ public static class Czech
         ["aura_ripple"] = "Vlna",
         ["aura_comet"] = "Kometa",
         ["aura_flash"] = "Záblesk",
+        ["aura_heatmap"] = "Tepelná mapa",
+        ["aura_gpu_mode"] = "Režim GPU",
+        ["aura_battery"] = "Baterie",
+        ["aura_gradient"] = "Gradient",
         ["aura_no_modes"] = "Žádné režimy",
 
         // AURA SPEEDS

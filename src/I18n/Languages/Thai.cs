@@ -421,6 +421,10 @@ public static class Thai
         ["aura_ripple"] = "ระลอกคลื่น",
         ["aura_comet"] = "ดาวหาง",
         ["aura_flash"] = "แฟลช",
+        ["aura_heatmap"] = "แผนที่ความร้อน",
+        ["aura_gpu_mode"] = "โหมด GPU",
+        ["aura_battery"] = "แบตเตอรี่",
+        ["aura_gradient"] = "การไล่ระดับ",
         ["aura_no_modes"] = "ไม่มีโหมด",
 
         // AURA SPEEDS

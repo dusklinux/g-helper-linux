@@ -421,6 +421,10 @@ public static class Norwegian
         ["aura_ripple"] = "Krusning",
         ["aura_comet"] = "Komet",
         ["aura_flash"] = "Blink",
+        ["aura_heatmap"] = "Varmekart",
+        ["aura_gpu_mode"] = "GPU-modus",
+        ["aura_battery"] = "Batteri",
+        ["aura_gradient"] = "Gradient",
         ["aura_no_modes"] = "Ingen moduser",
 
         // AURA SPEEDS

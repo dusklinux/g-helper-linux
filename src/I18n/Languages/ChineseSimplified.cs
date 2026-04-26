@@ -421,6 +421,10 @@ public static class ChineseSimplified
         ["aura_ripple"] = "涟漪",
         ["aura_comet"] = "彗星",
         ["aura_flash"] = "闪烁",
+        ["aura_heatmap"] = "热力图",
+        ["aura_gpu_mode"] = "GPU 模式",
+        ["aura_battery"] = "电池",
+        ["aura_gradient"] = "渐变",
         ["aura_no_modes"] = "无模式",
 
         // AURA SPEEDS

@@ -6,7 +6,12 @@ namespace GHelper.Linux.USB;
 
 /// <summary>
 /// AURA keyboard RGB modes.
-/// Values match the AURA HID protocol byte values.
+/// Values 0-12 match the AURA HID protocol byte values.
+/// Values 20+ are software-driven "custom RGB" modes that don't use
+/// the firmware mode bytes - they timer-paint via ApplyDirect.
+/// 22 (AMBIENT) is intentionally reserved to keep numeric parity with
+/// upstream Windows g-helper; not yet implemented on Linux because
+/// Wayland screen capture needs xdg-desktop-portal Screencast wiring.
 /// </summary>
 public enum AuraMode : int
 {
@@ -22,6 +27,15 @@ public enum AuraMode : int
     AuraStrobe = 10,
     Comet = 11,
     Flash = 12,
+    // CPU temp → keyboard color. Blue idle, red hot. Run a load (e.g. stress-ng --cpu 4) to warm it up.
+    Heatmap = 20,
+    // GPU mode → keyboard color. Eco=green, Std=yellow, Ultimate=red. Refreshes when you switch via tray menu.
+    GpuMode = 21,
+    // Ambient = 22 (reserved, see class comment)
+    // Battery % → keyboard color. Red low, yellow mid, lime full. Unplug AC to watch it drift.
+    Battery = 23,
+    // Two-color gradient across keyboard + lightbar zones (Strix only). Pick Color1 + Color2; blends left→right.
+    Gradient = 24,
 }
 
 /// <summary>
@@ -81,6 +95,36 @@ public static class Aura
     private static bool _backlight = true;
     private static bool _initDirect = false;
 
+
+    private static readonly System.Timers.Timer _customTimer = CreateCustomTimer();
+
+    private static System.Timers.Timer CreateCustomTimer()
+    {
+        var t = new System.Timers.Timer(2000) { AutoReset = true };
+        t.Elapsed += (_, _) =>
+        {
+            if (!_backlight)
+                return;
+            try
+            {
+                switch (_mode)
+                {
+                    case AuraMode.Heatmap:
+                        CustomRgb.ApplyHeatmap();
+                        break;
+                    case AuraMode.Battery:
+                        CustomRgb.ApplyBattery();
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine($"Aura custom timer error: {ex.Message}");
+            }
+        };
+        return t;
+    }
+
     // Model detection
     //
     // _isACPI controls whether we use the sysfs kbd_rgb_mode path (TUF)
@@ -98,6 +142,11 @@ public static class Aura
     private static bool _isStrix4Zone = AppConfig.Is4ZoneRGB();
     private static bool _isSingleColor = AppConfig.IsSingleColor();
 
+    /// <summary>True if this device exposes per-zone direct RGB
+    /// (Strix per-key or 4-zone). Used by CustomRgb.ApplyGradient
+    /// to decide between per-zone painting and single-color fallback.</summary>
+    public static bool IsStrixZoned => _isStrix || _isStrix4Zone;
+
     // Mode dictionaries
 
     private static Dictionary<AuraMode, string> ModesSingleColor => new()
@@ -114,6 +163,9 @@ public static class Aura
         { AuraMode.AuraColorCycle, Labels.Get("aura_color_cycle") },
         { AuraMode.AuraRainbow, Labels.Get("aura_rainbow") },
         { AuraMode.AuraStrobe, Labels.Get("aura_strobe") },
+        { AuraMode.Heatmap, Labels.Get("aura_heatmap") },
+        { AuraMode.GpuMode, Labels.Get("aura_gpu_mode") },
+        { AuraMode.Battery, Labels.Get("aura_battery") },
     };
 
     private static Dictionary<AuraMode, string> ModesStrix => new()
@@ -130,6 +182,9 @@ public static class Aura
         { AuraMode.AuraStrobe, Labels.Get("aura_strobe") },
         { AuraMode.Comet, Labels.Get("aura_comet") },
         { AuraMode.Flash, Labels.Get("aura_flash") },
+        { AuraMode.Heatmap, Labels.Get("aura_heatmap") },
+        { AuraMode.Battery, Labels.Get("aura_battery") },
+        { AuraMode.Gradient, Labels.Get("aura_gradient") },
     };
 
     // Properties
@@ -146,16 +201,21 @@ public static class Aura
         set => _speed = GetSpeeds().ContainsKey(value) ? value : AuraSpeed.Normal;
     }
 
-    /// <summary>Whether the current mode supports a second color (Breathe only, non-ACPI).</summary>
+    /// <summary>Whether the current mode supports a second color (Breathe + Gradient, non-ACPI).</summary>
     public static bool HasSecondColor()
     {
-        return _mode == AuraMode.AuraBreathe && !_isACPI;
+        return (_mode == AuraMode.AuraBreathe || _mode == AuraMode.Gradient) && !_isACPI;
     }
 
-    /// <summary>Whether the current mode uses a color at all (Rainbow/ColorCycle don't).</summary>
+    /// <summary>Whether the current mode uses Color1 at all. Rainbow/ColorCycle don't,
+    /// and the auto-color modes (Heatmap/GpuMode/Battery) compute their own color.</summary>
     public static bool UsesColor()
     {
-        return _mode != AuraMode.AuraColorCycle && _mode != AuraMode.AuraRainbow;
+        return _mode != AuraMode.AuraColorCycle
+            && _mode != AuraMode.AuraRainbow
+            && _mode != AuraMode.Heatmap
+            && _mode != AuraMode.GpuMode
+            && _mode != AuraMode.Battery;
     }
 
     // Mode/Speed lists
@@ -570,6 +630,29 @@ public static class Aura
         SetColor2(AppConfig.Get("aura_color2", 0));
 
         Logger.WriteLine($"ApplyAura: mode={Mode} speed={Speed} color=#{ColorR:X2}{ColorG:X2}{ColorB:X2} color2=#{Color2R:X2}{Color2G:X2}{Color2B:X2}");
+
+        // Custom RGB modes - software-driven, dispatched to CustomRgb.
+        // Stop the timer first so a previous mode's tick can't race a new selection.
+        _customTimer.Stop();
+        switch (Mode)
+        {
+            case AuraMode.Heatmap:
+                CustomRgb.ApplyHeatmap(true);
+                _customTimer.Interval = 2000;
+                _customTimer.Start();
+                return;
+            case AuraMode.Battery:
+                CustomRgb.ApplyBattery();
+                _customTimer.Interval = 30000;
+                _customTimer.Start();
+                return;
+            case AuraMode.GpuMode:
+                CustomRgb.ApplyGpuColor();
+                return;  // event-driven, no timer
+            case AuraMode.Gradient:
+                CustomRgb.ApplyGradient();
+                return;  // static, no timer
+        }
 
         // Map speed enum to protocol byte values
         int speedByte = Speed switch

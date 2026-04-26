@@ -423,6 +423,10 @@ public static class English
         ["aura_ripple"] = "Ripple",
         ["aura_comet"] = "Comet",
         ["aura_flash"] = "Flash",
+        ["aura_heatmap"] = "Heatmap",
+        ["aura_gpu_mode"] = "GPU Mode",
+        ["aura_battery"] = "Battery",
+        ["aura_gradient"] = "Gradient",
         ["aura_no_modes"] = "No modes",
 
         // AURA SPEEDS
