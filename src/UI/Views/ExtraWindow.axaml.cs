@@ -1046,6 +1046,7 @@ public partial class ExtraWindow : Window
             _batteryInfoWindow = new BatteryInfoWindow();
             if (Helpers.AppConfig.Is("topmost"))
                 _batteryInfoWindow.Topmost = true;
+            Helpers.WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_batteryInfoWindow);
             _batteryInfoWindow.Show();
         }
         else
@@ -1061,6 +1062,7 @@ public partial class ExtraWindow : Window
             _systemInfoWindow = new SystemInfoWindow();
             if (Helpers.AppConfig.Is("topmost"))
                 _systemInfoWindow.Topmost = true;
+            Helpers.WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_systemInfoWindow);
             _systemInfoWindow.Show();
         }
         else

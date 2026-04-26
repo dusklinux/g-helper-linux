@@ -1395,6 +1395,7 @@ public partial class MainWindow : Window
             _extraWindow = new ExtraWindow();
             if (Helpers.AppConfig.Is("topmost"))
                 _extraWindow.Topmost = true;
+            WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_extraWindow);
             _extraWindow.Show();
         }
         else
@@ -1434,6 +1435,7 @@ public partial class MainWindow : Window
                 if (_arcadeWindow == null || !_arcadeWindow.IsVisible)
                 {
                     _arcadeWindow = new ArcadeWindow();
+                    WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_arcadeWindow);
                     _arcadeWindow.Show();
                 }
                 else
@@ -1556,6 +1558,7 @@ public partial class MainWindow : Window
             _updatesWindow = new UpdatesWindow();
             if (Helpers.AppConfig.Is("topmost"))
                 _updatesWindow.Topmost = true;
+            WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_updatesWindow);
             _updatesWindow.Show();
         }
         else

@@ -62,6 +62,7 @@ public partial class FansWindow : Window
             _monitorWindow = new MonitorWindow();
             if (Helpers.AppConfig.Is("topmost"))
                 _monitorWindow.Topmost = true;
+            Helpers.WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_monitorWindow);
             _monitorWindow.Show();
         }
         else
