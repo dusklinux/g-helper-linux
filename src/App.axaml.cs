@@ -712,7 +712,6 @@ public class App : Application
         {
             var trayIcon = new TrayIcon
             {
-                ToolTipText = Labels.Format("tray_tooltip", Modes.GetCurrentName()),
                 IsVisible = true,
                 Menu = CreateTrayMenu(desktop)
             };
@@ -731,6 +730,8 @@ public class App : Application
 
             trayIcon.Clicked += (_, _) => ToggleMainWindow();
             TrayIconInstance = trayIcon;
+    
+            TrayTooltip.Start(trayIcon);
 
             Labels.LanguageChanged += () =>
             {
@@ -762,9 +763,8 @@ public class App : Application
         {
             int mode = Modes.GetCurrent();
             int baseMode = Modes.GetBase(mode);
-            string name = Modes.GetName(mode);
 
-            TrayIconInstance.ToolTipText = Labels.Format("tray_tooltip", name);
+            TrayTooltip.Refresh();
 
             bool bw = AppConfig.IsBWIcon();
 
@@ -1096,6 +1096,8 @@ public class App : Application
         // directly without going through Avalonia's request flow.
         IsShuttingDown = true;
         Logger.WriteLine("Shutting down...");
+
+        TrayTooltip.Stop();
 
         // Cleanup
         Power?.StopPowerMonitoring();

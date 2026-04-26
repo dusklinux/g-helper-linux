@@ -181,6 +181,8 @@ public static class Thai
 
         // SYSTEM TRAY
         ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (iGPU เท่านั้น)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: ปรับแต่งอัตโนมัติ (อัตโนมัติ)",
