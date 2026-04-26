@@ -54,8 +54,6 @@ public static class Indonesian
         // SCREEN
         ["screen_prefix"] = "Layar Laptop: {0}Hz",
         ["screen_prefix_auto"] = "Layar Laptop: {0}Hz (Otomatis)",
-        ["screen_auto"] = "Otomatis",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Keyboard Laptop",
@@ -180,7 +178,6 @@ public static class Indonesian
         ["udev_not_installed"] = "Aturan udev belum dipasang. Jalankan install.sh untuk fungsionalitas penuh (batas baterai, kontrol kipas, dll.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
         ["tray_tooltip_cpu"] = "CPU: {0}",
         ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (hanya iGPU)",
@@ -227,7 +224,6 @@ public static class Indonesian
 
         ["display_header"] = "Layar",
         ["controller"] = "Pengendali",
-        ["enable_backlight"] = "Aktifkan lampu latar layar",
         ["enable_backlight_load"] = "Aktifkan lampu latar layar (muat {0})",
         ["load_module"] = "Muat {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -258,6 +254,14 @@ public static class Indonesian
         ["bw_tray_icon"] = "Ikon Tray Hitam-Putih",
         ["clamshell_mode"] = "Mode Clamshell (nonaktifkan tidur saat penutup ditutup)",
         ["start_minimized"] = "Mulai diminimalkan ke tray",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Ikon System Tray",
+        ["cpu_temp_tray"] = "Tampilkan suhu CPU",
+        ["gpu_temp_tray"] = "Tampilkan suhu GPU",
+        ["tray_bg_color"] = "Warna latar belakang",
+        ["tray_text_color"] = "Warna teks",
+        ["tray_bg_transparent"] = "Transparan",
 
         ["key_bindings_header"] = "Pengikatan Tombol",
         ["key_rog_m5"] = "Tombol ROG / M5",
@@ -311,7 +315,6 @@ public static class Indonesian
         ["cpu_boost"] = "Boost CPU",
         ["auto_apply_power_limits"] = "Terapkan batas daya otomatis saat ganti mode",
         ["firmware_control"] = "Kontrol firmware",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Beban: {2}   Tengah: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Eksperimental)",
@@ -377,7 +380,6 @@ public static class Indonesian
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  gerak",
         ["arcade_shoot"] = "SPACE  tembak",

@@ -730,8 +730,8 @@ public class App : Application
 
             trayIcon.Clicked += (_, _) => ToggleMainWindow();
             TrayIconInstance = trayIcon;
-    
-            TrayTooltip.Start(trayIcon);
+
+            TraySystemMonitor.Start(trayIcon, () => ToggleMainWindow());
 
             Labels.LanguageChanged += () =>
             {
@@ -764,7 +764,7 @@ public class App : Application
             int mode = Modes.GetCurrent();
             int baseMode = Modes.GetBase(mode);
 
-            TrayTooltip.Refresh();
+            TraySystemMonitor.Refresh();
 
             bool bw = AppConfig.IsBWIcon();
 
@@ -1097,7 +1097,7 @@ public class App : Application
         IsShuttingDown = true;
         Logger.WriteLine("Shutting down...");
 
-        TrayTooltip.Stop();
+        TraySystemMonitor.Stop();
 
         // Cleanup
         Power?.StopPowerMonitoring();

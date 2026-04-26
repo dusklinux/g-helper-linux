@@ -54,8 +54,6 @@ public static class Korean
         // SCREEN
         ["screen_prefix"] = "노트북 화면: {0}Hz",
         ["screen_prefix_auto"] = "노트북 화면: {0}Hz (자동)",
-        ["screen_auto"] = "자동",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "노트북 키보드",
@@ -180,7 +178,6 @@ public static class Korean
         ["udev_not_installed"] = "udev 규칙이 설치되지 않았습니다. 전체 기능(배터리 제한, 팬 제어 등)을 사용하려면 install.sh를 실행하세요",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
         ["tray_tooltip_cpu"] = "CPU: {0}",
         ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (iGPU 전용)",
@@ -227,7 +224,6 @@ public static class Korean
 
         ["display_header"] = "디스플레이",
         ["controller"] = "컨트롤러",
-        ["enable_backlight"] = "디스플레이 백라이트 활성화",
         ["enable_backlight_load"] = "디스플레이 백라이트 활성화 ({0} 로드)",
         ["load_module"] = "{0} 로드",
         ["panel_overdrive_check"] = "패널 오버드라이브",
@@ -258,6 +254,14 @@ public static class Korean
         ["bw_tray_icon"] = "흑백 트레이 아이콘",
         ["clamshell_mode"] = "클램셸 모드 (덮개 닫아도 절전 안 함)",
         ["start_minimized"] = "트레이에 최소화하여 시작",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "시스템 트레이 아이콘",
+        ["cpu_temp_tray"] = "CPU 온도 표시",
+        ["gpu_temp_tray"] = "GPU 온도 표시",
+        ["tray_bg_color"] = "배경색",
+        ["tray_text_color"] = "글자색",
+        ["tray_bg_transparent"] = "투명",
 
         ["key_bindings_header"] = "키 바인딩",
         ["key_rog_m5"] = "ROG / M5 키",
@@ -311,7 +315,6 @@ public static class Korean
         ["cpu_boost"] = "CPU 부스트",
         ["auto_apply_power_limits"] = "모드 변경 시 전력 제한 자동 적용",
         ["firmware_control"] = "펌웨어 제어",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} 부하: {2}   중간: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "언더볼팅 (실험적)",
@@ -377,7 +380,6 @@ public static class Korean
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  이동",
         ["arcade_shoot"] = "SPACE  발사",

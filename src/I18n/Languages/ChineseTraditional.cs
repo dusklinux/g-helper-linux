@@ -54,8 +54,6 @@ public static class ChineseTraditional
         // SCREEN
         ["screen_prefix"] = "筆電螢幕：{0}Hz",
         ["screen_prefix_auto"] = "筆電螢幕：{0}Hz（自動）",
-        ["screen_auto"] = "自動",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "筆電鍵盤",
@@ -180,7 +178,6 @@ public static class ChineseTraditional
         ["udev_not_installed"] = "udev 規則未安裝。請執行 install.sh 以獲得完整功能（電池限制、風扇控制等）",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
         ["tray_tooltip_cpu"] = "CPU: {0}",
         ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU：Eco（僅 iGPU）",
@@ -227,7 +224,6 @@ public static class ChineseTraditional
 
         ["display_header"] = "顯示",
         ["controller"] = "控制器",
-        ["enable_backlight"] = "啟用螢幕背光",
         ["enable_backlight_load"] = "啟用螢幕背光（載入 {0}）",
         ["load_module"] = "載入 {0}",
         ["panel_overdrive_check"] = "面板超頻",
@@ -258,6 +254,14 @@ public static class ChineseTraditional
         ["bw_tray_icon"] = "黑白系統匣圖示",
         ["clamshell_mode"] = "合蓋模式（合蓋時不休眠）",
         ["start_minimized"] = "啟動時最小化至系統匣",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "系統匣圖示",
+        ["cpu_temp_tray"] = "顯示 CPU 溫度",
+        ["gpu_temp_tray"] = "顯示 GPU 溫度",
+        ["tray_bg_color"] = "背景顏色",
+        ["tray_text_color"] = "文字顏色",
+        ["tray_bg_transparent"] = "透明",
 
         ["key_bindings_header"] = "按鍵繫結",
         ["key_rog_m5"] = "ROG / M5 鍵",
@@ -311,7 +315,6 @@ public static class ChineseTraditional
         ["cpu_boost"] = "CPU 加速",
         ["auto_apply_power_limits"] = "切換模式時自動套用功率限制",
         ["firmware_control"] = "韌體控制",
-        ["fan_sensor_format"] = "CPU：{0} / GPU：{1} 負載：{2}   中間：{3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "降壓（實驗性）",
@@ -377,7 +380,6 @@ public static class ChineseTraditional
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  移動",
         ["arcade_shoot"] = "SPACE  射擊",

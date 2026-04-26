@@ -54,8 +54,6 @@ public static class Swedish
         // SCREEN
         ["screen_prefix"] = "Bärbar skärm: {0}Hz",
         ["screen_prefix_auto"] = "Bärbar skärm: {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Bärbart tangentbord",
@@ -180,7 +178,6 @@ public static class Swedish
         ["udev_not_installed"] = "udev-regler ej installerade. Kör install.sh för full funktionalitet (batterigräns, fläktstyrning, etc.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
         ["tray_tooltip_cpu"] = "CPU: {0}",
         ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (enbart iGPU)",
@@ -227,7 +224,6 @@ public static class Swedish
 
         ["display_header"] = "Skärm",
         ["controller"] = "Kontroller",
-        ["enable_backlight"] = "Aktivera skärmens bakgrundsbelysning",
         ["enable_backlight_load"] = "Aktivera skärmens bakgrundsbelysning (ladda {0})",
         ["load_module"] = "Ladda {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -258,6 +254,14 @@ public static class Swedish
         ["bw_tray_icon"] = "Svartvit systemfältsikon",
         ["clamshell_mode"] = "Clamshell-läge (inaktivera viloläge vid stängning av lock)",
         ["start_minimized"] = "Starta minimerad till systemfältet",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Systemfältsikoner",
+        ["cpu_temp_tray"] = "Visa CPU-temperatur",
+        ["gpu_temp_tray"] = "Visa GPU-temperatur",
+        ["tray_bg_color"] = "Bakgrundsfärg",
+        ["tray_text_color"] = "Textfärg",
+        ["tray_bg_transparent"] = "Transparent",
 
         ["key_bindings_header"] = "Tangentbindningar",
         ["key_rog_m5"] = "ROG / M5-tangent",
@@ -311,7 +315,6 @@ public static class Swedish
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Auto-tillämpa effektgränser vid lägsbyte",
         ["firmware_control"] = "Firmware-styrning",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Last: {2}   Mitt: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (experimentellt)",
@@ -377,7 +380,6 @@ public static class Swedish
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  flytta",
         ["arcade_shoot"] = "SPACE  skjut",

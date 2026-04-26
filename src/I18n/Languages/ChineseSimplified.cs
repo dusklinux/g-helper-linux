@@ -54,8 +54,6 @@ public static class ChineseSimplified
         // SCREEN
         ["screen_prefix"] = "笔记本屏幕：{0}Hz",
         ["screen_prefix_auto"] = "笔记本屏幕：{0}Hz（自动）",
-        ["screen_auto"] = "自动",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "笔记本键盘",
@@ -180,7 +178,6 @@ public static class ChineseSimplified
         ["udev_not_installed"] = "udev 规则未安装。请运行 install.sh 以获得完整功能（电池限制、风扇控制等）",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
         ["tray_tooltip_cpu"] = "CPU: {0}",
         ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU：Eco（仅 iGPU）",
@@ -227,7 +224,6 @@ public static class ChineseSimplified
 
         ["display_header"] = "显示",
         ["controller"] = "控制器",
-        ["enable_backlight"] = "启用显示背光",
         ["enable_backlight_load"] = "启用显示背光（加载 {0}）",
         ["load_module"] = "加载 {0}",
         ["panel_overdrive_check"] = "面板超频",
@@ -258,6 +254,14 @@ public static class ChineseSimplified
         ["bw_tray_icon"] = "黑白托盘图标",
         ["clamshell_mode"] = "合盖模式（合盖时不休眠）",
         ["start_minimized"] = "启动时最小化到托盘",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "系统托盘图标",
+        ["cpu_temp_tray"] = "显示 CPU 温度",
+        ["gpu_temp_tray"] = "显示 GPU 温度",
+        ["tray_bg_color"] = "背景颜色",
+        ["tray_text_color"] = "文字颜色",
+        ["tray_bg_transparent"] = "透明",
 
         ["key_bindings_header"] = "按键绑定",
         ["key_rog_m5"] = "ROG / M5 键",
@@ -311,7 +315,6 @@ public static class ChineseSimplified
         ["cpu_boost"] = "CPU 加速",
         ["auto_apply_power_limits"] = "切换模式时自动应用功率限制",
         ["firmware_control"] = "固件控制",
-        ["fan_sensor_format"] = "CPU：{0} / GPU：{1} 负载：{2}   中间：{3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "降压（实验性）",
@@ -377,7 +380,6 @@ public static class ChineseSimplified
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  移动",
         ["arcade_shoot"] = "SPACE  射击",

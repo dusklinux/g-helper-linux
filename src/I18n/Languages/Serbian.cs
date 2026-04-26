@@ -54,8 +54,6 @@ public static class Serbian
         // SCREEN
         ["screen_prefix"] = "Екран лаптопа: {0}Hz",
         ["screen_prefix_auto"] = "Екран лаптопа: {0}Hz (Ауто)",
-        ["screen_auto"] = "Ауто",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Тастатура лаптопа",
@@ -180,7 +178,6 @@ public static class Serbian
         ["udev_not_installed"] = "udev правила нису инсталирана. Покрените install.sh за пуну функционалност (ограничење батерије, контрола вентилатора, итд.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
         ["tray_tooltip_cpu"] = "CPU: {0}",
         ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (само iGPU)",
@@ -227,7 +224,6 @@ public static class Serbian
 
         ["display_header"] = "Дисплеј",
         ["controller"] = "Контролер",
-        ["enable_backlight"] = "Укључи позадинско осветљење дисплеја",
         ["enable_backlight_load"] = "Укључи позадинско осветљење дисплеја (учитај {0})",
         ["load_module"] = "Учитај {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -258,6 +254,14 @@ public static class Serbian
         ["bw_tray_icon"] = "Црно-бела икона у траци",
         ["clamshell_mode"] = "Режим шкољке (онемогући спавање при затварању поклопца)",
         ["start_minimized"] = "Покрени минимизовано у траци",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Иконе системске траке",
+        ["cpu_temp_tray"] = "Прикажи температуру CPU",
+        ["gpu_temp_tray"] = "Прикажи температуру GPU",
+        ["tray_bg_color"] = "Боја позадине",
+        ["tray_text_color"] = "Боја текста",
+        ["tray_bg_transparent"] = "Провидно",
 
         ["key_bindings_header"] = "Пречице тастера",
         ["key_rog_m5"] = "ROG / M5 тастер",
@@ -311,7 +315,6 @@ public static class Serbian
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Аутоматски примени ограничења снаге при промени режима",
         ["firmware_control"] = "Контрола фирмвера",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Оптерећење: {2}   Средњи: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Андерволтинг (експериментално)",
@@ -377,7 +380,6 @@ public static class Serbian
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  кретање",
         ["arcade_shoot"] = "SPACE  пуцај",

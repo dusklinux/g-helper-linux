@@ -51,8 +51,6 @@ public static class French
         // SCREEN
         ["screen_prefix"] = "Écran du portable : {0}Hz",
         ["screen_prefix_auto"] = "Écran du portable : {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Clavier du portable",
@@ -177,7 +175,6 @@ public static class French
         ["udev_not_installed"] = "Règles udev non installées. Exécutez install.sh pour la fonctionnalité complète (limite de batterie, contrôle des ventilateurs, etc.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
         ["tray_tooltip_cpu"] = "CPU: {0}",
         ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU : Eco (iGPU uniquement)",
@@ -224,7 +221,6 @@ public static class French
 
         ["display_header"] = "Affichage",
         ["controller"] = "Contrôleur",
-        ["enable_backlight"] = "Activer le rétroéclairage de l'écran",
         ["enable_backlight_load"] = "Activer le rétroéclairage (charger {0})",
         ["load_module"] = "Charger {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -255,6 +251,14 @@ public static class French
         ["bw_tray_icon"] = "Icône de barre des tâches N&B",
         ["clamshell_mode"] = "Mode coquille (pas de veille à la fermeture du couvercle)",
         ["start_minimized"] = "Démarrer minimisé dans la barre",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Icônes de barre des tâches",
+        ["cpu_temp_tray"] = "Afficher la température CPU",
+        ["gpu_temp_tray"] = "Afficher la température GPU",
+        ["tray_bg_color"] = "Couleur d'arrière-plan",
+        ["tray_text_color"] = "Couleur du texte",
+        ["tray_bg_transparent"] = "Transparent",
 
         ["key_bindings_header"] = "Raccourcis clavier",
         ["key_rog_m5"] = "Touche ROG / M5",
@@ -308,7 +312,6 @@ public static class French
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Appliquer automatiquement les limites de puissance au changement de mode",
         ["firmware_control"] = "Contrôle firmware",
-        ["fan_sensor_format"] = "CPU : {0} / GPU : {1} Charge : {2}   Central : {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Expérimental)",
@@ -374,7 +377,6 @@ public static class French
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  déplacer",
         ["arcade_shoot"] = "ESPACE  tirer",

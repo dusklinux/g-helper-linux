@@ -51,8 +51,6 @@ public static class Dutch
         // SCREEN
         ["screen_prefix"] = "Laptopscherm: {0}Hz",
         ["screen_prefix_auto"] = "Laptopscherm: {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Laptoptoetsenbord",
@@ -177,7 +175,6 @@ public static class Dutch
         ["udev_not_installed"] = "udev-regels niet geïnstalleerd. Voer install.sh uit voor volledige functionaliteit (acculimiet, ventilatorregeling, enz.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
         ["tray_tooltip_cpu"] = "CPU: {0}",
         ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (alleen iGPU)",
@@ -224,7 +221,6 @@ public static class Dutch
 
         ["display_header"] = "Beeldscherm",
         ["controller"] = "Controller",
-        ["enable_backlight"] = "Schermverlichting inschakelen",
         ["enable_backlight_load"] = "Schermverlichting inschakelen ({0} laden)",
         ["load_module"] = "{0} laden",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -255,6 +251,14 @@ public static class Dutch
         ["bw_tray_icon"] = "Z/W-systeemvakpictogram",
         ["clamshell_mode"] = "Clamshell-modus (niet in slaapstand bij sluiten deksel)",
         ["start_minimized"] = "Geminimaliseerd starten in systeemvak",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Systeemvakpictogrammen",
+        ["cpu_temp_tray"] = "CPU-temperatuur tonen",
+        ["gpu_temp_tray"] = "GPU-temperatuur tonen",
+        ["tray_bg_color"] = "Achtergrondkleur",
+        ["tray_text_color"] = "Tekstkleur",
+        ["tray_bg_transparent"] = "Transparant",
 
         ["key_bindings_header"] = "Toetsbindingen",
         ["key_rog_m5"] = "ROG / M5-toets",
@@ -308,7 +312,6 @@ public static class Dutch
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Vermogenslimieten automatisch toepassen bij moduswissel",
         ["firmware_control"] = "Firmwarebesturing",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Belasting: {2}   Midden: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Experimenteel)",
@@ -374,7 +377,6 @@ public static class Dutch
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  bewegen",
         ["arcade_shoot"] = "SPATIE  schieten",

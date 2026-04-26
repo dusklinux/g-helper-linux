@@ -54,8 +54,6 @@ public static class Japanese
         // SCREEN
         ["screen_prefix"] = "ノートPC画面: {0}Hz",
         ["screen_prefix_auto"] = "ノートPC画面: {0}Hz (自動)",
-        ["screen_auto"] = "自動",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "ノートPCキーボード",
@@ -180,7 +178,6 @@ public static class Japanese
         ["udev_not_installed"] = "udev ルールがインストールされていません。完全な機能（バッテリー制限、ファン制御など）を利用するには install.sh を実行してください",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
         ["tray_tooltip_cpu"] = "CPU: {0}",
         ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (iGPU のみ)",
@@ -227,7 +224,6 @@ public static class Japanese
 
         ["display_header"] = "ディスプレイ",
         ["controller"] = "コントローラー",
-        ["enable_backlight"] = "ディスプレイバックライトを有効にする",
         ["enable_backlight_load"] = "ディスプレイバックライトを有効にする ({0} をロード)",
         ["load_module"] = "{0} をロード",
         ["panel_overdrive_check"] = "パネルオーバードライブ",
@@ -258,6 +254,14 @@ public static class Japanese
         ["bw_tray_icon"] = "白黒トレイアイコン",
         ["clamshell_mode"] = "クラムシェルモード（蓋を閉じてもスリープしない）",
         ["start_minimized"] = "トレイに最小化して起動",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "システムトレイアイコン",
+        ["cpu_temp_tray"] = "CPU 温度を表示",
+        ["gpu_temp_tray"] = "GPU 温度を表示",
+        ["tray_bg_color"] = "背景色",
+        ["tray_text_color"] = "文字色",
+        ["tray_bg_transparent"] = "透明",
 
         ["key_bindings_header"] = "キーバインド",
         ["key_rog_m5"] = "ROG / M5 キー",
@@ -311,7 +315,6 @@ public static class Japanese
         ["cpu_boost"] = "CPU ブースト",
         ["auto_apply_power_limits"] = "モード変更時に電力制限を自動適用",
         ["firmware_control"] = "ファームウェア制御",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} 負荷: {2}   中間: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "アンダーボルト（実験的）",
@@ -377,7 +380,6 @@ public static class Japanese
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  移動",
         ["arcade_shoot"] = "SPACE  射撃",

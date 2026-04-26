@@ -36,7 +36,6 @@ public static class NativeLibExtractor
         // Determine where the binary lives
         var exeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? ".";
 
-        // Invalidate cache if binary version changed — prevents stale .so from breaking new binary
         InvalidateStaleCacheIfNeeded();
 
         foreach (var lib in NativeLibs)
@@ -162,7 +161,6 @@ public static class NativeLibExtractor
                 var cachedVersion = File.Exists(versionFile) ? File.ReadAllText(versionFile).Trim() : "";
                 if (cachedVersion != currentVersion)
                 {
-                    // Version changed — delete all cached files so fresh extraction occurs
                     foreach (var file in Directory.GetFiles(CacheDir))
                         try
                         { File.Delete(file); }

@@ -51,8 +51,6 @@ public static class German
         // SCREEN
         ["screen_prefix"] = "Laptop-Bildschirm: {0}Hz",
         ["screen_prefix_auto"] = "Laptop-Bildschirm: {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Laptop-Tastatur",
@@ -177,7 +175,6 @@ public static class German
         ["udev_not_installed"] = "udev-Regeln nicht installiert. Führen Sie install.sh aus für volle Funktionalität (Akkulimit, Lüftersteuerung usw.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
         ["tray_tooltip_cpu"] = "CPU: {0}",
         ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (nur iGPU)",
@@ -224,7 +221,6 @@ public static class German
 
         ["display_header"] = "Anzeige",
         ["controller"] = "Controller",
-        ["enable_backlight"] = "Bildschirmbeleuchtung aktivieren",
         ["enable_backlight_load"] = "Bildschirmbeleuchtung aktivieren ({0} laden)",
         ["load_module"] = "{0} laden",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -255,6 +251,14 @@ public static class German
         ["bw_tray_icon"] = "S/W-Tray-Symbol",
         ["clamshell_mode"] = "Clamshell-Modus (kein Schlaf bei geschlossenem Deckel)",
         ["start_minimized"] = "Minimiert im Tray starten",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Tray-Symbole",
+        ["cpu_temp_tray"] = "CPU-Temperatur anzeigen",
+        ["gpu_temp_tray"] = "GPU-Temperatur anzeigen",
+        ["tray_bg_color"] = "Hintergrundfarbe",
+        ["tray_text_color"] = "Textfarbe",
+        ["tray_bg_transparent"] = "Transparent",
 
         ["key_bindings_header"] = "Tastenbelegung",
         ["key_rog_m5"] = "ROG / M5 Taste",
@@ -308,7 +312,6 @@ public static class German
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Leistungslimits automatisch bei Moduswechsel anwenden",
         ["firmware_control"] = "Firmware-Steuerung",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Last: {2}   Mittel: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Experimentell)",
@@ -374,7 +377,6 @@ public static class German
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  bewegen",
         ["arcade_shoot"] = "LEERTASTE  schießen",

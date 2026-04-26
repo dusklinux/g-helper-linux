@@ -51,8 +51,6 @@ public static class Vietnamese
         // SCREEN
         ["screen_prefix"] = "Màn hình laptop: {0}Hz",
         ["screen_prefix_auto"] = "Màn hình laptop: {0}Hz (Tự động)",
-        ["screen_auto"] = "Tự động",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Bàn phím laptop",
@@ -177,7 +175,6 @@ public static class Vietnamese
         ["udev_not_installed"] = "Chưa cài đặt quy tắc udev. Chạy install.sh để có đầy đủ chức năng (giới hạn pin, điều khiển quạt, v.v.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
         ["tray_tooltip_cpu"] = "CPU: {0}",
         ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (chỉ iGPU)",
@@ -224,7 +221,6 @@ public static class Vietnamese
 
         ["display_header"] = "Màn hình",
         ["controller"] = "Bộ điều khiển",
-        ["enable_backlight"] = "Bật đèn nền màn hình",
         ["enable_backlight_load"] = "Bật đèn nền màn hình (tải {0})",
         ["load_module"] = "Tải {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -255,6 +251,14 @@ public static class Vietnamese
         ["bw_tray_icon"] = "Biểu tượng khay đen trắng",
         ["clamshell_mode"] = "Chế độ gập máy (tắt ngủ khi gập nắp)",
         ["start_minimized"] = "Khởi động thu nhỏ xuống khay",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Biểu tượng khay hệ thống",
+        ["cpu_temp_tray"] = "Hiển thị nhiệt độ CPU",
+        ["gpu_temp_tray"] = "Hiển thị nhiệt độ GPU",
+        ["tray_bg_color"] = "Màu nền",
+        ["tray_text_color"] = "Màu chữ",
+        ["tray_bg_transparent"] = "Trong suốt",
 
         ["key_bindings_header"] = "Gán phím",
         ["key_rog_m5"] = "Phím ROG / M5",
@@ -308,7 +312,6 @@ public static class Vietnamese
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Tự động áp dụng giới hạn công suất khi đổi chế độ",
         ["firmware_control"] = "Điều khiển firmware",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Tải: {2}   Giữa: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (thử nghiệm)",
@@ -374,7 +377,6 @@ public static class Vietnamese
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  di chuyển",
         ["arcade_shoot"] = "SPACE  bắn",

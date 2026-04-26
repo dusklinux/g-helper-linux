@@ -51,8 +51,6 @@ public static class Turkish
         // SCREEN
         ["screen_prefix"] = "Laptop Ekranı: {0}Hz",
         ["screen_prefix_auto"] = "Laptop Ekranı: {0}Hz (Otomatik)",
-        ["screen_auto"] = "Otomatik",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Laptop Klavyesi",
@@ -177,7 +175,6 @@ public static class Turkish
         ["udev_not_installed"] = "udev kuralları yüklü değil. Tam işlevsellik için install.sh dosyasını çalıştırın (pil limiti, fan kontrolü vb.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
         ["tray_tooltip_cpu"] = "CPU: {0}",
         ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (yalnızca iGPU)",
@@ -224,7 +221,6 @@ public static class Turkish
 
         ["display_header"] = "Ekran",
         ["controller"] = "Denetleyici",
-        ["enable_backlight"] = "Ekran arka ışığını etkinleştir",
         ["enable_backlight_load"] = "Ekran arka ışığını etkinleştir ({0} yükle)",
         ["load_module"] = "{0} Yükle",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -255,6 +251,14 @@ public static class Turkish
         ["bw_tray_icon"] = "Siyah-Beyaz Tepsi Simgesi",
         ["clamshell_mode"] = "Kapaklı Mod (kapak kapatıldığında uykuyu devre dışı bırak)",
         ["start_minimized"] = "Tepsiye küçültülmüş başlat",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Sistem Tepsisi Simgeleri",
+        ["cpu_temp_tray"] = "CPU sıcaklığını göster",
+        ["gpu_temp_tray"] = "GPU sıcaklığını göster",
+        ["tray_bg_color"] = "Arka plan rengi",
+        ["tray_text_color"] = "Yazı rengi",
+        ["tray_bg_transparent"] = "Şeffaf",
 
         ["key_bindings_header"] = "Tuş Atamaları",
         ["key_rog_m5"] = "ROG / M5 Tuşu",
@@ -308,7 +312,6 @@ public static class Turkish
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Mod değişikliğinde güç limitlerini otomatik uygula",
         ["firmware_control"] = "Firmware kontrolü",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Yük: {2}   Orta: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Deneysel)",
@@ -374,7 +377,6 @@ public static class Turkish
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  hareket",
         ["arcade_shoot"] = "SPACE  ateş",
