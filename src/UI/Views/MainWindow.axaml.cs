@@ -71,22 +71,32 @@ public partial class MainWindow : Window
             }
         };
 
-        // On close: let the window actually close (dispose).
-        // Don't cancel - this allows KDE logout/reboot to proceed.
-        // The app stays alive via ShutdownMode.OnExplicitShutdown + tray icon.
-        // A new MainWindow is created on tray click (see App.ToggleMainWindow).
-        Closing += (_, _) =>
+        // Tray-icon model: hide on user-initiated close, dispose only when the
+        // app is really shutting down. Hiding instead of disposing keeps the
+        // entire control tree warm so the next tray-toggle reopen is instant
+        // (~1-5 ms vs ~100-500 ms for a full reconstruction + AXAML inflate).
+        // KDE logout/reboot still proceed cleanly: ShutdownRequested sets
+        // App.IsShuttingDown=true before windows are walked for closing.
+        Closing += (_, e) =>
         {
+            if (!App.IsShuttingDown)
+            {
+                e.Cancel = true;
+                Hide();
+                _refreshTimer.Stop();
+                return;
+            }
             _refreshTimer.Stop();
             App.MainWindowInstance = null;
         };
 
-        // Start sensor refresh timer immediately (works even in tray-only mode)
-        _refreshTimer.Start();
-
-        // Populate UI controls when the window becomes visible
-        Loaded += (_, _) =>
+        // Start sensor refresh + populate UI on every show. Opened fires on the
+        // first show AND on Show() after a Hide(), unlike Loaded which fires
+        // only once per Window lifetime. Pairing Opened with the Closing-Hide
+        // flow above keeps sensor data fresh exactly when the user is looking.
+        Opened += (_, _) =>
         {
+            _refreshTimer.Start();
             RefreshAll();
         };
     }
@@ -1569,6 +1579,12 @@ public partial class MainWindow : Window
 
     private void ButtonQuit_Click(object? sender, RoutedEventArgs e)
     {
+        // Mark shutdown so MainWindow's Closing handler allows the window to
+        // dispose instead of hide. ShutdownRequested also sets this, but
+        // setting it here is defensive in case Avalonia's request flow is
+        // skipped on a particular platform.
+        App.IsShuttingDown = true;
+
         // Clean shutdown
         App.Input?.Dispose();
         App.Wmi?.Dispose();

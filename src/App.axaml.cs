@@ -37,6 +37,15 @@ public class App : Application
     public static TrayIcon? TrayIconInstance { get; set; }
 
     /// <summary>
+    /// Set to true when the app is on a shutdown path (tray Quit, MainWindow
+    /// Quit button, KDE logout/reboot, or any caller of <see cref="Shutdown"/>).
+    /// MainWindow's Closing handler reads this flag: when false, Closing is
+    /// cancelled and the window is hidden instead of disposed, so the next
+    /// tray-toggle re-open is instant. When true, Closing proceeds normally.
+    /// </summary>
+    public static bool IsShuttingDown { get; set; }
+
+    /// <summary>
     /// Active icon set slug. Read from AppConfig at startup; may be hot-swapped
     /// at runtime via the Extra window dropdown. Setting this fires
     /// <see cref="IconSetChanged"/> so all live <c>Icon</c> controls rebuild.
@@ -175,6 +184,16 @@ public class App : Application
         {
             // Keep running when window is closed (tray icon keeps app alive)
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+            // Catch-all signal that a shutdown is in progress, regardless of
+            // initiator (programmatic Shutdown(), KDE logout/reboot, etc).
+            // MainWindow's Closing handler relies on this flag to distinguish
+            // a real shutdown from a user-initiated window close (Hide-only).
+            desktop.ShutdownRequested += (_, _) =>
+            {
+                IsShuttingDown = true;
+                Logger.WriteLine("Shutdown requested - allowing windows to dispose");
+            };
 
             MainWindowInstance = new MainWindow();
             if (AppConfig.Is("topmost"))
@@ -843,6 +862,7 @@ public class App : Application
         var quit = new NativeMenuItem(Labels.Get("quit"));
         quit.Click += (_, _) =>
         {
+            IsShuttingDown = true;
             Shutdown(desktop);
         };
         menu.Add(quit);
@@ -1070,6 +1090,11 @@ public class App : Application
 
     private void Shutdown(IClassicDesktopStyleApplicationLifetime desktop)
     {
+        // Defensive: ensure Closing handlers see the shutdown flag before
+        // desktop.Shutdown() walks open windows. ShutdownRequested also sets
+        // this, but setting it here covers any path that calls Shutdown()
+        // directly without going through Avalonia's request flow.
+        IsShuttingDown = true;
         Logger.WriteLine("Shutting down...");
 
         // Cleanup
