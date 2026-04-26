@@ -52,7 +52,10 @@ public static class HidrawHelper
     // ASUS vendor ID
     private const ushort ASUS_VENDOR_ID = 0x0B05;
 
-    // Known AURA-capable product IDs (same list as AsusHid.DeviceIds)
+    // Known AURA-capable product IDs (union of AsusHid.MAIN_AURA_PIDS + REAR_LIGHT_PIDS).
+    // Used only by the I2C-HID fallback path; the rear-light Z13 is USB-HID and
+    // will never be discovered through here in practice, but we keep its PID in
+    // the set for completeness.
     private static readonly HashSet<ushort> AuraProductIds = new()
     {
         0x1A30, 0x1854, 0x1869, 0x1866, 0x19B6, 0x1822, 0x1837,

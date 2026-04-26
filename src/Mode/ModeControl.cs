@@ -40,14 +40,14 @@ public class ModeControl
             return 93;
         if (Helpers.AppConfig.IsCPULight())
             return 90;
-        if (Helpers.AppConfig.IsFA401EA())
+        if (Helpers.AppConfig.IsOnlyAIMAX())
             return 115;
         return 150; // default
     }
 
     private static int GetMaxCpu()
     {
-        if (Helpers.AppConfig.IsFA401EA())
+        if (Helpers.AppConfig.IsOnlyAIMAX())
             return 115;
         return 100; // default
     }

@@ -585,7 +585,9 @@ public static class Aura
                               Color2R, Color2G, Color2B,
                               speedByte, _isSingleColor);
 
-        AsusHid.Write(new List<byte[]> { msg, MESSAGE_SET, MESSAGE_APPLY });
+        // Restrict to keyboard / lightbar PIDs so the rear-light device (Z13)
+        // doesn't receive keyboard-protocol packets it can't interpret.
+        AsusHid.Write(new List<byte[]> { msg, MESSAGE_SET, MESSAGE_APPLY }, "Aura", AsusHid.MAIN_AURA_PIDS);
 
         // TUF/VivoZenPro: use sysfs kbd_rgb_mode (primary) + multi_intensity (fallback)
         if (_isACPI)
@@ -652,7 +654,7 @@ public static class Aura
             {
                 AuraMessage(AuraMode.AuraStatic, r, g, b, r, g, b, 0xEB, _isSingleColor),
                 MESSAGE_SET
-            }, null);
+            }, null, AsusHid.MAIN_AURA_PIDS);
             return;
         }
 

@@ -22,12 +22,28 @@ public static class AsusHid
     public const byte INPUT_ID = 0x5A;
     public const byte AURA_ID = 0x5D;
 
-    private static readonly int[] DeviceIds =
+    /// <summary>
+    /// Main keyboard / lightbar AURA HID PIDs. Use this when sending keyboard
+    /// RGB / lighting commands so we don't accidentally write to the rear-light
+    /// device (which speaks the AURA report ID but expects a different protocol).
+    /// </summary>
+    public static readonly int[] MAIN_AURA_PIDS =
     {
         0x1A30, 0x1854, 0x1869, 0x1866, 0x19B6, 0x1822, 0x1837,
-        0x184A, 0x183D, 0x8502, 0x1807, 0x17E0, 0x18C6, 0x1ABE,
+        0x184A, 0x183D, 0x8502, 0x1807, 0x17E0, 0x1ABE,
         0x1B4C, 0x1B6E, 0x1B2C, 0x8854
     };
+
+    /// <summary>
+    /// Rear-light HID PIDs (currently Z13 only).
+    /// </summary>
+    public static readonly int[] REAR_LIGHT_PIDS = { 0x18C6 };
+
+    /// <summary>
+    /// Union of MAIN_AURA_PIDS and REAR_LIGHT_PIDS. Default device set used
+    /// when callers don't specify a PID filter (preserves pre-split behaviour).
+    /// </summary>
+    public static readonly int[] ALL_PIDS = MAIN_AURA_PIDS.Concat(REAR_LIGHT_PIDS).ToArray();
 
     private static HidStream? _auraStream;
 
@@ -60,8 +76,17 @@ public static class AsusHid
     /// This only finds USB-HID devices (HidSharp limitation on Linux).
     /// For I2C-HID devices, use HidrawHelper directly.
     /// </summary>
-    public static IEnumerable<HidDevice> FindDevices(byte reportId)
+    /// <param name="reportId">Report ID the device must expose (e.g. AURA_ID, INPUT_ID).</param>
+    /// <param name="pids">
+    /// Optional product-ID filter. When null, falls back to <see cref="ALL_PIDS"/>
+    /// so legacy callers keep their original behaviour. Pass
+    /// <see cref="MAIN_AURA_PIDS"/> for keyboard / lightbar lighting and
+    /// <see cref="REAR_LIGHT_PIDS"/> for rear-light commands.
+    /// </param>
+    public static IEnumerable<HidDevice> FindDevices(byte reportId, int[]? pids = null)
     {
+        var pidFilter = pids ?? ALL_PIDS;
+
         IEnumerable<HidDevice> allDevices;
         try
         {
@@ -78,7 +103,7 @@ public static class AsusHid
         {
             try
             {
-                if (DeviceIds.Contains(device.ProductID) &&
+                if (pidFilter.Contains(device.ProductID) &&
                     device.CanOpen &&
                     device.GetMaxFeatureReportLength() > 0)
                 {
@@ -108,11 +133,11 @@ public static class AsusHid
     /// <summary>
     /// Find and open an HID stream for the given report ID.
     /// </summary>
-    public static HidStream? FindHidStream(byte reportId)
+    public static HidStream? FindHidStream(byte reportId, int[]? pids = null)
     {
         try
         {
-            var devices = FindDevices(reportId);
+            var devices = FindDevices(reportId, pids);
             if (devices == null)
                 return null;
 
@@ -131,11 +156,12 @@ public static class AsusHid
     /// <summary>
     /// Write data to INPUT_ID devices via SetFeature.
     /// </summary>
-    public static void WriteInput(byte[] data, string? log = "USB")
+    /// <param name="pids">Optional PID filter, see <see cref="FindDevices"/>.</param>
+    public static void WriteInput(byte[] data, string? log = "USB", int[]? pids = null)
     {
         // Try HidSharp (USB) first
         bool wroteAny = false;
-        foreach (var device in FindDevices(INPUT_ID))
+        foreach (var device in FindDevices(INPUT_ID, pids))
         {
             try
             {
@@ -163,21 +189,23 @@ public static class AsusHid
     /// <summary>
     /// Write a single message to all AURA_ID devices.
     /// </summary>
-    public static void Write(byte[] data, string? log = "USB")
+    /// <param name="pids">Optional PID filter, see <see cref="FindDevices"/>.</param>
+    public static void Write(byte[] data, string? log = "USB", int[]? pids = null)
     {
-        Write(new List<byte[]> { data }, log);
+        Write(new List<byte[]> { data }, log, pids);
     }
 
     /// <summary>
     /// Write multiple messages to all AURA_ID devices.
     /// Falls back to native hidraw for I2C-HID devices.
     /// </summary>
-    public static void Write(List<byte[]> dataList, string? log = "USB")
+    /// <param name="pids">Optional PID filter, see <see cref="FindDevices"/>.</param>
+    public static void Write(List<byte[]> dataList, string? log = "USB", int[]? pids = null)
     {
         bool wroteToAny = false;
 
         // Try HidSharp (USB-HID) path first
-        foreach (var device in FindDevices(AURA_ID))
+        foreach (var device in FindDevices(AURA_ID, pids))
         {
             try
             {
