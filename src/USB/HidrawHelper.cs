@@ -51,6 +51,8 @@ public static class HidrawHelper
 
     // ASUS vendor ID
     private const ushort ASUS_VENDOR_ID = 0x0B05;
+    // sysfs idVendor file format: 4-char lowercase hex, no 0x prefix
+    private const string ASUS_VENDOR_HEX = "0b05";
 
     // Known AURA-capable product IDs (union of AsusHid.MAIN_AURA_PIDS + REAR_LIGHT_PIDS).
     // Used only by the I2C-HID fallback path; the rear-light Z13 is USB-HID and
@@ -146,6 +148,10 @@ public static class HidrawHelper
     /// <summary>
     /// Enumerate all ASUS hidraw devices on the system, regardless of bus type.
     /// Results are cached for the lifetime of the process.
+    ///
+    /// Multiple hidraw nodes that share the same physical USB parent device
+    /// are deduplicated - we keep only the first one encountered per parent.
+    /// Mirrors asusctl 6.3.7 fix (asusd/src/aura_manager.rs, GitLab 9cbf643b).
     /// </summary>
     public static IReadOnlyList<HidrawDeviceInfo> EnumerateAsusDevices()
     {
@@ -155,6 +161,7 @@ public static class HidrawHelper
                 return _cachedDevices;
 
             _cachedDevices = new List<HidrawDeviceInfo>();
+            var seenUsbParents = new HashSet<string>();
 
             try
             {
@@ -166,12 +173,15 @@ public static class HidrawHelper
                         continue;
 
                     var info = ProbeDevice(path);
-                    if (info != null && info.Vendor == ASUS_VENDOR_ID)
-                    {
-                        _cachedDevices.Add(info);
-                        Helpers.Logger.WriteLine(
-                            $"HidrawHelper: found ASUS device {path} PID=0x{info.Product:X4} Bus={info.BusName} Aura={info.HasAuraReport}");
-                    }
+                    if (info == null || info.Vendor != ASUS_VENDOR_ID)
+                        continue;
+
+                    if (IsDuplicateUsbDevice(path, seenUsbParents, "HidrawHelper"))
+                        continue;
+
+                    _cachedDevices.Add(info);
+                    Helpers.Logger.WriteLine(
+                        $"HidrawHelper: found ASUS device {path} PID=0x{info.Product:X4} Bus={info.BusName} Aura={info.HasAuraReport}");
                 }
             }
             catch (Exception ex)
@@ -180,6 +190,109 @@ public static class HidrawHelper
             }
 
             return _cachedDevices;
+        }
+    }
+
+    /// <summary>
+    /// Returns true if <paramref name="hidrawDevPath"/>'s physical USB parent
+    /// has already been seen in this enumeration. Logs the skip when true.
+    /// I2C-HID and devices without a resolvable USB parent always return false
+    /// (no dedup) so they pass through unchanged.
+    /// </summary>
+    public static bool IsDuplicateUsbDevice(string hidrawDevPath, HashSet<string> seen, string logPrefix)
+    {
+        var parent = GetUsbParentSyspath(hidrawDevPath);
+        if (parent == null || seen.Add(parent))
+            return false;
+
+        Helpers.Logger.WriteLine(
+            $"{logPrefix}: skipping {hidrawDevPath} - USB parent {parent} already enumerated");
+        return true;
+    }
+
+    /// <summary>
+    /// Mirrors asusctl 6.3.7's seen_usb_parents logic
+    /// (asusd/src/aura_manager.rs, GitLab 9cbf643b):
+    ///   "A USB device can expose multiple HID interfaces (and thus multiple
+    ///    hidraw nodes). Processing more than one causes duplicate device
+    ///    initialisation which can interfere with the kernel's own HID driver
+    ///    and trigger a USB reset loop."
+    ///
+    /// </summary>
+    public static string? GetUsbParentSyspath(string hidrawDevPath)
+    {
+        try
+        {
+            var name = Path.GetFileName(hidrawDevPath);
+            if (!name.StartsWith("hidraw", StringComparison.Ordinal))
+                return null;
+
+            var sysClassPath = $"/sys/class/hidraw/{name}";
+            if (!Directory.Exists(sysClassPath))
+                return null;
+
+            // /sys/class/hidraw/hidrawN is a symlink into /sys/devices/.../hidraw/hidrawN.
+            // ResolveLinkTarget(true) chases the symlink chain via realpath().
+            var resolved = new DirectoryInfo(sysClassPath).ResolveLinkTarget(true) as DirectoryInfo;
+            var dir = resolved ?? new DirectoryInfo(sysClassPath);
+
+            // Walk up parents looking for DEVTYPE=usb_device. Bounded by both
+            // the /sys/ prefix and an explicit depth cap to prevent any runaway
+            // loop on weird filesystem shapes (sysfs depth is normally 6-8).
+            for (int depth = 0;
+                 depth < 16
+                 && dir != null
+                 && dir.FullName.StartsWith("/sys/", StringComparison.Ordinal);
+                 depth++, dir = dir.Parent)
+            {
+                if (IsUsbDeviceNode(dir.FullName, out var idVendor))
+                    return idVendor == ASUS_VENDOR_HEX ? dir.FullName : null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"HidrawHelper.GetUsbParentSyspath({hidrawDevPath}): {ex.Message}");
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Returns true if <paramref name="sysDir"/>'s uevent declares
+    /// DEVTYPE=usb_device. Sets <paramref name="idVendor"/> from idVendor file
+    /// if present (null if unreadable). Returns false for non-USB nodes,
+    /// missing/unreadable uevents, or any I/O failure.
+    /// </summary>
+    private static bool IsUsbDeviceNode(string sysDir, out string? idVendor)
+    {
+        idVendor = null;
+        try
+        {
+            var ueventPath = Path.Combine(sysDir, "uevent");
+            if (!File.Exists(ueventPath))
+                return false;
+
+            bool isUsbDevice = false;
+            foreach (var line in File.ReadAllLines(ueventPath))
+            {
+                if (line.Trim() == "DEVTYPE=usb_device")
+                {
+                    isUsbDevice = true;
+                    break;
+                }
+            }
+            if (!isUsbDevice)
+                return false;
+
+            var vendorPath = Path.Combine(sysDir, "idVendor");
+            if (File.Exists(vendorPath))
+                idVendor = File.ReadAllText(vendorPath).Trim();
+            return true;
+        }
+        catch
+        {
+            // Treat any read failure as "not a usable usb_device node" so the
+            // caller continues walking up rather than committing to dedup.
+            return false;
         }
     }
 

@@ -116,6 +116,8 @@ public static class AsusHid
             }
         }
 
+        var seenUsbParents = new HashSet<string>();
+
         foreach (var device in filteredDevices)
         {
             bool isValid = false;
@@ -125,8 +127,13 @@ public static class AsusHid
             }
             catch { }
 
-            if (isValid)
-                yield return device;
+            if (!isValid)
+                continue;
+
+            if (HidrawHelper.IsDuplicateUsbDevice(device.DevicePath, seenUsbParents, "AsusHid.FindDevices"))
+                continue;
+
+            yield return device;
         }
     }
 
