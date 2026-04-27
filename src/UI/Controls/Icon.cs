@@ -55,6 +55,13 @@ public class Icon : ContentControl
 
     public Icon()
     {
+
+        // <Icon> placed inside a <Button> swallows clicks on the icon area
+        // and the button's Click handler never fires
+        // If a future use case ever needs an Icon to be the click target
+        // itself, override at the call site: <controls:Icon IsHitTestVisible="True"/>.
+        IsHitTestVisible = false;
+
         // Subscribe to the app-wide icon-set change event only while this
         // control is in the visual tree. Detach cleanup is essential: the
         // static event would otherwise keep Icon instances alive after their
