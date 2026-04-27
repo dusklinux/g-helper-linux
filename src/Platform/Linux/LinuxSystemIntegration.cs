@@ -57,7 +57,7 @@ public class LinuxSystemIntegration : ISystemIntegration
         if (enabled)
         {
             Directory.CreateDirectory(_autostartDir);
-            var exePath = GetExecutablePath();
+            var exePath = GetAutostartExecutablePath();
             // Quote the Exec field if the path contains whitespace (per .desktop spec).
             // Typical install paths (/usr/local/bin/ghelper, ~/ghelper/ghelper) hit the
             // unquoted fast path; quoting only triggers for paths with spaces in $HOME
@@ -86,6 +86,30 @@ public class LinuxSystemIntegration : ISystemIntegration
                 Helpers.Logger.WriteLine("Autostart disabled");
             }
         }
+    }
+
+    /// <summary>
+    /// Resolves the path to write into the autostart <c>Exec=</c> field.
+    ///
+    /// When running from an AppImage, <see cref="GetExecutablePath"/> returns
+    /// something like <c>/tmp/.mount_GHelpeemfglL/usr/bin/ghelper</c> - a
+    /// FUSE mount that disappears the moment the AppImage process exits.
+    /// Writing that into autostart breaks autostart on the next boot.
+    ///
+    /// AppImage's runtime sets the <c>APPIMAGE</c> env var to the original
+    /// <c>.AppImage</c> file path, which is what we actually want to launch.
+    /// We prefer that when present, falling back to the regular binary path
+    /// for direct-binary deployments (~/ghelper/ghelper, /usr/local/bin/ghelper).
+    /// </summary>
+    private static string GetAutostartExecutablePath()
+    {
+        var appImagePath = Environment.GetEnvironmentVariable("APPIMAGE");
+        if (!string.IsNullOrEmpty(appImagePath) && File.Exists(appImagePath))
+        {
+            Helpers.Logger.WriteLine($"Autostart: using APPIMAGE path {appImagePath}");
+            return appImagePath;
+        }
+        return GetExecutablePath();
     }
 
     /// <summary>

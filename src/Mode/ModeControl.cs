@@ -23,6 +23,15 @@ public class ModeControl
     // PPT/CPU-temp/GPU values to fight BIOS clobber on some models.
     private System.Timers.Timer? _reapplyTimer;
 
+    /// <summary>
+    /// Fired after a mode change has fully landed (thermal policy + power limits +
+    /// fan curves all applied). Subscribers should refresh any UI showing
+    /// per-mode state (FansWindow charts, power sliders, boost button, UV).
+    /// Always raised from a background thread - handlers must marshal to the UI
+    /// thread themselves if they touch widgets.
+    /// </summary>
+    public event Action<int>? ModeApplied;
+
     // Power limit bounds (matches Windows G-Helper AsusACPI constructor)
 
     private const int MinTotal = 5;
@@ -192,6 +201,14 @@ public class ModeControl
 
             // 6. Refresh the reapply timer for the new mode.
             RefreshReapplyTimer();
+
+            // 7. Notify UI subscribers (FansWindow etc.) so they can re-read
+            //    fan curves, PPT, and CPU boost state after the kernel/EC has
+            //    settled. Raised from the background thread - handlers must
+            //    Dispatcher.UIThread.Post if they touch widgets.
+            try
+            { ModeApplied?.Invoke(mode); }
+            catch (Exception ex) { Helpers.Logger.WriteLine("ModeApplied handler threw", ex); }
         });
 
         if (notify)

@@ -50,7 +50,37 @@ public partial class FansWindow : Window
             _sensorTimer.Start();
         };
 
-        Closing += (_, _) => _sensorTimer.Stop();
+        // Refresh on performance-mode change (silent/balanced/turbo or auto AC/DC).
+        // ModeApplied fires from a background thread once the new mode is fully
+        // landed, so we marshal to the UI thread before touching widgets.
+        if (App.Mode != null)
+            App.Mode.ModeApplied += OnModeApplied;
+
+        Closing += (_, _) =>
+        {
+            _sensorTimer.Stop();
+            if (App.Mode != null)
+                App.Mode.ModeApplied -= OnModeApplied;
+        };
+    }
+
+    private void OnModeApplied(int mode)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            try
+            {
+                LoadFanCurves();
+                LoadPowerLimits();
+                LoadUV();
+                LoadAdvanced();
+                RefreshBoostButton();
+            }
+            catch (Exception ex)
+            {
+                Helpers.Logger.WriteLine("FansWindow OnModeApplied refresh failed", ex);
+            }
+        });
     }
 
     // Monitor
