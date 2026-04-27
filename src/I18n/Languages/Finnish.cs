@@ -254,6 +254,8 @@ public static class Finnish
         ["bw_tray_icon"] = "Mustavalkoinen ilmaisinalueen kuvake",
         ["clamshell_mode"] = "Simpukkatila (estä lepotila kannen sulkiessa)",
         ["start_minimized"] = "Käynnistä pienennettynä ilmaisinalueelle",
+        ["disable_osd_label"] = "Poista ilmoitukset käytöstä",
+        ["tray_bw_icon"] = "Mustavalkoinen ilmaisinalueen kuvake",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Ilmaisinalueen kuvakkeet",
@@ -280,6 +282,11 @@ public static class Finnish
         ["system_info_header"] = "Järjestelmätiedot",
 
         ["advanced_header"] = "Edistyneet",
+        ["mode_command_label"] = "Suorita vaihdettaessa:",
+        ["mode_command_hint"] = "Suoritetaan /bin/sh -c -komennolla jokaisen tilan vaihdon jälkeen (manuaalinen + auto AC/DC). Tilakohtainen; vaihda tilaa muokataksesi kutakin.",
+        ["reapply_power_label"] = "Aseta teho uudelleen:",
+        ["reapply_power_unit"] = "sekuntia (0 = pois)",
+        ["reapply_power_hint"] = "Kirjoita CPU/GPU-tehorajat uudelleen tällä välillä. Hyödyllinen, kun BIOS ylikirjoittaa PPT:n.",
         ["auto_apply_power"] = "Ota tehorajat automaattisesti käyttöön tilan vaihtuessa",
         ["raw_wmi_mode"] = "Raaka WMI-tila (kokeellinen - GPU Eco ACPI debugfs:n kautta)",
         ["raw_wmi_hint"] = "Kannettaville ilman GPU Eco sysfs-tukea. Sovellus käynnistyy uudelleen vaihdettaessa.",

@@ -251,6 +251,8 @@ public static class French
         ["bw_tray_icon"] = "Icône de barre des tâches N&B",
         ["clamshell_mode"] = "Mode coquille (pas de veille à la fermeture du couvercle)",
         ["start_minimized"] = "Démarrer minimisé dans la barre",
+        ["disable_osd_label"] = "Désactiver les notifications",
+        ["tray_bw_icon"] = "Icône N&B dans la barre",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Icônes de barre des tâches",
@@ -277,6 +279,11 @@ public static class French
         ["system_info_header"] = "Informations système",
 
         ["advanced_header"] = "Avancé",
+        ["mode_command_label"] = "Exécuter au changement :",
+        ["mode_command_hint"] = "Exécuté via /bin/sh -c après chaque changement de mode (manuel + auto AC/DC). Par mode ; changez de mode pour éditer chacun.",
+        ["reapply_power_label"] = "Réappliquer la puissance :",
+        ["reapply_power_unit"] = "secondes (0 = désactivé)",
+        ["reapply_power_hint"] = "Réécrit les limites de puissance CPU/GPU à cet intervalle. Utile quand le BIOS écrase le PPT.",
         ["auto_apply_power"] = "Appliquer automatiquement les limites de puissance au changement de mode",
         ["raw_wmi_mode"] = "Mode WMI brut (expérimental - GPU Eco via ACPI debugfs)",
         ["raw_wmi_hint"] = "Pour les portables sans sysfs GPU Eco. L'application redémarrera lors du basculement.",

@@ -254,6 +254,8 @@ public static class Swedish
         ["bw_tray_icon"] = "Svartvit systemfältsikon",
         ["clamshell_mode"] = "Clamshell-läge (inaktivera viloläge vid stängning av lock)",
         ["start_minimized"] = "Starta minimerad till systemfältet",
+        ["disable_osd_label"] = "Inaktivera aviseringar",
+        ["tray_bw_icon"] = "Svartvit systemfältsikon",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Systemfältsikoner",
@@ -280,6 +282,11 @@ public static class Swedish
         ["system_info_header"] = "Systeminformation",
 
         ["advanced_header"] = "Avancerat",
+        ["mode_command_label"] = "Kör vid byte:",
+        ["mode_command_hint"] = "Körs via /bin/sh -c efter varje lägesbyte (manuellt + auto AC/DC). Per läge; byt läge för att redigera vart och ett.",
+        ["reapply_power_label"] = "Återapplicera effekt:",
+        ["reapply_power_unit"] = "sekunder (0 = av)",
+        ["reapply_power_hint"] = "Skriv om CPU/GPU-effektgränser med detta intervall. Användbart när BIOS skriver över PPT.",
         ["auto_apply_power"] = "Auto-tillämpa effektgränser vid lägsbyte",
         ["raw_wmi_mode"] = "Rått WMI-läge (experimentellt - GPU Eco via ACPI debugfs)",
         ["raw_wmi_hint"] = "För bärbara datorer utan GPU Eco sysfs. Appen startar om vid växling.",

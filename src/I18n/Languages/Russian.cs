@@ -251,6 +251,8 @@ public static class Russian
         ["bw_tray_icon"] = "Чёрно-белая иконка в трее",
         ["clamshell_mode"] = "Режим «раскладушки» (не засыпать при закрытии крышки)",
         ["start_minimized"] = "Запускать свёрнутым в трей",
+        ["disable_osd_label"] = "Отключить уведомления",
+        ["tray_bw_icon"] = "Ч/Б значок в трее",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Иконки в системном трее",
@@ -277,6 +279,11 @@ public static class Russian
         ["system_info_header"] = "Информация о системе",
 
         ["advanced_header"] = "Расширенные",
+        ["mode_command_label"] = "Выполнить при переключении:",
+        ["mode_command_hint"] = "Выполняется через /bin/sh -c после каждого переключения режима (ручного + авто AC/DC). По режимам; переключайте режимы для редактирования каждого.",
+        ["reapply_power_label"] = "Повторно применить мощность:",
+        ["reapply_power_unit"] = "секунд (0 = выкл.)",
+        ["reapply_power_hint"] = "Перезаписывает лимиты мощности CPU/GPU с этим интервалом. Полезно, когда BIOS перезаписывает PPT.",
         ["auto_apply_power"] = "Автоприменение лимитов мощности при смене режима",
         ["raw_wmi_mode"] = "Прямой WMI-режим (экспериментальный - GPU Eco через ACPI debugfs)",
         ["raw_wmi_hint"] = "Для ноутбуков без sysfs GPU Eco. Приложение перезапустится при переключении.",

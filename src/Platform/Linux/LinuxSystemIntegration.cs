@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using GHelper.Linux.I18n;
 
 namespace GHelper.Linux.Platform.Linux;
@@ -58,13 +57,18 @@ public class LinuxSystemIntegration : ISystemIntegration
         if (enabled)
         {
             Directory.CreateDirectory(_autostartDir);
-            var exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "ghelper";
+            var exePath = GetExecutablePath();
+            // Quote the Exec field if the path contains whitespace (per .desktop spec).
+            // Typical install paths (/usr/local/bin/ghelper, ~/ghelper/ghelper) hit the
+            // unquoted fast path; quoting only triggers for paths with spaces in $HOME
+            // or weird install locations.
+            var execField = exePath.Contains(' ') ? $"\"{exePath}\"" : exePath;
             var desktop = $"""
                 [Desktop Entry]
                 Type=Application
                 Name={Labels.Get("ghelper")}
                 Comment={Labels.Get("asus_laptop_control")}
-                Exec={exePath}
+                Exec={execField}
                 Icon=ghelper
                 Terminal=false
                 Categories=System;HardwareSettings;
@@ -72,7 +76,7 @@ public class LinuxSystemIntegration : ISystemIntegration
                 X-GNOME-Autostart-enabled=true
                 """;
             File.WriteAllText(_desktopFilePath, desktop);
-            Helpers.Logger.WriteLine($"Autostart enabled: {_desktopFilePath}");
+            Helpers.Logger.WriteLine($"Autostart enabled: {_desktopFilePath} (exec={execField})");
         }
         else
         {
@@ -84,6 +88,38 @@ public class LinuxSystemIntegration : ISystemIntegration
         }
     }
 
+    /// <summary>
+    /// Resolves the running binary's absolute path. Uses Environment.ProcessPath
+    /// (which on Linux is readlink("/proc/self/exe")). Avoids
+    /// Process.GetCurrentProcess().MainModule.FileName which on Native AOT can
+    /// resolve to a random mmap'd shared library (issue #80: was writing
+    /// /usr/lib/x86_64-linux-gnu/libLLVM.so.21.1 into the autostart .desktop file
+    /// instead of the ghelper binary path, breaking autostart on Ubuntu 26.04).
+    /// </summary>
+    private static string GetExecutablePath()
+    {
+        var path = Environment.ProcessPath;
+        if (!string.IsNullOrEmpty(path))
+            return path;
+
+        // Fallback: directly resolve /proc/self/exe in case ProcessPath is null
+        // for some reason on this host. /proc/self/exe is a magic symlink that
+        // always points at the current process binary.
+        try
+        {
+            var fi = new FileInfo("/proc/self/exe");
+            if (fi.ResolveLinkTarget(true) is FileInfo resolved)
+                return resolved.FullName;
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"GetExecutablePath: /proc/self/exe resolve failed: {ex.Message}");
+        }
+
+        // Last-ditch fallback: bare name relies on PATH lookup at autostart time.
+        return "ghelper";
+    }
+
     public bool IsAutostartEnabled()
     {
         return File.Exists(_desktopFilePath);
@@ -91,6 +127,14 @@ public class LinuxSystemIntegration : ISystemIntegration
 
     public void ShowNotification(string title, string body, string? iconName = null)
     {
+        // Honor user opt-out: when disable_osd is true, skip the notify-send pop-up
+        // entirely. We still log to the in-memory logger so debugging stays usable.
+        if (Helpers.AppConfig.Is("disable_osd"))
+        {
+            Helpers.Logger.WriteLine($"ShowNotification (suppressed): {title} - {body}");
+            return;
+        }
+
         try
         {
             Helpers.Logger.WriteLine($"ShowNotification: {title} - {body}");

@@ -254,6 +254,8 @@ public static class Norwegian
         ["bw_tray_icon"] = "Svart-hvitt systemstatusikon",
         ["clamshell_mode"] = "Skallmodus (deaktiver hvilemodus ved lukking av lokk)",
         ["start_minimized"] = "Start minimert til systemstatusfeltet",
+        ["disable_osd_label"] = "Deaktiver varsler",
+        ["tray_bw_icon"] = "Svart-hvitt systemikon",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Systemstatusfelt-ikoner",
@@ -280,6 +282,11 @@ public static class Norwegian
         ["system_info_header"] = "Systeminformasjon",
 
         ["advanced_header"] = "Avansert",
+        ["mode_command_label"] = "Kjør ved bytte:",
+        ["mode_command_hint"] = "Kjøres via /bin/sh -c etter hvert modusbytte (manuelt + auto AC/DC). Per modus; bytt modus for å redigere hver enkelt.",
+        ["reapply_power_label"] = "Bruk effekt på nytt:",
+        ["reapply_power_unit"] = "sekunder (0 = av)",
+        ["reapply_power_hint"] = "Skriv CPU/GPU-effektgrenser på nytt med dette intervallet. Nyttig når BIOS overskriver PPT.",
         ["auto_apply_power"] = "Automatisk bruk av effektgrenser ved modusbytte",
         ["raw_wmi_mode"] = "Rå WMI-modus (eksperimentell - GPU Eco via ACPI debugfs)",
         ["raw_wmi_hint"] = "For bærbare uten GPU Eco sysfs. Appen starter på nytt ved veksling.",

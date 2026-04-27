@@ -251,6 +251,8 @@ public static class Italian
         ["bw_tray_icon"] = "Icona vassoio B&N",
         ["clamshell_mode"] = "Modalità clamshell (non sospendere alla chiusura del coperchio)",
         ["start_minimized"] = "Avvia minimizzato nel vassoio",
+        ["disable_osd_label"] = "Disattiva notifiche",
+        ["tray_bw_icon"] = "Icona vassoio B/N",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Icone della barra delle applicazioni",
@@ -277,6 +279,11 @@ public static class Italian
         ["system_info_header"] = "Informazioni di sistema",
 
         ["advanced_header"] = "Avanzate",
+        ["mode_command_label"] = "Esegui al cambio:",
+        ["mode_command_hint"] = "Eseguito tramite /bin/sh -c dopo ogni cambio modalità (manuale + auto AC/DC). Per modalità; cambia modalità per modificarne ciascuna.",
+        ["reapply_power_label"] = "Riapplica potenza:",
+        ["reapply_power_unit"] = "secondi (0 = disattivato)",
+        ["reapply_power_hint"] = "Riscrive i limiti di potenza CPU/GPU a questo intervallo. Utile quando il BIOS sovrascrive il PPT.",
         ["auto_apply_power"] = "Applica automaticamente i limiti di potenza al cambio modalità",
         ["raw_wmi_mode"] = "Modalità WMI diretta (sperimentale - GPU Eco tramite ACPI debugfs)",
         ["raw_wmi_hint"] = "Per portatili senza sysfs GPU Eco. L'app si riavvierà al cambio.",

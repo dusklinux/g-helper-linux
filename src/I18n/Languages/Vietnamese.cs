@@ -251,6 +251,8 @@ public static class Vietnamese
         ["bw_tray_icon"] = "Biểu tượng khay đen trắng",
         ["clamshell_mode"] = "Chế độ gập máy (tắt ngủ khi gập nắp)",
         ["start_minimized"] = "Khởi động thu nhỏ xuống khay",
+        ["disable_osd_label"] = "Tắt thông báo",
+        ["tray_bw_icon"] = "Biểu tượng khay Đen Trắng",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Biểu tượng khay hệ thống",
@@ -277,6 +279,11 @@ public static class Vietnamese
         ["system_info_header"] = "Thông tin hệ thống",
 
         ["advanced_header"] = "Nâng cao",
+        ["mode_command_label"] = "Chạy khi chuyển:",
+        ["mode_command_hint"] = "Chạy qua /bin/sh -c sau mỗi lần chuyển chế độ (thủ công + tự động AC/DC). Theo từng chế độ; chuyển chế độ để chỉnh sửa từng cái.",
+        ["reapply_power_label"] = "Áp dụng lại công suất:",
+        ["reapply_power_unit"] = "giây (0 = tắt)",
+        ["reapply_power_hint"] = "Ghi lại giới hạn công suất CPU/GPU theo khoảng thời gian này. Hữu ích khi BIOS ghi đè PPT.",
         ["auto_apply_power"] = "Tự động áp dụng giới hạn công suất khi đổi chế độ",
         ["raw_wmi_mode"] = "Chế độ WMI thô (thử nghiệm - GPU Eco qua ACPI debugfs)",
         ["raw_wmi_hint"] = "Dành cho laptop không có GPU Eco sysfs. Ứng dụng sẽ khởi động lại khi chuyển đổi.",

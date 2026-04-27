@@ -251,6 +251,8 @@ public static class Czech
         ["bw_tray_icon"] = "Černobílá ikona v panelu",
         ["clamshell_mode"] = "Režim zavřeného víka (zakázat spánek při zavření)",
         ["start_minimized"] = "Spustit minimalizovaně do panelu",
+        ["disable_osd_label"] = "Vypnout oznámení",
+        ["tray_bw_icon"] = "Černobílá ikona v panelu",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Ikony v systémové liště",
@@ -277,6 +279,11 @@ public static class Czech
         ["system_info_header"] = "Systémové informace",
 
         ["advanced_header"] = "Pokročilé",
+        ["mode_command_label"] = "Spustit při přepnutí:",
+        ["mode_command_hint"] = "Spustí se přes /bin/sh -c po každém přepnutí režimu (ručně + auto AC/DC). Pro každý režim zvlášť; přepněte režim pro úpravu jednotlivých.",
+        ["reapply_power_label"] = "Znovu použít napájení:",
+        ["reapply_power_unit"] = "sekund (0 = vypnuto)",
+        ["reapply_power_hint"] = "V tomto intervalu znovu zapíše limity výkonu CPU/GPU. Užitečné, když BIOS přepisuje PPT.",
         ["auto_apply_power"] = "Automaticky použít limity výkonu při změně režimu",
         ["raw_wmi_mode"] = "Surový režim WMI (experimentální - GPU Eco přes ACPI debugfs)",
         ["raw_wmi_hint"] = "Pro notebooky bez GPU Eco sysfs. Aplikace se po přepnutí restartuje.",

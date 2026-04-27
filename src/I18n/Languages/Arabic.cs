@@ -254,6 +254,8 @@ public static class Arabic
         ["bw_tray_icon"] = "أيقونة علبة النظام بالأبيض والأسود",
         ["clamshell_mode"] = "وضع الإغلاق (تعطيل السكون عند إغلاق الغطاء)",
         ["start_minimized"] = "بدء التشغيل مصغّراً في علبة النظام",
+        ["disable_osd_label"] = "تعطيل الإشعارات",
+        ["tray_bw_icon"] = "أيقونة شريط أبيض وأسود",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "أيقونات شريط النظام",
@@ -280,6 +282,11 @@ public static class Arabic
         ["system_info_header"] = "معلومات النظام",
 
         ["advanced_header"] = "متقدم",
+        ["mode_command_label"] = "تشغيل عند التبديل:",
+        ["mode_command_hint"] = "يُنفَّذ عبر /bin/sh -c بعد كل تبديل وضع (يدوي + تلقائي AC/DC). لكل وضع على حدة؛ بدّل الأوضاع لتعديل كل منها.",
+        ["reapply_power_label"] = "إعادة تطبيق الطاقة:",
+        ["reapply_power_unit"] = "ثانية (0 = إيقاف)",
+        ["reapply_power_hint"] = "إعادة كتابة حدود طاقة CPU/GPU بهذا الفاصل الزمني. مفيد عندما يقوم BIOS بإعادة ضبط PPT.",
         ["auto_apply_power"] = "تطبيق حدود الطاقة تلقائياً عند تغيير الوضع",
         ["raw_wmi_mode"] = "وضع WMI الخام (تجريبي - GPU Eco عبر ACPI debugfs)",
         ["raw_wmi_hint"] = "للحواسيب المحمولة بدون GPU Eco sysfs. سيُعاد تشغيل التطبيق عند التبديل.",

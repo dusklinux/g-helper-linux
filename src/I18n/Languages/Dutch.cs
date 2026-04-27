@@ -251,6 +251,8 @@ public static class Dutch
         ["bw_tray_icon"] = "Z/W-systeemvakpictogram",
         ["clamshell_mode"] = "Clamshell-modus (niet in slaapstand bij sluiten deksel)",
         ["start_minimized"] = "Geminimaliseerd starten in systeemvak",
+        ["disable_osd_label"] = "Meldingen uitschakelen",
+        ["tray_bw_icon"] = "Z/W-systeemvakpictogram",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Systeemvakpictogrammen",
@@ -277,6 +279,11 @@ public static class Dutch
         ["system_info_header"] = "Systeeminformatie",
 
         ["advanced_header"] = "Geavanceerd",
+        ["mode_command_label"] = "Uitvoeren bij wissel:",
+        ["mode_command_hint"] = "Wordt uitgevoerd via /bin/sh -c na elke moduswissel (handmatig + auto AC/DC). Per modus; wissel van modus om elk te bewerken.",
+        ["reapply_power_label"] = "Vermogen opnieuw toepassen:",
+        ["reapply_power_unit"] = "seconden (0 = uit)",
+        ["reapply_power_hint"] = "Schrijf CPU/GPU-vermogenslimieten opnieuw in dit interval. Handig als BIOS de PPT overschrijft.",
         ["auto_apply_power"] = "Vermogenslimieten automatisch toepassen bij moduswissel",
         ["raw_wmi_mode"] = "Raw WMI-modus (experimenteel - GPU Eco via ACPI debugfs)",
         ["raw_wmi_hint"] = "Voor laptops zonder GPU Eco sysfs. App wordt herstart bij schakelen.",

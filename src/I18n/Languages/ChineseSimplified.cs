@@ -254,6 +254,8 @@ public static class ChineseSimplified
         ["bw_tray_icon"] = "黑白托盘图标",
         ["clamshell_mode"] = "合盖模式（合盖时不休眠）",
         ["start_minimized"] = "启动时最小化到托盘",
+        ["disable_osd_label"] = "禁用通知",
+        ["tray_bw_icon"] = "黑白托盘图标",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "系统托盘图标",
@@ -280,6 +282,11 @@ public static class ChineseSimplified
         ["system_info_header"] = "系统信息",
 
         ["advanced_header"] = "高级",
+        ["mode_command_label"] = "切换时运行：",
+        ["mode_command_hint"] = "每次模式切换后通过 /bin/sh -c 运行（手动 + 自动 AC/DC）。按模式分别设置；切换模式以编辑各自的命令。",
+        ["reapply_power_label"] = "重新应用功率：",
+        ["reapply_power_unit"] = "秒（0 = 关闭）",
+        ["reapply_power_hint"] = "按此间隔重新写入 CPU/GPU 功率限制。在 BIOS 覆盖 PPT 时有用。",
         ["auto_apply_power"] = "切换模式时自动应用功率限制",
         ["raw_wmi_mode"] = "Raw WMI 模式（实验性 - 通过 ACPI debugfs 控制 GPU Eco）",
         ["raw_wmi_hint"] = "适用于没有 GPU Eco sysfs 的笔记本。切换时应用将重启。",

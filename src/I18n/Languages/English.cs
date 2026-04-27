@@ -256,6 +256,8 @@ public static class English
         ["bw_tray_icon"] = "B&W Tray Icon",
         ["clamshell_mode"] = "Clamshell Mode (disable sleep on lid close)",
         ["start_minimized"] = "Start minimized to tray",
+        ["disable_osd_label"] = "Disable notifications",
+        ["tray_bw_icon"] = "B&W Tray Icon",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "System Tray Icons",
@@ -282,6 +284,11 @@ public static class English
         ["system_info_header"] = "System Info",
 
         ["advanced_header"] = "Advanced",
+        ["mode_command_label"] = "Run on switch:",
+        ["mode_command_hint"] = "Runs via /bin/sh -c after every mode switch (manual + auto AC/DC). Per-mode; switch modes to edit each.",
+        ["reapply_power_label"] = "Reapply power:",
+        ["reapply_power_unit"] = "seconds (0 = off)",
+        ["reapply_power_hint"] = "Re-write CPU/GPU power limits at this interval. Useful when BIOS clobbers PPT.",
         ["auto_apply_power"] = "Auto-apply power limits on mode change",
         ["raw_wmi_mode"] = "Raw WMI mode (experimental - GPU Eco via ACPI debugfs)",
         ["raw_wmi_hint"] = "For laptops without GPU Eco sysfs. App will restart when toggled.",

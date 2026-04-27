@@ -266,6 +266,10 @@
                               Margin="0,4"
                               IsCheckedChanged="CheckSilentStart_Changed" />
 
+                    <CheckBox x:Name="checkDisableOsd" Content="Disable notifications"
+                              Margin="0,4"
+                              IsCheckedChanged="CheckDisableOsd_Changed" />
+
                     <Separator Margin="0,8,0,4" />
 
                     <!-- Device toggles -->

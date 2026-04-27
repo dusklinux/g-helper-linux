@@ -251,6 +251,8 @@ public static class German
         ["bw_tray_icon"] = "S/W-Tray-Symbol",
         ["clamshell_mode"] = "Clamshell-Modus (kein Schlaf bei geschlossenem Deckel)",
         ["start_minimized"] = "Minimiert im Tray starten",
+        ["disable_osd_label"] = "Benachrichtigungen deaktivieren",
+        ["tray_bw_icon"] = "S/W-Tray-Symbol",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Tray-Symbole",
@@ -277,6 +279,11 @@ public static class German
         ["system_info_header"] = "Systeminformationen",
 
         ["advanced_header"] = "Erweitert",
+        ["mode_command_label"] = "Bei Wechsel ausführen:",
+        ["mode_command_hint"] = "Wird über /bin/sh -c nach jedem Moduswechsel ausgeführt (manuell + auto AC/DC). Pro Modus; wechseln Sie den Modus, um jeden zu bearbeiten.",
+        ["reapply_power_label"] = "Leistung erneut anwenden:",
+        ["reapply_power_unit"] = "Sekunden (0 = aus)",
+        ["reapply_power_hint"] = "Schreibt CPU/GPU-Leistungslimits in diesem Intervall neu. Nützlich, wenn BIOS PPT überschreibt.",
         ["auto_apply_power"] = "Leistungslimits automatisch bei Moduswechsel anwenden",
         ["raw_wmi_mode"] = "Raw WMI-Modus (experimentell - GPU Eco über ACPI debugfs)",
         ["raw_wmi_hint"] = "Für Laptops ohne GPU Eco sysfs. App wird beim Umschalten neu gestartet.",

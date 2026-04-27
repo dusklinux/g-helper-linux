@@ -254,6 +254,8 @@ public static class ChineseTraditional
         ["bw_tray_icon"] = "黑白系統匣圖示",
         ["clamshell_mode"] = "合蓋模式（合蓋時不休眠）",
         ["start_minimized"] = "啟動時最小化至系統匣",
+        ["disable_osd_label"] = "停用通知",
+        ["tray_bw_icon"] = "黑白系統匣圖示",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "系統匣圖示",
@@ -280,6 +282,11 @@ public static class ChineseTraditional
         ["system_info_header"] = "系統資訊",
 
         ["advanced_header"] = "進階",
+        ["mode_command_label"] = "切換時執行：",
+        ["mode_command_hint"] = "每次模式切換後透過 /bin/sh -c 執行（手動 + 自動 AC/DC）。依模式分別設定；切換模式以編輯各自的命令。",
+        ["reapply_power_label"] = "重新套用功率：",
+        ["reapply_power_unit"] = "秒（0 = 關閉）",
+        ["reapply_power_hint"] = "依此間隔重新寫入 CPU/GPU 功率限制。在 BIOS 覆蓋 PPT 時有用。",
         ["auto_apply_power"] = "切換模式時自動套用功率限制",
         ["raw_wmi_mode"] = "Raw WMI 模式（實驗性 - 透過 ACPI debugfs 控制 GPU Eco）",
         ["raw_wmi_hint"] = "適用於沒有 GPU Eco sysfs 的筆電。切換時應用程式將重新啟動。",

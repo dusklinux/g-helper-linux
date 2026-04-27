@@ -346,6 +346,7 @@ public class App : Application
 
         // Create mode controller (uses App.Wmi, App.Power, etc.)
         Mode = new ModeControl();
+        Mode.RefreshReapplyTimer(); // arm timer if reapply_time is set
 
         // Create GPU mode switching controller
         if (Wmi != null && Power != null)
@@ -678,6 +679,8 @@ public class App : Application
             next = up ? Math.Min(current + 1, 3) : Math.Max(current - 1, 0);
             Wmi?.SetKeyboardBrightness(next);
         }
+        // Persist under AC- or battery-specific key so future AC/DC transitions restore the right level.
+        Helpers.AppConfig.Set(USB.Aura.GetBrightnessConfigKey(), next);
         string level = next switch
         {
             0 => Labels.Get("kbd_off"),
@@ -858,6 +861,20 @@ public class App : Application
 
         menu.Add(new NativeMenuItemSeparator());
 
+        string BuildBwIconHeader() =>
+            (Helpers.AppConfig.Is("bw_icon") ? "✓ " : "   ") + Labels.Get("tray_bw_icon");
+        var bwIcon = new NativeMenuItem(BuildBwIconHeader());
+        bwIcon.Click += (_, _) =>
+        {
+            bool next = !Helpers.AppConfig.Is("bw_icon");
+            Helpers.AppConfig.Set("bw_icon", next ? 1 : 0);
+            bwIcon.Header = BuildBwIconHeader();
+            UpdateTrayIcon();
+        };
+        menu.Add(bwIcon);
+
+        menu.Add(new NativeMenuItemSeparator());
+
         // Quit
         var quit = new NativeMenuItem(Labels.Get("quit"));
         quit.Click += (_, _) =>
@@ -1023,6 +1040,18 @@ public class App : Application
 
         // Auto screen refresh rate (if configured)
         AutoScreen();
+
+        // Apply AC- vs battery-specific keyboard backlight level (if configured).
+        try
+        {
+            USB.Aura.ApplyConfiguredBrightness("PowerChange");
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                MainWindowInstance?.RefreshExtraKeyboardBrightness());
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine("ApplyConfiguredBrightness failed", ex);
+        }
     }
 
     // Unix signal handlers for clean shutdown on SIGTERM/SIGINT (logout/reboot)

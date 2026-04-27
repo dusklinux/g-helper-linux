@@ -251,6 +251,8 @@ public static class Hungarian
         ["bw_tray_icon"] = "Fekete-fehér tálca ikon",
         ["clamshell_mode"] = "Zárt fedél mód (alvás letiltása fedél bezárásakor)",
         ["start_minimized"] = "Indítás tálcára minimalizálva",
+        ["disable_osd_label"] = "Értesítések kikapcsolása",
+        ["tray_bw_icon"] = "Fekete-fehér tálcaikon",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Tálcaikonok",
@@ -277,6 +279,11 @@ public static class Hungarian
         ["system_info_header"] = "Rendszer információ",
 
         ["advanced_header"] = "Haladó",
+        ["mode_command_label"] = "Futtatás váltáskor:",
+        ["mode_command_hint"] = "Minden módváltás után /bin/sh -c-vel fut (manuális + automatikus AC/DC). Módonként; váltson módot az egyenkénti szerkesztéshez.",
+        ["reapply_power_label"] = "Teljesítmény újraalkalmazása:",
+        ["reapply_power_unit"] = "másodperc (0 = ki)",
+        ["reapply_power_hint"] = "Újraírja a CPU/GPU teljesítménykorlátokat ennyi időnként. Hasznos, ha a BIOS felülírja a PPT-t.",
         ["auto_apply_power"] = "Teljesítmény korlátok automatikus alkalmazása mód váltáskor",
         ["raw_wmi_mode"] = "Nyers WMI mód (kísérleti - GPU Eco ACPI debugfs-en keresztül)",
         ["raw_wmi_hint"] = "GPU Eco sysfs nélküli laptopokhoz. Az alkalmazás újraindul váltáskor.",

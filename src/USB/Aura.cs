@@ -363,6 +363,41 @@ public static class Aura
     }
 
     /// <summary>
+    /// AppConfig key for the current power state. AC and battery have separate
+    /// brightness levels. If <c>keyboard_brightness_ac</c> isn't set yet (older
+    /// configs), the AC path falls back to <c>keyboard_brightness</c>.
+    /// </summary>
+    public static string GetBrightnessConfigKey()
+    {
+        bool onAc = App.Power?.IsOnAcPower() ?? true;
+        return onAc ? "keyboard_brightness_ac" : "keyboard_brightness";
+    }
+
+    /// <summary>
+    /// Read the configured brightness for the current AC/battery state and apply it.
+    /// Used on AC/DC transitions and at startup.
+    /// </summary>
+    public static void ApplyConfiguredBrightness(string log = "Configured")
+    {
+        bool onAc = App.Power?.IsOnAcPower() ?? true;
+        int level;
+        if (onAc)
+        {
+            // Migrate older configs that only have keyboard_brightness
+            level = AppConfig.Get("keyboard_brightness_ac", -1);
+            if (level < 0)
+                level = AppConfig.Get("keyboard_brightness", -1);
+        }
+        else
+        {
+            level = AppConfig.Get("keyboard_brightness", -1);
+        }
+        if (level < 0) // never configured - leave hardware as-is
+            return;
+        ApplyBrightness(Math.Clamp(level, 0, 3), log);
+    }
+
+    /// <summary>
     /// Set keyboard backlight brightness via HID.
     /// Level: 0=off, 1=low, 2=medium, 3=high
     /// </summary>

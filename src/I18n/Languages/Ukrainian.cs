@@ -251,6 +251,8 @@ public static class Ukrainian
         ["bw_tray_icon"] = "Чорно-біла іконка в треї",
         ["clamshell_mode"] = "Режим закритої кришки (вимкнути сон при закритті)",
         ["start_minimized"] = "Запускати згорнутим у трей",
+        ["disable_osd_label"] = "Вимкнути сповіщення",
+        ["tray_bw_icon"] = "Ч/Б піктограма в треї",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Іконки в системному треї",
@@ -277,6 +279,11 @@ public static class Ukrainian
         ["system_info_header"] = "Інформація про систему",
 
         ["advanced_header"] = "Розширені",
+        ["mode_command_label"] = "Виконати при перемиканні:",
+        ["mode_command_hint"] = "Виконується через /bin/sh -c після кожного перемикання режиму (вручну + авто AC/DC). По режимах; перемикайте режими, щоб редагувати кожен.",
+        ["reapply_power_label"] = "Повторно застосувати потужність:",
+        ["reapply_power_unit"] = "секунд (0 = вимкнено)",
+        ["reapply_power_hint"] = "Перезаписує ліміти потужності CPU/GPU з цим інтервалом. Корисно, коли BIOS перезаписує PPT.",
         ["auto_apply_power"] = "Автоматично застосовувати ліміти потужності при зміні режиму",
         ["raw_wmi_mode"] = "Сирий режим WMI (експериментальний - GPU Eco через ACPI debugfs)",
         ["raw_wmi_hint"] = "Для ноутбуків без GPU Eco sysfs. Застосунок перезапуститься при перемиканні.",

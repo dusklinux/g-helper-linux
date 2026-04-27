@@ -185,6 +185,7 @@ public partial class ExtraWindow : Window
         checkBWIcon.Content = Labels.Get("bw_tray_icon");
         checkClamshell.Content = Labels.Get("clamshell_mode");
         checkSilentStart.Content = Labels.Get("start_minimized");
+        checkDisableOsd.Content = Labels.Get("disable_osd_label");
         checkCamera.Content = Labels.Get("camera");
         checkTouchpad.Content = Labels.Get("touchpad");
         checkTouchscreen.Content = Labels.Get("touchscreen");
@@ -395,7 +396,8 @@ public partial class ExtraWindow : Window
             return;
         int level = (int)e.NewValue;
         labelKbdBrightness.Text = level.ToString();
-        Helpers.AppConfig.Set("keyboard_brightness", level);
+        // Persist under the AC- or battery-specific key based on current power state.
+        Helpers.AppConfig.Set(Aura.GetBrightnessConfigKey(), level);
         Aura.ApplyBrightness(level, "KbdSlider");
         App.MainWindowInstance?.RefreshKeyboard();
     }
@@ -698,6 +700,9 @@ public partial class ExtraWindow : Window
         // Silent start (minimized to tray)
         checkSilentStart.IsChecked = Helpers.AppConfig.Is("silent_start");
 
+        // Disable OSD/notifications
+        checkDisableOsd.IsChecked = Helpers.AppConfig.Is("disable_osd");
+
         // Camera
         checkCamera.IsChecked = LinuxSystemIntegration.IsCameraEnabled();
 
@@ -946,6 +951,13 @@ public partial class ExtraWindow : Window
         if (_suppressEvents)
             return;
         Helpers.AppConfig.Set("silent_start", (checkSilentStart.IsChecked ?? false) ? 1 : 0);
+    }
+
+    private void CheckDisableOsd_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        Helpers.AppConfig.Set("disable_osd", (checkDisableOsd.IsChecked ?? false) ? 1 : 0);
     }
 
     /// <summary>Start a systemd-inhibit process that prevents lid-close suspend.</summary>
@@ -1320,6 +1332,9 @@ public partial class ExtraWindow : Window
         if (_suppressEvents)
             return;
         bool enabled = checkRawWmi.IsChecked ?? false;
+        // Idempotency guard
+        if (enabled == Helpers.AppConfig.Is("raw_wmi"))
+            return;
 
         Helpers.AppConfig.Set("raw_wmi", enabled ? 1 : 0);
         Helpers.AppConfig.Flush();

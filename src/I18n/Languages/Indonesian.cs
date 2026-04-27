@@ -254,6 +254,8 @@ public static class Indonesian
         ["bw_tray_icon"] = "Ikon Tray Hitam-Putih",
         ["clamshell_mode"] = "Mode Clamshell (nonaktifkan tidur saat penutup ditutup)",
         ["start_minimized"] = "Mulai diminimalkan ke tray",
+        ["disable_osd_label"] = "Nonaktifkan notifikasi",
+        ["tray_bw_icon"] = "Ikon tray hitam putih",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Ikon System Tray",
@@ -280,6 +282,11 @@ public static class Indonesian
         ["system_info_header"] = "Info Sistem",
 
         ["advanced_header"] = "Lanjutan",
+        ["mode_command_label"] = "Jalankan saat ganti:",
+        ["mode_command_hint"] = "Dijalankan via /bin/sh -c setelah setiap pergantian mode (manual + otomatis AC/DC). Per-mode; ganti mode untuk mengedit masing-masing.",
+        ["reapply_power_label"] = "Terapkan ulang daya:",
+        ["reapply_power_unit"] = "detik (0 = mati)",
+        ["reapply_power_hint"] = "Menulis ulang batas daya CPU/GPU pada interval ini. Berguna saat BIOS menimpa PPT.",
         ["auto_apply_power"] = "Terapkan batas daya otomatis saat ganti mode",
         ["raw_wmi_mode"] = "Mode WMI mentah (eksperimental - GPU Eco via ACPI debugfs)",
         ["raw_wmi_hint"] = "Untuk laptop tanpa GPU Eco sysfs. Aplikasi akan dimulai ulang saat dialihkan.",

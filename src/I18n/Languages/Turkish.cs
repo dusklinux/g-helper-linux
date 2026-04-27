@@ -251,6 +251,8 @@ public static class Turkish
         ["bw_tray_icon"] = "Siyah-Beyaz Tepsi Simgesi",
         ["clamshell_mode"] = "Kapaklı Mod (kapak kapatıldığında uykuyu devre dışı bırak)",
         ["start_minimized"] = "Tepsiye küçültülmüş başlat",
+        ["disable_osd_label"] = "Bildirimleri kapat",
+        ["tray_bw_icon"] = "S/B Tepsi Simgesi",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Sistem Tepsisi Simgeleri",
@@ -277,6 +279,11 @@ public static class Turkish
         ["system_info_header"] = "Sistem Bilgisi",
 
         ["advanced_header"] = "Gelişmiş",
+        ["mode_command_label"] = "Geçişte çalıştır:",
+        ["mode_command_hint"] = "Her mod değişikliğinden sonra /bin/sh -c üzerinden çalışır (manuel + otomatik AC/DC). Mod başına; her birini düzenlemek için modu değiştirin.",
+        ["reapply_power_label"] = "Gücü yeniden uygula:",
+        ["reapply_power_unit"] = "saniye (0 = kapalı)",
+        ["reapply_power_hint"] = "Bu aralıkta CPU/GPU güç limitlerini yeniden yazar. BIOS, PPT'yi ezdiğinde kullanışlıdır.",
         ["auto_apply_power"] = "Mod değişikliğinde güç limitlerini otomatik uygula",
         ["raw_wmi_mode"] = "Ham WMI modu (deneysel - ACPI debugfs üzerinden GPU Eco)",
         ["raw_wmi_hint"] = "GPU Eco sysfs'i olmayan laptoplar için. Açıldığında uygulama yeniden başlayacak.",

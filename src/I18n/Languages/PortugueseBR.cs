@@ -251,6 +251,8 @@ public static class PortugueseBR
         ["bw_tray_icon"] = "Ícone da bandeja em P&B",
         ["clamshell_mode"] = "Modo clamshell (não suspender ao fechar a tampa)",
         ["start_minimized"] = "Iniciar minimizado na bandeja",
+        ["disable_osd_label"] = "Desativar notificações",
+        ["tray_bw_icon"] = "Ícone P&B na bandeja",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Ícones da bandeja do sistema",
@@ -277,6 +279,11 @@ public static class PortugueseBR
         ["system_info_header"] = "Informações do sistema",
 
         ["advanced_header"] = "Avançado",
+        ["mode_command_label"] = "Executar ao trocar:",
+        ["mode_command_hint"] = "Executado via /bin/sh -c após cada troca de modo (manual + auto AC/DC). Por modo; troque de modo para editar cada um.",
+        ["reapply_power_label"] = "Reaplicar potência:",
+        ["reapply_power_unit"] = "segundos (0 = desligado)",
+        ["reapply_power_hint"] = "Reescreve os limites de potência da CPU/GPU neste intervalo. Útil quando a BIOS sobrescreve o PPT.",
         ["auto_apply_power"] = "Aplicar automaticamente os limites de potência ao mudar de modo",
         ["raw_wmi_mode"] = "Modo WMI direto (experimental - GPU Eco via ACPI debugfs)",
         ["raw_wmi_hint"] = "Para notebooks sem sysfs GPU Eco. O app reiniciará ao alternar.",

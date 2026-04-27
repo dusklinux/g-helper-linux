@@ -254,6 +254,8 @@ public static class Thai
         ["bw_tray_icon"] = "ไอคอนถาดขาวดำ",
         ["clamshell_mode"] = "โหมดปิดฝา (ปิดการพักเครื่องเมื่อปิดฝา)",
         ["start_minimized"] = "เริ่มโดยย่อเล็กไว้ที่ถาด",
+        ["disable_osd_label"] = "ปิดการแจ้งเตือน",
+        ["tray_bw_icon"] = "ไอคอนถาดขาวดำ",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "ไอคอนซิสเต็มเทรย์",
@@ -280,6 +282,11 @@ public static class Thai
         ["system_info_header"] = "ข้อมูลระบบ",
 
         ["advanced_header"] = "ขั้นสูง",
+        ["mode_command_label"] = "รันเมื่อสลับ:",
+        ["mode_command_hint"] = "รันผ่าน /bin/sh -c หลังการสลับโหมดทุกครั้ง (ด้วยตนเอง + อัตโนมัติ AC/DC) แยกตามโหมด สลับโหมดเพื่อแก้ไขแต่ละโหมด",
+        ["reapply_power_label"] = "นำพลังงานไปใช้ใหม่:",
+        ["reapply_power_unit"] = "วินาที (0 = ปิด)",
+        ["reapply_power_hint"] = "เขียนขีดจำกัดพลังงาน CPU/GPU ใหม่ที่ช่วงเวลานี้ มีประโยชน์เมื่อ BIOS เขียนทับ PPT",
         ["auto_apply_power"] = "นำขีดจำกัดพลังงานไปใช้อัตโนมัติเมื่อเปลี่ยนโหมด",
         ["raw_wmi_mode"] = "โหมด WMI ดิบ (ทดลอง - GPU Eco ผ่าน ACPI debugfs)",
         ["raw_wmi_hint"] = "สำหรับแล็ปท็อปที่ไม่มี GPU Eco sysfs แอปจะรีสตาร์ทเมื่อสลับ",

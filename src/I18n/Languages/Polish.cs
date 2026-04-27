@@ -251,6 +251,8 @@ public static class Polish
         ["bw_tray_icon"] = "Czarno-biała ikona w zasobniku",
         ["clamshell_mode"] = "Tryb zamkniętej klapy (wyłącz uśpienie po zamknięciu)",
         ["start_minimized"] = "Uruchom zminimalizowany do zasobnika",
+        ["disable_osd_label"] = "Wyłącz powiadomienia",
+        ["tray_bw_icon"] = "Czarno-biała ikona w zasobniku",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Ikony zasobnika systemowego",
@@ -277,6 +279,11 @@ public static class Polish
         ["system_info_header"] = "Informacje o systemie",
 
         ["advanced_header"] = "Zaawansowane",
+        ["mode_command_label"] = "Uruchom przy przełączeniu:",
+        ["mode_command_hint"] = "Uruchamiane przez /bin/sh -c po każdym przełączeniu trybu (ręcznym + auto AC/DC). Dla każdego trybu osobno; przełącz tryb, aby edytować każdy.",
+        ["reapply_power_label"] = "Ponowne zastosowanie mocy:",
+        ["reapply_power_unit"] = "sekund (0 = wył.)",
+        ["reapply_power_hint"] = "Ponownie zapisuje limity mocy CPU/GPU w tym interwale. Przydatne, gdy BIOS nadpisuje PPT.",
         ["auto_apply_power"] = "Automatycznie stosuj limity mocy przy zmianie trybu",
         ["raw_wmi_mode"] = "Tryb surowy WMI (eksperymentalny - GPU Eco przez ACPI debugfs)",
         ["raw_wmi_hint"] = "Dla laptopów bez GPU Eco sysfs. Aplikacja uruchomi się ponownie po przełączeniu.",

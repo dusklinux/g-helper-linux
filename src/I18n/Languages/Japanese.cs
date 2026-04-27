@@ -254,6 +254,8 @@ public static class Japanese
         ["bw_tray_icon"] = "白黒トレイアイコン",
         ["clamshell_mode"] = "クラムシェルモード（蓋を閉じてもスリープしない）",
         ["start_minimized"] = "トレイに最小化して起動",
+        ["disable_osd_label"] = "通知を無効にする",
+        ["tray_bw_icon"] = "白黒トレイアイコン",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "システムトレイアイコン",
@@ -280,6 +282,11 @@ public static class Japanese
         ["system_info_header"] = "システム情報",
 
         ["advanced_header"] = "詳細",
+        ["mode_command_label"] = "切替時に実行：",
+        ["mode_command_hint"] = "モード切替（手動 + 自動 AC/DC）のたびに /bin/sh -c 経由で実行されます。モードごと；モードを切り替えて個別に編集してください。",
+        ["reapply_power_label"] = "電力の再適用：",
+        ["reapply_power_unit"] = "秒（0 = オフ）",
+        ["reapply_power_hint"] = "この間隔で CPU/GPU の電力制限を再書き込みします。BIOS が PPT を上書きする場合に有用です。",
         ["auto_apply_power"] = "モード変更時に電力制限を自動適用",
         ["raw_wmi_mode"] = "Raw WMI モード（実験的 - ACPI debugfs 経由の GPU Eco）",
         ["raw_wmi_hint"] = "GPU Eco sysfs が無いノートPC向け。切り替え時にアプリが再起動します。",

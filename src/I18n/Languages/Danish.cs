@@ -254,6 +254,8 @@ public static class Danish
         ["bw_tray_icon"] = "Sort-hvid statusikon",
         ["clamshell_mode"] = "Skaltilstand (deaktiver dvale ved lukning af låg)",
         ["start_minimized"] = "Start minimeret til statusområdet",
+        ["disable_osd_label"] = "Deaktivér notifikationer",
+        ["tray_bw_icon"] = "Sort/hvidt ikon i statusområdet",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Systembakke-ikoner",
@@ -280,6 +282,11 @@ public static class Danish
         ["system_info_header"] = "Systemoplysninger",
 
         ["advanced_header"] = "Avanceret",
+        ["mode_command_label"] = "Kør ved skift:",
+        ["mode_command_hint"] = "Køres via /bin/sh -c efter hvert tilstandsskift (manuelt + auto AC/DC). Per tilstand; skift tilstand for at redigere hver enkelt.",
+        ["reapply_power_label"] = "Genanvend effekt:",
+        ["reapply_power_unit"] = "sekunder (0 = fra)",
+        ["reapply_power_hint"] = "Genskriv CPU/GPU-effektgrænser med dette interval. Nyttigt når BIOS overskriver PPT.",
         ["auto_apply_power"] = "Auto-anvend effektgrænser ved tilstandsskift",
         ["raw_wmi_mode"] = "Rå WMI-tilstand (eksperimentel - GPU Eco via ACPI debugfs)",
         ["raw_wmi_hint"] = "Til bærbare uden GPU Eco sysfs. Appen genstarter ved skift.",

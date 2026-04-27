@@ -254,6 +254,8 @@ public static class Greek
         ["bw_tray_icon"] = "Ασπρόμαυρο εικονίδιο δίσκου",
         ["clamshell_mode"] = "Λειτουργία κλειστού καπακιού (απενεργοποίηση αναστολής κατά το κλείσιμο)",
         ["start_minimized"] = "Εκκίνηση ελαχιστοποιημένο στο δίσκο",
+        ["disable_osd_label"] = "Απενεργοποίηση ειδοποιήσεων",
+        ["tray_bw_icon"] = "Ασπρόμαυρο εικονίδιο δίσκου",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Εικονίδια περιοχής ειδοποιήσεων",
@@ -280,6 +282,11 @@ public static class Greek
         ["system_info_header"] = "Πληροφορίες συστήματος",
 
         ["advanced_header"] = "Προχωρημένα",
+        ["mode_command_label"] = "Εκτέλεση στην αλλαγή:",
+        ["mode_command_hint"] = "Εκτελείται μέσω /bin/sh -c μετά από κάθε αλλαγή λειτουργίας (χειροκίνητα + αυτόματα AC/DC). Ανά λειτουργία· αλλάξτε λειτουργία για να επεξεργαστείτε κάθε μία.",
+        ["reapply_power_label"] = "Επανεφαρμογή ισχύος:",
+        ["reapply_power_unit"] = "δευτερόλεπτα (0 = ανενεργό)",
+        ["reapply_power_hint"] = "Επανεγγραφή των ορίων ισχύος CPU/GPU σε αυτό το διάστημα. Χρήσιμο όταν το BIOS αντικαθιστά το PPT.",
         ["auto_apply_power"] = "Αυτόματη εφαρμογή ορίων ισχύος κατά την αλλαγή λειτουργίας",
         ["raw_wmi_mode"] = "Λειτουργία Raw WMI (πειραματική - GPU Eco μέσω ACPI debugfs)",
         ["raw_wmi_hint"] = "Για φορητούς χωρίς GPU Eco sysfs. Η εφαρμογή θα επανεκκινηθεί κατά την εναλλαγή.",

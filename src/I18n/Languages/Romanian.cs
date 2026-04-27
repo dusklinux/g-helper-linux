@@ -251,6 +251,8 @@ public static class Romanian
         ["bw_tray_icon"] = "Pictogramă alb-negru în tray",
         ["clamshell_mode"] = "Mod capac închis (dezactivează repausul la închiderea capacului)",
         ["start_minimized"] = "Pornește minimizat în tray",
+        ["disable_osd_label"] = "Dezactivează notificările",
+        ["tray_bw_icon"] = "Pictogramă alb-negru în tray",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Pictograme bară de sistem",
@@ -277,6 +279,11 @@ public static class Romanian
         ["system_info_header"] = "Informații sistem",
 
         ["advanced_header"] = "Avansat",
+        ["mode_command_label"] = "Rulează la comutare:",
+        ["mode_command_hint"] = "Rulează prin /bin/sh -c după fiecare schimbare de mod (manual + auto AC/DC). Per mod; comută modurile pentru a edita fiecare.",
+        ["reapply_power_label"] = "Reaplică puterea:",
+        ["reapply_power_unit"] = "secunde (0 = oprit)",
+        ["reapply_power_hint"] = "Rescrie limitele de putere CPU/GPU la acest interval. Util când BIOS-ul suprascrie PPT.",
         ["auto_apply_power"] = "Aplică automat limitele de putere la schimbarea modului",
         ["raw_wmi_mode"] = "Mod WMI brut (experimental - GPU Eco prin ACPI debugfs)",
         ["raw_wmi_hint"] = "Pentru laptopuri fără GPU Eco sysfs. Aplicația va reporni la comutare.",

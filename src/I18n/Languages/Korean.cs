@@ -254,6 +254,8 @@ public static class Korean
         ["bw_tray_icon"] = "흑백 트레이 아이콘",
         ["clamshell_mode"] = "클램셸 모드 (덮개 닫아도 절전 안 함)",
         ["start_minimized"] = "트레이에 최소화하여 시작",
+        ["disable_osd_label"] = "알림 사용 안 함",
+        ["tray_bw_icon"] = "흑백 트레이 아이콘",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "시스템 트레이 아이콘",
@@ -280,6 +282,11 @@ public static class Korean
         ["system_info_header"] = "시스템 정보",
 
         ["advanced_header"] = "고급",
+        ["mode_command_label"] = "전환 시 실행:",
+        ["mode_command_hint"] = "모드 전환(수동 + 자동 AC/DC)마다 /bin/sh -c 로 실행됩니다. 모드별 설정이며, 각각 편집하려면 모드를 전환하세요.",
+        ["reapply_power_label"] = "전력 재적용:",
+        ["reapply_power_unit"] = "초 (0 = 끔)",
+        ["reapply_power_hint"] = "이 간격으로 CPU/GPU 전력 제한을 다시 기록합니다. BIOS가 PPT를 덮어쓸 때 유용합니다.",
         ["auto_apply_power"] = "모드 변경 시 전력 제한 자동 적용",
         ["raw_wmi_mode"] = "Raw WMI 모드 (실험적 - ACPI debugfs를 통한 GPU Eco)",
         ["raw_wmi_hint"] = "GPU Eco sysfs가 없는 노트북용. 전환 시 앱이 재시작됩니다.",

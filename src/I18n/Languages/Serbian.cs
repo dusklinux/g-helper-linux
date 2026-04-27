@@ -254,6 +254,8 @@ public static class Serbian
         ["bw_tray_icon"] = "Црно-бела икона у траци",
         ["clamshell_mode"] = "Режим шкољке (онемогући спавање при затварању поклопца)",
         ["start_minimized"] = "Покрени минимизовано у траци",
+        ["disable_osd_label"] = "Онемогући обавештења",
+        ["tray_bw_icon"] = "Црно-бела икона у траци",
 
         // System Tray Icons (CPU / GPU temp panel in Extra window)
         ["tray_icons_header"] = "Иконе системске траке",
@@ -280,6 +282,11 @@ public static class Serbian
         ["system_info_header"] = "Информације о систему",
 
         ["advanced_header"] = "Напредно",
+        ["mode_command_label"] = "Изврши при промени:",
+        ["mode_command_hint"] = "Извршава се преко /bin/sh -c након сваке промене режима (ручно + ауто AC/DC). По режиму; промени режиме да би уредио сваки.",
+        ["reapply_power_label"] = "Поново примени снагу:",
+        ["reapply_power_unit"] = "секунди (0 = искључено)",
+        ["reapply_power_hint"] = "Поново уписује ограничења снаге CPU/GPU на овом интервалу. Корисно када BIOS преписује PPT.",
         ["auto_apply_power"] = "Аутоматски примени ограничења снаге при промени режима",
         ["raw_wmi_mode"] = "Сиров WMI режим (експериментално - GPU Eco преко ACPI debugfs)",
         ["raw_wmi_hint"] = "За лаптопове без GPU Eco sysfs. Апликација ће се рестартовати при промени.",

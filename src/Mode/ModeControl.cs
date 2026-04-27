@@ -19,6 +19,10 @@ public class ModeControl
     // Track whether custom power limits were applied (for IsResetRequired workaround)
     private int _customPower;
 
+    // Power-limit reapply timer. Off when reapply_time <= 0. Periodically re-writes
+    // PPT/CPU-temp/GPU values to fight BIOS clobber on some models.
+    private System.Timers.Timer? _reapplyTimer;
+
     // Power limit bounds (matches Windows G-Helper AsusACPI constructor)
 
     private const int MinTotal = 5;
@@ -181,11 +185,97 @@ public class ModeControl
             await Task.Delay(100); // Let EC settle after power/ASPM changes
 
             AutoFans(mode);
+
+            // 5. Mode-change shell command hook (per-mode, optional). Runs on every
+            // switch including auto AC/DC. Empty string = no-op. Fire-and-forget.
+            RunModeCommand(mode);
+
+            // 6. Refresh the reapply timer for the new mode.
+            RefreshReapplyTimer();
         });
 
         if (notify)
         {
             App.System?.ShowNotification(Labels.Get("performance"), Modes.GetName(mode), "preferences-system-performance");
+        }
+    }
+
+    /// <summary>
+    /// (Re)configure the power-limit reapply timer based on <c>reapply_time</c>
+    /// (seconds; 0 = disabled). Safe to call repeatedly.
+    /// </summary>
+    public void RefreshReapplyTimer()
+    {
+        int seconds = Helpers.AppConfig.Get("reapply_time", 0);
+
+        if (seconds <= 0)
+        {
+            if (_reapplyTimer != null)
+            {
+                _reapplyTimer.Stop();
+                _reapplyTimer.Elapsed -= ReapplyTimer_Elapsed;
+                _reapplyTimer.Dispose();
+                _reapplyTimer = null;
+                Helpers.Logger.WriteLine("ReapplyTimer: disabled");
+            }
+            return;
+        }
+
+        // (Re)create timer at requested interval
+        if (_reapplyTimer != null)
+        {
+            _reapplyTimer.Stop();
+            _reapplyTimer.Elapsed -= ReapplyTimer_Elapsed;
+            _reapplyTimer.Dispose();
+        }
+        _reapplyTimer = new System.Timers.Timer(seconds * 1000.0) { AutoReset = true };
+        _reapplyTimer.Elapsed += ReapplyTimer_Elapsed;
+        _reapplyTimer.Start();
+        Helpers.Logger.WriteLine($"ReapplyTimer: every {seconds}s");
+    }
+
+    private void ReapplyTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        try
+        {
+            // Re-run the PPT writes for the current mode. AutoPower already short-circuits
+            // when auto_apply_power is off, which is the right behavior here.
+            int mode = Modes.GetCurrent();
+            AutoPower(mode);
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine("ReapplyTimer tick failed", ex);
+        }
+    }
+
+    /// <summary>
+    /// Run the user-configured shell command for this mode, if any.
+    /// Persisted as <c>mode_command_&lt;mode&gt;</c>.
+    /// </summary>
+    private static void RunModeCommand(int mode)
+    {
+        string? cmd = Helpers.AppConfig.GetString($"mode_command_{mode}");
+        if (string.IsNullOrWhiteSpace(cmd))
+            return;
+
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "/bin/sh",
+                ArgumentList = { "-c", cmd },
+                UseShellExecute = false,
+                RedirectStandardOutput = false,
+                RedirectStandardError = false,
+                CreateNoWindow = true,
+            };
+            var proc = System.Diagnostics.Process.Start(psi);
+            Helpers.Logger.WriteLine($"RunModeCommand[{mode}]: started pid={proc?.Id} cmd={cmd}");
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"RunModeCommand[{mode}] failed: cmd={cmd}", ex);
         }
     }
 
