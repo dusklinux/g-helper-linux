@@ -88,6 +88,96 @@ public static class WindowPositioner
     }
 
     /// <summary>
+    /// Center window on the same screen as the MainWindow currently lives on,
+    /// falling back to the primary monitor if the MainWindow instance is not
+    /// available (null or disposed). Used for secondary windows (Updates, Extra,
+    /// Arcade, Monitor, BatteryInfo, SystemInfo) so they follow the user's
+    /// active display in multi-monitor setups instead of whichever screen the
+    /// compositor picks when WindowStartupLocation=CenterScreen is left to
+    /// defaults.
+    ///
+    /// Same two-phase pattern as BottomRight: estimate before Show(), exact
+    /// reposition after Opened.
+    /// </summary>
+    public static void CenterOfMainWindowOrPrimaryMonitor(Window window)
+    {
+        if (window.FrameSize != null)
+        {
+            ApplyCenter(window, "reshow");
+            return;
+        }
+
+        ApplyCenter(window, "estimate");
+
+        EventHandler? handler = null;
+        handler = (_, _) =>
+        {
+            window.Opened -= handler;
+            Dispatcher.UIThread.Post(
+                () => ApplyCenter(window, "final"),
+                DispatcherPriority.Loaded);
+        };
+        window.Opened += handler;
+    }
+
+    /// <summary>Apply center positioning, anchored to MainWindow's screen with primary fallback.</summary>
+    private static void ApplyCenter(Window window, string phase)
+    {
+        string source;
+        var screen = GetMainWindowScreen();
+        if (screen != null)
+        {
+            source = "main";
+        }
+        else
+        {
+            screen = GetPrimaryScreen(window);
+            source = "primary";
+        }
+        if (screen == null)
+            return;
+
+        var wa = screen.WorkingArea;
+        double scale = screen.Scaling;
+
+        bool trustClientSize = phase != "estimate";
+        var (winW, winH) = GetWindowPixelSize(window, scale, trustClientSize);
+
+        int x = wa.X + (wa.Width - winW) / 2;
+        int y = wa.Y + (wa.Height - winH) / 2;
+
+        // Guard: don't place above or left of working area
+        x = Math.Max(wa.X, x);
+        y = Math.Max(wa.Y, y);
+
+        window.WindowStartupLocation = WindowStartupLocation.Manual;
+        window.Position = new PixelPoint(x, y);
+
+        Logger.WriteLine($"WindowPositioner: CenterOfMainWindowOrPrimaryMonitor ({phase}, src={source}) -> ({x},{y}) on {screen.DisplayName ?? "primary"} " +
+            $"[win={winW}x{winH} wa={wa.Width}x{wa.Height}+{wa.X}+{wa.Y} scale={scale:F2}]");
+    }
+
+    /// <summary>
+    /// Get the screen the MainWindow currently lives on. Returns null if the
+    /// MainWindow instance is unavailable (not yet created, or already disposed),
+    /// or if the screen lookup throws.
+    /// </summary>
+    private static Screen? GetMainWindowScreen()
+    {
+        try
+        {
+            var main = App.MainWindowInstance;
+            if (main == null || main.PlatformImpl == null)
+                return null;
+            return main.Screens.ScreenFromWindow(main);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Position child window to the left of parent, 5px gap.
     /// If child is taller than parent, bottom-aligns. Otherwise top-aligns.
     /// Matches Windows G-Helper Fans.cs FormPosition().

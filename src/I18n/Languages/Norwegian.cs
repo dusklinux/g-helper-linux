@@ -54,8 +54,6 @@ public static class Norwegian
         // SCREEN
         ["screen_prefix"] = "Bærbar skjerm: {0}Hz",
         ["screen_prefix_auto"] = "Bærbar skjerm: {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Bærbart tastatur",
@@ -180,7 +178,8 @@ public static class Norwegian
         ["udev_not_installed"] = "udev-regler er ikke installert. Kjør install.sh for full funksjonalitet (batteribegrensning, viftekontroll osv.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (kun iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Optimalisert (auto)",
@@ -225,7 +224,6 @@ public static class Norwegian
 
         ["display_header"] = "Skjerm",
         ["controller"] = "Kontroller",
-        ["enable_backlight"] = "Aktiver skjermens bakbelysning",
         ["enable_backlight_load"] = "Aktiver skjermens bakbelysning (last {0})",
         ["load_module"] = "Last {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -256,6 +254,16 @@ public static class Norwegian
         ["bw_tray_icon"] = "Svart-hvitt systemstatusikon",
         ["clamshell_mode"] = "Skallmodus (deaktiver hvilemodus ved lukking av lokk)",
         ["start_minimized"] = "Start minimert til systemstatusfeltet",
+        ["disable_osd_label"] = "Deaktiver varsler",
+        ["tray_bw_icon"] = "Svart-hvitt systemikon",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Systemstatusfelt-ikoner",
+        ["cpu_temp_tray"] = "Vis CPU-temperatur",
+        ["gpu_temp_tray"] = "Vis GPU-temperatur",
+        ["tray_bg_color"] = "Bakgrunnsfarge",
+        ["tray_text_color"] = "Tekstfarge",
+        ["tray_bg_transparent"] = "Gjennomsiktig",
 
         ["key_bindings_header"] = "Tastebindinger",
         ["key_rog_m5"] = "ROG / M5-tast",
@@ -274,6 +282,11 @@ public static class Norwegian
         ["system_info_header"] = "Systeminformasjon",
 
         ["advanced_header"] = "Avansert",
+        ["mode_command_label"] = "Kjør ved bytte:",
+        ["mode_command_hint"] = "Kjøres via /bin/sh -c etter hvert modusbytte (manuelt + auto AC/DC). Per modus; bytt modus for å redigere hver enkelt.",
+        ["reapply_power_label"] = "Bruk effekt på nytt:",
+        ["reapply_power_unit"] = "sekunder (0 = av)",
+        ["reapply_power_hint"] = "Skriv CPU/GPU-effektgrenser på nytt med dette intervallet. Nyttig når BIOS overskriver PPT.",
         ["auto_apply_power"] = "Automatisk bruk av effektgrenser ved modusbytte",
         ["raw_wmi_mode"] = "Rå WMI-modus (eksperimentell - GPU Eco via ACPI debugfs)",
         ["raw_wmi_hint"] = "For bærbare uten GPU Eco sysfs. Appen starter på nytt ved veksling.",
@@ -309,7 +322,6 @@ public static class Norwegian
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Automatisk bruk av effektgrenser ved modusbytte",
         ["firmware_control"] = "Firmware-kontroll",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Last: {2}   Midt: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (eksperimentelt)",
@@ -375,7 +387,6 @@ public static class Norwegian
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  flytt",
         ["arcade_shoot"] = "SPACE  skyt",
@@ -417,6 +428,10 @@ public static class Norwegian
         ["aura_ripple"] = "Krusning",
         ["aura_comet"] = "Komet",
         ["aura_flash"] = "Blink",
+        ["aura_heatmap"] = "Varmekart",
+        ["aura_gpu_mode"] = "GPU-modus",
+        ["aura_battery"] = "Batteri",
+        ["aura_gradient"] = "Gradient",
         ["aura_no_modes"] = "Ingen moduser",
 
         // AURA SPEEDS

@@ -51,8 +51,6 @@ public static class Vietnamese
         // SCREEN
         ["screen_prefix"] = "Màn hình laptop: {0}Hz",
         ["screen_prefix_auto"] = "Màn hình laptop: {0}Hz (Tự động)",
-        ["screen_auto"] = "Tự động",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Bàn phím laptop",
@@ -177,7 +175,8 @@ public static class Vietnamese
         ["udev_not_installed"] = "Chưa cài đặt quy tắc udev. Chạy install.sh để có đầy đủ chức năng (giới hạn pin, điều khiển quạt, v.v.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (chỉ iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Tối ưu (tự động)",
@@ -222,7 +221,6 @@ public static class Vietnamese
 
         ["display_header"] = "Màn hình",
         ["controller"] = "Bộ điều khiển",
-        ["enable_backlight"] = "Bật đèn nền màn hình",
         ["enable_backlight_load"] = "Bật đèn nền màn hình (tải {0})",
         ["load_module"] = "Tải {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -253,6 +251,16 @@ public static class Vietnamese
         ["bw_tray_icon"] = "Biểu tượng khay đen trắng",
         ["clamshell_mode"] = "Chế độ gập máy (tắt ngủ khi gập nắp)",
         ["start_minimized"] = "Khởi động thu nhỏ xuống khay",
+        ["disable_osd_label"] = "Tắt thông báo",
+        ["tray_bw_icon"] = "Biểu tượng khay Đen Trắng",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Biểu tượng khay hệ thống",
+        ["cpu_temp_tray"] = "Hiển thị nhiệt độ CPU",
+        ["gpu_temp_tray"] = "Hiển thị nhiệt độ GPU",
+        ["tray_bg_color"] = "Màu nền",
+        ["tray_text_color"] = "Màu chữ",
+        ["tray_bg_transparent"] = "Trong suốt",
 
         ["key_bindings_header"] = "Gán phím",
         ["key_rog_m5"] = "Phím ROG / M5",
@@ -271,6 +279,11 @@ public static class Vietnamese
         ["system_info_header"] = "Thông tin hệ thống",
 
         ["advanced_header"] = "Nâng cao",
+        ["mode_command_label"] = "Chạy khi chuyển:",
+        ["mode_command_hint"] = "Chạy qua /bin/sh -c sau mỗi lần chuyển chế độ (thủ công + tự động AC/DC). Theo từng chế độ; chuyển chế độ để chỉnh sửa từng cái.",
+        ["reapply_power_label"] = "Áp dụng lại công suất:",
+        ["reapply_power_unit"] = "giây (0 = tắt)",
+        ["reapply_power_hint"] = "Ghi lại giới hạn công suất CPU/GPU theo khoảng thời gian này. Hữu ích khi BIOS ghi đè PPT.",
         ["auto_apply_power"] = "Tự động áp dụng giới hạn công suất khi đổi chế độ",
         ["raw_wmi_mode"] = "Chế độ WMI thô (thử nghiệm - GPU Eco qua ACPI debugfs)",
         ["raw_wmi_hint"] = "Dành cho laptop không có GPU Eco sysfs. Ứng dụng sẽ khởi động lại khi chuyển đổi.",
@@ -306,7 +319,6 @@ public static class Vietnamese
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Tự động áp dụng giới hạn công suất khi đổi chế độ",
         ["firmware_control"] = "Điều khiển firmware",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Tải: {2}   Giữa: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (thử nghiệm)",
@@ -372,7 +384,6 @@ public static class Vietnamese
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  di chuyển",
         ["arcade_shoot"] = "SPACE  bắn",
@@ -414,6 +425,10 @@ public static class Vietnamese
         ["aura_ripple"] = "Gợn sóng",
         ["aura_comet"] = "Sao chổi",
         ["aura_flash"] = "Lóe sáng",
+        ["aura_heatmap"] = "Bản đồ nhiệt",
+        ["aura_gpu_mode"] = "Chế độ GPU",
+        ["aura_battery"] = "Pin",
+        ["aura_gradient"] = "Chuyển sắc",
         ["aura_no_modes"] = "Không có chế độ",
 
         // AURA SPEEDS

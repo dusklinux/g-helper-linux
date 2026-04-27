@@ -51,8 +51,6 @@ public static class Czech
         // SCREEN
         ["screen_prefix"] = "Displej notebooku: {0}Hz",
         ["screen_prefix_auto"] = "Displej notebooku: {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Klávesnice notebooku",
@@ -177,7 +175,8 @@ public static class Czech
         ["udev_not_installed"] = "Pravidla udev nejsou nainstalována. Spusťte install.sh pro plnou funkčnost (limit baterie, ovládání ventilátorů atd.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (pouze iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Optimalizovaný (auto)",
@@ -222,7 +221,6 @@ public static class Czech
 
         ["display_header"] = "Displej",
         ["controller"] = "Řadič",
-        ["enable_backlight"] = "Povolit podsvícení displeje",
         ["enable_backlight_load"] = "Povolit podsvícení displeje (načíst {0})",
         ["load_module"] = "Načíst {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -253,6 +251,16 @@ public static class Czech
         ["bw_tray_icon"] = "Černobílá ikona v panelu",
         ["clamshell_mode"] = "Režim zavřeného víka (zakázat spánek při zavření)",
         ["start_minimized"] = "Spustit minimalizovaně do panelu",
+        ["disable_osd_label"] = "Vypnout oznámení",
+        ["tray_bw_icon"] = "Černobílá ikona v panelu",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Ikony v systémové liště",
+        ["cpu_temp_tray"] = "Zobrazit teplotu CPU",
+        ["gpu_temp_tray"] = "Zobrazit teplotu GPU",
+        ["tray_bg_color"] = "Barva pozadí",
+        ["tray_text_color"] = "Barva textu",
+        ["tray_bg_transparent"] = "Průhledné",
 
         ["key_bindings_header"] = "Přiřazení kláves",
         ["key_rog_m5"] = "Klávesa ROG / M5",
@@ -271,6 +279,11 @@ public static class Czech
         ["system_info_header"] = "Systémové informace",
 
         ["advanced_header"] = "Pokročilé",
+        ["mode_command_label"] = "Spustit při přepnutí:",
+        ["mode_command_hint"] = "Spustí se přes /bin/sh -c po každém přepnutí režimu (ručně + auto AC/DC). Pro každý režim zvlášť; přepněte režim pro úpravu jednotlivých.",
+        ["reapply_power_label"] = "Znovu použít napájení:",
+        ["reapply_power_unit"] = "sekund (0 = vypnuto)",
+        ["reapply_power_hint"] = "V tomto intervalu znovu zapíše limity výkonu CPU/GPU. Užitečné, když BIOS přepisuje PPT.",
         ["auto_apply_power"] = "Automaticky použít limity výkonu při změně režimu",
         ["raw_wmi_mode"] = "Surový režim WMI (experimentální - GPU Eco přes ACPI debugfs)",
         ["raw_wmi_hint"] = "Pro notebooky bez GPU Eco sysfs. Aplikace se po přepnutí restartuje.",
@@ -306,7 +319,6 @@ public static class Czech
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Automaticky použít limity výkonu při změně režimu",
         ["firmware_control"] = "Ovládání firmwaru",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Zátěž: {2}   Střed.: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Podpětí (experimentální)",
@@ -372,7 +384,6 @@ public static class Czech
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  pohyb",
         ["arcade_shoot"] = "SPACE  střelba",
@@ -414,6 +425,10 @@ public static class Czech
         ["aura_ripple"] = "Vlna",
         ["aura_comet"] = "Kometa",
         ["aura_flash"] = "Záblesk",
+        ["aura_heatmap"] = "Tepelná mapa",
+        ["aura_gpu_mode"] = "Režim GPU",
+        ["aura_battery"] = "Baterie",
+        ["aura_gradient"] = "Gradient",
         ["aura_no_modes"] = "Žádné režimy",
 
         // AURA SPEEDS

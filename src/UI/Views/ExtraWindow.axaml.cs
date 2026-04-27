@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using GHelper.Linux.I18n;
 using GHelper.Linux.Platform.Linux;
 using GHelper.Linux.USB;
@@ -41,6 +42,7 @@ public partial class ExtraWindow : Window
             RefreshDisplay();
             RefreshGpuTuning();
             RefreshOther();
+            RefreshTrayIcons();
             RefreshPower();
             RefreshSystemInfo();
             RefreshAdvanced();
@@ -183,9 +185,21 @@ public partial class ExtraWindow : Window
         checkBWIcon.Content = Labels.Get("bw_tray_icon");
         checkClamshell.Content = Labels.Get("clamshell_mode");
         checkSilentStart.Content = Labels.Get("start_minimized");
+        checkDisableOsd.Content = Labels.Get("disable_osd_label");
         checkCamera.Content = Labels.Get("camera");
         checkTouchpad.Content = Labels.Get("touchpad");
         checkTouchscreen.Content = Labels.Get("touchscreen");
+
+        // System Tray Icons
+        headerTrayIcons.Text = Labels.Get("tray_icons_header");
+        checkCpuTrayIcon.Content = Labels.Get("cpu_temp_tray");
+        checkGpuTrayIcon.Content = Labels.Get("gpu_temp_tray");
+        checkCpuTrayTransparent.Content = Labels.Get("tray_bg_transparent");
+        checkGpuTrayTransparent.Content = Labels.Get("tray_bg_transparent");
+        ToolTip.SetTip(btnCpuTrayBg, Labels.Get("tray_bg_color"));
+        ToolTip.SetTip(btnCpuTrayText, Labels.Get("tray_text_color"));
+        ToolTip.SetTip(btnGpuTrayBg, Labels.Get("tray_bg_color"));
+        ToolTip.SetTip(btnGpuTrayText, Labels.Get("tray_text_color"));
 
         // Key Bindings
         headerKeyBindings.Text = Labels.Get("key_bindings_header");
@@ -382,7 +396,8 @@ public partial class ExtraWindow : Window
             return;
         int level = (int)e.NewValue;
         labelKbdBrightness.Text = level.ToString();
-        Helpers.AppConfig.Set("keyboard_brightness", level);
+        // Persist under the AC- or battery-specific key based on current power state.
+        Helpers.AppConfig.Set(Aura.GetBrightnessConfigKey(), level);
         Aura.ApplyBrightness(level, "KbdSlider");
         App.MainWindowInstance?.RefreshKeyboard();
     }
@@ -685,6 +700,9 @@ public partial class ExtraWindow : Window
         // Silent start (minimized to tray)
         checkSilentStart.IsChecked = Helpers.AppConfig.Is("silent_start");
 
+        // Disable OSD/notifications
+        checkDisableOsd.IsChecked = Helpers.AppConfig.Is("disable_osd");
+
         // Camera
         checkCamera.IsChecked = LinuxSystemIntegration.IsCameraEnabled();
 
@@ -766,6 +784,143 @@ public partial class ExtraWindow : Window
         App.UpdateTrayIcon();
     }
 
+    // The GPU row is hidden on iGPU-only systems (no discrete GPU detected).
+
+    /// <summary>Default colors when the user has never set one. CPU=blue, GPU=green.</summary>
+    private const string DefaultCpuBg = "#3AAEEF";
+    private const string DefaultGpuBg = "#06B48A";
+    private const string DefaultTextColor = "#FFFFFF";
+
+    /// <summary>
+    /// Initialize tray-icon panel state from saved config: checkboxes,
+    /// color-swatch button backgrounds, and dGPU-gated row visibility.
+    /// Called once on window load, after <c>InitOther</c> (does not need
+    /// to re-fire on language change since only <see cref="ApplyLabels"/>
+    /// touches text strings).
+    /// </summary>
+    private void RefreshTrayIcons()
+    {
+        // Master toggles
+        checkCpuTrayIcon.IsChecked = Helpers.AppConfig.Is("cpu_tray_enabled");
+        checkCpuTrayTransparent.IsChecked = Helpers.AppConfig.Is("cpu_tray_bg_transparent");
+        checkGpuTrayIcon.IsChecked = Helpers.AppConfig.Is("gpu_tray_enabled");
+        checkGpuTrayTransparent.IsChecked = Helpers.AppConfig.Is("gpu_tray_bg_transparent");
+
+        // Color swatches: button background reflects the saved color so the
+        // user sees the current state at a glance.
+        UpdateSwatch(btnCpuTrayBg, Helpers.AppConfig.GetString("cpu_tray_bg") ?? DefaultCpuBg);
+        UpdateSwatch(btnCpuTrayText, Helpers.AppConfig.GetString("cpu_tray_text") ?? DefaultTextColor);
+        UpdateSwatch(btnGpuTrayBg, Helpers.AppConfig.GetString("gpu_tray_bg") ?? DefaultGpuBg);
+        UpdateSwatch(btnGpuTrayText, Helpers.AppConfig.GetString("gpu_tray_text") ?? DefaultTextColor);
+
+        // Hide the entire GPU row on iGPU-only systems. Same gate used by
+        // MainWindow / MonitorWindow / FansWindow for "GPU available" UI.
+        rowGpuTray.IsVisible = App.GpuControl?.IsAvailable() == true;
+    }
+
+    /// <summary>
+    /// Paint a color swatch on a <see cref="Button"/>. Catches malformed
+    /// hex (e.g. config tampering) and falls back to grey rather than
+    /// throwing; the user can re-pick to fix.
+    /// </summary>
+    private static void UpdateSwatch(Button btn, string hex)
+    {
+        try
+        {
+            btn.Background = new SolidColorBrush(Color.Parse(hex));
+        }
+        catch
+        {
+            btn.Background = new SolidColorBrush(Color.Parse("#808080"));
+        }
+    }
+
+    //  CPU temp icon handlers 
+
+    private void CheckCpuTrayIcon_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool on = checkCpuTrayIcon.IsChecked ?? false;
+        Helpers.AppConfig.Set("cpu_tray_enabled", on ? 1 : 0);
+        Helpers.TraySystemMonitor.SetCpuIconEnabled(on);
+        Helpers.Logger.WriteLine($"CPU temp tray icon → {on}");
+    }
+
+    private void CheckCpuTrayTransparent_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        Helpers.AppConfig.Set("cpu_tray_bg_transparent",
+            (checkCpuTrayTransparent.IsChecked ?? false) ? 1 : 0);
+        Helpers.TraySystemMonitor.RefreshIconAppearance();
+    }
+
+    private void BtnCpuTrayBg_Click(object? sender, RoutedEventArgs e)
+    {
+        string current = Helpers.AppConfig.GetString("cpu_tray_bg") ?? DefaultCpuBg;
+        Helpers.ColorPicker.Show(this, current, hex =>
+        {
+            Helpers.AppConfig.Set("cpu_tray_bg", hex);
+            UpdateSwatch(btnCpuTrayBg, hex);
+            Helpers.TraySystemMonitor.RefreshIconAppearance();
+        });
+    }
+
+    private void BtnCpuTrayText_Click(object? sender, RoutedEventArgs e)
+    {
+        string current = Helpers.AppConfig.GetString("cpu_tray_text") ?? DefaultTextColor;
+        Helpers.ColorPicker.Show(this, current, hex =>
+        {
+            Helpers.AppConfig.Set("cpu_tray_text", hex);
+            UpdateSwatch(btnCpuTrayText, hex);
+            Helpers.TraySystemMonitor.RefreshIconAppearance();
+        });
+    }
+
+    //  GPU temp icon handlers (mirrors of CPU) 
+
+    private void CheckGpuTrayIcon_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool on = checkGpuTrayIcon.IsChecked ?? false;
+        Helpers.AppConfig.Set("gpu_tray_enabled", on ? 1 : 0);
+        Helpers.TraySystemMonitor.SetGpuIconEnabled(on);
+        Helpers.Logger.WriteLine($"GPU temp tray icon → {on}");
+    }
+
+    private void CheckGpuTrayTransparent_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        Helpers.AppConfig.Set("gpu_tray_bg_transparent",
+            (checkGpuTrayTransparent.IsChecked ?? false) ? 1 : 0);
+        Helpers.TraySystemMonitor.RefreshIconAppearance();
+    }
+
+    private void BtnGpuTrayBg_Click(object? sender, RoutedEventArgs e)
+    {
+        string current = Helpers.AppConfig.GetString("gpu_tray_bg") ?? DefaultGpuBg;
+        Helpers.ColorPicker.Show(this, current, hex =>
+        {
+            Helpers.AppConfig.Set("gpu_tray_bg", hex);
+            UpdateSwatch(btnGpuTrayBg, hex);
+            Helpers.TraySystemMonitor.RefreshIconAppearance();
+        });
+    }
+
+    private void BtnGpuTrayText_Click(object? sender, RoutedEventArgs e)
+    {
+        string current = Helpers.AppConfig.GetString("gpu_tray_text") ?? DefaultTextColor;
+        Helpers.ColorPicker.Show(this, current, hex =>
+        {
+            Helpers.AppConfig.Set("gpu_tray_text", hex);
+            UpdateSwatch(btnGpuTrayText, hex);
+            Helpers.TraySystemMonitor.RefreshIconAppearance();
+        });
+    }
+
     private void CheckClamshell_Changed(object? sender, RoutedEventArgs e)
     {
         if (_suppressEvents)
@@ -796,6 +951,13 @@ public partial class ExtraWindow : Window
         if (_suppressEvents)
             return;
         Helpers.AppConfig.Set("silent_start", (checkSilentStart.IsChecked ?? false) ? 1 : 0);
+    }
+
+    private void CheckDisableOsd_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        Helpers.AppConfig.Set("disable_osd", (checkDisableOsd.IsChecked ?? false) ? 1 : 0);
     }
 
     /// <summary>Start a systemd-inhibit process that prevents lid-close suspend.</summary>
@@ -1046,6 +1208,7 @@ public partial class ExtraWindow : Window
             _batteryInfoWindow = new BatteryInfoWindow();
             if (Helpers.AppConfig.Is("topmost"))
                 _batteryInfoWindow.Topmost = true;
+            Helpers.WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_batteryInfoWindow);
             _batteryInfoWindow.Show();
         }
         else
@@ -1061,6 +1224,7 @@ public partial class ExtraWindow : Window
             _systemInfoWindow = new SystemInfoWindow();
             if (Helpers.AppConfig.Is("topmost"))
                 _systemInfoWindow.Topmost = true;
+            Helpers.WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_systemInfoWindow);
             _systemInfoWindow.Show();
         }
         else
@@ -1168,6 +1332,9 @@ public partial class ExtraWindow : Window
         if (_suppressEvents)
             return;
         bool enabled = checkRawWmi.IsChecked ?? false;
+        // Idempotency guard
+        if (enabled == Helpers.AppConfig.Is("raw_wmi"))
+            return;
 
         Helpers.AppConfig.Set("raw_wmi", enabled ? 1 : 0);
         Helpers.AppConfig.Flush();

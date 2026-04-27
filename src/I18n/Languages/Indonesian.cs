@@ -54,8 +54,6 @@ public static class Indonesian
         // SCREEN
         ["screen_prefix"] = "Layar Laptop: {0}Hz",
         ["screen_prefix_auto"] = "Layar Laptop: {0}Hz (Otomatis)",
-        ["screen_auto"] = "Otomatis",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Keyboard Laptop",
@@ -180,7 +178,8 @@ public static class Indonesian
         ["udev_not_installed"] = "Aturan udev belum dipasang. Jalankan install.sh untuk fungsionalitas penuh (batas baterai, kontrol kipas, dll.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (hanya iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Dioptimalkan (otomatis)",
@@ -225,7 +224,6 @@ public static class Indonesian
 
         ["display_header"] = "Layar",
         ["controller"] = "Pengendali",
-        ["enable_backlight"] = "Aktifkan lampu latar layar",
         ["enable_backlight_load"] = "Aktifkan lampu latar layar (muat {0})",
         ["load_module"] = "Muat {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -256,6 +254,16 @@ public static class Indonesian
         ["bw_tray_icon"] = "Ikon Tray Hitam-Putih",
         ["clamshell_mode"] = "Mode Clamshell (nonaktifkan tidur saat penutup ditutup)",
         ["start_minimized"] = "Mulai diminimalkan ke tray",
+        ["disable_osd_label"] = "Nonaktifkan notifikasi",
+        ["tray_bw_icon"] = "Ikon tray hitam putih",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Ikon System Tray",
+        ["cpu_temp_tray"] = "Tampilkan suhu CPU",
+        ["gpu_temp_tray"] = "Tampilkan suhu GPU",
+        ["tray_bg_color"] = "Warna latar belakang",
+        ["tray_text_color"] = "Warna teks",
+        ["tray_bg_transparent"] = "Transparan",
 
         ["key_bindings_header"] = "Pengikatan Tombol",
         ["key_rog_m5"] = "Tombol ROG / M5",
@@ -274,6 +282,11 @@ public static class Indonesian
         ["system_info_header"] = "Info Sistem",
 
         ["advanced_header"] = "Lanjutan",
+        ["mode_command_label"] = "Jalankan saat ganti:",
+        ["mode_command_hint"] = "Dijalankan via /bin/sh -c setelah setiap pergantian mode (manual + otomatis AC/DC). Per-mode; ganti mode untuk mengedit masing-masing.",
+        ["reapply_power_label"] = "Terapkan ulang daya:",
+        ["reapply_power_unit"] = "detik (0 = mati)",
+        ["reapply_power_hint"] = "Menulis ulang batas daya CPU/GPU pada interval ini. Berguna saat BIOS menimpa PPT.",
         ["auto_apply_power"] = "Terapkan batas daya otomatis saat ganti mode",
         ["raw_wmi_mode"] = "Mode WMI mentah (eksperimental - GPU Eco via ACPI debugfs)",
         ["raw_wmi_hint"] = "Untuk laptop tanpa GPU Eco sysfs. Aplikasi akan dimulai ulang saat dialihkan.",
@@ -309,7 +322,6 @@ public static class Indonesian
         ["cpu_boost"] = "Boost CPU",
         ["auto_apply_power_limits"] = "Terapkan batas daya otomatis saat ganti mode",
         ["firmware_control"] = "Kontrol firmware",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Beban: {2}   Tengah: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Eksperimental)",
@@ -375,7 +387,6 @@ public static class Indonesian
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  gerak",
         ["arcade_shoot"] = "SPACE  tembak",
@@ -417,6 +428,10 @@ public static class Indonesian
         ["aura_ripple"] = "Riak",
         ["aura_comet"] = "Komet",
         ["aura_flash"] = "Kilat",
+        ["aura_heatmap"] = "Peta Panas",
+        ["aura_gpu_mode"] = "Mode GPU",
+        ["aura_battery"] = "Baterai",
+        ["aura_gradient"] = "Gradien",
         ["aura_no_modes"] = "Tidak ada mode",
 
         // AURA SPEEDS

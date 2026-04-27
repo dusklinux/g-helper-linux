@@ -51,8 +51,6 @@ public static class Spanish
         // SCREEN
         ["screen_prefix"] = "Pantalla del portátil: {0}Hz",
         ["screen_prefix_auto"] = "Pantalla del portátil: {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Teclado del portátil",
@@ -177,7 +175,8 @@ public static class Spanish
         ["udev_not_installed"] = "Reglas udev no instaladas. Ejecute install.sh para funcionalidad completa (límite de batería, control de ventiladores, etc.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (solo iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Optimizado (auto)",
@@ -222,7 +221,6 @@ public static class Spanish
 
         ["display_header"] = "Pantalla",
         ["controller"] = "Controlador",
-        ["enable_backlight"] = "Activar retroiluminación de pantalla",
         ["enable_backlight_load"] = "Activar retroiluminación (cargar {0})",
         ["load_module"] = "Cargar {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -253,6 +251,16 @@ public static class Spanish
         ["bw_tray_icon"] = "Icono de bandeja en B&N",
         ["clamshell_mode"] = "Modo clamshell (no suspender al cerrar la tapa)",
         ["start_minimized"] = "Iniciar minimizado en la bandeja",
+        ["disable_osd_label"] = "Desactivar notificaciones",
+        ["tray_bw_icon"] = "Icono B/N en la bandeja",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Iconos de la bandeja del sistema",
+        ["cpu_temp_tray"] = "Mostrar temperatura de CPU",
+        ["gpu_temp_tray"] = "Mostrar temperatura de GPU",
+        ["tray_bg_color"] = "Color de fondo",
+        ["tray_text_color"] = "Color de texto",
+        ["tray_bg_transparent"] = "Transparente",
 
         ["key_bindings_header"] = "Asignación de teclas",
         ["key_rog_m5"] = "Tecla ROG / M5",
@@ -271,6 +279,11 @@ public static class Spanish
         ["system_info_header"] = "Información del sistema",
 
         ["advanced_header"] = "Avanzado",
+        ["mode_command_label"] = "Ejecutar al cambiar:",
+        ["mode_command_hint"] = "Se ejecuta vía /bin/sh -c tras cada cambio de modo (manual + auto AC/DC). Por modo; cambia de modo para editar cada uno.",
+        ["reapply_power_label"] = "Reaplicar potencia:",
+        ["reapply_power_unit"] = "segundos (0 = desactivado)",
+        ["reapply_power_hint"] = "Reescribe los límites de potencia de CPU/GPU en este intervalo. Útil cuando la BIOS sobrescribe el PPT.",
         ["auto_apply_power"] = "Aplicar automáticamente los límites de potencia al cambiar de modo",
         ["raw_wmi_mode"] = "Modo WMI directo (experimental - GPU Eco vía ACPI debugfs)",
         ["raw_wmi_hint"] = "Para portátiles sin sysfs GPU Eco. La app se reiniciará al cambiar.",
@@ -306,7 +319,6 @@ public static class Spanish
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Aplicar automáticamente los límites de potencia al cambiar de modo",
         ["firmware_control"] = "Control de firmware",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Carga: {2}   Central: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Experimental)",
@@ -372,7 +384,6 @@ public static class Spanish
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  mover",
         ["arcade_shoot"] = "ESPACIO  disparar",
@@ -414,6 +425,10 @@ public static class Spanish
         ["aura_ripple"] = "Ondulación",
         ["aura_comet"] = "Cometa",
         ["aura_flash"] = "Destello",
+        ["aura_heatmap"] = "Mapa de calor",
+        ["aura_gpu_mode"] = "Modo GPU",
+        ["aura_battery"] = "Batería",
+        ["aura_gradient"] = "Degradado",
         ["aura_no_modes"] = "Sin modos",
 
         // AURA SPEEDS

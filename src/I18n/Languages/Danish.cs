@@ -54,8 +54,6 @@ public static class Danish
         // SCREEN
         ["screen_prefix"] = "Bærbar skærm: {0}Hz",
         ["screen_prefix_auto"] = "Bærbar skærm: {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Bærbart tastatur",
@@ -180,7 +178,8 @@ public static class Danish
         ["udev_not_installed"] = "udev-regler er ikke installeret. Kør install.sh for fuld funktionalitet (batterigrænse, blæserstyring osv.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (kun iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Optimeret (auto)",
@@ -225,7 +224,6 @@ public static class Danish
 
         ["display_header"] = "Skærm",
         ["controller"] = "Controller",
-        ["enable_backlight"] = "Aktivér skærmens baggrundsbelysning",
         ["enable_backlight_load"] = "Aktivér skærmens baggrundsbelysning (indlæs {0})",
         ["load_module"] = "Indlæs {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -256,6 +254,16 @@ public static class Danish
         ["bw_tray_icon"] = "Sort-hvid statusikon",
         ["clamshell_mode"] = "Skaltilstand (deaktiver dvale ved lukning af låg)",
         ["start_minimized"] = "Start minimeret til statusområdet",
+        ["disable_osd_label"] = "Deaktivér notifikationer",
+        ["tray_bw_icon"] = "Sort/hvidt ikon i statusområdet",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Systembakke-ikoner",
+        ["cpu_temp_tray"] = "Vis CPU-temperatur",
+        ["gpu_temp_tray"] = "Vis GPU-temperatur",
+        ["tray_bg_color"] = "Baggrundsfarve",
+        ["tray_text_color"] = "Tekstfarve",
+        ["tray_bg_transparent"] = "Gennemsigtig",
 
         ["key_bindings_header"] = "Tastebindinger",
         ["key_rog_m5"] = "ROG / M5-tast",
@@ -274,6 +282,11 @@ public static class Danish
         ["system_info_header"] = "Systemoplysninger",
 
         ["advanced_header"] = "Avanceret",
+        ["mode_command_label"] = "Kør ved skift:",
+        ["mode_command_hint"] = "Køres via /bin/sh -c efter hvert tilstandsskift (manuelt + auto AC/DC). Per tilstand; skift tilstand for at redigere hver enkelt.",
+        ["reapply_power_label"] = "Genanvend effekt:",
+        ["reapply_power_unit"] = "sekunder (0 = fra)",
+        ["reapply_power_hint"] = "Genskriv CPU/GPU-effektgrænser med dette interval. Nyttigt når BIOS overskriver PPT.",
         ["auto_apply_power"] = "Auto-anvend effektgrænser ved tilstandsskift",
         ["raw_wmi_mode"] = "Rå WMI-tilstand (eksperimentel - GPU Eco via ACPI debugfs)",
         ["raw_wmi_hint"] = "Til bærbare uden GPU Eco sysfs. Appen genstarter ved skift.",
@@ -309,7 +322,6 @@ public static class Danish
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Auto-anvend effektgrænser ved tilstandsskift",
         ["firmware_control"] = "Firmware-styring",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Last: {2}   Midt: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (eksperimentel)",
@@ -375,7 +387,6 @@ public static class Danish
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  flyt",
         ["arcade_shoot"] = "SPACE  skyd",
@@ -417,6 +428,10 @@ public static class Danish
         ["aura_ripple"] = "Krusning",
         ["aura_comet"] = "Komet",
         ["aura_flash"] = "Blink",
+        ["aura_heatmap"] = "Varmekort",
+        ["aura_gpu_mode"] = "GPU-tilstand",
+        ["aura_battery"] = "Batteri",
+        ["aura_gradient"] = "Gradient",
         ["aura_no_modes"] = "Ingen tilstande",
 
         // AURA SPEEDS

@@ -9,6 +9,16 @@ permissions:
   actions: read
 
 jobs:
+  i18n:
+    name: i18n consistency
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate translation key parity
+        run: ./scripts/i18n-check.sh
+
   build:
     runs-on: ubuntu-latest
     steps:

@@ -54,8 +54,6 @@ public static class Swedish
         // SCREEN
         ["screen_prefix"] = "Bärbar skärm: {0}Hz",
         ["screen_prefix_auto"] = "Bärbar skärm: {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Bärbart tangentbord",
@@ -180,7 +178,8 @@ public static class Swedish
         ["udev_not_installed"] = "udev-regler ej installerade. Kör install.sh för full funktionalitet (batterigräns, fläktstyrning, etc.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (enbart iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Optimerad (auto)",
@@ -225,7 +224,6 @@ public static class Swedish
 
         ["display_header"] = "Skärm",
         ["controller"] = "Kontroller",
-        ["enable_backlight"] = "Aktivera skärmens bakgrundsbelysning",
         ["enable_backlight_load"] = "Aktivera skärmens bakgrundsbelysning (ladda {0})",
         ["load_module"] = "Ladda {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -256,6 +254,16 @@ public static class Swedish
         ["bw_tray_icon"] = "Svartvit systemfältsikon",
         ["clamshell_mode"] = "Clamshell-läge (inaktivera viloläge vid stängning av lock)",
         ["start_minimized"] = "Starta minimerad till systemfältet",
+        ["disable_osd_label"] = "Inaktivera aviseringar",
+        ["tray_bw_icon"] = "Svartvit systemfältsikon",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Systemfältsikoner",
+        ["cpu_temp_tray"] = "Visa CPU-temperatur",
+        ["gpu_temp_tray"] = "Visa GPU-temperatur",
+        ["tray_bg_color"] = "Bakgrundsfärg",
+        ["tray_text_color"] = "Textfärg",
+        ["tray_bg_transparent"] = "Transparent",
 
         ["key_bindings_header"] = "Tangentbindningar",
         ["key_rog_m5"] = "ROG / M5-tangent",
@@ -274,6 +282,11 @@ public static class Swedish
         ["system_info_header"] = "Systeminformation",
 
         ["advanced_header"] = "Avancerat",
+        ["mode_command_label"] = "Kör vid byte:",
+        ["mode_command_hint"] = "Körs via /bin/sh -c efter varje lägesbyte (manuellt + auto AC/DC). Per läge; byt läge för att redigera vart och ett.",
+        ["reapply_power_label"] = "Återapplicera effekt:",
+        ["reapply_power_unit"] = "sekunder (0 = av)",
+        ["reapply_power_hint"] = "Skriv om CPU/GPU-effektgränser med detta intervall. Användbart när BIOS skriver över PPT.",
         ["auto_apply_power"] = "Auto-tillämpa effektgränser vid lägsbyte",
         ["raw_wmi_mode"] = "Rått WMI-läge (experimentellt - GPU Eco via ACPI debugfs)",
         ["raw_wmi_hint"] = "För bärbara datorer utan GPU Eco sysfs. Appen startar om vid växling.",
@@ -309,7 +322,6 @@ public static class Swedish
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Auto-tillämpa effektgränser vid lägsbyte",
         ["firmware_control"] = "Firmware-styrning",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Last: {2}   Mitt: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (experimentellt)",
@@ -375,7 +387,6 @@ public static class Swedish
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  flytta",
         ["arcade_shoot"] = "SPACE  skjut",
@@ -417,6 +428,10 @@ public static class Swedish
         ["aura_ripple"] = "Krusning",
         ["aura_comet"] = "Komet",
         ["aura_flash"] = "Blixt",
+        ["aura_heatmap"] = "Värmekarta",
+        ["aura_gpu_mode"] = "GPU-läge",
+        ["aura_battery"] = "Batteri",
+        ["aura_gradient"] = "Gradient",
         ["aura_no_modes"] = "Inga lägen",
 
         // AURA SPEEDS

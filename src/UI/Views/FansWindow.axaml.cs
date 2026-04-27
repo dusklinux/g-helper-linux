@@ -19,6 +19,7 @@ public partial class FansWindow : Window
     private System.Timers.Timer? _plDebounce;
     private bool _updatingPLSliders;
     private bool _updatingUV;
+    private bool _updatingAdvanced;
 
     public FansWindow()
     {
@@ -43,12 +44,43 @@ public partial class FansWindow : Window
             LoadFanCurves();
             LoadPowerLimits();
             LoadUV();
+            LoadAdvanced();
             RefreshBoostButton();
             RefreshSensors();
             _sensorTimer.Start();
         };
 
-        Closing += (_, _) => _sensorTimer.Stop();
+        // Refresh on performance-mode change (silent/balanced/turbo or auto AC/DC).
+        // ModeApplied fires from a background thread once the new mode is fully
+        // landed, so we marshal to the UI thread before touching widgets.
+        if (App.Mode != null)
+            App.Mode.ModeApplied += OnModeApplied;
+
+        Closing += (_, _) =>
+        {
+            _sensorTimer.Stop();
+            if (App.Mode != null)
+                App.Mode.ModeApplied -= OnModeApplied;
+        };
+    }
+
+    private void OnModeApplied(int mode)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            try
+            {
+                LoadFanCurves();
+                LoadPowerLimits();
+                LoadUV();
+                LoadAdvanced();
+                RefreshBoostButton();
+            }
+            catch (Exception ex)
+            {
+                Helpers.Logger.WriteLine("FansWindow OnModeApplied refresh failed", ex);
+            }
+        });
     }
 
     // Monitor
@@ -62,6 +94,7 @@ public partial class FansWindow : Window
             _monitorWindow = new MonitorWindow();
             if (Helpers.AppConfig.Is("topmost"))
                 _monitorWindow.Topmost = true;
+            Helpers.WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_monitorWindow);
             _monitorWindow.Show();
         }
         else
@@ -96,6 +129,12 @@ public partial class FansWindow : Window
         buttonApplyUV.Content = Labels.Get("apply");
         buttonResetUV.Content = Labels.Get("reset");
         checkApplyUV.Content = Labels.Get("undervolt_auto_apply");
+        headerAdvanced.Text = Labels.Get("advanced_header");
+        labelModeCmd.Text = Labels.Get("mode_command_label");
+        labelModeCmdHint.Text = Labels.Get("mode_command_hint");
+        labelReapply.Text = Labels.Get("reapply_power_label");
+        labelReapplyUnit.Text = Labels.Get("reapply_power_unit");
+        labelReapplyHint.Text = Labels.Get("reapply_power_hint");
     }
 
     // Fan Curves
@@ -608,5 +647,45 @@ public partial class FansWindow : Window
             return;
         Helpers.AppConfig.SetMode("auto_uv", checkApplyUV.IsChecked == true ? 1 : 0);
         App.Mode?.AutoRyzen();
+    }
+
+    // Advanced: per-mode shell hook + reapply timer
+
+    private void LoadAdvanced()
+    {
+        _updatingAdvanced = true;
+        try
+        {
+            int mode = Mode.Modes.GetCurrent();
+            textModeCommand.Text = Helpers.AppConfig.GetString($"mode_command_{mode}") ?? "";
+            int reapply = Helpers.AppConfig.Get("reapply_time", 0);
+            if (reapply < 0)
+                reapply = 0;
+            numReapplyTime.Value = reapply;
+        }
+        finally
+        {
+            _updatingAdvanced = false;
+        }
+    }
+
+    private void TextModeCommand_TextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_updatingAdvanced)
+            return;
+        int mode = Mode.Modes.GetCurrent();
+        string val = textModeCommand.Text ?? "";
+        Helpers.AppConfig.Set($"mode_command_{mode}", val);
+    }
+
+    private void NumReapplyTime_ValueChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+    {
+        if (_updatingAdvanced)
+            return;
+        int v = (int)(e.NewValue ?? 0);
+        if (v < 0)
+            v = 0;
+        Helpers.AppConfig.Set("reapply_time", v);
+        App.Mode?.RefreshReapplyTimer();
     }
 }

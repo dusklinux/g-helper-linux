@@ -51,8 +51,6 @@ public static class German
         // SCREEN
         ["screen_prefix"] = "Laptop-Bildschirm: {0}Hz",
         ["screen_prefix_auto"] = "Laptop-Bildschirm: {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Laptop-Tastatur",
@@ -177,7 +175,8 @@ public static class German
         ["udev_not_installed"] = "udev-Regeln nicht installiert. Führen Sie install.sh aus für volle Funktionalität (Akkulimit, Lüftersteuerung usw.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (nur iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Optimiert (Auto)",
@@ -222,7 +221,6 @@ public static class German
 
         ["display_header"] = "Anzeige",
         ["controller"] = "Controller",
-        ["enable_backlight"] = "Bildschirmbeleuchtung aktivieren",
         ["enable_backlight_load"] = "Bildschirmbeleuchtung aktivieren ({0} laden)",
         ["load_module"] = "{0} laden",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -253,6 +251,16 @@ public static class German
         ["bw_tray_icon"] = "S/W-Tray-Symbol",
         ["clamshell_mode"] = "Clamshell-Modus (kein Schlaf bei geschlossenem Deckel)",
         ["start_minimized"] = "Minimiert im Tray starten",
+        ["disable_osd_label"] = "Benachrichtigungen deaktivieren",
+        ["tray_bw_icon"] = "S/W-Tray-Symbol",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Tray-Symbole",
+        ["cpu_temp_tray"] = "CPU-Temperatur anzeigen",
+        ["gpu_temp_tray"] = "GPU-Temperatur anzeigen",
+        ["tray_bg_color"] = "Hintergrundfarbe",
+        ["tray_text_color"] = "Textfarbe",
+        ["tray_bg_transparent"] = "Transparent",
 
         ["key_bindings_header"] = "Tastenbelegung",
         ["key_rog_m5"] = "ROG / M5 Taste",
@@ -271,6 +279,11 @@ public static class German
         ["system_info_header"] = "Systeminformationen",
 
         ["advanced_header"] = "Erweitert",
+        ["mode_command_label"] = "Bei Wechsel ausführen:",
+        ["mode_command_hint"] = "Wird über /bin/sh -c nach jedem Moduswechsel ausgeführt (manuell + auto AC/DC). Pro Modus; wechseln Sie den Modus, um jeden zu bearbeiten.",
+        ["reapply_power_label"] = "Leistung erneut anwenden:",
+        ["reapply_power_unit"] = "Sekunden (0 = aus)",
+        ["reapply_power_hint"] = "Schreibt CPU/GPU-Leistungslimits in diesem Intervall neu. Nützlich, wenn BIOS PPT überschreibt.",
         ["auto_apply_power"] = "Leistungslimits automatisch bei Moduswechsel anwenden",
         ["raw_wmi_mode"] = "Raw WMI-Modus (experimentell - GPU Eco über ACPI debugfs)",
         ["raw_wmi_hint"] = "Für Laptops ohne GPU Eco sysfs. App wird beim Umschalten neu gestartet.",
@@ -306,7 +319,6 @@ public static class German
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Leistungslimits automatisch bei Moduswechsel anwenden",
         ["firmware_control"] = "Firmware-Steuerung",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Last: {2}   Mittel: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Experimentell)",
@@ -372,7 +384,6 @@ public static class German
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  bewegen",
         ["arcade_shoot"] = "LEERTASTE  schießen",
@@ -414,6 +425,10 @@ public static class German
         ["aura_ripple"] = "Wellen",
         ["aura_comet"] = "Komet",
         ["aura_flash"] = "Blitz",
+        ["aura_heatmap"] = "Heatmap",
+        ["aura_gpu_mode"] = "GPU-Modus",
+        ["aura_battery"] = "Batterie",
+        ["aura_gradient"] = "Verlauf",
         ["aura_no_modes"] = "Keine Modi",
 
         // AURA SPEEDS

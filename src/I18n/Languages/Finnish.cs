@@ -54,8 +54,6 @@ public static class Finnish
         // SCREEN
         ["screen_prefix"] = "Kannettavan näyttö: {0}Hz",
         ["screen_prefix_auto"] = "Kannettavan näyttö: {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Kannettavan näppäimistö",
@@ -180,7 +178,8 @@ public static class Finnish
         ["udev_not_installed"] = "udev-sääntöjä ei ole asennettu. Suorita install.sh täyden toiminnallisuuden saamiseksi (akun raja, tuuletinhallinta jne.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (vain iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Optimoitu (auto)",
@@ -225,7 +224,6 @@ public static class Finnish
 
         ["display_header"] = "Näyttö",
         ["controller"] = "Ohjain",
-        ["enable_backlight"] = "Ota näytön taustavalo käyttöön",
         ["enable_backlight_load"] = "Ota näytön taustavalo käyttöön (lataa {0})",
         ["load_module"] = "Lataa {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -256,6 +254,16 @@ public static class Finnish
         ["bw_tray_icon"] = "Mustavalkoinen ilmaisinalueen kuvake",
         ["clamshell_mode"] = "Simpukkatila (estä lepotila kannen sulkiessa)",
         ["start_minimized"] = "Käynnistä pienennettynä ilmaisinalueelle",
+        ["disable_osd_label"] = "Poista ilmoitukset käytöstä",
+        ["tray_bw_icon"] = "Mustavalkoinen ilmaisinalueen kuvake",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Ilmaisinalueen kuvakkeet",
+        ["cpu_temp_tray"] = "Näytä CPU-lämpötila",
+        ["gpu_temp_tray"] = "Näytä GPU-lämpötila",
+        ["tray_bg_color"] = "Taustaväri",
+        ["tray_text_color"] = "Tekstin väri",
+        ["tray_bg_transparent"] = "Läpinäkyvä",
 
         ["key_bindings_header"] = "Näppäinsidokset",
         ["key_rog_m5"] = "ROG / M5 -näppäin",
@@ -274,6 +282,11 @@ public static class Finnish
         ["system_info_header"] = "Järjestelmätiedot",
 
         ["advanced_header"] = "Edistyneet",
+        ["mode_command_label"] = "Suorita vaihdettaessa:",
+        ["mode_command_hint"] = "Suoritetaan /bin/sh -c -komennolla jokaisen tilan vaihdon jälkeen (manuaalinen + auto AC/DC). Tilakohtainen; vaihda tilaa muokataksesi kutakin.",
+        ["reapply_power_label"] = "Aseta teho uudelleen:",
+        ["reapply_power_unit"] = "sekuntia (0 = pois)",
+        ["reapply_power_hint"] = "Kirjoita CPU/GPU-tehorajat uudelleen tällä välillä. Hyödyllinen, kun BIOS ylikirjoittaa PPT:n.",
         ["auto_apply_power"] = "Ota tehorajat automaattisesti käyttöön tilan vaihtuessa",
         ["raw_wmi_mode"] = "Raaka WMI-tila (kokeellinen - GPU Eco ACPI debugfs:n kautta)",
         ["raw_wmi_hint"] = "Kannettaville ilman GPU Eco sysfs-tukea. Sovellus käynnistyy uudelleen vaihdettaessa.",
@@ -309,7 +322,6 @@ public static class Finnish
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Ota tehorajat automaattisesti käyttöön tilan vaihtuessa",
         ["firmware_control"] = "Firmware-ohjaus",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Kuorma: {2}   Keski: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Alijännite (kokeellinen)",
@@ -375,7 +387,6 @@ public static class Finnish
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  liiku",
         ["arcade_shoot"] = "SPACE  ammu",
@@ -417,6 +428,10 @@ public static class Finnish
         ["aura_ripple"] = "Aaltoilu",
         ["aura_comet"] = "Komeetta",
         ["aura_flash"] = "Välähdys",
+        ["aura_heatmap"] = "Lämpökartta",
+        ["aura_gpu_mode"] = "GPU-tila",
+        ["aura_battery"] = "Akku",
+        ["aura_gradient"] = "Liukuväri",
         ["aura_no_modes"] = "Ei tiloja",
 
         // AURA SPEEDS

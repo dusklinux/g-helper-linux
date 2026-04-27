@@ -54,8 +54,6 @@ public static class ChineseSimplified
         // SCREEN
         ["screen_prefix"] = "笔记本屏幕：{0}Hz",
         ["screen_prefix_auto"] = "笔记本屏幕：{0}Hz（自动）",
-        ["screen_auto"] = "自动",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "笔记本键盘",
@@ -180,7 +178,8 @@ public static class ChineseSimplified
         ["udev_not_installed"] = "udev 规则未安装。请运行 install.sh 以获得完整功能（电池限制、风扇控制等）",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU：Eco（仅 iGPU）",
         ["tray_gpu_standard"] = "GPU：Standard（dGPU）",
         ["tray_gpu_optimized"] = "GPU：优化（自动）",
@@ -225,7 +224,6 @@ public static class ChineseSimplified
 
         ["display_header"] = "显示",
         ["controller"] = "控制器",
-        ["enable_backlight"] = "启用显示背光",
         ["enable_backlight_load"] = "启用显示背光（加载 {0}）",
         ["load_module"] = "加载 {0}",
         ["panel_overdrive_check"] = "面板超频",
@@ -256,6 +254,16 @@ public static class ChineseSimplified
         ["bw_tray_icon"] = "黑白托盘图标",
         ["clamshell_mode"] = "合盖模式（合盖时不休眠）",
         ["start_minimized"] = "启动时最小化到托盘",
+        ["disable_osd_label"] = "禁用通知",
+        ["tray_bw_icon"] = "黑白托盘图标",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "系统托盘图标",
+        ["cpu_temp_tray"] = "显示 CPU 温度",
+        ["gpu_temp_tray"] = "显示 GPU 温度",
+        ["tray_bg_color"] = "背景颜色",
+        ["tray_text_color"] = "文字颜色",
+        ["tray_bg_transparent"] = "透明",
 
         ["key_bindings_header"] = "按键绑定",
         ["key_rog_m5"] = "ROG / M5 键",
@@ -274,6 +282,11 @@ public static class ChineseSimplified
         ["system_info_header"] = "系统信息",
 
         ["advanced_header"] = "高级",
+        ["mode_command_label"] = "切换时运行：",
+        ["mode_command_hint"] = "每次模式切换后通过 /bin/sh -c 运行（手动 + 自动 AC/DC）。按模式分别设置；切换模式以编辑各自的命令。",
+        ["reapply_power_label"] = "重新应用功率：",
+        ["reapply_power_unit"] = "秒（0 = 关闭）",
+        ["reapply_power_hint"] = "按此间隔重新写入 CPU/GPU 功率限制。在 BIOS 覆盖 PPT 时有用。",
         ["auto_apply_power"] = "切换模式时自动应用功率限制",
         ["raw_wmi_mode"] = "Raw WMI 模式（实验性 - 通过 ACPI debugfs 控制 GPU Eco）",
         ["raw_wmi_hint"] = "适用于没有 GPU Eco sysfs 的笔记本。切换时应用将重启。",
@@ -309,7 +322,6 @@ public static class ChineseSimplified
         ["cpu_boost"] = "CPU 加速",
         ["auto_apply_power_limits"] = "切换模式时自动应用功率限制",
         ["firmware_control"] = "固件控制",
-        ["fan_sensor_format"] = "CPU：{0} / GPU：{1} 负载：{2}   中间：{3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "降压（实验性）",
@@ -375,7 +387,6 @@ public static class ChineseSimplified
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  移动",
         ["arcade_shoot"] = "SPACE  射击",
@@ -417,6 +428,10 @@ public static class ChineseSimplified
         ["aura_ripple"] = "涟漪",
         ["aura_comet"] = "彗星",
         ["aura_flash"] = "闪烁",
+        ["aura_heatmap"] = "热力图",
+        ["aura_gpu_mode"] = "GPU 模式",
+        ["aura_battery"] = "电池",
+        ["aura_gradient"] = "渐变",
         ["aura_no_modes"] = "无模式",
 
         // AURA SPEEDS

@@ -54,8 +54,6 @@ public static class Greek
         // SCREEN
         ["screen_prefix"] = "Οθόνη φορητού: {0}Hz",
         ["screen_prefix_auto"] = "Οθόνη φορητού: {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Πληκτρολόγιο φορητού",
@@ -180,7 +178,8 @@ public static class Greek
         ["udev_not_installed"] = "Οι κανόνες udev δεν έχουν εγκατασταθεί. Εκτελέστε install.sh για πλήρη λειτουργικότητα (όριο μπαταρίας, έλεγχος ανεμιστήρων κ.λπ.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (μόνο iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Βελτιστοποιημένο (auto)",
@@ -225,7 +224,6 @@ public static class Greek
 
         ["display_header"] = "Οθόνη",
         ["controller"] = "Ελεγκτής",
-        ["enable_backlight"] = "Ενεργοποίηση οπίσθιου φωτισμού οθόνης",
         ["enable_backlight_load"] = "Ενεργοποίηση οπίσθιου φωτισμού οθόνης (φόρτωση {0})",
         ["load_module"] = "Φόρτωση {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -256,6 +254,16 @@ public static class Greek
         ["bw_tray_icon"] = "Ασπρόμαυρο εικονίδιο δίσκου",
         ["clamshell_mode"] = "Λειτουργία κλειστού καπακιού (απενεργοποίηση αναστολής κατά το κλείσιμο)",
         ["start_minimized"] = "Εκκίνηση ελαχιστοποιημένο στο δίσκο",
+        ["disable_osd_label"] = "Απενεργοποίηση ειδοποιήσεων",
+        ["tray_bw_icon"] = "Ασπρόμαυρο εικονίδιο δίσκου",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Εικονίδια περιοχής ειδοποιήσεων",
+        ["cpu_temp_tray"] = "Εμφάνιση θερμοκρασίας CPU",
+        ["gpu_temp_tray"] = "Εμφάνιση θερμοκρασίας GPU",
+        ["tray_bg_color"] = "Χρώμα φόντου",
+        ["tray_text_color"] = "Χρώμα κειμένου",
+        ["tray_bg_transparent"] = "Διαφανές",
 
         ["key_bindings_header"] = "Αντιστοιχίσεις πλήκτρων",
         ["key_rog_m5"] = "Πλήκτρο ROG / M5",
@@ -274,6 +282,11 @@ public static class Greek
         ["system_info_header"] = "Πληροφορίες συστήματος",
 
         ["advanced_header"] = "Προχωρημένα",
+        ["mode_command_label"] = "Εκτέλεση στην αλλαγή:",
+        ["mode_command_hint"] = "Εκτελείται μέσω /bin/sh -c μετά από κάθε αλλαγή λειτουργίας (χειροκίνητα + αυτόματα AC/DC). Ανά λειτουργία· αλλάξτε λειτουργία για να επεξεργαστείτε κάθε μία.",
+        ["reapply_power_label"] = "Επανεφαρμογή ισχύος:",
+        ["reapply_power_unit"] = "δευτερόλεπτα (0 = ανενεργό)",
+        ["reapply_power_hint"] = "Επανεγγραφή των ορίων ισχύος CPU/GPU σε αυτό το διάστημα. Χρήσιμο όταν το BIOS αντικαθιστά το PPT.",
         ["auto_apply_power"] = "Αυτόματη εφαρμογή ορίων ισχύος κατά την αλλαγή λειτουργίας",
         ["raw_wmi_mode"] = "Λειτουργία Raw WMI (πειραματική - GPU Eco μέσω ACPI debugfs)",
         ["raw_wmi_hint"] = "Για φορητούς χωρίς GPU Eco sysfs. Η εφαρμογή θα επανεκκινηθεί κατά την εναλλαγή.",
@@ -309,7 +322,6 @@ public static class Greek
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Αυτόματη εφαρμογή ορίων ισχύος κατά την αλλαγή λειτουργίας",
         ["firmware_control"] = "Έλεγχος firmware",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Φορτίο: {2}   Μεσαίος: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Πειραματικό)",
@@ -375,7 +387,6 @@ public static class Greek
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  μετακίνηση",
         ["arcade_shoot"] = "SPACE  πυροβολισμός",
@@ -417,6 +428,10 @@ public static class Greek
         ["aura_ripple"] = "Κυματισμός",
         ["aura_comet"] = "Κομήτης",
         ["aura_flash"] = "Αναλαμπή",
+        ["aura_heatmap"] = "Θερμικός χάρτης",
+        ["aura_gpu_mode"] = "Λειτουργία GPU",
+        ["aura_battery"] = "Μπαταρία",
+        ["aura_gradient"] = "Διαβάθμιση",
         ["aura_no_modes"] = "Χωρίς λειτουργίες",
 
         // AURA SPEEDS

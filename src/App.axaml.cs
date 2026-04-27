@@ -37,6 +37,15 @@ public class App : Application
     public static TrayIcon? TrayIconInstance { get; set; }
 
     /// <summary>
+    /// Set to true when the app is on a shutdown path (tray Quit, MainWindow
+    /// Quit button, KDE logout/reboot, or any caller of <see cref="Shutdown"/>).
+    /// MainWindow's Closing handler reads this flag: when false, Closing is
+    /// cancelled and the window is hidden instead of disposed, so the next
+    /// tray-toggle re-open is instant. When true, Closing proceeds normally.
+    /// </summary>
+    public static bool IsShuttingDown { get; set; }
+
+    /// <summary>
     /// Active icon set slug. Read from AppConfig at startup; may be hot-swapped
     /// at runtime via the Extra window dropdown. Setting this fires
     /// <see cref="IconSetChanged"/> so all live <c>Icon</c> controls rebuild.
@@ -175,6 +184,16 @@ public class App : Application
         {
             // Keep running when window is closed (tray icon keeps app alive)
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+            // Catch-all signal that a shutdown is in progress, regardless of
+            // initiator (programmatic Shutdown(), KDE logout/reboot, etc).
+            // MainWindow's Closing handler relies on this flag to distinguish
+            // a real shutdown from a user-initiated window close (Hide-only).
+            desktop.ShutdownRequested += (_, _) =>
+            {
+                IsShuttingDown = true;
+                Logger.WriteLine("Shutdown requested - allowing windows to dispose");
+            };
 
             MainWindowInstance = new MainWindow();
             if (AppConfig.Is("topmost"))
@@ -327,6 +346,7 @@ public class App : Application
 
         // Create mode controller (uses App.Wmi, App.Power, etc.)
         Mode = new ModeControl();
+        Mode.RefreshReapplyTimer(); // arm timer if reapply_time is set
 
         // Create GPU mode switching controller
         if (Wmi != null && Power != null)
@@ -659,6 +679,8 @@ public class App : Application
             next = up ? Math.Min(current + 1, 3) : Math.Max(current - 1, 0);
             Wmi?.SetKeyboardBrightness(next);
         }
+        // Persist under AC- or battery-specific key so future AC/DC transitions restore the right level.
+        Helpers.AppConfig.Set(USB.Aura.GetBrightnessConfigKey(), next);
         string level = next switch
         {
             0 => Labels.Get("kbd_off"),
@@ -693,7 +715,6 @@ public class App : Application
         {
             var trayIcon = new TrayIcon
             {
-                ToolTipText = Labels.Format("tray_tooltip", Modes.GetCurrentName()),
                 IsVisible = true,
                 Menu = CreateTrayMenu(desktop)
             };
@@ -712,6 +733,8 @@ public class App : Application
 
             trayIcon.Clicked += (_, _) => ToggleMainWindow();
             TrayIconInstance = trayIcon;
+
+            TraySystemMonitor.Start(trayIcon, () => ToggleMainWindow());
 
             Labels.LanguageChanged += () =>
             {
@@ -743,9 +766,8 @@ public class App : Application
         {
             int mode = Modes.GetCurrent();
             int baseMode = Modes.GetBase(mode);
-            string name = Modes.GetName(mode);
 
-            TrayIconInstance.ToolTipText = Labels.Format("tray_tooltip", name);
+            TraySystemMonitor.Refresh();
 
             bool bw = AppConfig.IsBWIcon();
 
@@ -839,10 +861,25 @@ public class App : Application
 
         menu.Add(new NativeMenuItemSeparator());
 
+        string BuildBwIconHeader() =>
+            (Helpers.AppConfig.Is("bw_icon") ? "✓ " : "   ") + Labels.Get("tray_bw_icon");
+        var bwIcon = new NativeMenuItem(BuildBwIconHeader());
+        bwIcon.Click += (_, _) =>
+        {
+            bool next = !Helpers.AppConfig.Is("bw_icon");
+            Helpers.AppConfig.Set("bw_icon", next ? 1 : 0);
+            bwIcon.Header = BuildBwIconHeader();
+            UpdateTrayIcon();
+        };
+        menu.Add(bwIcon);
+
+        menu.Add(new NativeMenuItemSeparator());
+
         // Quit
         var quit = new NativeMenuItem(Labels.Get("quit"));
         quit.Click += (_, _) =>
         {
+            IsShuttingDown = true;
             Shutdown(desktop);
         };
         menu.Add(quit);
@@ -1003,6 +1040,18 @@ public class App : Application
 
         // Auto screen refresh rate (if configured)
         AutoScreen();
+
+        // Apply AC- vs battery-specific keyboard backlight level (if configured).
+        try
+        {
+            USB.Aura.ApplyConfiguredBrightness("PowerChange");
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                MainWindowInstance?.RefreshExtraKeyboardBrightness());
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine("ApplyConfiguredBrightness failed", ex);
+        }
     }
 
     // Unix signal handlers for clean shutdown on SIGTERM/SIGINT (logout/reboot)
@@ -1070,7 +1119,14 @@ public class App : Application
 
     private void Shutdown(IClassicDesktopStyleApplicationLifetime desktop)
     {
+        // Defensive: ensure Closing handlers see the shutdown flag before
+        // desktop.Shutdown() walks open windows. ShutdownRequested also sets
+        // this, but setting it here covers any path that calls Shutdown()
+        // directly without going through Avalonia's request flow.
+        IsShuttingDown = true;
         Logger.WriteLine("Shutting down...");
+
+        TraySystemMonitor.Stop();
 
         // Cleanup
         Power?.StopPowerMonitoring();

@@ -51,8 +51,6 @@ public static class Hungarian
         // SCREEN
         ["screen_prefix"] = "Laptop képernyő: {0}Hz",
         ["screen_prefix_auto"] = "Laptop képernyő: {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Laptop billentyűzet",
@@ -177,7 +175,8 @@ public static class Hungarian
         ["udev_not_installed"] = "Az udev szabályok nincsenek telepítve. Futtassa az install.sh-t a teljes funkcionalitáshoz (akkumulátor korlát, ventilátor vezérlés stb.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (csak iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Optimalizált (auto)",
@@ -222,7 +221,6 @@ public static class Hungarian
 
         ["display_header"] = "Kijelző",
         ["controller"] = "Vezérlő",
-        ["enable_backlight"] = "Kijelző háttérvilágítás engedélyezése",
         ["enable_backlight_load"] = "Kijelző háttérvilágítás engedélyezése ({0} betöltése)",
         ["load_module"] = "{0} betöltése",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -253,6 +251,16 @@ public static class Hungarian
         ["bw_tray_icon"] = "Fekete-fehér tálca ikon",
         ["clamshell_mode"] = "Zárt fedél mód (alvás letiltása fedél bezárásakor)",
         ["start_minimized"] = "Indítás tálcára minimalizálva",
+        ["disable_osd_label"] = "Értesítések kikapcsolása",
+        ["tray_bw_icon"] = "Fekete-fehér tálcaikon",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Tálcaikonok",
+        ["cpu_temp_tray"] = "CPU hőmérséklet megjelenítése",
+        ["gpu_temp_tray"] = "GPU hőmérséklet megjelenítése",
+        ["tray_bg_color"] = "Háttérszín",
+        ["tray_text_color"] = "Szövegszín",
+        ["tray_bg_transparent"] = "Átlátszó",
 
         ["key_bindings_header"] = "Billentyű-kiosztás",
         ["key_rog_m5"] = "ROG / M5 gomb",
@@ -271,6 +279,11 @@ public static class Hungarian
         ["system_info_header"] = "Rendszer információ",
 
         ["advanced_header"] = "Haladó",
+        ["mode_command_label"] = "Futtatás váltáskor:",
+        ["mode_command_hint"] = "Minden módváltás után /bin/sh -c-vel fut (manuális + automatikus AC/DC). Módonként; váltson módot az egyenkénti szerkesztéshez.",
+        ["reapply_power_label"] = "Teljesítmény újraalkalmazása:",
+        ["reapply_power_unit"] = "másodperc (0 = ki)",
+        ["reapply_power_hint"] = "Újraírja a CPU/GPU teljesítménykorlátokat ennyi időnként. Hasznos, ha a BIOS felülírja a PPT-t.",
         ["auto_apply_power"] = "Teljesítmény korlátok automatikus alkalmazása mód váltáskor",
         ["raw_wmi_mode"] = "Nyers WMI mód (kísérleti - GPU Eco ACPI debugfs-en keresztül)",
         ["raw_wmi_hint"] = "GPU Eco sysfs nélküli laptopokhoz. Az alkalmazás újraindul váltáskor.",
@@ -306,7 +319,6 @@ public static class Hungarian
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Teljesítmény korlátok automatikus alkalmazása mód váltáskor",
         ["firmware_control"] = "Firmware vezérlés",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Terhelés: {2}   Közép: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Alulfeszültség (kísérleti)",
@@ -372,7 +384,6 @@ public static class Hungarian
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  mozgás",
         ["arcade_shoot"] = "SPACE  lövés",
@@ -414,6 +425,10 @@ public static class Hungarian
         ["aura_ripple"] = "Hullám",
         ["aura_comet"] = "Üstökös",
         ["aura_flash"] = "Villanás",
+        ["aura_heatmap"] = "Hőtérkép",
+        ["aura_gpu_mode"] = "GPU mód",
+        ["aura_battery"] = "Akkumulátor",
+        ["aura_gradient"] = "Színátmenet",
         ["aura_no_modes"] = "Nincs mód",
 
         // AURA SPEEDS

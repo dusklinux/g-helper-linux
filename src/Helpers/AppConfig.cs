@@ -371,12 +371,12 @@ public static class AppConfig
     public static bool IsTUF() => ContainsModel("TUF") || ContainsModel("TX Gaming") || ContainsModel("TX Air");
     public static bool IsROG() => ContainsModel("ROG");
     public static bool IsStrix() => ContainsModel("Strix") || ContainsModel("Scar") || ContainsModel("G703G");
-    public static bool IsVivoZenbook() => ContainsModel("Vivobook") || ContainsModel("Zenbook") || ContainsModel("EXPERTBOOK") || ContainsModel(" V16");
+    public static bool IsVivoZenbook() => ContainsModel("Vivobook") || ContainsModel("Zenbook") || ContainsModel("EXPERTBOOK") || ContainsModel(" V16") || ContainsModel("ASUSLaptop");
     public static bool IsProArt() => ContainsModel("ProArt");
     public static bool IsDUO() => ContainsModel("Duo") || ContainsModel("GX550") || ContainsModel("GX551") || ContainsModel("GX650") || ContainsModel("UX840") || ContainsModel("UX482");
     public static bool IsAlly() => ContainsModel("RC7");
     public static bool IsASUS() => ContainsModel("ROG") || ContainsModel("TUF") || ContainsModel("Vivobook") || ContainsModel("Zenbook");
-    public static bool IsVivoZenPro() => ContainsModel("Vivobook") || ContainsModel("Zenbook") || ContainsModel("ProArt") || ContainsModel("EXPERTBOOK") || ContainsModel(" V16");
+    public static bool IsVivoZenPro() => ContainsModel("Vivobook") || ContainsModel("Zenbook") || ContainsModel("ProArt") || ContainsModel("EXPERTBOOK") || ContainsModel(" V16") || ContainsModel("ASUSLaptop");
 
     // Specific model variants
     public static bool IsARCNM() => ContainsModel("GZ301VIC");
@@ -386,12 +386,12 @@ public static class AppConfig
     public static bool IsS17() => ContainsModel("S17");
     public static bool IsX13() => ContainsModel("X13");
     public static bool IsG14AMD() => ContainsModel("GA402R");
-    public static bool IsFA401EA() => ContainsModel("FA401EA");
+    public static bool IsOnlyAIMAX() => ContainsModel("FA401EA") || ContainsModel("HN7306EA");
     public static bool IsAdvantageEdition() => ContainsModel("13QY");
 
     // GPU / power management
-    public static bool NoGpu() => Is("no_gpu") || ContainsModel("UX540") || ContainsModel("M560") || ContainsModel("GZ302") || IsFA401EA();
-    public static bool IsAMDiGPU() => ContainsModel("GV301RA") || ContainsModel("GV302XA") || ContainsModel("GZ302") || IsFA401EA() || IsAlly();
+    public static bool NoGpu() => Is("no_gpu") || ContainsModel("UX540") || ContainsModel("M560") || ContainsModel("GZ302") || IsOnlyAIMAX();
+    public static bool IsAMDiGPU() => ContainsModel("GV301RA") || ContainsModel("GV302XA") || ContainsModel("GZ302") || IsOnlyAIMAX() || IsAlly();
     public static bool IsGPUFix() => Is("gpu_fix") || (ContainsModel("GA402X") && IsNotFalse("gpu_fix"));
     public static bool IsForceSetGPUMode() => Is("gpu_mode_force_set") || (ContainsModel("503") && IsNotFalse("gpu_mode_force_set"));
     public static bool IsNVPlatform() => Is("nv_platform");
@@ -408,7 +408,7 @@ public static class AppConfig
     public static bool IsAlwaysUltimate() => ContainsModel("FA507NUR") || ContainsModel("FA506NCR") || ContainsModel("FA507NVR");
     public static bool IsManualModeRequired() => IsMode("auto_apply_power") && (Is("manual_mode") || ContainsModel("G733"));
     public static bool IsModeReapplyRequired() => Is("mode_reapply") || ContainsModel("FA401");
-    public static bool IsResetRequired() => ContainsModel("GA403") || ContainsModel("FA507XV");
+    public static bool IsResetRequired() => ContainsModel("GA403UI") || ContainsModel("GA403UU") || ContainsModel("GA403UV") || ContainsModel("FA507XV");
     public static bool IsPowerRequired() => ContainsModel("FX507") || ContainsModel("FX517") || ContainsModel("FX707");
 
     // Fan control
@@ -423,11 +423,11 @@ public static class AppConfig
     public static bool IsStrixLimitedRGB() =>
         ContainsModel("G614PM") || ContainsModel("G614PP") || ContainsModel("G614PR") || ContainsModel("G512LI") ||
         ContainsModel("G513R") || ContainsModel("G713QM") || ContainsModel("G713PV") || ContainsModel("G513IE") ||
-        ContainsModel("G713RC") || ContainsModel("G713IC") || ContainsModel("G713PU") || ContainsModel("G513QM") ||
-        ContainsModel("G513QC") || ContainsModel("G531G") || ContainsModel("G615JMR") || ContainsModel("G615LM") ||
-        ContainsModel("G815LR");
+        ContainsModel("G513IC") || ContainsModel("G713RC") || ContainsModel("G713IC") || ContainsModel("G713PU") ||
+        ContainsModel("G513QE") || ContainsModel("G513QM") || ContainsModel("G513QC") || ContainsModel("G531G") ||
+        ContainsModel("G615JMR") || ContainsModel("G615LM") || ContainsModel("G815LR");
     public static bool IsPossible4ZoneRGB() =>
-        ContainsModel("G614JI_") || ContainsModel("G614JV_") || ContainsModel("G614JZ") ||
+        ContainsModel("G614JI") || ContainsModel("G614JV") || ContainsModel("G614JZ") ||
         ContainsModel("G614JU") || IsStrixLimitedRGB();
     public static bool Is4ZoneRGB() => IsPossible4ZoneRGB() && !Is("per_key_rgb");
     public static bool IsNoDirectRGB() =>
@@ -466,7 +466,7 @@ public static class AppConfig
         ContainsModel("M540") || ContainsModel("K340") || ContainsModel("K350") || ContainsModel("M140") ||
         ContainsModel("S540") || ContainsModel("S550") || ContainsModel("M7400") || ContainsModel("N650") ||
         ContainsModel("HN7306") || ContainsModel("H760") || ContainsModel("UX5406") || ContainsModel("M5606") ||
-        ContainsModel("X513") || ContainsModel("N7400") || ContainsModel("UX760");
+        ContainsModel("X513") || ContainsModel("N7400") || ContainsModel("UX760") || ContainsModel("Q530VJ");
     public static bool IsNoOverdrive() => Is("no_overdrive");
     public static bool SwappedBrightness() => ContainsModel("FA506IEB") || ContainsModel("FA506IH") || ContainsModel("FA506IC") || ContainsModel("FA506II") || ContainsModel("FX506LU") || ContainsModel("FX506IC") || ContainsModel("FX506LH") || ContainsModel("FA506IV") || ContainsModel("FA706IC") || ContainsModel("FA706IH");
     public static bool SaveDimming() => Is("save_dimming");
@@ -477,7 +477,7 @@ public static class AppConfig
 
     // Form factor / misc
     public static bool HasTabletMode() => ContainsModel("X16") || ContainsModel("X13") || ContainsModel("Z13");
-    public static bool IsSleepBacklight() => ContainsModel("FA617") || ContainsModel("FX507");
+    public static bool IsSleepBacklight() => ContainsModel("FA617") || ContainsModel("FX507") || ContainsModel("FA507");
     public static bool IsNoSleepEvent() => ContainsModel("FX505");
     public static bool NoWMI() => ContainsModel("GL704G") || ContainsModel("GM501G") || ContainsModel("GX501G");
 

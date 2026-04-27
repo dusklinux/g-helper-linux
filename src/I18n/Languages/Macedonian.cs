@@ -54,8 +54,6 @@ public static class Macedonian
         // SCREEN
         ["screen_prefix"] = "Екран на лаптоп: {0}Hz",
         ["screen_prefix_auto"] = "Екран на лаптоп: {0}Hz (Авто)",
-        ["screen_auto"] = "Авто",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Тастатура на лаптоп",
@@ -180,7 +178,8 @@ public static class Macedonian
         ["udev_not_installed"] = "udev правилата не се инсталирани. Извршете install.sh за целосна функционалност (ограничување на батерија, контрола на вентилатори, итн.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (само iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Оптимизиран (авто)",
@@ -225,7 +224,6 @@ public static class Macedonian
 
         ["display_header"] = "Дисплеј",
         ["controller"] = "Контролер",
-        ["enable_backlight"] = "Вклучи позадинско осветлување на дисплеј",
         ["enable_backlight_load"] = "Вклучи позадинско осветлување на дисплеј (вчитај {0})",
         ["load_module"] = "Вчитај {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -256,6 +254,16 @@ public static class Macedonian
         ["bw_tray_icon"] = "Црно-бела икона во лента",
         ["clamshell_mode"] = "Режим со затворен капак (оневозможи спиење при затворање)",
         ["start_minimized"] = "Стартувај минимизирано во лента",
+        ["disable_osd_label"] = "Оневозможи известувања",
+        ["tray_bw_icon"] = "Црно-бела икона во лента",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Икони на системската лента",
+        ["cpu_temp_tray"] = "Прикажи температура на CPU",
+        ["gpu_temp_tray"] = "Прикажи температура на GPU",
+        ["tray_bg_color"] = "Боја на позадина",
+        ["tray_text_color"] = "Боја на текст",
+        ["tray_bg_transparent"] = "Проѕирно",
 
         ["key_bindings_header"] = "Врзување на копчиња",
         ["key_rog_m5"] = "ROG / M5 копче",
@@ -274,6 +282,11 @@ public static class Macedonian
         ["system_info_header"] = "Информации за системот",
 
         ["advanced_header"] = "Напредно",
+        ["mode_command_label"] = "Изврши при промена:",
+        ["mode_command_hint"] = "Се извршува преку /bin/sh -c по секоја промена на режим (рачно + автоматски AC/DC). По режим; смени режим за да го уредиш секој.",
+        ["reapply_power_label"] = "Повторно примени моќност:",
+        ["reapply_power_unit"] = "секунди (0 = исклучено)",
+        ["reapply_power_hint"] = "Повторно ги запишува ограничувањата на моќност на CPU/GPU на овој интервал. Корисно кога BIOS го пребришува PPT.",
         ["auto_apply_power"] = "Авто-примени ограничувања на моќност при промена на режим",
         ["raw_wmi_mode"] = "Суров WMI режим (експериментално - GPU Eco преку ACPI debugfs)",
         ["raw_wmi_hint"] = "За лаптопи без GPU Eco sysfs. Апликацијата ќе се рестартира при промена.",
@@ -309,7 +322,6 @@ public static class Macedonian
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Авто-примени ограничувања на моќност при промена на режим",
         ["firmware_control"] = "Контрола на фирмвер",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Оптеретување: {2}   Среден: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Андерволтинг (Експериментално)",
@@ -375,7 +387,6 @@ public static class Macedonian
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  движење",
         ["arcade_shoot"] = "SPACE  пукај",
@@ -417,6 +428,10 @@ public static class Macedonian
         ["aura_ripple"] = "Бранување",
         ["aura_comet"] = "Комета",
         ["aura_flash"] = "Блесок",
+        ["aura_heatmap"] = "Топлинска мапа",
+        ["aura_gpu_mode"] = "GPU режим",
+        ["aura_battery"] = "Батерија",
+        ["aura_gradient"] = "Градиент",
         ["aura_no_modes"] = "Нема режими",
 
         // AURA SPEEDS

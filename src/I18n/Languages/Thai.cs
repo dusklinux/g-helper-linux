@@ -54,8 +54,6 @@ public static class Thai
         // SCREEN
         ["screen_prefix"] = "หน้าจอแล็ปท็อป: {0}Hz",
         ["screen_prefix_auto"] = "หน้าจอแล็ปท็อป: {0}Hz (อัตโนมัติ)",
-        ["screen_auto"] = "อัตโนมัติ",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "แป้นพิมพ์แล็ปท็อป",
@@ -180,7 +178,8 @@ public static class Thai
         ["udev_not_installed"] = "ยังไม่ได้ติดตั้งกฎ udev เรียกใช้ install.sh เพื่อใช้งานฟีเจอร์ทั้งหมด (จำกัดแบตเตอรี่, ควบคุมพัดลม, ฯลฯ)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (iGPU เท่านั้น)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: ปรับแต่งอัตโนมัติ (อัตโนมัติ)",
@@ -225,7 +224,6 @@ public static class Thai
 
         ["display_header"] = "จอแสดงผล",
         ["controller"] = "คอนโทรลเลอร์",
-        ["enable_backlight"] = "เปิดใช้งานไฟส่องสว่างจอ",
         ["enable_backlight_load"] = "เปิดใช้งานไฟส่องสว่างจอ (โหลด {0})",
         ["load_module"] = "โหลด {0}",
         ["panel_overdrive_check"] = "โอเวอร์ไดรว์จอ",
@@ -256,6 +254,16 @@ public static class Thai
         ["bw_tray_icon"] = "ไอคอนถาดขาวดำ",
         ["clamshell_mode"] = "โหมดปิดฝา (ปิดการพักเครื่องเมื่อปิดฝา)",
         ["start_minimized"] = "เริ่มโดยย่อเล็กไว้ที่ถาด",
+        ["disable_osd_label"] = "ปิดการแจ้งเตือน",
+        ["tray_bw_icon"] = "ไอคอนถาดขาวดำ",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "ไอคอนซิสเต็มเทรย์",
+        ["cpu_temp_tray"] = "แสดงอุณหภูมิ CPU",
+        ["gpu_temp_tray"] = "แสดงอุณหภูมิ GPU",
+        ["tray_bg_color"] = "สีพื้นหลัง",
+        ["tray_text_color"] = "สีข้อความ",
+        ["tray_bg_transparent"] = "โปร่งใส",
 
         ["key_bindings_header"] = "การผูกปุ่ม",
         ["key_rog_m5"] = "ปุ่ม ROG / M5",
@@ -274,6 +282,11 @@ public static class Thai
         ["system_info_header"] = "ข้อมูลระบบ",
 
         ["advanced_header"] = "ขั้นสูง",
+        ["mode_command_label"] = "รันเมื่อสลับ:",
+        ["mode_command_hint"] = "รันผ่าน /bin/sh -c หลังการสลับโหมดทุกครั้ง (ด้วยตนเอง + อัตโนมัติ AC/DC) แยกตามโหมด สลับโหมดเพื่อแก้ไขแต่ละโหมด",
+        ["reapply_power_label"] = "นำพลังงานไปใช้ใหม่:",
+        ["reapply_power_unit"] = "วินาที (0 = ปิด)",
+        ["reapply_power_hint"] = "เขียนขีดจำกัดพลังงาน CPU/GPU ใหม่ที่ช่วงเวลานี้ มีประโยชน์เมื่อ BIOS เขียนทับ PPT",
         ["auto_apply_power"] = "นำขีดจำกัดพลังงานไปใช้อัตโนมัติเมื่อเปลี่ยนโหมด",
         ["raw_wmi_mode"] = "โหมด WMI ดิบ (ทดลอง - GPU Eco ผ่าน ACPI debugfs)",
         ["raw_wmi_hint"] = "สำหรับแล็ปท็อปที่ไม่มี GPU Eco sysfs แอปจะรีสตาร์ทเมื่อสลับ",
@@ -309,7 +322,6 @@ public static class Thai
         ["cpu_boost"] = "บูสต์ CPU",
         ["auto_apply_power_limits"] = "นำขีดจำกัดพลังงานไปใช้อัตโนมัติเมื่อเปลี่ยนโหมด",
         ["firmware_control"] = "ควบคุมเฟิร์มแวร์",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} โหลด: {2}   กลาง: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (ทดลอง)",
@@ -375,7 +387,6 @@ public static class Thai
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  เคลื่อนที่",
         ["arcade_shoot"] = "SPACE  ยิง",
@@ -417,6 +428,10 @@ public static class Thai
         ["aura_ripple"] = "ระลอกคลื่น",
         ["aura_comet"] = "ดาวหาง",
         ["aura_flash"] = "แฟลช",
+        ["aura_heatmap"] = "แผนที่ความร้อน",
+        ["aura_gpu_mode"] = "โหมด GPU",
+        ["aura_battery"] = "แบตเตอรี่",
+        ["aura_gradient"] = "การไล่ระดับ",
         ["aura_no_modes"] = "ไม่มีโหมด",
 
         // AURA SPEEDS

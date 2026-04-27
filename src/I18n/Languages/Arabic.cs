@@ -54,8 +54,6 @@ public static class Arabic
         // SCREEN
         ["screen_prefix"] = "شاشة الحاسوب المحمول: {0}Hz",
         ["screen_prefix_auto"] = "شاشة الحاسوب المحمول: {0}Hz (تلقائي)",
-        ["screen_auto"] = "تلقائي",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "لوحة مفاتيح الحاسوب المحمول",
@@ -180,7 +178,8 @@ public static class Arabic
         ["udev_not_installed"] = "قواعد udev غير مثبّتة. قم بتشغيل install.sh للحصول على الوظائف الكاملة (حد البطارية، التحكم بالمروحة، إلخ)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (iGPU فقط)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: مُحسَّن (تلقائي)",
@@ -225,7 +224,6 @@ public static class Arabic
 
         ["display_header"] = "العرض",
         ["controller"] = "وحدة التحكم",
-        ["enable_backlight"] = "تفعيل الإضاءة الخلفية للشاشة",
         ["enable_backlight_load"] = "تفعيل الإضاءة الخلفية للشاشة (تحميل {0})",
         ["load_module"] = "تحميل {0}",
         ["panel_overdrive_check"] = "تسريع اللوحة",
@@ -256,6 +254,16 @@ public static class Arabic
         ["bw_tray_icon"] = "أيقونة علبة النظام بالأبيض والأسود",
         ["clamshell_mode"] = "وضع الإغلاق (تعطيل السكون عند إغلاق الغطاء)",
         ["start_minimized"] = "بدء التشغيل مصغّراً في علبة النظام",
+        ["disable_osd_label"] = "تعطيل الإشعارات",
+        ["tray_bw_icon"] = "أيقونة شريط أبيض وأسود",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "أيقونات شريط النظام",
+        ["cpu_temp_tray"] = "عرض درجة حرارة المعالج",
+        ["gpu_temp_tray"] = "عرض درجة حرارة بطاقة الرسومات",
+        ["tray_bg_color"] = "لون الخلفية",
+        ["tray_text_color"] = "لون النص",
+        ["tray_bg_transparent"] = "شفاف",
 
         ["key_bindings_header"] = "ارتباطات المفاتيح",
         ["key_rog_m5"] = "مفتاح ROG / M5",
@@ -274,6 +282,11 @@ public static class Arabic
         ["system_info_header"] = "معلومات النظام",
 
         ["advanced_header"] = "متقدم",
+        ["mode_command_label"] = "تشغيل عند التبديل:",
+        ["mode_command_hint"] = "يُنفَّذ عبر /bin/sh -c بعد كل تبديل وضع (يدوي + تلقائي AC/DC). لكل وضع على حدة؛ بدّل الأوضاع لتعديل كل منها.",
+        ["reapply_power_label"] = "إعادة تطبيق الطاقة:",
+        ["reapply_power_unit"] = "ثانية (0 = إيقاف)",
+        ["reapply_power_hint"] = "إعادة كتابة حدود طاقة CPU/GPU بهذا الفاصل الزمني. مفيد عندما يقوم BIOS بإعادة ضبط PPT.",
         ["auto_apply_power"] = "تطبيق حدود الطاقة تلقائياً عند تغيير الوضع",
         ["raw_wmi_mode"] = "وضع WMI الخام (تجريبي - GPU Eco عبر ACPI debugfs)",
         ["raw_wmi_hint"] = "للحواسيب المحمولة بدون GPU Eco sysfs. سيُعاد تشغيل التطبيق عند التبديل.",
@@ -309,7 +322,6 @@ public static class Arabic
         ["cpu_boost"] = "تعزيز CPU",
         ["auto_apply_power_limits"] = "تطبيق حدود الطاقة تلقائياً عند تغيير الوضع",
         ["firmware_control"] = "التحكم بالبرنامج الثابت",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} الحمل: {2}   الوسطى: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "خفض الجهد (تجريبي)",
@@ -375,7 +387,6 @@ public static class Arabic
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  تحرّك",
         ["arcade_shoot"] = "SPACE  إطلاق",
@@ -417,6 +428,10 @@ public static class Arabic
         ["aura_ripple"] = "تموّج",
         ["aura_comet"] = "مذنّب",
         ["aura_flash"] = "وميض سريع",
+        ["aura_heatmap"] = "خريطة الحرارة",
+        ["aura_gpu_mode"] = "وضع GPU",
+        ["aura_battery"] = "البطارية",
+        ["aura_gradient"] = "تدرج",
         ["aura_no_modes"] = "لا توجد أوضاع",
 
         // AURA SPEEDS

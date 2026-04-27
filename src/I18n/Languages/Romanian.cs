@@ -51,8 +51,6 @@ public static class Romanian
         // SCREEN
         ["screen_prefix"] = "Ecran laptop: {0}Hz",
         ["screen_prefix_auto"] = "Ecran laptop: {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Tastatura laptopului",
@@ -177,7 +175,8 @@ public static class Romanian
         ["udev_not_installed"] = "Regulile udev nu sunt instalate. Rulați install.sh pentru funcționalitate completă (limită baterie, control ventilatoare etc.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (doar iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Optimizat (auto)",
@@ -222,7 +221,6 @@ public static class Romanian
 
         ["display_header"] = "Afișaj",
         ["controller"] = "Controler",
-        ["enable_backlight"] = "Activează iluminarea ecranului",
         ["enable_backlight_load"] = "Activează iluminarea ecranului (încarcă {0})",
         ["load_module"] = "Încarcă {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -253,6 +251,16 @@ public static class Romanian
         ["bw_tray_icon"] = "Pictogramă alb-negru în tray",
         ["clamshell_mode"] = "Mod capac închis (dezactivează repausul la închiderea capacului)",
         ["start_minimized"] = "Pornește minimizat în tray",
+        ["disable_osd_label"] = "Dezactivează notificările",
+        ["tray_bw_icon"] = "Pictogramă alb-negru în tray",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Pictograme bară de sistem",
+        ["cpu_temp_tray"] = "Afișează temperatura CPU",
+        ["gpu_temp_tray"] = "Afișează temperatura GPU",
+        ["tray_bg_color"] = "Culoare fundal",
+        ["tray_text_color"] = "Culoare text",
+        ["tray_bg_transparent"] = "Transparent",
 
         ["key_bindings_header"] = "Asocieri taste",
         ["key_rog_m5"] = "Tasta ROG / M5",
@@ -271,6 +279,11 @@ public static class Romanian
         ["system_info_header"] = "Informații sistem",
 
         ["advanced_header"] = "Avansat",
+        ["mode_command_label"] = "Rulează la comutare:",
+        ["mode_command_hint"] = "Rulează prin /bin/sh -c după fiecare schimbare de mod (manual + auto AC/DC). Per mod; comută modurile pentru a edita fiecare.",
+        ["reapply_power_label"] = "Reaplică puterea:",
+        ["reapply_power_unit"] = "secunde (0 = oprit)",
+        ["reapply_power_hint"] = "Rescrie limitele de putere CPU/GPU la acest interval. Util când BIOS-ul suprascrie PPT.",
         ["auto_apply_power"] = "Aplică automat limitele de putere la schimbarea modului",
         ["raw_wmi_mode"] = "Mod WMI brut (experimental - GPU Eco prin ACPI debugfs)",
         ["raw_wmi_hint"] = "Pentru laptopuri fără GPU Eco sysfs. Aplicația va reporni la comutare.",
@@ -306,7 +319,6 @@ public static class Romanian
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Aplică automat limitele de putere la schimbarea modului",
         ["firmware_control"] = "Control firmware",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Încărcare: {2}   Mijloc: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (experimental)",
@@ -372,7 +384,6 @@ public static class Romanian
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  mișcare",
         ["arcade_shoot"] = "SPACE  trage",
@@ -414,6 +425,10 @@ public static class Romanian
         ["aura_ripple"] = "Undă",
         ["aura_comet"] = "Cometă",
         ["aura_flash"] = "Bliț",
+        ["aura_heatmap"] = "Hartă termică",
+        ["aura_gpu_mode"] = "Mod GPU",
+        ["aura_battery"] = "Baterie",
+        ["aura_gradient"] = "Gradient",
         ["aura_no_modes"] = "Niciun mod",
 
         // AURA SPEEDS

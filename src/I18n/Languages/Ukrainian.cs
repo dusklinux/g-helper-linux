@@ -51,8 +51,6 @@ public static class Ukrainian
         // SCREEN
         ["screen_prefix"] = "Екран ноутбука: {0}Hz",
         ["screen_prefix_auto"] = "Екран ноутбука: {0}Hz (Авто)",
-        ["screen_auto"] = "Авто",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Клавіатура ноутбука",
@@ -177,7 +175,8 @@ public static class Ukrainian
         ["udev_not_installed"] = "Правила udev не встановлені. Запустіть install.sh для повної функціональності (ліміт батареї, контроль вентиляторів тощо)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (лише iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Оптимізований (авто)",
@@ -222,7 +221,6 @@ public static class Ukrainian
 
         ["display_header"] = "Дисплей",
         ["controller"] = "Контролер",
-        ["enable_backlight"] = "Увімкнути підсвічування дисплея",
         ["enable_backlight_load"] = "Увімкнути підсвічування дисплея (завантажити {0})",
         ["load_module"] = "Завантажити {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -253,6 +251,16 @@ public static class Ukrainian
         ["bw_tray_icon"] = "Чорно-біла іконка в треї",
         ["clamshell_mode"] = "Режим закритої кришки (вимкнути сон при закритті)",
         ["start_minimized"] = "Запускати згорнутим у трей",
+        ["disable_osd_label"] = "Вимкнути сповіщення",
+        ["tray_bw_icon"] = "Ч/Б піктограма в треї",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Іконки в системному треї",
+        ["cpu_temp_tray"] = "Показувати температуру CPU",
+        ["gpu_temp_tray"] = "Показувати температуру GPU",
+        ["tray_bg_color"] = "Колір фону",
+        ["tray_text_color"] = "Колір тексту",
+        ["tray_bg_transparent"] = "Прозорий",
 
         ["key_bindings_header"] = "Призначення клавіш",
         ["key_rog_m5"] = "Клавіша ROG / M5",
@@ -271,6 +279,11 @@ public static class Ukrainian
         ["system_info_header"] = "Інформація про систему",
 
         ["advanced_header"] = "Розширені",
+        ["mode_command_label"] = "Виконати при перемиканні:",
+        ["mode_command_hint"] = "Виконується через /bin/sh -c після кожного перемикання режиму (вручну + авто AC/DC). По режимах; перемикайте режими, щоб редагувати кожен.",
+        ["reapply_power_label"] = "Повторно застосувати потужність:",
+        ["reapply_power_unit"] = "секунд (0 = вимкнено)",
+        ["reapply_power_hint"] = "Перезаписує ліміти потужності CPU/GPU з цим інтервалом. Корисно, коли BIOS перезаписує PPT.",
         ["auto_apply_power"] = "Автоматично застосовувати ліміти потужності при зміні режиму",
         ["raw_wmi_mode"] = "Сирий режим WMI (експериментальний - GPU Eco через ACPI debugfs)",
         ["raw_wmi_hint"] = "Для ноутбуків без GPU Eco sysfs. Застосунок перезапуститься при перемиканні.",
@@ -306,7 +319,6 @@ public static class Ukrainian
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Автоматично застосовувати ліміти потужності при зміні режиму",
         ["firmware_control"] = "Контроль прошивки",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Навант.: {2}   Серед.: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Андервольтинг (експериментально)",
@@ -372,7 +384,6 @@ public static class Ukrainian
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  рух",
         ["arcade_shoot"] = "SPACE  стріляти",
@@ -414,6 +425,10 @@ public static class Ukrainian
         ["aura_ripple"] = "Хвиля",
         ["aura_comet"] = "Комета",
         ["aura_flash"] = "Спалах",
+        ["aura_heatmap"] = "Теплова карта",
+        ["aura_gpu_mode"] = "Режим GPU",
+        ["aura_battery"] = "Акумулятор",
+        ["aura_gradient"] = "Градієнт",
         ["aura_no_modes"] = "Немає режимів",
 
         // AURA SPEEDS

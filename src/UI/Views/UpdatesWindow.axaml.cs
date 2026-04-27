@@ -41,6 +41,7 @@ public partial class UpdatesWindow : Window
         "Aura Wallpaper",
         "Virtual Pet",
         "Virtual Pet- Ultimate Edition",
+        "Virtual Assistant",
         "ROG Font V1.5",
     };
 

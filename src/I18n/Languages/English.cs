@@ -56,8 +56,6 @@ public static class English
         // SCREEN
         ["screen_prefix"] = "Laptop Screen: {0}Hz",
         ["screen_prefix_auto"] = "Laptop Screen: {0}Hz (Auto)",
-        ["screen_auto"] = "Auto",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Laptop Keyboard",
@@ -182,7 +180,8 @@ public static class English
         ["udev_not_installed"] = "udev rules not installed. Run install.sh for full functionality (battery limit, fan control, etc.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (iGPU only)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Optimized (auto)",
@@ -227,7 +226,6 @@ public static class English
 
         ["display_header"] = "Display",
         ["controller"] = "Controller",
-        ["enable_backlight"] = "Enable display backlight",
         ["enable_backlight_load"] = "Enable display backlight (load {0})",
         ["load_module"] = "Load {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -258,6 +256,16 @@ public static class English
         ["bw_tray_icon"] = "B&W Tray Icon",
         ["clamshell_mode"] = "Clamshell Mode (disable sleep on lid close)",
         ["start_minimized"] = "Start minimized to tray",
+        ["disable_osd_label"] = "Disable notifications",
+        ["tray_bw_icon"] = "B&W Tray Icon",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "System Tray Icons",
+        ["cpu_temp_tray"] = "Show CPU temperature",
+        ["gpu_temp_tray"] = "Show GPU temperature",
+        ["tray_bg_color"] = "Background color",
+        ["tray_text_color"] = "Text color",
+        ["tray_bg_transparent"] = "Transparent",
 
         ["key_bindings_header"] = "Key Bindings",
         ["key_rog_m5"] = "ROG / M5 Key",
@@ -276,6 +284,11 @@ public static class English
         ["system_info_header"] = "System Info",
 
         ["advanced_header"] = "Advanced",
+        ["mode_command_label"] = "Run on switch:",
+        ["mode_command_hint"] = "Runs via /bin/sh -c after every mode switch (manual + auto AC/DC). Per-mode; switch modes to edit each.",
+        ["reapply_power_label"] = "Reapply power:",
+        ["reapply_power_unit"] = "seconds (0 = off)",
+        ["reapply_power_hint"] = "Re-write CPU/GPU power limits at this interval. Useful when BIOS clobbers PPT.",
         ["auto_apply_power"] = "Auto-apply power limits on mode change",
         ["raw_wmi_mode"] = "Raw WMI mode (experimental - GPU Eco via ACPI debugfs)",
         ["raw_wmi_hint"] = "For laptops without GPU Eco sysfs. App will restart when toggled.",
@@ -311,7 +324,6 @@ public static class English
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Auto-apply power limits on mode change",
         ["firmware_control"] = "Firmware control",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Load: {2}   Mid: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Experimental)",
@@ -377,7 +389,6 @@ public static class English
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  move",
         ["arcade_shoot"] = "SPACE  shoot",
@@ -419,6 +430,10 @@ public static class English
         ["aura_ripple"] = "Ripple",
         ["aura_comet"] = "Comet",
         ["aura_flash"] = "Flash",
+        ["aura_heatmap"] = "Heatmap",
+        ["aura_gpu_mode"] = "GPU Mode",
+        ["aura_battery"] = "Battery",
+        ["aura_gradient"] = "Gradient",
         ["aura_no_modes"] = "No modes",
 
         // AURA SPEEDS

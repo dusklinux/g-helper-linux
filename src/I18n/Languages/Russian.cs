@@ -51,8 +51,6 @@ public static class Russian
         // SCREEN
         ["screen_prefix"] = "Экран ноутбука: {0}Hz",
         ["screen_prefix_auto"] = "Экран ноутбука: {0}Hz (Авто)",
-        ["screen_auto"] = "Авто",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "Клавиатура ноутбука",
@@ -177,7 +175,8 @@ public static class Russian
         ["udev_not_installed"] = "Правила udev не установлены. Запустите install.sh для полной функциональности (лимит батареи, управление вентиляторами и т.д.)",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (только iGPU)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: Оптимизированный (авто)",
@@ -222,7 +221,6 @@ public static class Russian
 
         ["display_header"] = "Дисплей",
         ["controller"] = "Контроллер",
-        ["enable_backlight"] = "Включить подсветку дисплея",
         ["enable_backlight_load"] = "Включить подсветку дисплея (загрузить {0})",
         ["load_module"] = "Загрузить {0}",
         ["panel_overdrive_check"] = "Panel Overdrive",
@@ -253,6 +251,16 @@ public static class Russian
         ["bw_tray_icon"] = "Чёрно-белая иконка в трее",
         ["clamshell_mode"] = "Режим «раскладушки» (не засыпать при закрытии крышки)",
         ["start_minimized"] = "Запускать свёрнутым в трей",
+        ["disable_osd_label"] = "Отключить уведомления",
+        ["tray_bw_icon"] = "Ч/Б значок в трее",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "Иконки в системном трее",
+        ["cpu_temp_tray"] = "Показывать температуру CPU",
+        ["gpu_temp_tray"] = "Показывать температуру GPU",
+        ["tray_bg_color"] = "Цвет фона",
+        ["tray_text_color"] = "Цвет текста",
+        ["tray_bg_transparent"] = "Прозрачный",
 
         ["key_bindings_header"] = "Назначение клавиш",
         ["key_rog_m5"] = "Клавиша ROG / M5",
@@ -271,6 +279,11 @@ public static class Russian
         ["system_info_header"] = "Информация о системе",
 
         ["advanced_header"] = "Расширенные",
+        ["mode_command_label"] = "Выполнить при переключении:",
+        ["mode_command_hint"] = "Выполняется через /bin/sh -c после каждого переключения режима (ручного + авто AC/DC). По режимам; переключайте режимы для редактирования каждого.",
+        ["reapply_power_label"] = "Повторно применить мощность:",
+        ["reapply_power_unit"] = "секунд (0 = выкл.)",
+        ["reapply_power_hint"] = "Перезаписывает лимиты мощности CPU/GPU с этим интервалом. Полезно, когда BIOS перезаписывает PPT.",
         ["auto_apply_power"] = "Автоприменение лимитов мощности при смене режима",
         ["raw_wmi_mode"] = "Прямой WMI-режим (экспериментальный - GPU Eco через ACPI debugfs)",
         ["raw_wmi_hint"] = "Для ноутбуков без sysfs GPU Eco. Приложение перезапустится при переключении.",
@@ -306,7 +319,6 @@ public static class Russian
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Автоприменение лимитов мощности при смене режима",
         ["firmware_control"] = "Управление прошивкой",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} Нагрузка: {2}   Средний: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Андервольтинг (экспериментально)",
@@ -372,7 +384,6 @@ public static class Russian
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  движение",
         ["arcade_shoot"] = "ПРОБЕЛ  стрелять",
@@ -414,6 +425,10 @@ public static class Russian
         ["aura_ripple"] = "Рябь",
         ["aura_comet"] = "Комета",
         ["aura_flash"] = "Вспышка",
+        ["aura_heatmap"] = "Тепловая карта",
+        ["aura_gpu_mode"] = "Режим GPU",
+        ["aura_battery"] = "Батарея",
+        ["aura_gradient"] = "Градиент",
         ["aura_no_modes"] = "Нет режимов",
 
         // AURA SPEEDS

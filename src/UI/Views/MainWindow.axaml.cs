@@ -71,22 +71,32 @@ public partial class MainWindow : Window
             }
         };
 
-        // On close: let the window actually close (dispose).
-        // Don't cancel - this allows KDE logout/reboot to proceed.
-        // The app stays alive via ShutdownMode.OnExplicitShutdown + tray icon.
-        // A new MainWindow is created on tray click (see App.ToggleMainWindow).
-        Closing += (_, _) =>
+        // Tray-icon model: hide on user-initiated close, dispose only when the
+        // app is really shutting down. Hiding instead of disposing keeps the
+        // entire control tree warm so the next tray-toggle reopen is instant
+        // (~1-5 ms vs ~100-500 ms for a full reconstruction + AXAML inflate).
+        // KDE logout/reboot still proceed cleanly: ShutdownRequested sets
+        // App.IsShuttingDown=true before windows are walked for closing.
+        Closing += (_, e) =>
         {
+            if (!App.IsShuttingDown)
+            {
+                e.Cancel = true;
+                Hide();
+                _refreshTimer.Stop();
+                return;
+            }
             _refreshTimer.Stop();
             App.MainWindowInstance = null;
         };
 
-        // Start sensor refresh timer immediately (works even in tray-only mode)
-        _refreshTimer.Start();
-
-        // Populate UI controls when the window becomes visible
-        Loaded += (_, _) =>
+        // Start sensor refresh + populate UI on every show. Opened fires on the
+        // first show AND on Show() after a Hide(), unlike Loaded which fires
+        // only once per Window lifetime. Pairing Opened with the Closing-Hide
+        // flow above keeps sensor data fresh exactly when the user is looking.
+        Opened += (_, _) =>
         {
+            _refreshTimer.Start();
             RefreshAll();
         };
     }
@@ -1005,159 +1015,15 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Shows a simple color picker window.
-    /// Avalonia doesn't have a built-in color dialog, so we use a popup with sliders.
+    /// Thin wrapper around <see cref="ColorPicker.Show(Window, byte, byte, byte, Action{byte, byte, byte})"/>.
+    /// The actual picker UI lives in <c>Helpers/ColorPicker.cs</c> so it can be
+    /// shared with ExtraWindow's tray-icon color buttons. <paramref name="configKey"/>
+    /// is unused by the picker itself - it is kept on the call signature so the
+    /// caller can clearly mark which config key the chosen color will land in.
     /// </summary>
     private void ShowColorPicker(string configKey, byte initR, byte initG, byte initB, Action<byte, byte, byte> onColorSet)
     {
-        var pickerWindow = new Window
-        {
-            Title = Labels.Get("pick_color"),
-            Width = 320,
-            Height = 420,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Background = new SolidColorBrush(Color.Parse("#1C1C1C")),
-            CanResize = false,
-            WindowDecorations = WindowDecorations.Full,
-        };
-
-        var preview = new Border
-        {
-            Width = 280,
-            Height = 50,
-            CornerRadius = new Avalonia.CornerRadius(6),
-            Background = new SolidColorBrush(Color.FromRgb(initR, initG, initB)),
-            Margin = new Avalonia.Thickness(0, 8, 0, 8),
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-        };
-
-        var sliderR = new Slider { Minimum = 0, Maximum = 255, Value = initR, Foreground = new SolidColorBrush(Color.FromRgb(255, 80, 80)) };
-        var sliderG = new Slider { Minimum = 0, Maximum = 255, Value = initG, Foreground = new SolidColorBrush(Color.FromRgb(80, 255, 80)) };
-        var sliderB = new Slider { Minimum = 0, Maximum = 255, Value = initB, Foreground = new SolidColorBrush(Color.FromRgb(80, 80, 255)) };
-
-        var labelR = new TextBlock { Text = $"R: {initR}", Foreground = Brushes.White, Margin = new Avalonia.Thickness(4, 2, 0, 0) };
-        var labelG = new TextBlock { Text = $"G: {initG}", Foreground = Brushes.White, Margin = new Avalonia.Thickness(4, 2, 0, 0) };
-        var labelB = new TextBlock { Text = $"B: {initB}", Foreground = Brushes.White, Margin = new Avalonia.Thickness(4, 2, 0, 0) };
-
-        // Hex color input
-        var hexLabel = new TextBlock { Text = Labels.Get("hex_label"), Foreground = Brushes.White, Margin = new Avalonia.Thickness(4, 6, 0, 0), FontSize = 11 };
-        var hexInput = new TextBox
-        {
-            Text = $"#{initR:X2}{initG:X2}{initB:X2}",
-            Width = 100,
-            Height = 28,
-            FontSize = 12,
-            Margin = new Avalonia.Thickness(4, 2, 0, 0),
-            Background = new SolidColorBrush(Color.Parse("#262626")),
-            Foreground = Brushes.White,
-        };
-        bool _suppressHexUpdate = false;
-
-        void UpdatePreview()
-        {
-            byte r = (byte)sliderR.Value;
-            byte g = (byte)sliderG.Value;
-            byte b = (byte)sliderB.Value;
-            preview.Background = new SolidColorBrush(Color.FromRgb(r, g, b));
-            labelR.Text = $"R: {r}";
-            labelG.Text = $"G: {g}";
-            labelB.Text = $"B: {b}";
-            if (!_suppressHexUpdate)
-                hexInput.Text = $"#{r:X2}{g:X2}{b:X2}";
-        }
-
-        sliderR.PropertyChanged += (_, e) => { if (e.Property.Name == "Value") UpdatePreview(); };
-        sliderG.PropertyChanged += (_, e) => { if (e.Property.Name == "Value") UpdatePreview(); };
-        sliderB.PropertyChanged += (_, e) => { if (e.Property.Name == "Value") UpdatePreview(); };
-
-        // Parse hex input when user types
-        hexInput.TextChanged += (_, _) =>
-        {
-            var text = hexInput.Text?.Trim() ?? "";
-            if (!text.StartsWith("#"))
-                text = "#" + text;
-            if (text.Length == 7)
-            {
-                try
-                {
-                    var c = Color.Parse(text);
-                    _suppressHexUpdate = true;
-                    sliderR.Value = c.R;
-                    sliderG.Value = c.G;
-                    sliderB.Value = c.B;
-                    _suppressHexUpdate = false;
-                    preview.Background = new SolidColorBrush(c);
-                    labelR.Text = $"R: {c.R}";
-                    labelG.Text = $"G: {c.G}";
-                    labelB.Text = $"B: {c.B}";
-                }
-                catch { }
-            }
-        };
-
-        var btnOk = new Button
-        {
-            Content = Labels.Get("apply"),
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-            Margin = new Avalonia.Thickness(0, 12, 0, 0),
-            MinWidth = 120,
-            MinHeight = 34,
-            Background = new SolidColorBrush(Color.Parse("#4CC2FF")),
-            Foreground = Brushes.Black,
-            FontWeight = Avalonia.Media.FontWeight.Bold,
-        };
-        btnOk.Click += (_, _) =>
-        {
-            onColorSet((byte)sliderR.Value, (byte)sliderG.Value, (byte)sliderB.Value);
-            pickerWindow.Close();
-        };
-
-        // Quick preset colors
-        var presetPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, Spacing = 4, Margin = new Avalonia.Thickness(0, 4) };
-        var presets = new (byte R, byte G, byte B)[]
-        {
-            (255, 255, 255), (255, 0, 0), (0, 255, 0), (0, 0, 255),
-            (255, 255, 0), (0, 255, 255), (255, 0, 255), (255, 128, 0),
-        };
-        foreach (var (pr, pg, pb) in presets)
-        {
-            var btn = new Button
-            {
-                Width = 28,
-                Height = 28,
-                Background = new SolidColorBrush(Color.FromRgb(pr, pg, pb)),
-                Margin = new Avalonia.Thickness(1),
-                BorderThickness = new Avalonia.Thickness(1),
-                BorderBrush = new SolidColorBrush(Color.Parse("#555555")),
-            };
-            byte cr = pr, cg = pg, cb = pb;
-            btn.Click += (_, _) =>
-            {
-                sliderR.Value = cr;
-                sliderG.Value = cg;
-                sliderB.Value = cb;
-            };
-            presetPanel.Children.Add(btn);
-        }
-
-        var hexRow = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Margin = new Avalonia.Thickness(0, 4) };
-        hexRow.Children.Add(hexLabel);
-        hexRow.Children.Add(hexInput);
-
-        var stack = new StackPanel { Margin = new Avalonia.Thickness(16, 8) };
-        stack.Children.Add(preview);
-        stack.Children.Add(presetPanel);
-        stack.Children.Add(hexRow);
-        stack.Children.Add(labelR);
-        stack.Children.Add(sliderR);
-        stack.Children.Add(labelG);
-        stack.Children.Add(sliderG);
-        stack.Children.Add(labelB);
-        stack.Children.Add(sliderB);
-        stack.Children.Add(btnOk);
-
-        pickerWindow.Content = stack;
-        pickerWindow.ShowDialog(this);
+        ColorPicker.Show(this, initR, initG, initB, onColorSet);
     }
 
     private void ApplyAuraAsync()
@@ -1395,6 +1261,7 @@ public partial class MainWindow : Window
             _extraWindow = new ExtraWindow();
             if (Helpers.AppConfig.Is("topmost"))
                 _extraWindow.Topmost = true;
+            WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_extraWindow);
             _extraWindow.Show();
         }
         else
@@ -1434,6 +1301,7 @@ public partial class MainWindow : Window
                 if (_arcadeWindow == null || !_arcadeWindow.IsVisible)
                 {
                     _arcadeWindow = new ArcadeWindow();
+                    WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_arcadeWindow);
                     _arcadeWindow.Show();
                 }
                 else
@@ -1556,6 +1424,7 @@ public partial class MainWindow : Window
             _updatesWindow = new UpdatesWindow();
             if (Helpers.AppConfig.Is("topmost"))
                 _updatesWindow.Topmost = true;
+            WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_updatesWindow);
             _updatesWindow.Show();
         }
         else
@@ -1566,6 +1435,12 @@ public partial class MainWindow : Window
 
     private void ButtonQuit_Click(object? sender, RoutedEventArgs e)
     {
+        // Mark shutdown so MainWindow's Closing handler allows the window to
+        // dispose instead of hide. ShutdownRequested also sets this, but
+        // setting it here is defensive in case Avalonia's request flow is
+        // skipped on a particular platform.
+        App.IsShuttingDown = true;
+
         // Clean shutdown
         App.Input?.Dispose();
         App.Wmi?.Dispose();

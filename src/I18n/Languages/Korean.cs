@@ -54,8 +54,6 @@ public static class Korean
         // SCREEN
         ["screen_prefix"] = "노트북 화면: {0}Hz",
         ["screen_prefix_auto"] = "노트북 화면: {0}Hz (자동)",
-        ["screen_auto"] = "자동",
-        ["screen_miniled"] = "MiniLED",
 
         // KEYBOARD
         ["keyboard_header"] = "노트북 키보드",
@@ -180,7 +178,8 @@ public static class Korean
         ["udev_not_installed"] = "udev 규칙이 설치되지 않았습니다. 전체 기능(배터리 제한, 팬 제어 등)을 사용하려면 install.sh를 실행하세요",
 
         // SYSTEM TRAY
-        ["tray_tooltip"] = "G-Helper - {0}",
+        ["tray_tooltip_cpu"] = "CPU: {0}",
+        ["tray_tooltip_gpu"] = "GPU: {0}",
         ["tray_gpu_eco"] = "GPU: Eco (iGPU 전용)",
         ["tray_gpu_standard"] = "GPU: Standard (dGPU)",
         ["tray_gpu_optimized"] = "GPU: 최적화 (자동)",
@@ -225,7 +224,6 @@ public static class Korean
 
         ["display_header"] = "디스플레이",
         ["controller"] = "컨트롤러",
-        ["enable_backlight"] = "디스플레이 백라이트 활성화",
         ["enable_backlight_load"] = "디스플레이 백라이트 활성화 ({0} 로드)",
         ["load_module"] = "{0} 로드",
         ["panel_overdrive_check"] = "패널 오버드라이브",
@@ -256,6 +254,16 @@ public static class Korean
         ["bw_tray_icon"] = "흑백 트레이 아이콘",
         ["clamshell_mode"] = "클램셸 모드 (덮개 닫아도 절전 안 함)",
         ["start_minimized"] = "트레이에 최소화하여 시작",
+        ["disable_osd_label"] = "알림 사용 안 함",
+        ["tray_bw_icon"] = "흑백 트레이 아이콘",
+
+        // System Tray Icons (CPU / GPU temp panel in Extra window)
+        ["tray_icons_header"] = "시스템 트레이 아이콘",
+        ["cpu_temp_tray"] = "CPU 온도 표시",
+        ["gpu_temp_tray"] = "GPU 온도 표시",
+        ["tray_bg_color"] = "배경색",
+        ["tray_text_color"] = "글자색",
+        ["tray_bg_transparent"] = "투명",
 
         ["key_bindings_header"] = "키 바인딩",
         ["key_rog_m5"] = "ROG / M5 키",
@@ -274,6 +282,11 @@ public static class Korean
         ["system_info_header"] = "시스템 정보",
 
         ["advanced_header"] = "고급",
+        ["mode_command_label"] = "전환 시 실행:",
+        ["mode_command_hint"] = "모드 전환(수동 + 자동 AC/DC)마다 /bin/sh -c 로 실행됩니다. 모드별 설정이며, 각각 편집하려면 모드를 전환하세요.",
+        ["reapply_power_label"] = "전력 재적용:",
+        ["reapply_power_unit"] = "초 (0 = 끔)",
+        ["reapply_power_hint"] = "이 간격으로 CPU/GPU 전력 제한을 다시 기록합니다. BIOS가 PPT를 덮어쓸 때 유용합니다.",
         ["auto_apply_power"] = "모드 변경 시 전력 제한 자동 적용",
         ["raw_wmi_mode"] = "Raw WMI 모드 (실험적 - ACPI debugfs를 통한 GPU Eco)",
         ["raw_wmi_hint"] = "GPU Eco sysfs가 없는 노트북용. 전환 시 앱이 재시작됩니다.",
@@ -309,7 +322,6 @@ public static class Korean
         ["cpu_boost"] = "CPU 부스트",
         ["auto_apply_power_limits"] = "모드 변경 시 전력 제한 자동 적용",
         ["firmware_control"] = "펌웨어 제어",
-        ["fan_sensor_format"] = "CPU: {0} / GPU: {1} 부하: {2}   중간: {3} RPM",
 
         // UNDERVOLTING
         ["undervolt_header"] = "언더볼팅 (실험적)",
@@ -375,7 +387,6 @@ public static class Korean
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
         // ARCADE GAME
-        ["arcade_title"] = "ROG Fighter",
         ["arcade_game_title"] = "ROG FIGHTER",
         ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  이동",
         ["arcade_shoot"] = "SPACE  발사",
@@ -417,6 +428,10 @@ public static class Korean
         ["aura_ripple"] = "파문",
         ["aura_comet"] = "혜성",
         ["aura_flash"] = "플래시",
+        ["aura_heatmap"] = "히트맵",
+        ["aura_gpu_mode"] = "GPU 모드",
+        ["aura_battery"] = "배터리",
+        ["aura_gradient"] = "그라데이션",
         ["aura_no_modes"] = "모드 없음",
 
         // AURA SPEEDS
