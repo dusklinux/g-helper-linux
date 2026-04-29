@@ -61,9 +61,6 @@ public static class AppConfig
 
     static AppConfig()
     {
-        // Migrate from old config dir if it exists and new one doesn't
-        MigrateOldConfigDir();
-
         Directory.CreateDirectory(ConfigDir);
 
         if (File.Exists(ConfigFile))
@@ -89,41 +86,6 @@ public static class AppConfig
         _writeTimer = new System.Timers.Timer(2000);
         _writeTimer.Elapsed += (_, _) => FlushConfig();
         _writeTimer.AutoReset = false;
-    }
-
-    /// <summary>
-    /// One-time migration from ~/.config/ghelper-linux/ to ~/.config/ghelper/.
-    /// Moves config.json and backup if they exist. Removes old dir if empty.
-    /// </summary>
-    private static void MigrateOldConfigDir()
-    {
-        try
-        {
-            var oldDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".config", "ghelper-linux");
-
-            if (!Directory.Exists(oldDir) || Directory.Exists(ConfigDir))
-                return; // Nothing to migrate, or new dir already exists
-
-            Directory.CreateDirectory(ConfigDir);
-
-            foreach (var file in Directory.GetFiles(oldDir))
-            {
-                var dest = Path.Combine(ConfigDir, Path.GetFileName(file));
-                File.Move(file, dest);
-            }
-
-            // Remove old dir if now empty
-            if (Directory.GetFiles(oldDir).Length == 0 && Directory.GetDirectories(oldDir).Length == 0)
-                Directory.Delete(oldDir);
-
-            Logger.WriteLine($"Migrated config from {oldDir} → {ConfigDir}");
-        }
-        catch (Exception ex)
-        {
-            Logger.WriteLine($"Config migration failed (non-fatal): {ex.Message}");
-        }
     }
 
     // Core Get/Set

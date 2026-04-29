@@ -98,8 +98,26 @@ public partial class MainWindow : Window
         {
             _refreshTimer.Start();
             RefreshAll();
+            // Subscribe to fn-lock state changes so the button label/styling
+            // updates when the user flips state via hotkey, tray, or window.
+            HookFnLockChanged();
         };
     }
+
+    /// <summary>
+    /// Subscribe to FnLockChanged. Idempotent (un/re-subscribes safely so
+    /// repeated calls during App.RestartFnLock don't double-fire).
+    /// </summary>
+    private void HookFnLockChanged()
+    {
+        if (App.FnLock == null)
+            return;
+        App.FnLock.FnLockChanged -= OnFnLockChangedFromMain;
+        App.FnLock.FnLockChanged += OnFnLockChangedFromMain;
+    }
+
+    private void OnFnLockChangedFromMain(bool _) =>
+        Avalonia.Threading.Dispatcher.UIThread.Post(RefreshFnLockButton);
 
     // Refresh / Init
 
@@ -111,6 +129,7 @@ public partial class MainWindow : Window
         RefreshScreen();
         RefreshBattery();
         RefreshKeyboard();
+        RefreshFnLockButton();
         RefreshSensorData();
         RefreshFooter();
     }
@@ -1268,6 +1287,48 @@ public partial class MainWindow : Window
         {
             _extraWindow.Activate();
         }
+    }
+
+    /// <summary>
+    /// FN-Lock master toggle. Click flips between two states:
+    ///   OFF (default, grayed) - software remapper stopped, F1..F12 emit
+    ///                          natively.
+    ///   ON  (blue accent)     - software remapper running with media keys
+    ///                          mode active.
+    /// State is held by FnLockRemapper.IsActive (not persisted, off by default
+    /// each session). Mirrors Windows g-helper button behavior. Delegates to
+    /// <see cref="App.SetFnLockEnabled"/> so the tray menu and any other UI
+    /// surface go through the same authoritative path.
+    /// </summary>
+    private void ButtonFnLock_Click(object? sender, RoutedEventArgs e)
+    {
+        bool currentlyOn = App.FnLock?.IsActive ?? false;
+        App.SetFnLockEnabled(!currentlyOn);
+        RefreshFnLockButton();
+    }
+
+    /// <summary>
+    /// Update the FN-Lock title-row button visual to reflect remapper state.
+    /// Always visible; styling flips between the default ghelper button (OFF /
+    /// grayed) and the fnlock-on accent class (solid blue, ON).
+    /// </summary>
+    public void RefreshFnLockButton()
+    {
+        // Source of truth: the remapper itself. IsActive means we're grabbing
+        // input devices; FnLockOn means media-keys mode is currently active.
+        bool active = (App.FnLock?.IsActive ?? false) && App.FnLock!.FnLockOn;
+
+        // Toggle the fnlock-on style class on/off without disturbing the
+        // base "ghelper" class.
+        const string accent = "fnlock-on";
+        if (active && !buttonFnLock.Classes.Contains(accent))
+            buttonFnLock.Classes.Add(accent);
+        else if (!active && buttonFnLock.Classes.Contains(accent))
+            buttonFnLock.Classes.Remove(accent);
+
+        ToolTip.SetTip(buttonFnLock, active
+            ? Labels.Get("fnlock_osd_on")
+            : Labels.Get("fnlock_osd_off"));
     }
 
 

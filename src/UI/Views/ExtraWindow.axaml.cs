@@ -209,13 +209,19 @@ public partial class ExtraWindow : Window
 
         // Power Management
         headerPowerMgmt.Text = Labels.Get("power_mgmt_header");
-        labelPlatformProfileLabel.Text = Labels.Get("platform_profile");
-        labelAspmLabel.Text = Labels.Get("pcie_aspm");
+        labelProfileSilent.Text = Labels.Get("profile_silent_label");
+        labelProfileBalanced.Text = Labels.Get("profile_balanced_label");
+        labelProfileTurbo.Text = Labels.Get("profile_turbo_label");
         labelBatteryDetails.Text = Labels.Get("details");
 
         // System Info
         headerSystemInfo.Text = Labels.Get("system_info_header");
         labelSystemInfoMore.Text = Labels.Get("details");
+
+        // Function Key Remap (Details button under Key Bindings)
+        labelFnLockTeaser.Text = Labels.Get("fnlock_header");
+        labelFnLockTeaserSub.Text = Labels.Get("fnlock_teaser_sub");
+        labelFnLockDetails.Text = Labels.Get("details");
 
         // Advanced
         headerAdvanced.Text = Labels.Get("advanced_header");
@@ -1128,6 +1134,93 @@ public partial class ExtraWindow : Window
     }
 
     // POWER MANAGEMENT
+    //
+    // Three platform_profile dropdowns, one per ghelper performance mode (Silent /
+    // Balanced / Turbo). All combos are populated at runtime from
+    // /sys/firmware/acpi/platform_profile_choices so users only see kernel-supported
+    // values. Selections are persisted per-mode in AppConfig as platform_profile_<N>
+    // (where N = base mode index: 0=Balanced, 1=Turbo, 2=Silent).
+    //
+    // ModeControl.SetPerformanceMode reads the per-mode override on every mode switch
+    // (via AppConfig.GetModeString("platform_profile") which resolves to platform_profile_<currentMode>).
+    // If unset, ModeControl uses canonical defaults: Silent→low-power, Balanced→balanced,
+    // Turbo→performance. SetPlatformProfile then maps to firmware-supported names via
+    // its synonym table (e.g. low-power→quiet on legacy firmware).
+    //
+    // Changing a dropdown for the currently-active mode applies immediately. Changing
+    // dropdowns for inactive modes only persists - the value lands when the user
+    // switches into that mode.
+
+    private bool _powerInitialized;
+
+    /// <summary>Returns the canonical mode-derived platform_profile default for a
+    /// given base mode (matches ModeControl fallback). Used when no per-mode override
+    /// is saved yet, so dropdowns show the value the system would actually apply.</summary>
+    private static string CanonicalProfileForMode(int baseMode) => baseMode switch
+    {
+        0 => "balanced",
+        1 => "performance",
+        2 => "low-power",
+        _ => "balanced"
+    };
+
+    private void InitPowerCombos()
+    {
+        var power = App.Power;
+        if (power == null)
+            return;
+
+        var choices = power.GetPlatformProfileChoices();
+        var combos = new[] { comboProfileSilent, comboProfileBalanced, comboProfileTurbo };
+
+        foreach (var combo in combos)
+        {
+            combo.Items.Clear();
+            if (choices.Length == 0)
+            {
+                combo.IsEnabled = false;
+                combo.PlaceholderText = Labels.Get("platform_profile_unavailable");
+            }
+            else
+            {
+                combo.IsEnabled = true;
+                foreach (var choice in choices)
+                    combo.Items.Add(new ComboBoxItem { Content = choice });
+            }
+        }
+
+        _powerInitialized = true;
+    }
+
+    /// <summary>Selects the dropdown item with content matching value. No-op if
+    /// nothing matches (combo retains current selection or empty state).</summary>
+    private static void SelectComboValue(ComboBox combo, string value)
+    {
+        for (int i = 0; i < combo.Items.Count; i++)
+        {
+            if (combo.Items[i] is ComboBoxItem item &&
+                item.Content?.ToString() == value)
+            {
+                combo.SelectedIndex = i;
+                return;
+            }
+        }
+    }
+
+    /// <summary>Reads the saved per-mode profile (or canonical default if unset)
+    /// and selects the corresponding combo item. baseMode: 0=Balanced, 1=Turbo, 2=Silent.
+    /// If the saved value isn't a kernel-exposed choice (firmware change, stale config),
+    /// resolves through <see cref="LinuxPowerManager.TryResolveSupportedProfile"/> so
+    /// the dropdown shows the value that would actually land on sysfs; if no synonym
+    /// exists, falls back to the first available kernel choice.</summary>
+    private void RefreshProfileCombo(ComboBox combo, int baseMode, string[] choices)
+    {
+        string? saved = Helpers.AppConfig.GetString($"platform_profile_{baseMode}");
+        string desired = saved ?? CanonicalProfileForMode(baseMode);
+        desired = LinuxPowerManager.TryResolveSupportedProfile(desired, choices)
+                  ?? (choices.Length > 0 ? choices[0] : desired);
+        SelectComboValue(combo, desired);
+    }
 
     private void RefreshPower()
     {
@@ -1135,28 +1228,15 @@ public partial class ExtraWindow : Window
         if (power == null)
             return;
 
-        // Platform profile
-        string profile = power.GetPlatformProfile();
-        for (int i = 0; i < comboPlatformProfile.Items.Count; i++)
-        {
-            if (comboPlatformProfile.Items[i] is ComboBoxItem item &&
-                item.Content?.ToString() == profile)
-            {
-                comboPlatformProfile.SelectedIndex = i;
-                break;
-            }
-        }
+        if (!_powerInitialized)
+            InitPowerCombos();
 
-        // ASPM
-        string aspm = power.GetAspmPolicy();
-        for (int i = 0; i < comboAspm.Items.Count; i++)
+        var choices = power.GetPlatformProfileChoices();
+        if (choices.Length > 0)
         {
-            if (comboAspm.Items[i] is ComboBoxItem item &&
-                item.Content?.ToString() == aspm)
-            {
-                comboAspm.SelectedIndex = i;
-                break;
-            }
+            RefreshProfileCombo(comboProfileSilent, 2, choices);
+            RefreshProfileCombo(comboProfileBalanced, 0, choices);
+            RefreshProfileCombo(comboProfileTurbo, 1, choices);
         }
 
         // Battery health
@@ -1175,28 +1255,31 @@ public partial class ExtraWindow : Window
             labelPowerDraw.Text = Labels.Get("power_draw_unknown");
     }
 
-    private void ComboPlatformProfile_Changed(object? sender, SelectionChangedEventArgs e)
+    /// <summary>Common handler body for all three per-mode profile combos. Persists
+    /// the user's choice to AppConfig only. The selection lands on sysfs the next
+    /// time the user activates that mode via MainWindow buttons - this UI is
+    /// configuration-only, never the trigger for an active mode change. Avoids
+    /// the derived-policy trap on asus-armoury kernels where writing
+    /// platform_profile silently flips throttle_thermal_policy.</summary>
+    private void OnProfileComboChanged(int baseMode, ComboBox combo)
     {
         if (_suppressEvents)
             return;
-        if (comboPlatformProfile.SelectedItem is ComboBoxItem item && item.Content is string profile)
-        {
-            App.Power?.SetPlatformProfile(profile);
-            Helpers.Logger.WriteLine($"Platform profile → {profile}");
-            App.MainWindowInstance?.RefreshPerformanceMode();
-        }
+        if (combo.SelectedItem is not ComboBoxItem item || item.Content is not string profile)
+            return;
+
+        Helpers.AppConfig.Set($"platform_profile_{baseMode}", profile);
+        Helpers.Logger.WriteLine($"Platform profile (mode {baseMode}) saved → {profile}");
     }
 
-    private void ComboAspm_Changed(object? sender, SelectionChangedEventArgs e)
-    {
-        if (_suppressEvents)
-            return;
-        if (comboAspm.SelectedItem is ComboBoxItem item && item.Content is string policy)
-        {
-            App.Power?.SetAspmPolicy(policy);
-            Helpers.Logger.WriteLine($"ASPM policy → {policy}");
-        }
-    }
+    private void ComboProfileSilent_Changed(object? sender, SelectionChangedEventArgs e)
+        => OnProfileComboChanged(2, comboProfileSilent);
+
+    private void ComboProfileBalanced_Changed(object? sender, SelectionChangedEventArgs e)
+        => OnProfileComboChanged(0, comboProfileBalanced);
+
+    private void ComboProfileTurbo_Changed(object? sender, SelectionChangedEventArgs e)
+        => OnProfileComboChanged(1, comboProfileTurbo);
 
     private BatteryInfoWindow? _batteryInfoWindow;
     private SystemInfoWindow? _systemInfoWindow;
@@ -1390,6 +1473,27 @@ public partial class ExtraWindow : Window
         catch (Exception ex)
         {
             Helpers.Logger.WriteLine("Failed to open config dir", ex);
+        }
+    }
+
+
+    // FUNCTION KEY REMAP details button
+
+    private FnLockWindow? _fnLockWindow;
+
+    private void ButtonFnLockDetails_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_fnLockWindow == null || !_fnLockWindow.IsVisible)
+        {
+            _fnLockWindow = new FnLockWindow();
+            if (Helpers.AppConfig.Is("topmost"))
+                _fnLockWindow.Topmost = true;
+            Helpers.WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_fnLockWindow);
+            _fnLockWindow.Show();
+        }
+        else
+        {
+            _fnLockWindow.Activate();
         }
     }
 }

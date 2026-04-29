@@ -117,8 +117,13 @@ public class ModeControl
 
         App.Wmi?.SetThrottleThermalPolicy(baseMode);
 
-        // 2. Set platform profile to match
-        string profile = baseMode switch
+        // 2. Set platform profile to match.
+        // User can override per-mode (per base mode 0/1/2) via Extra Settings → Power
+        // Management. Stored as platform_profile_<baseMode> with kernel-native token
+        // (read from platform_profile_choices), so it's known to be supported. Falls
+        // back to canonical defaults when unset (mapped to firmware-supported names
+        // by SetPlatformProfile's synonym table for legacy firmware).
+        string profile = Helpers.AppConfig.GetString($"platform_profile_{baseMode}") ?? baseMode switch
         {
             0 => "balanced",
             1 => "performance",
@@ -185,7 +190,9 @@ public class ModeControl
                 App.Power?.SetCpuBoost(autoBoost == 1);
             }
 
-            // ASPM - on by default (synced with upstream IsAutoASPM/IsNotFalse behavior)
+            // ASPM - on by default (synced with upstream IsAutoASPM/IsNotFalse behavior).
+            // No UI for ASPM (kernel writes are often blocked on built-in pcie_aspm
+            // configurations). Auto-derived: powersave for Silent, default elsewhere.
             if (Helpers.AppConfig.IsNotFalse("aspm"))
             {
                 App.Power?.SetAspmPolicy(baseMode == 2 ? "powersave" : "default");

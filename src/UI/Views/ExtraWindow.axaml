@@ -382,6 +382,22 @@
                                   Width="220" Height="28"
                                   SelectionChanged="ComboKeyBinding_Changed" />
                     </Grid>
+
+                    <!-- Function Key Remap (software fn-lock) -->
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock x:Name="labelFnLockTeaser" Classes="label-dim"
+                                       Text="Function Key Remap" />
+                            <TextBlock x:Name="labelFnLockTeaserSub" Classes="label-dim"
+                                       Text="Remap F1-F12 to media keys"
+                                       FontSize="10" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <Button Grid.Column="1" x:Name="buttonFnLockDetails" Classes="ghelper"
+                                Height="28" VerticalAlignment="Center"
+                                Click="ButtonFnLockDetails_Click">
+                            <TextBlock x:Name="labelFnLockDetails" Text="Details..." FontSize="11" />
+                        </Button>
+                    </Grid>
                 </StackPanel>
             </Border>
 
@@ -392,29 +408,27 @@
                         <TextBlock x:Name="headerPowerMgmt" Classes="header" Text="Power Management" />
                     </Border>
 
-                    <!-- Platform Profile -->
+                    <!-- Per-mode platform profile pickers.
+                         Items populated at runtime from /sys/firmware/acpi/platform_profile_choices.
+                         Each combo controls the platform_profile written when that ghelper
+                         performance mode is active. -->
                     <Grid ColumnDefinitions="120,*" Margin="0,4">
-                        <TextBlock Grid.Column="0" x:Name="labelPlatformProfileLabel" Text="Platform Profile"
+                        <TextBlock Grid.Column="0" x:Name="labelProfileSilent" Text="Silent profile"
                                    Classes="label-dim" VerticalAlignment="Center" />
-                        <ComboBox Grid.Column="1" x:Name="comboPlatformProfile"
-                                  Width="200" SelectionChanged="ComboPlatformProfile_Changed">
-                            <ComboBoxItem Content="low-power" />
-                            <ComboBoxItem Content="balanced" />
-                            <ComboBoxItem Content="performance" />
-                        </ComboBox>
+                        <ComboBox Grid.Column="1" x:Name="comboProfileSilent"
+                                  Width="200" SelectionChanged="ComboProfileSilent_Changed" />
                     </Grid>
-
-                    <!-- ASPM Policy -->
                     <Grid ColumnDefinitions="120,*" Margin="0,4">
-                        <TextBlock Grid.Column="0" x:Name="labelAspmLabel" Text="PCIe ASPM"
+                        <TextBlock Grid.Column="0" x:Name="labelProfileBalanced" Text="Balanced profile"
                                    Classes="label-dim" VerticalAlignment="Center" />
-                        <ComboBox Grid.Column="1" x:Name="comboAspm"
-                                  Width="200" SelectionChanged="ComboAspm_Changed">
-                            <ComboBoxItem Content="default" />
-                            <ComboBoxItem Content="performance" />
-                            <ComboBoxItem Content="powersave" />
-                            <ComboBoxItem Content="powersupersave" />
-                        </ComboBox>
+                        <ComboBox Grid.Column="1" x:Name="comboProfileBalanced"
+                                  Width="200" SelectionChanged="ComboProfileBalanced_Changed" />
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelProfileTurbo" Text="Turbo profile"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboProfileTurbo"
+                                  Width="200" SelectionChanged="ComboProfileTurbo_Changed" />
                     </Grid>
 
                     <!-- Battery Health -->
