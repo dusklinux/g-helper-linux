@@ -869,6 +869,7 @@ public static class Aura
                 buffer[6] = (byte)i;
                 Buffer.BlockCopy(keyBuf, 3 * i, buffer, 9, 3 * buffer[7]);
                 AsusHid.WriteAura(buffer);
+                Thread.Sleep(1);
             }
         }
 
@@ -894,6 +895,7 @@ public static class Aura
             }
             Buffer.BlockCopy(keyBuf, 0, buffer, 9, 3 * ledCount4Z);
             AsusHid.WriteAura(buffer);
+            Thread.Sleep(1);
             return;
         }
 
