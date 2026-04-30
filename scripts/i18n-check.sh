@@ -46,7 +46,13 @@ fi
 #   later resolved via Labels.Get(entry.LabelKey)). A naive "find Labels.Get"
 #   scan would falsely flag them as unused, so we treat any key matching these
 #   prefixes as "used" if a string literal of that key appears anywhere in src/.
-INDIRECT_PREFIXES=("sysinfo_")
+#   - "sysinfo_": SystemInfoCollector emits Label keys as bare string literals
+#     and resolves them via Labels.Get(entry.LabelKey) later.
+#   - "bind_", "btn_", "ally_grp_", "controller_mode_": ROG Ally controller
+#     binding catalog (BindingGroups.cs) stores i18n keys in tuple Display
+#     fields; HandheldWindow looks them up via Labels.Get(entry.Display) at
+#     dropdown population time.
+INDIRECT_PREFIXES=("sysinfo_" "bind_" "btn_" "ally_grp_" "controller_mode_")
 
 # ----- argument parsing -----
 

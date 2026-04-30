@@ -34,6 +34,11 @@ public class App : Application
     // Business logic orchestrator
     public static ModeControl? Mode { get; private set; }
 
+    // ROG Ally controller helper (HID bindings + auto-mode timer + TDP).
+    // Initialised on every model - internally short-circuits when
+    // AppConfig.IsAlly() is false, so it's safe to query unconditionally.
+    public static Ally.AllyControl? Ally { get; private set; }
+
     public static MainWindow? MainWindowInstance { get; set; }
     public static TrayIcon? TrayIconInstance { get; set; }
 
@@ -100,35 +105,45 @@ public class App : Application
     /// </summary>
     public static readonly Dictionary<string, string> AvailableKeyActions = new()
     {
-        { "none",            "None" },
-        { "ghelper",         "Toggle G-Helper" },
-        { "performance",     "Cycle Performance Mode" },
-        { "aura",            "Cycle Aura Mode" },
-        { "brightness_up",   "Keyboard Brightness Up" },
-        { "brightness_down", "Keyboard Brightness Down" },
-        { "micmute",         "Toggle Microphone Mute" },
-        { "mute",            "Toggle Speaker Mute" },
-        { "screen_refresh",  "Cycle Screen Refresh Rate" },
-        { "overdrive",       "Toggle Panel Overdrive" },
-        { "miniled",         "Toggle MiniLED" },
-        { "camera",          "Toggle Camera" },
-        { "touchpad",        "Toggle Touchpad" },
+        { "none",              "None" },
+        { "ghelper",           "Toggle G-Helper" },
+        { "performance",       "Cycle Performance Mode" },
+        { "aura",              "Cycle Aura Mode" },
+        { "brightness_up",     "Keyboard Brightness Up" },
+        { "brightness_down",   "Keyboard Brightness Down" },
+        { "micmute",           "Toggle Microphone Mute" },
+        { "mute",              "Toggle Speaker Mute" },
+        { "screen_refresh",    "Cycle Screen Refresh Rate" },
+        { "overdrive",         "Toggle Panel Overdrive" },
+        { "miniled",           "Toggle MiniLED" },
+        { "camera",            "Toggle Camera" },
+        { "touchpad",          "Toggle Touchpad" },
+        // ROG Ally controller-mode toggle. Bind this to the M1/M2 buttons on
+        // the Ally chassis. Evdev codes for those buttons vary by kernel /
+        // BIOS revision and aren't standard XInput - Ally users will need to
+        // discover them with `evtest` and map via the existing key-binding UI.
+        { "ally_toggle_mode",  "Ally: Toggle Controller Mode" },
     };
 
     /// <summary>Default actions for each configurable key (matches Windows G-Helper).</summary>
     private static readonly Dictionary<string, string> DefaultKeyActions = new()
     {
-        { "m4",   "ghelper" },     // ROG/M5 key → toggle window
-        { "fnf4", "aura" },        // Fn+F4 → cycle aura mode
-        { "fnf5", "performance" }, // Fn+F5 / M4 → cycle performance mode
+        { "m4",     "ghelper" },          // ROG/M5 key (laptop) / ROG button (Ally) → toggle window
+        { "fnf4",   "aura" },             // Fn+F4 → cycle aura mode (laptop only)
+        { "fnf5",   "performance" },      // Fn+F5 / M4 → cycle performance mode (laptop only)
+        // Ally hardware buttons (ExtraWindow remaps fnf4↔paddle, fnf5↔cc on Ally).
+        { "paddle", "ghelper" },          // Ally X back paddles → toggle window
+        { "cc",     "ally_toggle_mode" }, // Ally Cmd Center → cycle controller mode
     };
 
     /// <summary>Human-readable names for configurable keys (for UI labels).</summary>
     public static readonly Dictionary<string, string> ConfigurableKeyNames = new()
     {
-        { "m4",   "ROG / M5 Key" },
-        { "fnf4", "Fn+F4 (Aura)" },
-        { "fnf5", "Fn+F5 / M4 (Performance)" },
+        { "m4",     "ROG / M5 Key" },
+        { "fnf4",   "Fn+F4 (Aura)" },
+        { "fnf5",   "Fn+F5 / M4 (Performance)" },
+        { "paddle", "Ally Back Paddles" },
+        { "cc",     "Ally Cmd Center" },
     };
 
     public static string GetKeyActionDisplayName(string actionId)
@@ -148,6 +163,7 @@ public class App : Application
             "miniled" => Labels.Get("action_miniled"),
             "camera" => Labels.Get("action_camera"),
             "touchpad" => Labels.Get("action_touchpad"),
+            "ally_toggle_mode" => Labels.Get("action_ally_toggle_mode"),
             _ => actionId
         };
     }
@@ -159,6 +175,8 @@ public class App : Application
             "m4" => Labels.Get("key_m4"),
             "fnf4" => Labels.Get("key_fnf4"),
             "fnf5" => Labels.Get("key_fnf5"),
+            "paddle" => Labels.Get("ally_extra_btn_paddle"),
+            "cc" => Labels.Get("ally_extra_btn_cc"),
             _ => bindingName
         };
     }
@@ -363,6 +381,12 @@ public class App : Application
         // Create GPU mode switching controller
         if (Wmi != null && Power != null)
             GpuModeCtrl = new GpuModeController(Wmi, Power);
+
+        // Create Ally controller helper. Constructor sets up the 300ms auto-
+        // mode timer when on RC71L/RC72L; on every other model the .ctor is
+        // a no-op so this is cheap and safe to call unconditionally.
+        Ally = new Ally.AllyControl();
+        Ally.Init();
 
         // Initialize GPU control (nvidia-smi / amdgpu sysfs for temp/load)
         InitializeGpuControl();
@@ -624,6 +648,12 @@ public class App : Application
                 System?.ShowNotification(Labels.Get("camera"),
                     !camOn ? Labels.Get("enabled") : Labels.Get("disabled"),
                     !camOn ? "camera-on" : "camera-off");
+                break;
+
+            case "ally_toggle_mode":
+                Ally?.ToggleModeHotkey();
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    MainWindowInstance?.RefreshAllyPanel());
                 break;
 
             case "touchpad":
@@ -906,6 +936,21 @@ public class App : Application
         var settings = new NativeMenuItem(Labels.Get("settings"));
         settings.Click += (_, _) => ToggleMainWindow();
         menu.Add(settings);
+
+        // ROG Ally - surface the controller-mode toggle directly in the tray
+        // menu so handheld users don't have to open the main window for it.
+        // Only visible on RC71L/RC72L.
+        if (AppConfig.IsAlly())
+        {
+            var allyToggle = new NativeMenuItem(Labels.Get("action_ally_toggle_mode"));
+            allyToggle.Click += (_, _) =>
+            {
+                Ally?.ToggleModeHotkey();
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    MainWindowInstance?.RefreshAllyPanel());
+            };
+            menu.Add(allyToggle);
+        }
 
         menu.Add(new NativeMenuItemSeparator());
 

@@ -441,6 +441,13 @@ public class ModeControl
 
         // Verify PPT writes took effect - read back and warn on mismatches
         VerifyPptLimits(wmi, pl1, pl2, fppt, apuPlatCeiling > 0 ? apuPlatCeiling : -1);
+
+        if (Helpers.AppConfig.IsAlly())
+        {
+            int total = Helpers.AppConfig.GetMode("limit_total");
+            if (total > 0)
+                Ally.AllyControl.SetTDP(total, $"AutoPower mode {mode}");
+        }
     }
 
     // Ryzen Curve Optimizer undervolt (mirrors Windows ModeControl.AutoRyzen/SetRyzen/ResetRyzen/SetUV)

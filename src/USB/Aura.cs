@@ -818,6 +818,25 @@ public static class Aura
             }
         }
 
+        // Ally / Ally X: a separate report ID (0xD1 not 0xBD) and a different
+        // bit layout. Single byte packs all 4 power states for the gamepad
+        // backlight (no logo / lightbar / lid concept on a handheld). Matches
+        // asusctl rog-aura/src/keyboard/power.rs:113-118 (PowerZones::Ally).
+        if (AppConfig.IsAlly())
+        {
+            byte bits = 0;
+            if (flags.BootKeyb)
+                bits |= 1 << 0;
+            if (flags.AwakeKeyb)
+                bits |= 1 << 1;
+            if (flags.SleepKeyb)
+                bits |= 1 << 2;
+            if (flags.ShutdownKeyb)
+                bits |= 1 << 3;
+            AsusHid.Write(new byte[] { AsusHid.AURA_ID, 0xD1, 0x09, 0x01, bits }, "AuraPower(Ally)");
+            return;
+        }
+
         AsusHid.Write(AuraPowerMessage(flags));
     }
 

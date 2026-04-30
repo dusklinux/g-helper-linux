@@ -291,6 +291,45 @@ public static class SysfsHelper
         }
     }
 
+    /// <summary>
+    /// Read the asus-armoury <c>possible_values</c> companion file for a
+    /// given attribute. Returns null when the attr isn't present, returns
+    /// an empty array when the kernel publishes no value list (treat as
+    /// "free-form integer"). Each value is whitespace-trimmed.
+    ///
+    /// File location: <c>FirmwareAttributes/&lt;attr&gt;/possible_values</c>.
+    /// Format: kernel writes a space- or newline-separated list, e.g.
+    /// "256 512 1024 2048" or "0\n1".
+    /// </summary>
+    public static string[]? ReadPossibleValues(AttrDef attr)
+    {
+        try
+        {
+            // possible_values lives next to current_value in the fw-attr
+            // directory; legacy sysfs attrs don't expose it.
+            var dir = Path.Combine(FirmwareAttributes, attr.FwAttrName);
+            if (!Directory.Exists(dir))
+                return null;
+            var pvPath = Path.Combine(dir, "possible_values");
+            if (!File.Exists(pvPath))
+                return Array.Empty<string>();
+
+            var raw = File.ReadAllText(pvPath);
+            // Kernel typically emits values separated by spaces / newlines /
+            // semicolons. Split on any whitespace + collapse blanks.
+            return raw
+                .Split(new[] { ' ', '\t', '\n', '\r', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Where(s => s.Length > 0)
+                .ToArray();
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"SysfsHelper.ReadPossibleValues({attr.FwAttrName}) failed", ex);
+            return null;
+        }
+    }
+
     /// <summary>Read a sysfs attribute as an integer. Returns defaultValue on failure.</summary>
     public static int ReadInt(string path, int defaultValue = -1)
     {

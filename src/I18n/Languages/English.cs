@@ -534,5 +534,149 @@ public static class English
         // MISC
         ["ghelper"] = "G-Helper",
         ["asus_laptop_control"] = "ASUS Laptop Control (Linux)",
+
+        // ROG ALLY (handheld controller) - UI chrome
+        ["ally_handheld_section"] = "Handheld",
+        ["ally_window_title"] = "ROG Ally Controller",
+        ["ally_button_bindings"] = "Button Bindings",
+        ["ally_click_to_bind"] = "Click a button below to bind primary / secondary actions.",
+        ["ally_binding_active"] = "Binding: {0}",
+        ["ally_primary"] = "Primary",
+        ["ally_secondary"] = "Secondary",
+        ["ally_turbo_primary"] = "Turbo Primary",
+        ["ally_turbo_secondary"] = "Turbo Secondary",
+        ["ally_deadzones_vibration"] = "Deadzones & Vibration",
+        ["ally_l_stick"] = "L-Stick",
+        ["ally_r_stick"] = "R-Stick",
+        ["ally_l_trigger_short"] = "L-Trigger",
+        ["ally_r_trigger_short"] = "R-Trigger",
+        ["ally_vibration"] = "Vibration",
+        ["ally_controller"] = "Controller",
+        ["ally_disable_controller"] = "Disable Controller",
+        ["ally_reset_defaults"] = "Reset to Defaults",
+        ["ally_open_handheld"] = "Bindings & Deadzones...",
+        ["ally_mode_label_format"] = "Mode: {0}",
+        ["ally_backlight_label_format"] = "Backlight {0}%",
+        ["ally_turbo_off"] = "Off",
+        ["ally_toast_title"] = "Ally",
+
+        // ALLY - controller modes
+        ["controller_mode_auto"] = "Auto",
+        ["controller_mode_gamepad"] = "Gamepad",
+        ["controller_mode_wasd"] = "WASD",
+        ["controller_mode_mouse"] = "Mouse",
+        ["controller_mode_skip"] = "Skip",
+
+        // ALLY - descriptive button labels (HandheldWindow + BindingGroups)
+        ["btn_dpad_up"] = "D-Pad Up",
+        ["btn_dpad_down"] = "D-Pad Down",
+        ["btn_dpad_left"] = "D-Pad Left",
+        ["btn_dpad_right"] = "D-Pad Right",
+        ["btn_l_trigger"] = "L-Trigger",
+        ["btn_r_trigger"] = "R-Trigger",
+        ["btn_l_bumper"] = "L-Bumper",
+        ["btn_r_bumper"] = "R-Bumper",
+        ["btn_l_stick_click"] = "L-Stick Click",
+        ["btn_r_stick_click"] = "R-Stick Click",
+        ["btn_view"] = "View",
+        ["btn_menu"] = "Menu",
+
+        // ALLY - binding-group dropdown headers
+        ["ally_grp_controller"] = "Controller",
+        ["ally_grp_mouse"] = "Mouse",
+        ["ally_grp_system"] = "System",
+        ["ally_grp_modifiers"] = "Modifiers",
+        ["ally_grp_navigation"] = "Navigation",
+        ["ally_grp_fkeys"] = "Function Keys",
+        ["ally_grp_keyboard"] = "Keyboard",
+        ["ally_grp_numpad"] = "Numpad",
+
+        // ALLY - special binding entries
+        ["bind_disabled"] = "[ Disabled ]",
+
+        // ALLY - Mouse binding entries
+        ["bind_mouse_left"] = "Left Click",
+        ["bind_mouse_right"] = "Right Click",
+        ["bind_mouse_middle"] = "Middle Click",
+        ["bind_mouse_scrollup"] = "Scroll Up",
+        ["bind_mouse_scrolldn"] = "Scroll Down",
+
+        // ALLY - System actions (visible in binding dropdown)
+        ["bind_act_controller_mode"] = "Controller Mode",
+        ["bind_act_fps_limit"] = "FPS Limit",
+        ["bind_act_touch_screen"] = "Touch Screen",
+        ["bind_act_vol_up"] = "Vol Up",
+        ["bind_act_vol_down"] = "Vol Down",
+        ["bind_act_bright_up"] = "Bright Up",
+        ["bind_act_bright_down"] = "Bright Down",
+        ["bind_act_show_keyboard"] = "Show Keyboard",
+        ["bind_act_show_desktop"] = "Show Desktop",
+        ["bind_act_screenshot"] = "Screenshot",
+        ["bind_act_amd_overlay"] = "AMD Overlay",
+        ["bind_act_task_manager"] = "Task Manager",
+        ["bind_act_close_window"] = "Close Window",
+        ["bind_act_xgm_toggle"] = "XGM Toggle",
+        ["bind_act_project_mode"] = "Project Mode",
+        ["bind_act_start_recording"] = "Start Recording",
+        ["bind_act_mic_off"] = "Mic Off",
+
+        // ALLY - Modifier descriptive entries
+        ["bind_mod_backspace"] = "Backspace",
+        ["bind_mod_app_menu"] = "App menu",
+        ["bind_mod_caps"] = "Caps",
+        ["bind_mod_space"] = "Space",
+        ["bind_mod_print_scrn"] = "PrntScn",
+        ["bind_mod_pause"] = "Pause",
+        ["bind_mod_scrlk"] = "ScrLk",
+
+        // ALLY - Navigation descriptive entries
+        ["bind_nav_pgup"] = "Pg-Up",
+        ["bind_nav_pgdn"] = "Pg-Dwn",
+        ["bind_nav_uparr"] = "Up-Arrow",
+        ["bind_nav_downarr"] = "Down-Arrow",
+        ["bind_nav_leftarr"] = "Left-Arrow",
+        ["bind_nav_rightarr"] = "Right-Arrow",
+        ["bind_nav_insert"] = "Insert",
+        ["bind_nav_delete"] = "Delete",
+        ["bind_nav_home"] = "Home",
+        ["bind_nav_end"] = "End",
+
+        // ALLY - Action label (used in AvailableKeyActions / tray menu)
+        ["action_ally_toggle_mode"] = "Ally: Toggle Controller Mode",
+
+        // ALLY - Stick calibration panel
+        ["ally_stickcal_header"] = "Stick Calibration",
+        ["ally_stickcal_hint"] = "Reset to factory defaults, or enter custom raw ADC values (0-4095).",
+        ["ally_stickcal_reset"] = "Reset Calibration",
+        ["ally_stickcal_advanced"] = "Advanced - left stick raw values",
+        ["ally_stickcal_axis_x"] = "X axis",
+        ["ally_stickcal_axis_y"] = "Y axis",
+        ["ally_stickcal_stable"] = "Center",
+        ["ally_stickcal_min"] = "Min",
+        ["ally_stickcal_max"] = "Max",
+        ["ally_stickcal_apply"] = "Apply Left Stick",
+        ["ally_stickcal_advanced_r"] = "Advanced - right stick raw values",
+        ["ally_stickcal_apply_r"] = "Apply Right Stick",
+        ["ally_triggercal_advanced"] = "Advanced - trigger raw values (rest / max)",
+        ["ally_triggercal_apply"] = "Apply Triggers",
+        ["ally_stickcal_capture"] = "Auto-Capture (move sticks & triggers, 3s)",
+        ["ally_stickcal_capture_running"] = "Capturing... move sticks & triggers (3s)",
+
+        // ALLY - ExtraWindow hardware-button labels (relabel m4/fnf4/fnf5 on Ally)
+        ["ally_extra_btn_rog"] = "ROG",
+        ["ally_extra_btn_paddle"] = "Back Paddles",
+        ["ally_extra_btn_cc"] = "Cmd Center",
+
+        // ALLY - APU UMA buffer combo
+        ["ally_apu_mem_header"] = "APU Memory",
+        ["ally_apu_mem_label"] = "UMA Buffer Size",
+        ["ally_apu_mem_reboot_required"] = "Requires reboot to apply",
+
+        // XG Mobile (eGPU dock)
+        ["xgm_label"] = "XG Mobile",
+        ["xgm_button_enable"] = "XG Mobile: Enable",
+        ["xgm_button_disable"] = "XG Mobile: Disable",
+        ["xgm_unavailable"] = "XG Mobile path unavailable on this kernel",
+        ["xgm_reboot_required"] = "Reboot required for XG Mobile change",
     };
 }

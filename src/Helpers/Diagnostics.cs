@@ -47,6 +47,9 @@ public static class Diagnostics
         // Input Devices
         AppendInputDevices(sb);
 
+        // ROG Ally controller state (only emitted on RC71L/RC72L)
+        AppendAllyState(sb);
+
         // udev / tmpfiles
         AppendInstallState(sb);
 
@@ -235,6 +238,11 @@ public static class Diagnostics
             "/sys/class/leds/asus::kbd_backlight/multi_intensity",
             "/sys/class/leds/asus::kbd_backlight/kbd_rgb_mode",
             "/sys/class/leds/asus::kbd_backlight/kbd_rgb_state",
+            // ROG Ally gamepad RGB LED node (asus-armoury exposes this for
+            // controller-side lighting in addition to the standard keyboard
+            // backlight). Reference: asusctl rog-platform/src/keyboard_led.rs:51.
+            "/sys/class/leds/ally:rgb:gamepad/brightness",
+            "/sys/class/leds/ally:rgb:gamepad/multi_intensity",
             // Platform profile
             "/sys/firmware/acpi/platform_profile",
             "/sys/firmware/acpi/platform_profile_choices",
@@ -477,6 +485,55 @@ public static class Diagnostics
         {
             sb.AppendLine($"  (error: {ex.Message})");
         }
+
+        sb.AppendLine();
+    }
+
+    /// <summary>
+    /// ROG Ally controller diagnostic block. Only emitted when AppConfig.IsAlly()
+    /// returns true (i.e. board name contains "RC7"). Lists saved controller
+    /// state, binding count, and the LinuxAmdGpuMetrics snapshot used by the
+    /// auto-mode timer.
+    /// </summary>
+    private static void AppendAllyState(StringBuilder sb)
+    {
+        if (!AppConfig.IsAlly())
+            return;
+
+        sb.AppendLine("--- ROG Ally Controller ---");
+
+        // Saved mode (controller_mode, default Auto=0).
+        int rawMode = AppConfig.Get("controller_mode", 0);
+        sb.AppendLine($"  controller_mode    : {rawMode} ({(Ally.ControllerMode)rawMode})");
+        sb.AppendLine($"  controller_disabled: {AppConfig.Is("controller_disabled")}");
+        sb.AppendLine($"  ally_show_tray     : {AppConfig.Is("ally_show_tray")}");
+
+        // Persisted bindings - count non-empty `bind_*` keys (rough proxy for
+        // "user has customized something" without dumping the whole catalog).
+        int bindingCount = 0;
+        foreach (var key in new[]
+        {
+            "m1","m2","a","b","x","y",
+            "du","dd","dl","dr",
+            "lt","rt","lb","rb",
+            "ll","rs","vb","mb",
+        })
+        {
+            if (!string.IsNullOrEmpty(AppConfig.GetString("bind_" + key, "")))
+                bindingCount++;
+            if (!string.IsNullOrEmpty(AppConfig.GetString("bind2_" + key, "")))
+                bindingCount++;
+        }
+        sb.AppendLine($"  custom bindings    : {bindingCount}");
+
+        // iGPU metrics snapshot - what the auto-mode timer sees.
+        int? busy = Gpu.LinuxAmdGpuMetrics.GetIgpuBusyPercent();
+        float? power = Gpu.LinuxAmdGpuMetrics.GetIgpuPowerWatts();
+        int? temp = Gpu.LinuxAmdGpuMetrics.GetIgpuTempCelsius();
+        sb.AppendLine($"  iGPU available     : {Gpu.LinuxAmdGpuMetrics.IsAvailable}");
+        sb.AppendLine($"  iGPU busy %        : {(busy.HasValue ? busy.ToString() : "(n/a)")}");
+        sb.AppendLine($"  iGPU power W       : {(power.HasValue ? power.Value.ToString("0.0") : "(n/a)")}");
+        sb.AppendLine($"  iGPU temp °C       : {(temp.HasValue ? temp.ToString() : "(n/a)")}");
 
         sb.AppendLine();
     }

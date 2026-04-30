@@ -414,6 +414,26 @@
                 </StackPanel>
             </Border>
 
+            <!-- ROG ALLY: APU UMA buffer (visible on Ally only when the
+                 asus-armoury kernel attribute is present) -->
+            <Border x:Name="panelApuMem" Classes="panel" IsVisible="False">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock x:Name="labelApuMemHeader" Classes="header" Text="APU Memory" />
+                    </Border>
+                    <Grid ColumnDefinitions="160,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelApuMemValue" Text="UMA Buffer Size"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboApuMem"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ComboApuMem_Changed" />
+                    </Grid>
+                    <TextBlock x:Name="labelApuMemReboot" Classes="label-dim" FontSize="10"
+                               Text="Requires reboot to apply"
+                               Margin="0,4,0,0" />
+                </StackPanel>
+            </Border>
+
             <!-- POWER MANAGEMENT -->
             <Border Classes="panel">
                 <StackPanel>

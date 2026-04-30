@@ -184,6 +184,16 @@ public partial class ExtraWindow : Window
         checkTopmost.Content = Labels.Get("window_topmost");
         checkBWIcon.Content = Labels.Get("bw_tray_icon");
         checkClamshell.Content = Labels.Get("clamshell_mode");
+        // Ally has no lid - clamshell-mode toggle is meaningless on a handheld.
+        checkClamshell.IsVisible = !Helpers.AppConfig.IsAlly();
+
+        // ROG Ally: APU UMA buffer combo. Read possible_values from the
+        // kernel; show the panel only when the attribute is exposed (newer
+        // asus-armoury on AMD APU systems).
+        labelApuMemHeader.Text = Labels.Get("ally_apu_mem_header");
+        labelApuMemValue.Text = Labels.Get("ally_apu_mem_label");
+        labelApuMemReboot.Text = Labels.Get("ally_apu_mem_reboot_required");
+        InitApuMem();
         checkSilentStart.Content = Labels.Get("start_minimized");
         checkDisableOsd.Content = Labels.Get("disable_osd_label");
         checkCamera.Content = Labels.Get("camera");
@@ -557,9 +567,17 @@ public partial class ExtraWindow : Window
 
     private void InitKeyBindings()
     {
+        bool isAlly = Helpers.AppConfig.IsAlly();
         _keyBindingCombos[comboKeyM4] = "m4";
-        _keyBindingCombos[comboKeyFnF4] = "fnf4";
-        _keyBindingCombos[comboKeyFnF5] = "fnf5";
+        _keyBindingCombos[comboKeyFnF4] = isAlly ? "paddle" : "fnf4";
+        _keyBindingCombos[comboKeyFnF5] = isAlly ? "cc" : "fnf5";
+
+        if (isAlly)
+        {
+            labelKeyM4.Text = Labels.Get("ally_extra_btn_rog");
+            labelKeyFnF4.Text = Labels.Get("ally_extra_btn_paddle");
+            labelKeyFnF5.Text = Labels.Get("ally_extra_btn_cc");
+        }
 
         foreach (var (combo, bindingName) in _keyBindingCombos)
         {
@@ -1572,5 +1590,74 @@ public partial class ExtraWindow : Window
         {
             _fnLockWindow.Activate();
         }
+    }
+
+    private bool _suppressApuMem;
+
+    /// <summary>
+    /// Populate the APU memory combo from the kernel's possible_values list.
+    /// Hides the entire panel when the attribute isn't exposed (non-Ally,
+    /// or older kernels missing apu_mem support).
+    /// </summary>
+    private void InitApuMem()
+    {
+        var values = Platform.Linux.SysfsHelper.ReadPossibleValues(
+            Platform.Linux.AsusAttributes.ApuMem);
+
+        if (!Helpers.AppConfig.IsAlly() || values == null)
+        {
+            panelApuMem.IsVisible = false;
+            return;
+        }
+
+        panelApuMem.IsVisible = true;
+        comboApuMem.Items.Clear();
+
+        // Some kernels expose values like "0 1 2 3 ..." (enum index) and
+        // others like "256 512 1024 ..." (MB). Display whatever the kernel
+        // gave us - the user picks one and we write it back as-is.
+        foreach (var v in values)
+            comboApuMem.Items.Add(new ComboBoxItem { Content = v, Tag = v });
+
+        // Reflect the current value.
+        var path = Platform.Linux.SysfsHelper.ResolveAttrPath(
+            Platform.Linux.AsusAttributes.ApuMem);
+        if (path != null)
+        {
+            var current = Platform.Linux.SysfsHelper.ReadAttribute(path)?.Trim();
+            if (current != null)
+            {
+                _suppressApuMem = true;
+                try
+                {
+                    foreach (ComboBoxItem item in comboApuMem.Items.Cast<ComboBoxItem>())
+                    {
+                        if ((item.Tag as string) == current)
+                        {
+                            comboApuMem.SelectedItem = item;
+                            break;
+                        }
+                    }
+                }
+                finally { _suppressApuMem = false; }
+            }
+        }
+    }
+
+    private void ComboApuMem_Changed(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressApuMem)
+            return;
+        if (comboApuMem.SelectedItem is not ComboBoxItem item)
+            return;
+        if (item.Tag is not string value)
+            return;
+
+        bool ok = Platform.Linux.SysfsHelper.WriteToAllBackends(
+            Platform.Linux.AsusAttributes.ApuMem, value);
+        Helpers.Logger.WriteLine($"APU mem → {value} (ok={ok})");
+
+        App.System?.ShowNotification(Labels.Get("ally_apu_mem_header"),
+            Labels.Get("ally_apu_mem_reboot_required"), "system-reboot");
     }
 }

@@ -19,6 +19,8 @@ public static class WindowPositioner
 {
     private const int EdgeInset = 10;
     private const int BottomExtraInset = 4;
+
+    private const int AllyBottomInset = 110;
     private const int DockGap = 5;
     // Avalonia on Linux uses client-side decorations (CSD) - the title bar is drawn
     // by Avalonia, not the compositor. ClientSize excludes it, FrameSize includes it.
@@ -74,7 +76,8 @@ public static class WindowPositioner
         var (winW, winH) = GetWindowPixelSize(window, scale, trustClientSize);
 
         int x = wa.X + wa.Width - EdgeInset - winW;
-        int y = wa.Y + wa.Height - EdgeInset - BottomExtraInset - winH;
+        int bottomInset = Helpers.AppConfig.IsAlly() ? AllyBottomInset : (EdgeInset + BottomExtraInset);
+        int y = wa.Y + wa.Height - bottomInset - winH;
 
         // Guard: don't place above or left of working area
         x = Math.Max(wa.X, x);

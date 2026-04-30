@@ -31,9 +31,20 @@ internal static class EvdevInterop
     // EV_* event types
     public const ushort EV_SYN = 0x00;
     public const ushort EV_KEY = 0x01;
+    public const ushort EV_ABS = 0x03;
     public const ushort EV_MSC = 0x04;
     public const ushort EV_LED = 0x11;
     public const ushort EV_REP = 0x14;
+
+    // ABS_* axis codes (gamepad subset). LX/LY = left stick, RX/RY = right
+    // stick, Z/RZ = analog triggers (LT/RT). Used by AllyControl's stick
+    // auto-capture.
+    public const ushort ABS_X = 0x00;   // left stick X
+    public const ushort ABS_Y = 0x01;   // left stick Y
+    public const ushort ABS_Z = 0x02;   // left analog trigger (LT)
+    public const ushort ABS_RX = 0x03;  // right stick X
+    public const ushort ABS_RY = 0x04;  // right stick Y
+    public const ushort ABS_RZ = 0x05;  // right analog trigger (RT)
 
     // MSC_* misc-event subcodes (used inside EV_MSC events).
     public const ushort MSC_SCAN = 0x04;

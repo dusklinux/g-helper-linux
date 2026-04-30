@@ -132,6 +132,7 @@ public partial class MainWindow : Window
         RefreshFnLockButton();
         RefreshSensorData();
         RefreshFooter();
+        RefreshAllyPanel();
     }
 
     private void ApplyLabels()
@@ -156,6 +157,11 @@ public partial class MainWindow : Window
 
         labelKeyboard.Text = Labels.Get("keyboard_header");
         checkStartup.Content = Labels.Get("run_on_startup");
+
+        // ROG Ally panel - static labels. Dynamic ones (mode, backlight %)
+        // are refreshed by RefreshAllyPanel.
+        labelAllyHeader.Text = Labels.Get("ally_handheld_section");
+        labelOpenHandheld.Text = Labels.Get("ally_open_handheld");
 
         // Refresh dynamic labels
         RefreshPerformanceMode();
@@ -1295,6 +1301,168 @@ public partial class MainWindow : Window
         {
             _extraWindow.Activate();
         }
+    }
+
+    private HandheldWindow? _handheldWindow;
+
+    /// <summary>Show the Ally panel + prime its labels when on RC71L/RC72L.</summary>
+    public void RefreshAllyPanel()
+    {
+        bool isAlly = Helpers.AppConfig.IsAlly();
+        panelAlly.IsVisible = isAlly;
+
+        // Hide the laptop GPU mode buttons (Eco / Standard / Optimized /
+        // Ultimate) on Ally - there's no MUX and no dGPU. Match Windows
+        // g-helper Settings.cs:1810-1821 which does the same thing.
+        panelGpuModes.IsVisible = !isAlly;
+
+        // Show / hide the GPU section title differently on Ally - the simple
+        // "GPU Mode: …" text is replaced by a fixed "GPU" so we don't show a
+        // status that doesn't apply.
+        if (isAlly && labelGPU != null)
+        {
+            labelGPU.Text = "GPU";
+        }
+
+        // XG Mobile (eGPU dock) - only relevant on Ally and only when the
+        // dock is physically connected. Read egpu_connected fw-attr.
+        RefreshXgMobile();
+
+        if (!isAlly)
+            return;
+
+        // Controller mode label - localized via i18n.
+        var saved = (Ally.ControllerMode)Helpers.AppConfig.Get(
+            "controller_mode", (int)Ally.ControllerMode.Auto);
+        string modeLabel = saved switch
+        {
+            Ally.ControllerMode.Auto => Labels.Get("controller_mode_auto"),
+            Ally.ControllerMode.Gamepad => Labels.Get("controller_mode_gamepad"),
+            Ally.ControllerMode.Mouse => Labels.Get("controller_mode_mouse"),
+            Ally.ControllerMode.WASD => Labels.Get("controller_mode_wasd"),
+            Ally.ControllerMode.Skip => Labels.Get("controller_mode_skip"),
+            _ => "?",
+        };
+        labelControllerMode.Text = Labels.Format("ally_mode_label_format", modeLabel);
+
+        // Backlight label (kbd brightness 0..3 → 0/33/66/100%).
+        int br = App.Wmi?.GetKeyboardBrightness() ?? 0;
+        labelAllyBacklight.Text = Labels.Format("ally_backlight_label_format",
+            (int)Math.Round(br * 33.33));
+
+        // iGPU sensors (refreshed lazily; the existing tray sensor timer
+        // could also call this, but for now a one-shot on panel show is
+        // enough to verify rendering).
+        int? busy = Gpu.LinuxAmdGpuMetrics.GetIgpuBusyPercent();
+        float? power = Gpu.LinuxAmdGpuMetrics.GetIgpuPowerWatts();
+        if (busy != null || power != null)
+        {
+            labelAllyMetrics.Text =
+                (busy != null ? $"{busy}% " : "") +
+                (power != null ? $"{power.Value:0.0}W" : "");
+        }
+    }
+
+    private void ButtonControllerMode_Click(object? sender, RoutedEventArgs e)
+    {
+        var ally = App.Ally;
+        if (ally == null)
+            return;
+        ally.ToggleMode();
+        RefreshAllyPanel();
+    }
+
+    private void ButtonAllyBacklight_Click(object? sender, RoutedEventArgs e)
+    {
+        var ally = App.Ally;
+        if (ally == null)
+            return;
+        ally.ToggleBacklight();
+        RefreshAllyPanel();
+    }
+
+    private void ButtonOpenHandheld_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_handheldWindow == null || !_handheldWindow.IsVisible)
+        {
+            _handheldWindow = new HandheldWindow();
+            if (Helpers.AppConfig.Is("topmost"))
+                _handheldWindow.Topmost = true;
+            WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_handheldWindow);
+            _handheldWindow.Show();
+        }
+        else
+        {
+            _handheldWindow.Activate();
+        }
+    }
+
+    /// <summary>
+    /// Refresh the XG Mobile dock button. Reads the asus-armoury fw-attr
+    /// <c>egpu_connected/current_value</c> - when present and equal to 1
+    /// the dock is physically attached and we expose a button that toggles
+    /// <c>egpu_enable</c>. Like other GPU-class fw-attrs this is BIOS-staged
+    /// and requires a reboot to fully apply.
+    /// </summary>
+    private void RefreshXgMobile()
+    {
+        if (!Helpers.AppConfig.IsAlly())
+        {
+            buttonXGM.IsVisible = false;
+            return;
+        }
+
+        // egpu_connected: 1 = dock attached, 0 = standalone, missing = no XGM
+        // path present at all.
+        var connectedPath = SysfsHelper.ResolveAttrPath(
+            Platform.Linux.AsusAttributes.EgpuConnected);
+        bool connected = false;
+        if (connectedPath != null)
+        {
+            var raw = SysfsHelper.ReadAttribute(connectedPath);
+            connected = raw != null && raw.Trim() == "1";
+        }
+        buttonXGM.IsVisible = connected;
+        if (!connected)
+            return;
+
+        // Reflect current egpu_enable state in the label so the user sees
+        // "XG Mobile: Enabled" vs "XG Mobile: Disabled".
+        var enablePath = SysfsHelper.ResolveAttrPath(
+            Platform.Linux.AsusAttributes.EgpuEnable);
+        bool enabled = false;
+        if (enablePath != null)
+        {
+            var raw = SysfsHelper.ReadAttribute(enablePath);
+            enabled = raw != null && raw.Trim() == "1";
+        }
+        labelXGM.Text = enabled
+            ? Labels.Get("xgm_button_disable")
+            : Labels.Get("xgm_button_enable");
+    }
+
+    private void ButtonXGM_Click(object? sender, RoutedEventArgs e)
+    {
+        var enablePath = SysfsHelper.ResolveAttrPath(
+            Platform.Linux.AsusAttributes.EgpuEnable);
+        if (enablePath == null)
+        {
+            App.System?.ShowNotification(Labels.Get("xgm_label"),
+                Labels.Get("xgm_unavailable"), "dialog-warning");
+            return;
+        }
+
+        var raw = SysfsHelper.ReadAttribute(enablePath);
+        bool currentlyEnabled = raw != null && raw.Trim() == "1";
+        string targetValue = currentlyEnabled ? "0" : "1";
+        bool ok = SysfsHelper.WriteToAllBackends(
+            Platform.Linux.AsusAttributes.EgpuEnable, targetValue);
+
+        Helpers.Logger.WriteLine($"XGMobile: egpu_enable {raw?.Trim()} → {targetValue} (ok={ok})");
+        App.System?.ShowNotification(Labels.Get("xgm_label"),
+            Labels.Get("xgm_reboot_required"), "system-reboot");
+
+        RefreshXgMobile();
     }
 
     /// <summary>

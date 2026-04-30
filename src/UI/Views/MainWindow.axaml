@@ -99,8 +99,11 @@
                                    Text="GPU Fan: 0RPM" VerticalAlignment="Center" />
                     </Grid>
 
-                    <!-- GPU mode buttons, 4 modes matching Windows G-Helper -->
-                    <UniformGrid Rows="1" Columns="4" Margin="0,0">
+                    <!-- GPU mode buttons, 4 modes matching Windows G-Helper.
+                         Hidden entirely on Ally (no dGPU / no MUX) - replaced
+                         by the XGM dock button below when an XG Mobile is
+                         attached. Match Windows g-helper Settings.cs:1810. -->
+                    <UniformGrid x:Name="panelGpuModes" Rows="1" Columns="4" Margin="0,0">
                         <Button x:Name="buttonEco" Classes="ghelper-tall"
                                 Margin="0,0,3,0" Click="ButtonEco_Click">
                             <StackPanel HorizontalAlignment="Center" Spacing="4">
@@ -130,6 +133,19 @@
                             </StackPanel>
                         </Button>
                     </UniformGrid>
+
+                    <!-- XG Mobile (eGPU dock) toggle. Visible on Ally only,
+                         and only when egpu_connected reads 1. Click toggles
+                         egpu_enable + schedules a reboot for the change to
+                         apply (BIOS-staged, like dgpu_disable). -->
+                    <Button x:Name="buttonXGM" Classes="ghelper"
+                            Margin="0,4,0,0" Click="ButtonXGM_Click"
+                            Height="36" IsVisible="False">
+                        <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                            <ctrl:Icon IconName="package" Width="14" Height="14" VerticalAlignment="Center" />
+                            <TextBlock x:Name="labelXGM" Text="XG Mobile" FontSize="11" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
 
                     <TextBlock x:Name="labelTipGPU" Classes="label-dim"
                                Text="" Margin="2,6,2,0" TextWrapping="Wrap" />
@@ -173,6 +189,48 @@
                             Margin="0,4,0,0" Click="ButtonMiniled_Click"
                             Height="36" IsVisible="False">
                         <TextBlock Text="MiniLED" HorizontalAlignment="Center" FontSize="11" />
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- ROG ALLY HANDHELD SECTION (visible only on Ally / Ally X) -->
+            <Border x:Name="panelAlly" Classes="panel" IsVisible="False">
+                <StackPanel>
+                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="2,0,2,8">
+                        <ctrl:Icon Grid.Column="0" IconName="gamepad" Bold="True"
+                                   Width="18" Height="18"
+                                   VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Grid.Column="1" x:Name="labelAllyHeader" Classes="header"
+                                   Text="Handheld" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="2" x:Name="labelAllyMetrics" Classes="label-dim"
+                                   Text="" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Row 1: Controller mode + Backlight cycle -->
+                    <Grid ColumnDefinitions="*,*" Margin="0,0,0,4">
+                        <Button Grid.Column="0" x:Name="buttonControllerMode" Classes="ghelper"
+                                Margin="0,0,3,0" Click="ButtonControllerMode_Click"
+                                HorizontalAlignment="Stretch"
+                                Height="36">
+                            <TextBlock x:Name="labelControllerMode" Text="Mode: Auto"
+                                       HorizontalAlignment="Center" FontSize="11" />
+                        </Button>
+                        <Button Grid.Column="1" x:Name="buttonAllyBacklight" Classes="ghelper"
+                                Margin="3,0,0,0" Click="ButtonAllyBacklight_Click"
+                                HorizontalAlignment="Stretch"
+                                Height="36">
+                            <TextBlock x:Name="labelAllyBacklight" Text="Backlight 100%"
+                                       HorizontalAlignment="Center" FontSize="11" />
+                        </Button>
+                    </Grid>
+
+                    <!-- Row 2: Open Handheld settings window -->
+                    <Button x:Name="buttonOpenHandheld" Classes="ghelper"
+                            Click="ButtonOpenHandheld_Click"
+                            HorizontalAlignment="Stretch"
+                            Height="36" Margin="0,0,0,0">
+                        <TextBlock x:Name="labelOpenHandheld" Text="Bindings &amp; Deadzones..."
+                                   HorizontalAlignment="Center" FontSize="11" />
                     </Button>
                 </StackPanel>
             </Border>
