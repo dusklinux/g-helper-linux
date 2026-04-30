@@ -400,7 +400,8 @@ public partial class ExtraWindow : Window
 
     private void ComboRearLight_Changed(object? sender, SelectionChangedEventArgs e)
     {
-        if (_suppressEvents) return;
+        if (_suppressEvents)
+            return;
         if (comboRearLight.SelectedItem is ComboBoxItem item && item.Tag is int modeVal)
         {
             Helpers.AppConfig.Set("rear_mode", modeVal);

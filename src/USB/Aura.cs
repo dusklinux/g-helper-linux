@@ -830,7 +830,8 @@ public static class Aura
     /// </summary>
     public static void ApplyRearLight()
     {
-        if (!AppConfig.HasRearLight()) return;
+        if (!AppConfig.HasRearLight())
+            return;
 
         RearMode = (AuraMode)AppConfig.Get("rear_mode");
         SetRearColor(AppConfig.Get("rear_color", unchecked((int)0xFFFFFFFF)));
