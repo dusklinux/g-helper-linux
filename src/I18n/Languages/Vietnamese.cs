@@ -217,6 +217,8 @@ public static class Vietnamese
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Thanh đèn",
         ["kbd_lid"] = "Nắp",
+        ["rear_light"] = "Đèn sau",
+        ["rear_mode"] = "Chế độ",
 
         ["display_header"] = "Màn hình",
         ["controller"] = "Bộ điều khiển",

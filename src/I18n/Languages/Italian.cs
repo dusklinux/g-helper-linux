@@ -217,6 +217,8 @@ public static class Italian
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Barra luminosa",
         ["kbd_lid"] = "Coperchio",
+        ["rear_light"] = "Luce posteriore",
+        ["rear_mode"] = "Modalità",
 
         ["display_header"] = "Schermo",
         ["controller"] = "Controller",

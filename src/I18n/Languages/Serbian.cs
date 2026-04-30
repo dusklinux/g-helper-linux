@@ -220,6 +220,8 @@ public static class Serbian
         ["kbd_logo"] = "Лого",
         ["kbd_lightbar"] = "Светлосна трака",
         ["kbd_lid"] = "Поклопац",
+        ["rear_light"] = "Задње светло",
+        ["rear_mode"] = "Режим",
 
         ["display_header"] = "Дисплеј",
         ["controller"] = "Контролер",

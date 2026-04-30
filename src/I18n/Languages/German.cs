@@ -217,6 +217,8 @@ public static class German
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Lichtleiste",
         ["kbd_lid"] = "Deckel",
+        ["rear_light"] = "Hintere Beleuchtung",
+        ["rear_mode"] = "Modus",
 
         ["display_header"] = "Anzeige",
         ["controller"] = "Controller",

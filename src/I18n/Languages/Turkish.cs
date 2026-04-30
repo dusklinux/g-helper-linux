@@ -217,6 +217,8 @@ public static class Turkish
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Işık Çubuğu",
         ["kbd_lid"] = "Kapak",
+        ["rear_light"] = "Arka Işık",
+        ["rear_mode"] = "Mod",
 
         ["display_header"] = "Ekran",
         ["controller"] = "Denetleyici",

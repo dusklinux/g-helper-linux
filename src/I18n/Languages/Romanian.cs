@@ -217,6 +217,8 @@ public static class Romanian
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Bară luminoasă",
         ["kbd_lid"] = "Capac",
+        ["rear_light"] = "Lumină spate",
+        ["rear_mode"] = "Mod",
 
         ["display_header"] = "Afișaj",
         ["controller"] = "Controler",

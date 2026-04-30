@@ -439,6 +439,29 @@ public static class AppConfig
     // Battery-specific config check (original logic: fallback to zone config if bat-specific not set)
     public static bool IsOnBattery(string zone) => Get(zone + "_bat", Get(zone)) != 0;
 
+    // Rear glow zone (Z13's rear-of-lid window/logo). Used by Aura.ApplyRearLight
+    // to early-return on hardware without the rear-light controller (PID 0x18C6).
+    public static bool HasRearLight() => IsZ13();
+
+    // Auto-ASPM (PCIe link power state) toggle - on by default; consumed by
+    // ModeControl when applying a performance mode. UI not exposed (kernel
+    // pcie_aspm config often blocks runtime writes).
+    public static bool IsAutoASPM() => IsNotFalse("aspm");
+
+    // Models that handle FN-Lock in firmware (no software remapper needed).
+    // Predicate added for upstream parity; Linux still runs the uinput
+    // remapper on these models since both paths coexist without conflict.
+    public static bool IsHardwareFnLock() => IsVivoZenPro() || ContainsModel("GZ302EA");
+
+    // Models with inverted FN-Lock semantics (FW state 0=locked / 1=unlocked).
+    // Predicate added for upstream parity; not consumed on Linux because the
+    // uinput remapper is independent of firmware FN-Lock state.
+    public static bool IsInvertedFNLock() =>
+        ContainsModel("M140") || ContainsModel("S550") || ContainsModel("P540") || IsTUF();
+
+    public static bool IsSleepReset() =>
+        ContainsModel("GU605MI") || ContainsModel("GU605MV");
+
     // Helpers
 
     private static int GetCurrentMode()

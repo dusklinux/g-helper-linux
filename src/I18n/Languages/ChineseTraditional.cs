@@ -220,6 +220,8 @@ public static class ChineseTraditional
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "燈條",
         ["kbd_lid"] = "上蓋",
+        ["rear_light"] = "後部燈光",
+        ["rear_mode"] = "模式",
 
         ["display_header"] = "顯示",
         ["controller"] = "控制器",

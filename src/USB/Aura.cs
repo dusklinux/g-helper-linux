@@ -110,6 +110,14 @@ public static class Aura
     public static byte Color2G = 0;
     public static byte Color2B = 0;
 
+    // Rear-light state (Z13 only). The rear glow window/logo on the lid is a
+    // separate AURA device (PID 0x18C6) and accepts its own AuraMessage with
+    // independent mode + color. Speed shares the main keyboard's speed value.
+    private static AuraMode _rearMode = AuraMode.AuraStatic;
+    public static byte RearR = 255;
+    public static byte RearG = 255;
+    public static byte RearB = 255;
+
     private static bool _backlight = true;
     private static bool _initDirect = false;
 
@@ -219,6 +227,15 @@ public static class Aura
     {
         get => _speed;
         set => _speed = GetSpeeds().ContainsKey(value) ? value : AuraSpeed.Normal;
+    }
+
+    /// <summary>Mode for the rear glow zone (Z13). Validated against
+    /// <see cref="GetRearModes"/> on set; falls back to <see cref="AuraMode.AuraStatic"/>
+    /// for unsupported values.</summary>
+    public static AuraMode RearMode
+    {
+        get => _rearMode;
+        set => _rearMode = GetRearModes().ContainsKey(value) ? value : AuraMode.AuraStatic;
     }
 
     /// <summary>Whether the current mode supports a second color (Breathe + Gradient, non-ACPI).</summary>
@@ -360,6 +377,23 @@ public static class Aura
         };
     }
 
+    /// <summary>
+    /// Modes available for the rear glow zone (Z13). Restricted to the 5 firmware
+    /// modes the rear-light controller supports - none of the per-key effects
+    /// (Star/Rain/etc.) or software-driven modes (Heatmap/Battery) apply.
+    /// </summary>
+    public static Dictionary<AuraMode, string> GetRearModes()
+    {
+        return new Dictionary<AuraMode, string>
+        {
+            { AuraMode.AuraStatic,     Labels.Get("aura_static") },
+            { AuraMode.AuraBreathe,    Labels.Get("aura_breathe") },
+            { AuraMode.AuraColorCycle, Labels.Get("aura_color_cycle") },
+            { AuraMode.AuraRainbow,    Labels.Get("aura_rainbow") },
+            { AuraMode.AuraStrobe,     Labels.Get("aura_strobe") },
+        };
+    }
+
     // Color helpers
 
     public static void SetColor(int argb)
@@ -384,6 +418,18 @@ public static class Aura
     public static int GetColor2Argb()
     {
         return (255 << 24) | (Color2R << 16) | (Color2G << 8) | Color2B;
+    }
+
+    public static void SetRearColor(int argb)
+    {
+        RearR = (byte)((argb >> 16) & 0xFF);
+        RearG = (byte)((argb >> 8) & 0xFF);
+        RearB = (byte)(argb & 0xFF);
+    }
+
+    public static int GetRearColorArgb()
+    {
+        return (255 << 24) | (RearR << 16) | (RearG << 8) | RearB;
     }
 
     // Protocol messages
@@ -775,6 +821,32 @@ public static class Aura
         AsusHid.Write(AuraPowerMessage(flags));
     }
 
+    /// <summary>
+    /// Apply the rear glow zone (Z13 only) - sends an AuraMessage routed to
+    /// the rear-light device (PID 0x18C6). Reads <c>rear_mode</c> + <c>rear_color</c>
+    /// from AppConfig; speed shares the main keyboard's <see cref="Speed"/> value.
+    /// Early-returns on non-<see cref="AppConfig.HasRearLight"/> models so it's
+    /// safe to call unconditionally from <see cref="ApplyAura"/>.
+    /// </summary>
+    public static void ApplyRearLight()
+    {
+        if (!AppConfig.HasRearLight()) return;
+
+        RearMode = (AuraMode)AppConfig.Get("rear_mode");
+        SetRearColor(AppConfig.Get("rear_color", unchecked((int)0xFFFFFFFF)));
+
+        int speedByte = Speed switch
+        {
+            AuraSpeed.Normal => 0xEB,
+            AuraSpeed.Fast => 0xF5,
+            AuraSpeed.Slow => 0xE1,
+            _ => 0xEB
+        };
+
+        var msg = AuraMessage(RearMode, RearR, RearG, RearB, RearR, RearG, RearB, speedByte);
+        AsusHid.Write(new List<byte[]> { msg, MESSAGE_SET, MESSAGE_APPLY }, "Rear", AsusHid.REAR_LIGHT_PIDS);
+    }
+
     // 4-zone direct RGB map
 
     /// <summary>
@@ -968,6 +1040,10 @@ public static class Aura
         // Restrict to keyboard / lightbar PIDs so the rear-light device (Z13)
         // doesn't receive keyboard-protocol packets it can't interpret.
         AsusHid.Write(new List<byte[]> { msg, MESSAGE_SET, MESSAGE_APPLY }, "Aura", AsusHid.MAIN_AURA_PIDS);
+
+        // Z13 rear glow zone - independent device (PID 0x18C6), own mode/color.
+        // Early-returns on non-Z13 hardware (HasRearLight = IsZ13).
+        ApplyRearLight();
 
         // TUF/VivoZenPro: use sysfs kbd_rgb_mode (primary) + multi_intensity (fallback)
         if (_isACPI)

@@ -220,6 +220,8 @@ public static class Macedonian
         ["kbd_logo"] = "Лого",
         ["kbd_lightbar"] = "Светлосна лента",
         ["kbd_lid"] = "Капак",
+        ["rear_light"] = "Задно светло",
+        ["rear_mode"] = "Режим",
 
         ["display_header"] = "Дисплеј",
         ["controller"] = "Контролер",

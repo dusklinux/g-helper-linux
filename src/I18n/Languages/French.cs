@@ -217,6 +217,8 @@ public static class French
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Barre lumineuse",
         ["kbd_lid"] = "Couvercle",
+        ["rear_light"] = "Lumière arrière",
+        ["rear_mode"] = "Mode",
 
         ["display_header"] = "Affichage",
         ["controller"] = "Contrôleur",

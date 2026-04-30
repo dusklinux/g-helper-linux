@@ -220,6 +220,8 @@ public static class ChineseSimplified
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "灯条",
         ["kbd_lid"] = "顶盖",
+        ["rear_light"] = "后部灯光",
+        ["rear_mode"] = "模式",
 
         ["display_header"] = "显示",
         ["controller"] = "控制器",

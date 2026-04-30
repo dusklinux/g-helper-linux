@@ -220,6 +220,8 @@ public static class Japanese
         ["kbd_logo"] = "ロゴ",
         ["kbd_lightbar"] = "ライトバー",
         ["kbd_lid"] = "蓋",
+        ["rear_light"] = "リアライト",
+        ["rear_mode"] = "モード",
 
         ["display_header"] = "ディスプレイ",
         ["controller"] = "コントローラー",

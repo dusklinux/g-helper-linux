@@ -217,6 +217,8 @@ public static class Ukrainian
         ["kbd_logo"] = "Логотип",
         ["kbd_lightbar"] = "Світлова панель",
         ["kbd_lid"] = "Кришка",
+        ["rear_light"] = "Задня підсвітка",
+        ["rear_mode"] = "Режим",
 
         ["display_header"] = "Дисплей",
         ["controller"] = "Контролер",

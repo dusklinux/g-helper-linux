@@ -220,6 +220,8 @@ public static class Greek
         ["kbd_logo"] = "Λογότυπο",
         ["kbd_lightbar"] = "Γραμμή φωτός",
         ["kbd_lid"] = "Καπάκι",
+        ["rear_light"] = "Πίσω φωτισμός",
+        ["rear_mode"] = "Λειτουργία",
 
         ["display_header"] = "Οθόνη",
         ["controller"] = "Ελεγκτής",

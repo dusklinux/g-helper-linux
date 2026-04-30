@@ -220,6 +220,8 @@ public static class Korean
         ["kbd_logo"] = "로고",
         ["kbd_lightbar"] = "라이트바",
         ["kbd_lid"] = "덮개",
+        ["rear_light"] = "후면 조명",
+        ["rear_mode"] = "모드",
 
         ["display_header"] = "디스플레이",
         ["controller"] = "컨트롤러",

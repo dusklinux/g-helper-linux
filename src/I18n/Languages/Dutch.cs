@@ -217,6 +217,8 @@ public static class Dutch
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Lichtbalk",
         ["kbd_lid"] = "Deksel",
+        ["rear_light"] = "Achterlicht",
+        ["rear_mode"] = "Modus",
 
         ["display_header"] = "Beeldscherm",
         ["controller"] = "Controller",

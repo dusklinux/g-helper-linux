@@ -220,6 +220,8 @@ public static class Arabic
         ["kbd_logo"] = "الشعار",
         ["kbd_lightbar"] = "شريط الإضاءة",
         ["kbd_lid"] = "الغطاء",
+        ["rear_light"] = "الإضاءة الخلفية",
+        ["rear_mode"] = "الوضع",
 
         ["display_header"] = "العرض",
         ["controller"] = "وحدة التحكم",

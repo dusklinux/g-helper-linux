@@ -220,6 +220,8 @@ public static class Swedish
         ["kbd_logo"] = "Logotyp",
         ["kbd_lightbar"] = "Ljuslist",
         ["kbd_lid"] = "Lock",
+        ["rear_light"] = "Bakljus",
+        ["rear_mode"] = "Läge",
 
         ["display_header"] = "Skärm",
         ["controller"] = "Kontroller",

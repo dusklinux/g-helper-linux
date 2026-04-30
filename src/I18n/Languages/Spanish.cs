@@ -217,6 +217,8 @@ public static class Spanish
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Barra de luz",
         ["kbd_lid"] = "Tapa",
+        ["rear_light"] = "Luz trasera",
+        ["rear_mode"] = "Modo",
 
         ["display_header"] = "Pantalla",
         ["controller"] = "Controlador",

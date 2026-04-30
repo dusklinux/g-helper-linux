@@ -190,10 +190,10 @@ public class ModeControl
                 App.Power?.SetCpuBoost(autoBoost == 1);
             }
 
-            // ASPM - on by default (synced with upstream IsAutoASPM/IsNotFalse behavior).
-            // No UI for ASPM (kernel writes are often blocked on built-in pcie_aspm
-            // configurations). Auto-derived: powersave for Silent, default elsewhere.
-            if (Helpers.AppConfig.IsNotFalse("aspm"))
+            // ASPM - on by default. No UI (kernel writes often blocked by
+            // built-in pcie_aspm config). Auto-derived: powersave for Silent,
+            // default elsewhere.
+            if (Helpers.AppConfig.IsAutoASPM())
             {
                 App.Power?.SetAspmPolicy(baseMode == 2 ? "powersave" : "default");
             }

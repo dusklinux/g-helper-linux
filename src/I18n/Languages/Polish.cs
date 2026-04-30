@@ -217,6 +217,8 @@ public static class Polish
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Pasek świetlny",
         ["kbd_lid"] = "Klapa",
+        ["rear_light"] = "Tylne światło",
+        ["rear_mode"] = "Tryb",
 
         ["display_header"] = "Wyświetlacz",
         ["controller"] = "Kontroler",

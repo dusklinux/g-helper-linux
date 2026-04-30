@@ -220,6 +220,8 @@ public static class Indonesian
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Lightbar",
         ["kbd_lid"] = "Penutup",
+        ["rear_light"] = "Lampu Belakang",
+        ["rear_mode"] = "Mode",
 
         ["display_header"] = "Layar",
         ["controller"] = "Pengendali",

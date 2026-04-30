@@ -222,6 +222,8 @@ public static class English
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Lightbar",
         ["kbd_lid"] = "Lid",
+        ["rear_light"] = "Rear Light",
+        ["rear_mode"] = "Mode",
 
         ["display_header"] = "Display",
         ["controller"] = "Controller",

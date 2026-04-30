@@ -220,6 +220,8 @@ public static class Danish
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Lysliste",
         ["kbd_lid"] = "Låg",
+        ["rear_light"] = "Baglys",
+        ["rear_mode"] = "Tilstand",
 
         ["display_header"] = "Skærm",
         ["controller"] = "Controller",

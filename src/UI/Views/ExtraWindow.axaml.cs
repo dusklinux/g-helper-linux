@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using GHelper.Linux.I18n;
@@ -352,6 +353,74 @@ public partial class ExtraWindow : Window
         rowPowerBar.IsVisible = Aura.HasLightbar;
         rowPowerLogo.IsVisible = Aura.HasLogo;
         rowPowerLid.IsVisible = Aura.HasRearglow;
+
+        // Z13 rear-glow zone (independent device, PID 0x18C6) - own mode + color.
+        InitRearLight();
+    }
+
+    /// <summary>
+    /// Populate the rear-light combo + swatch from AppConfig and show the panel
+    /// on Z13. Hidden on all other models (HasRearLight returns false).
+    /// </summary>
+    private void InitRearLight()
+    {
+        if (!Helpers.AppConfig.HasRearLight())
+        {
+            panelRearLight.IsVisible = false;
+            return;
+        }
+
+        Aura.RearMode = (AuraMode)Helpers.AppConfig.Get("rear_mode");
+        Aura.SetRearColor(Helpers.AppConfig.Get("rear_color", unchecked((int)0xFFFFFFFF)));
+
+        var modes = Aura.GetRearModes();
+        comboRearLight.Items.Clear();
+        int selectedIdx = 0;
+        int idx = 0;
+        foreach (var kv in modes)
+        {
+            comboRearLight.Items.Add(new ComboBoxItem { Content = kv.Value, Tag = (int)kv.Key });
+            if (kv.Key == Aura.RearMode)
+                selectedIdx = idx;
+            idx++;
+        }
+        comboRearLight.SelectedIndex = selectedIdx;
+
+        UpdateRearSwatch();
+        labelRearLight.Text = Labels.Get("rear_light");
+        labelRearMode.Text = Labels.Get("rear_mode");
+        panelRearLight.IsVisible = true;
+    }
+
+    private void UpdateRearSwatch()
+    {
+        swatchRearColor.Background = new Avalonia.Media.SolidColorBrush(
+            Avalonia.Media.Color.FromRgb(Aura.RearR, Aura.RearG, Aura.RearB));
+    }
+
+    private void ComboRearLight_Changed(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressEvents) return;
+        if (comboRearLight.SelectedItem is ComboBoxItem item && item.Tag is int modeVal)
+        {
+            Helpers.AppConfig.Set("rear_mode", modeVal);
+            Aura.RearMode = (AuraMode)modeVal;
+            // ApplyAura() invokes ApplyRearLight() at the end; saves a separate write.
+            Task.Run(() => Aura.ApplyAura());
+        }
+    }
+
+    private void SwatchRearColor_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        Helpers.ColorPicker.Show(this, Aura.RearR, Aura.RearG, Aura.RearB, (r, g, b) =>
+        {
+            Aura.RearR = r;
+            Aura.RearG = g;
+            Aura.RearB = b;
+            Helpers.AppConfig.Set("rear_color", Aura.GetRearColorArgb());
+            UpdateRearSwatch();
+            Task.Run(() => Aura.ApplyAura());
+        });
     }
 
     /// <summary>Update keyboard brightness slider from external change (physical Fn key press).</summary>

@@ -220,6 +220,8 @@ public static class Norwegian
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Lyslist",
         ["kbd_lid"] = "Lokk",
+        ["rear_light"] = "Baklys",
+        ["rear_mode"] = "Modus",
 
         ["display_header"] = "Skjerm",
         ["controller"] = "Kontroller",

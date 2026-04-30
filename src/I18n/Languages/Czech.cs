@@ -217,6 +217,8 @@ public static class Czech
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Světelný pás",
         ["kbd_lid"] = "Víko",
+        ["rear_light"] = "Zadní podsvícení",
+        ["rear_mode"] = "Režim",
 
         ["display_header"] = "Displej",
         ["controller"] = "Řadič",

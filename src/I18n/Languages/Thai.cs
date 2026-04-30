@@ -220,6 +220,8 @@ public static class Thai
         ["kbd_logo"] = "โลโก้",
         ["kbd_lightbar"] = "แถบไฟ",
         ["kbd_lid"] = "ฝาครอบ",
+        ["rear_light"] = "ไฟท้าย",
+        ["rear_mode"] = "โหมด",
 
         ["display_header"] = "จอแสดงผล",
         ["controller"] = "คอนโทรลเลอร์",

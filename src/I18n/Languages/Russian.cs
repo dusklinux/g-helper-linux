@@ -217,6 +217,8 @@ public static class Russian
         ["kbd_logo"] = "Логотип",
         ["kbd_lightbar"] = "Светодиодная полоса",
         ["kbd_lid"] = "Крышка",
+        ["rear_light"] = "Задняя подсветка",
+        ["rear_mode"] = "Режим",
 
         ["display_header"] = "Дисплей",
         ["controller"] = "Контроллер",

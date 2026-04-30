@@ -217,6 +217,8 @@ public static class PortugueseBR
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Barra de luz",
         ["kbd_lid"] = "Tampa",
+        ["rear_light"] = "Luz traseira",
+        ["rear_mode"] = "Modo",
 
         ["display_header"] = "Tela",
         ["controller"] = "Controlador",

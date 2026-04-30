@@ -217,6 +217,8 @@ public static class Hungarian
         ["kbd_logo"] = "Logó",
         ["kbd_lightbar"] = "Fénysáv",
         ["kbd_lid"] = "Fedél",
+        ["rear_light"] = "Hátsó fény",
+        ["rear_mode"] = "Mód",
 
         ["display_header"] = "Kijelző",
         ["controller"] = "Vezérlő",

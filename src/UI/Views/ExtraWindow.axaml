@@ -127,6 +127,23 @@
                         <CheckBox Grid.Column="4" x:Name="checkShutdownLid" HorizontalAlignment="Center" IsCheckedChanged="CheckPower_Changed" />
                         <CheckBox Grid.Column="5" x:Name="checkBatteryLid" HorizontalAlignment="Center" IsCheckedChanged="CheckPower_Changed" />
                     </Grid>
+
+                    <!-- Rear Light (Z13 only) - independent rear-glow zone with own mode + color -->
+                    <StackPanel x:Name="panelRearLight" IsVisible="False" Margin="0,12,0,0">
+                        <TextBlock x:Name="labelRearLight" Text="Rear Light"
+                                   Classes="label-dim" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <Grid ColumnDefinitions="80,*,40" Margin="0,4">
+                            <TextBlock Grid.Column="0" x:Name="labelRearMode" Text="Mode"
+                                       Classes="label-dim" FontSize="11" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1" x:Name="comboRearLight"
+                                      HorizontalAlignment="Stretch"
+                                      SelectionChanged="ComboRearLight_Changed" />
+                            <Border Grid.Column="2" x:Name="swatchRearColor"
+                                    Width="32" Height="24" Margin="4,0,0,0"
+                                    Background="White" BorderBrush="#666" BorderThickness="1"
+                                    Cursor="Hand" PointerPressed="SwatchRearColor_PointerPressed" />
+                        </Grid>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

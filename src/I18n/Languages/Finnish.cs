@@ -220,6 +220,8 @@ public static class Finnish
         ["kbd_logo"] = "Logo",
         ["kbd_lightbar"] = "Valopalkki",
         ["kbd_lid"] = "Kansi",
+        ["rear_light"] = "Takavalo",
+        ["rear_mode"] = "Tila",
 
         ["display_header"] = "Näyttö",
         ["controller"] = "Ohjain",
