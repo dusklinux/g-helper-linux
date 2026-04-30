@@ -245,7 +245,6 @@ public static class Romanian
 
         ["other_header"] = "Altele",
         ["boot_sound"] = "Sunet la pornire",
-        ["per_key_rgb"] = "RGB per tastă (în loc de 4 zone)",
         ["window_topmost"] = "Fereastră mereu deasupra",
         ["bw_tray_icon"] = "Pictogramă alb-negru în tray",
         ["clamshell_mode"] = "Mod capac închis (dezactivează repausul la închiderea capacului)",
@@ -430,6 +429,7 @@ public static class Romanian
         ["aura_gpu_mode"] = "Mod GPU",
         ["aura_battery"] = "Baterie",
         ["aura_gradient"] = "Gradient",
+        ["aura_zone_test"] = "Test zone",
         ["aura_no_modes"] = "Niciun mod",
 
         // AURA SPEEDS

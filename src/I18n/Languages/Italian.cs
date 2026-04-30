@@ -245,7 +245,6 @@ public static class Italian
 
         ["other_header"] = "Altro",
         ["boot_sound"] = "Suono di avvio",
-        ["per_key_rgb"] = "RGB per tasto (invece di 4 zone)",
         ["window_topmost"] = "Finestra sempre in primo piano",
         ["bw_tray_icon"] = "Icona vassoio B&N",
         ["clamshell_mode"] = "Modalità clamshell (non sospendere alla chiusura del coperchio)",
@@ -430,6 +429,7 @@ public static class Italian
         ["aura_gpu_mode"] = "Modalità GPU",
         ["aura_battery"] = "Batteria",
         ["aura_gradient"] = "Gradiente",
+        ["aura_zone_test"] = "Test zone",
         ["aura_no_modes"] = "Nessuna modalità",
 
         // AURA SPEEDS

@@ -245,7 +245,6 @@ public static class Polish
 
         ["other_header"] = "Inne",
         ["boot_sound"] = "Dźwięk rozruchu",
-        ["per_key_rgb"] = "RGB per klawisz (zamiast 4-strefowego)",
         ["window_topmost"] = "Okno zawsze na wierzchu",
         ["bw_tray_icon"] = "Czarno-biała ikona w zasobniku",
         ["clamshell_mode"] = "Tryb zamkniętej klapy (wyłącz uśpienie po zamknięciu)",
@@ -430,6 +429,7 @@ public static class Polish
         ["aura_gpu_mode"] = "Tryb GPU",
         ["aura_battery"] = "Bateria",
         ["aura_gradient"] = "Gradient",
+        ["aura_zone_test"] = "Test stref",
         ["aura_no_modes"] = "Brak trybów",
 
         // AURA SPEEDS

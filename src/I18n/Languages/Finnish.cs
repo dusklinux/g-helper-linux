@@ -248,7 +248,6 @@ public static class Finnish
 
         ["other_header"] = "Muut",
         ["boot_sound"] = "Käynnistysääni",
-        ["per_key_rgb"] = "Näppäinkohtainen RGB (4-vyöhykkeen sijaan)",
         ["window_topmost"] = "Ikkuna aina päällimmäisenä",
         ["bw_tray_icon"] = "Mustavalkoinen ilmaisinalueen kuvake",
         ["clamshell_mode"] = "Simpukkatila (estä lepotila kannen sulkiessa)",
@@ -433,6 +432,7 @@ public static class Finnish
         ["aura_gpu_mode"] = "GPU-tila",
         ["aura_battery"] = "Akku",
         ["aura_gradient"] = "Liukuväri",
+        ["aura_zone_test"] = "Aluetesti",
         ["aura_no_modes"] = "Ei tiloja",
 
         // AURA SPEEDS

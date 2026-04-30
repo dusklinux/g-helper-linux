@@ -245,7 +245,6 @@ public static class Ukrainian
 
         ["other_header"] = "Інше",
         ["boot_sound"] = "Звук завантаження",
-        ["per_key_rgb"] = "RGB поклавішно (замість 4-зонного)",
         ["window_topmost"] = "Вікно завжди зверху",
         ["bw_tray_icon"] = "Чорно-біла іконка в треї",
         ["clamshell_mode"] = "Режим закритої кришки (вимкнути сон при закритті)",
@@ -430,6 +429,7 @@ public static class Ukrainian
         ["aura_gpu_mode"] = "Режим GPU",
         ["aura_battery"] = "Акумулятор",
         ["aura_gradient"] = "Градієнт",
+        ["aura_zone_test"] = "Тест зон",
         ["aura_no_modes"] = "Немає режимів",
 
         // AURA SPEEDS

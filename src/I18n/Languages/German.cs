@@ -245,7 +245,6 @@ public static class German
 
         ["other_header"] = "Sonstiges",
         ["boot_sound"] = "Startsound",
-        ["per_key_rgb"] = "Einzeltasten-RGB (statt 4-Zonen)",
         ["window_topmost"] = "Fenster immer im Vordergrund",
         ["bw_tray_icon"] = "S/W-Tray-Symbol",
         ["clamshell_mode"] = "Clamshell-Modus (kein Schlaf bei geschlossenem Deckel)",
@@ -430,6 +429,7 @@ public static class German
         ["aura_gpu_mode"] = "GPU-Modus",
         ["aura_battery"] = "Batterie",
         ["aura_gradient"] = "Verlauf",
+        ["aura_zone_test"] = "Zonentest",
         ["aura_no_modes"] = "Keine Modi",
 
         // AURA SPEEDS

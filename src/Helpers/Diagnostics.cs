@@ -1,4 +1,5 @@
 using System.Text;
+using GHelper.Linux.USB;
 
 namespace GHelper.Linux.Helpers;
 
@@ -118,10 +119,11 @@ public static class Diagnostics
             ("IsAlly", AppConfig.IsAlly()),
             ("NoGpu", AppConfig.NoGpu()),
             ("IsChargeLimit6080", AppConfig.IsChargeLimit6080()),
-            ("IsSingleColor", AppConfig.IsSingleColor()),
+            ("IsWhite", AppConfig.IsWhite()),
             ("NoAura", AppConfig.NoAura()),
-            ("IsAdvancedRGB", AppConfig.IsAdvancedRGB()),
-            ("Is4ZoneRGB", AppConfig.Is4ZoneRGB()),
+            ("IsBacklightZones", AppConfig.IsBacklightZones()),
+            ("IsStrix4ZoneFlipped", AppConfig.IsStrix4ZoneFlipped()),
+            ("IsNoDirectRGB", AppConfig.IsNoDirectRGB()),
             ("IsDynamicLighting", AppConfig.IsDynamicLighting()),
             ("IsIntelHX", AppConfig.IsIntelHX()),
             ("IsCPULight", AppConfig.IsCPULight()),
@@ -129,6 +131,14 @@ public static class Diagnostics
             ("IsFanRequired", AppConfig.IsFanRequired()),
             ("IsSleepBacklight", AppConfig.IsSleepBacklight()),
             ("IsSlash", AppConfig.IsSlash()),
+            // AURA hardware-detected state (populated by Aura.DetectBacklightType
+            // at startup). When IsBacklightDetected is false the device gets
+            // the basic AURA mode set (no model-list fallback).
+            ("Aura.IsBacklightDetected", Aura.IsBacklightDetected),
+            ("Aura.HasLogo", Aura.HasLogo),
+            ("Aura.HasLightbar", Aura.HasLightbar),
+            ("Aura.HasRearglow", Aura.HasRearglow),
+            ("Aura.isWhite", Aura.isWhite),
         };
 
         foreach (var (name, value) in flags)
@@ -136,6 +146,12 @@ public static class Diagnostics
             if (value)
                 sb.AppendLine($"  {name}: true");
         }
+
+        // AURA detection scalar fields (always shown for diagnostics).
+        // FamilyByte / YearByte are not exposed publicly - check the
+        // probe log line ("Aura Probe: Type=... Year=... Family=...")
+        // for those values.
+        sb.AppendLine($"  Aura.BacklightType: {Aura.BacklightType}");
 
         // Show any that are true; if none are true, say so
         if (!flags.Any(f => f.Value))

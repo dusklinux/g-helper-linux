@@ -250,7 +250,6 @@ public static class English
 
         ["other_header"] = "Other",
         ["boot_sound"] = "Boot Sound",
-        ["per_key_rgb"] = "Per-Key RGB (instead of 4-zone)",
         ["window_topmost"] = "Window Always on Top",
         ["bw_tray_icon"] = "B&W Tray Icon",
         ["clamshell_mode"] = "Clamshell Mode (disable sleep on lid close)",
@@ -479,6 +478,7 @@ public static class English
         ["aura_gpu_mode"] = "GPU Mode",
         ["aura_battery"] = "Battery",
         ["aura_gradient"] = "Gradient",
+        ["aura_zone_test"] = "Zone Test",
         ["aura_no_modes"] = "No modes",
 
         // AURA SPEEDS

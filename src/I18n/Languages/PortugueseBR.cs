@@ -245,7 +245,6 @@ public static class PortugueseBR
 
         ["other_header"] = "Outros",
         ["boot_sound"] = "Som de inicialização",
-        ["per_key_rgb"] = "RGB por tecla (em vez de 4 zonas)",
         ["window_topmost"] = "Janela sempre no topo",
         ["bw_tray_icon"] = "Ícone da bandeja em P&B",
         ["clamshell_mode"] = "Modo clamshell (não suspender ao fechar a tampa)",
@@ -430,6 +429,7 @@ public static class PortugueseBR
         ["aura_gpu_mode"] = "Modo GPU",
         ["aura_battery"] = "Bateria",
         ["aura_gradient"] = "Gradiente",
+        ["aura_zone_test"] = "Teste de zonas",
         ["aura_no_modes"] = "Sem modos",
 
         // AURA SPEEDS

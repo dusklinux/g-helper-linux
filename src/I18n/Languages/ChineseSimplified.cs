@@ -248,7 +248,6 @@ public static class ChineseSimplified
 
         ["other_header"] = "其他",
         ["boot_sound"] = "启动声音",
-        ["per_key_rgb"] = "Per-Key RGB（代替4区域）",
         ["window_topmost"] = "窗口始终置顶",
         ["bw_tray_icon"] = "黑白托盘图标",
         ["clamshell_mode"] = "合盖模式（合盖时不休眠）",
@@ -433,6 +432,7 @@ public static class ChineseSimplified
         ["aura_gpu_mode"] = "GPU 模式",
         ["aura_battery"] = "电池",
         ["aura_gradient"] = "渐变",
+        ["aura_zone_test"] = "区域测试",
         ["aura_no_modes"] = "无模式",
 
         // AURA SPEEDS

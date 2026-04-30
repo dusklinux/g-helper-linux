@@ -180,7 +180,6 @@ public partial class ExtraWindow : Window
         // Other
         headerOther.Text = Labels.Get("other_header");
         checkBootSound.Content = Labels.Get("boot_sound");
-        checkPerKeyRGB.Content = Labels.Get("per_key_rgb");
         checkTopmost.Content = Labels.Get("window_topmost");
         checkBWIcon.Content = Labels.Get("bw_tray_icon");
         checkClamshell.Content = Labels.Get("clamshell_mode");
@@ -277,12 +276,29 @@ public partial class ExtraWindow : Window
 
     private void InitKeyboardBacklight()
     {
+        // Settings-form retry: if the AURA probe didn't run / didn't succeed
+        // earlier (e.g. hidraw races at startup, transient permission glitch),
+        // re-run Init() now so power-zone visibility + mode list reflect the
+        // hardware. skip_aura honors a user override for fully RGB-disabled
+        // setups.
+        if (!Aura.IsBacklightDetected
+            && !Helpers.AppConfig.Is("skip_aura")
+            && Aura.IsAvailable())
+        {
+            try
+            { Aura.Init(); }
+            catch (Exception ex) { Helpers.Logger.WriteLine($"ExtraWindow: Aura.Init retry failed: {ex.Message}"); }
+        }
+
         // Brightness (0-3)
         int brightness = App.Wmi?.GetKeyboardBrightness() ?? 3;
         sliderKbdBrightness.Value = brightness;
         labelKbdBrightness.Text = brightness.ToString();
 
-        // Speed combo
+        // Speed combo - populate items, then hide for modes where speed has
+        // no effect (Static / Heatmap / GpuMode / Battery / Gradient / ZoneTest).
+        // Cleaner than always showing a non-functional dropdown; diverges from
+        // Windows g-helper which always shows speed.
         var speeds = Aura.GetSpeeds();
         comboKbdSpeed.Items.Clear();
         int selectedSpeedIdx = 0;
@@ -295,10 +311,7 @@ public partial class ExtraWindow : Window
             idx++;
         }
         comboKbdSpeed.SelectedIndex = selectedSpeedIdx;
-
-        // Power zones
-        bool hasZones = Helpers.AppConfig.IsBacklightZones();
-        bool isLimited = Helpers.AppConfig.IsStrixLimitedRGB() || Helpers.AppConfig.IsARCNM();
+        comboKbdSpeed.IsVisible = Aura.UsesSpeed();
 
         // Keyboard
         checkAwake.IsChecked = Helpers.AppConfig.IsNotFalse("keyboard_awake");
@@ -328,25 +341,17 @@ public partial class ExtraWindow : Window
         checkShutdownLid.IsChecked = Helpers.AppConfig.IsNotFalse("keyboard_shutdown_lid");
         checkBatteryLid.IsChecked = Helpers.AppConfig.IsOnBattery("keyboard_awake_lid");
 
-        // Visibility rules from original
-        if (!hasZones || isLimited)
-        {
-            if (!Helpers.AppConfig.IsStrixLimitedRGB())
-            {
-                rowPowerBar.IsVisible = false;
-                rowPowerKeyboard.FindControl<CheckBox>("checkBattery")!.IsVisible =
-                    Helpers.AppConfig.IsBacklightZones();
-            }
+        // Power-zone row visibility:
+        //   - keyboard battery toggle: visible iff IsBacklightZones() && !IsARCNM()
+        //   - lightbar / logo / lid rows: visible iff probe says zone exists
+        // When BacklightType == Unknown (probe failed / not run) the Has* flags
+        // are all false, so chassis-light rows hide and only keyboard remains.
+        bool hideBattery = !Helpers.AppConfig.IsBacklightZones() || Helpers.AppConfig.IsARCNM();
+        rowPowerKeyboard.FindControl<CheckBox>("checkBattery")!.IsVisible = !hideBattery;
 
-            rowPowerLid.IsVisible = false;
-            rowPowerLogo.IsVisible = false;
-        }
-
-        if (Helpers.AppConfig.IsZ13())
-        {
-            rowPowerBar.IsVisible = false;
-            rowPowerLid.IsVisible = false;
-        }
+        rowPowerBar.IsVisible = Aura.HasLightbar;
+        rowPowerLogo.IsVisible = Aura.HasLogo;
+        rowPowerLid.IsVisible = Aura.HasRearglow;
     }
 
     /// <summary>Update keyboard brightness slider from external change (physical Fn key press).</summary>
@@ -455,8 +460,24 @@ public partial class ExtraWindow : Window
             Helpers.AppConfig.Set("keyboard_awake_logo_bat", (checkBatteryLogo.IsChecked ?? false) ? 1 : 0);
         }
 
-        // Apply via HID
-        Task.Run(() => Aura.ApplyPower());
+        // Apply power message + re-apply current mode.
+        //
+        // The power message [5D BD 01 keyb bar lid rear FF] tells the firmware
+        // which zones stay lit on awake/boot/sleep/shutdown. For firmware modes
+        // (Static, Breathe, ColorCycle, etc.) the keyboard resumes its mode
+        // automatically when a zone is toggled back on - the firmware retains
+        // mode + color state internally.
+        //
+        // For animation / direct-RGB modes (Comet, Gradient, ZoneTest) the
+        // firmware drops the per-key buffer when the keyboard zone goes off,
+        // and toggling it back on leaves the zone dark with no buffer to
+        // render. Re-applying ApplyAura re-sends both the firmware mode (0xB3)
+        // and any direct-RGB packets (0xBC) so these modes restore correctly.
+        Task.Run(() =>
+        {
+            Aura.ApplyPower();
+            Aura.ApplyAura();
+        });
     }
 
     // KEY BINDINGS
@@ -688,10 +709,6 @@ public partial class ExtraWindow : Window
         int bootSound = Helpers.AppConfig.Get("boot_sound", 0);
         checkBootSound.IsChecked = bootSound == 1;
 
-        // Per-key RGB (only visible if 4-zone is possible)
-        checkPerKeyRGB.IsVisible = Helpers.AppConfig.IsPossible4ZoneRGB();
-        checkPerKeyRGB.IsChecked = Helpers.AppConfig.Is("per_key_rgb");
-
         // Window always on top
         checkTopmost.IsChecked = Helpers.AppConfig.Is("topmost");
         if (Helpers.AppConfig.Is("topmost"))
@@ -757,16 +774,6 @@ public partial class ExtraWindow : Window
         }
 
         Helpers.Logger.WriteLine($"Boot sound → {val}");
-    }
-
-    private void CheckPerKeyRGB_Changed(object? sender, RoutedEventArgs e)
-    {
-        if (_suppressEvents)
-            return;
-        Helpers.AppConfig.Set("per_key_rgb", (checkPerKeyRGB.IsChecked ?? false) ? 1 : 0);
-        Helpers.Logger.WriteLine($"Per-key RGB → {checkPerKeyRGB.IsChecked}");
-        // Re-apply aura so the mode change takes effect immediately
-        Task.Run(() => Aura.ApplyAura());
     }
 
     private void CheckTopmost_Changed(object? sender, RoutedEventArgs e)

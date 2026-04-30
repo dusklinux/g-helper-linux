@@ -15,7 +15,7 @@ namespace GHelper.Linux.USB;
 public static class CustomRgb
 {
     // CPU temp thresholds (°C) and corresponding colors.
-    // Mirrors Windows g-helper defaults - blue at idle, red when toasty.
+    // Blue at idle, red when toasty.
     private const int TempFreeze = 20;
     private const int TempCold = 40;
     private const int TempWarm = 65;
@@ -46,7 +46,7 @@ public static class CustomRgb
 
     /// <summary>
     /// Linear interpolation between two colors. <c>t</c> is clamped to [0,1].
-    /// Matches the math in Windows <c>ColorUtils.GetWeightedAverage</c>.
+    /// Matches the math in upstream <c>ColorUtils.GetWeightedAverage</c>.
     /// </summary>
     private static Rgb Lerp(Rgb a, Rgb b, float t)
     {
@@ -63,8 +63,8 @@ public static class CustomRgb
     /// <summary>
     /// Heatmap mode tick: read CPU temp, blend across the four threshold
     /// stops, push to keyboard. <paramref name="init"/> forces an HID
-    /// re-initialization on the first apply after a mode switch (matches
-    /// the Windows pattern - cheap on subsequent ticks).
+    /// re-initialization on the first apply after a mode switch (cheap
+    /// on subsequent ticks).
     /// </summary>
     public static void ApplyHeatmap(bool init = false)
     {
@@ -76,7 +76,7 @@ public static class CustomRgb
         if (cpuTemp < 0)
         {
             // Sensor unavailable - default to "freeze" color rather than
-            // a confusing flash. Matches Windows behavior.
+            // a confusing flash.
             color = ColorFreeze;
         }
         else if (cpuTemp < TempCold)
@@ -105,7 +105,7 @@ public static class CustomRgb
     /// <summary>
     /// Battery mode tick: read battery %, blend red/yellow/lime, push.
     /// On systems without a battery (desktop/null power source) the read
-    /// returns -1 and we paint red - matches Windows.
+    /// returns -1 and we paint red.
     /// </summary>
     public static void ApplyBattery()
     {
@@ -160,7 +160,7 @@ public static class CustomRgb
     /// <c>Color1</c> - the user picked Gradient, so honor at least one
     /// of their colors instead of silently no-op'ing.
     ///
-    /// Zone layout (matches Windows):
+    /// Zone layout (matches upstream):
     /// - keyboard zones 0..3 → Color2 → Color1 weighted by index/3
     /// - lightbar zones, painted in order [7,6,4,5] → Color2 → Color1 weighted by i/3
     ///   (the 7,6,4,5 order is the physical L→R lightbar arrangement)
@@ -205,5 +205,42 @@ public static class CustomRgb
         }
 
         Aura.ApplyDirectZones(zones, true);
+    }
+
+    /// <summary>
+    /// Diagnostic 8-zone rainbow paint: red, orange, yellow, green, cyan, blue,
+    /// magenta, white across the keyboard zones, plus the same colors on the
+    /// lightbar. Used to verify zone wiring after detection (especially the
+    /// G513 flipped-lightbar quirk). Static, no timer.
+    /// </summary>
+    public static void ApplyZoneTest()
+    {
+        // Eight test zones - one per zone index used by ApplyDirectZones.
+        var test = new (byte R, byte G, byte B)[]
+        {
+            (0xFF, 0x00, 0x00), // 0 = red
+            (0xFF, 0x80, 0x00), // 1 = orange
+            (0xFF, 0xFF, 0x00), // 2 = yellow
+            (0x00, 0xFF, 0x00), // 3 = green
+            (0x00, 0xFF, 0xFF), // 4 = cyan
+            (0x00, 0x00, 0xFF), // 5 = blue
+            (0xFF, 0x00, 0xFF), // 6 = magenta
+            (0xFF, 0xFF, 0xFF), // 7 = white
+        };
+
+        byte[] zones = new byte[test.Length * 3];
+        for (int z = 0; z < test.Length; z++)
+        {
+            zones[z * 3] = test[z].R;
+            zones[z * 3 + 1] = test[z].G;
+            zones[z * 3 + 2] = test[z].B;
+        }
+
+        // Paint keyboard zones first, then explicitly target the lightbar.
+        // ApplyDirectZones handles the per-key/4-zone branch + flipped quirk;
+        // ApplyDirectLightbar sends one extra packet so the lightbar isn't
+        // skipped on per-key Strix where ApplyDirectZones bails after keys.
+        Aura.ApplyDirectZones(zones, true);
+        Aura.ApplyDirectLightbar(zones);
     }
 }

@@ -248,7 +248,6 @@ public static class Korean
 
         ["other_header"] = "기타",
         ["boot_sound"] = "부팅 소리",
-        ["per_key_rgb"] = "Per-Key RGB (4구역 대신)",
         ["window_topmost"] = "창 항상 맨 위에 표시",
         ["bw_tray_icon"] = "흑백 트레이 아이콘",
         ["clamshell_mode"] = "클램셸 모드 (덮개 닫아도 절전 안 함)",
@@ -433,6 +432,7 @@ public static class Korean
         ["aura_gpu_mode"] = "GPU 모드",
         ["aura_battery"] = "배터리",
         ["aura_gradient"] = "그라데이션",
+        ["aura_zone_test"] = "구역 테스트",
         ["aura_no_modes"] = "모드 없음",
 
         // AURA SPEEDS

@@ -248,7 +248,6 @@ public static class Arabic
 
         ["other_header"] = "أخرى",
         ["boot_sound"] = "صوت الإقلاع",
-        ["per_key_rgb"] = "RGB لكل مفتاح (بدلاً من 4 مناطق)",
         ["window_topmost"] = "النافذة دائماً في المقدمة",
         ["bw_tray_icon"] = "أيقونة علبة النظام بالأبيض والأسود",
         ["clamshell_mode"] = "وضع الإغلاق (تعطيل السكون عند إغلاق الغطاء)",
@@ -433,6 +432,7 @@ public static class Arabic
         ["aura_gpu_mode"] = "وضع GPU",
         ["aura_battery"] = "البطارية",
         ["aura_gradient"] = "تدرج",
+        ["aura_zone_test"] = "اختبار المناطق",
         ["aura_no_modes"] = "لا توجد أوضاع",
 
         // AURA SPEEDS

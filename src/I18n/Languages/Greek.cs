@@ -248,7 +248,6 @@ public static class Greek
 
         ["other_header"] = "Άλλα",
         ["boot_sound"] = "Ήχος εκκίνησης",
-        ["per_key_rgb"] = "RGB ανά πλήκτρο (αντί 4-ζωνών)",
         ["window_topmost"] = "Παράθυρο πάντα στην κορυφή",
         ["bw_tray_icon"] = "Ασπρόμαυρο εικονίδιο δίσκου",
         ["clamshell_mode"] = "Λειτουργία κλειστού καπακιού (απενεργοποίηση αναστολής κατά το κλείσιμο)",
@@ -433,6 +432,7 @@ public static class Greek
         ["aura_gpu_mode"] = "Λειτουργία GPU",
         ["aura_battery"] = "Μπαταρία",
         ["aura_gradient"] = "Διαβάθμιση",
+        ["aura_zone_test"] = "Δοκιμή ζωνών",
         ["aura_no_modes"] = "Χωρίς λειτουργίες",
 
         // AURA SPEEDS

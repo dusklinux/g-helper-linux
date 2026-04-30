@@ -248,7 +248,6 @@ public static class Macedonian
 
         ["other_header"] = "Друго",
         ["boot_sound"] = "Звук при подигање",
-        ["per_key_rgb"] = "RGB по копче (наместо 4-зони)",
         ["window_topmost"] = "Прозорецот секогаш одгоре",
         ["bw_tray_icon"] = "Црно-бела икона во лента",
         ["clamshell_mode"] = "Режим со затворен капак (оневозможи спиење при затворање)",
@@ -433,6 +432,7 @@ public static class Macedonian
         ["aura_gpu_mode"] = "GPU режим",
         ["aura_battery"] = "Батерија",
         ["aura_gradient"] = "Градиент",
+        ["aura_zone_test"] = "Тест на зоните",
         ["aura_no_modes"] = "Нема режими",
 
         // AURA SPEEDS

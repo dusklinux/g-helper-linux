@@ -248,7 +248,6 @@ public static class Serbian
 
         ["other_header"] = "Остало",
         ["boot_sound"] = "Звук при покретању",
-        ["per_key_rgb"] = "RGB по тастеру (уместо 4 зоне)",
         ["window_topmost"] = "Прозор увек на врху",
         ["bw_tray_icon"] = "Црно-бела икона у траци",
         ["clamshell_mode"] = "Режим шкољке (онемогући спавање при затварању поклопца)",
@@ -433,6 +432,7 @@ public static class Serbian
         ["aura_gpu_mode"] = "GPU режим",
         ["aura_battery"] = "Батерија",
         ["aura_gradient"] = "Градијент",
+        ["aura_zone_test"] = "Тест зона",
         ["aura_no_modes"] = "Нема режима",
 
         // AURA SPEEDS

@@ -248,7 +248,6 @@ public static class Indonesian
 
         ["other_header"] = "Lainnya",
         ["boot_sound"] = "Suara Boot",
-        ["per_key_rgb"] = "Per-Key RGB (sebagai ganti 4 zona)",
         ["window_topmost"] = "Jendela Selalu di Atas",
         ["bw_tray_icon"] = "Ikon Tray Hitam-Putih",
         ["clamshell_mode"] = "Mode Clamshell (nonaktifkan tidur saat penutup ditutup)",
@@ -433,6 +432,7 @@ public static class Indonesian
         ["aura_gpu_mode"] = "Mode GPU",
         ["aura_battery"] = "Baterai",
         ["aura_gradient"] = "Gradien",
+        ["aura_zone_test"] = "Tes Zona",
         ["aura_no_modes"] = "Tidak ada mode",
 
         // AURA SPEEDS

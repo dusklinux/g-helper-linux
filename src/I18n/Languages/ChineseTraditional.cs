@@ -248,7 +248,6 @@ public static class ChineseTraditional
 
         ["other_header"] = "其他",
         ["boot_sound"] = "開機音效",
-        ["per_key_rgb"] = "Per-Key RGB（取代4區域）",
         ["window_topmost"] = "視窗始終置頂",
         ["bw_tray_icon"] = "黑白系統匣圖示",
         ["clamshell_mode"] = "合蓋模式（合蓋時不休眠）",
@@ -433,6 +432,7 @@ public static class ChineseTraditional
         ["aura_gpu_mode"] = "GPU 模式",
         ["aura_battery"] = "電池",
         ["aura_gradient"] = "漸層",
+        ["aura_zone_test"] = "區域測試",
         ["aura_no_modes"] = "無模式",
 
         // AURA SPEEDS

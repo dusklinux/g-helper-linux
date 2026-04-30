@@ -246,10 +246,6 @@
                               Margin="0,4"
                               IsCheckedChanged="CheckBootSound_Changed" />
 
-                    <CheckBox x:Name="checkPerKeyRGB" Content="Per-Key RGB (instead of 4-zone)"
-                              Margin="0,4" IsVisible="False"
-                              IsCheckedChanged="CheckPerKeyRGB_Changed" />
-
                     <CheckBox x:Name="checkTopmost" Content="Window Always on Top"
                               Margin="0,4"
                               IsCheckedChanged="CheckTopmost_Changed" />

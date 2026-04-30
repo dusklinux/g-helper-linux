@@ -245,7 +245,6 @@ public static class Dutch
 
         ["other_header"] = "Overig",
         ["boot_sound"] = "Opstartgeluid",
-        ["per_key_rgb"] = "Per-toets RGB (in plaats van 4 zones)",
         ["window_topmost"] = "Venster altijd bovenaan",
         ["bw_tray_icon"] = "Z/W-systeemvakpictogram",
         ["clamshell_mode"] = "Clamshell-modus (niet in slaapstand bij sluiten deksel)",
@@ -430,6 +429,7 @@ public static class Dutch
         ["aura_gpu_mode"] = "GPU-modus",
         ["aura_battery"] = "Batterij",
         ["aura_gradient"] = "Verloop",
+        ["aura_zone_test"] = "Zonetest",
         ["aura_no_modes"] = "Geen modi",
 
         // AURA SPEEDS

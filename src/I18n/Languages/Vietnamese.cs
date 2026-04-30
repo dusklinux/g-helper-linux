@@ -245,7 +245,6 @@ public static class Vietnamese
 
         ["other_header"] = "Khác",
         ["boot_sound"] = "Âm thanh khởi động",
-        ["per_key_rgb"] = "RGB từng phím (thay vì 4 vùng)",
         ["window_topmost"] = "Cửa sổ luôn ở trên",
         ["bw_tray_icon"] = "Biểu tượng khay đen trắng",
         ["clamshell_mode"] = "Chế độ gập máy (tắt ngủ khi gập nắp)",
@@ -430,6 +429,7 @@ public static class Vietnamese
         ["aura_gpu_mode"] = "Chế độ GPU",
         ["aura_battery"] = "Pin",
         ["aura_gradient"] = "Chuyển sắc",
+        ["aura_zone_test"] = "Kiểm tra vùng",
         ["aura_no_modes"] = "Không có chế độ",
 
         // AURA SPEEDS

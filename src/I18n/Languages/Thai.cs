@@ -248,7 +248,6 @@ public static class Thai
 
         ["other_header"] = "อื่นๆ",
         ["boot_sound"] = "เสียงบูต",
-        ["per_key_rgb"] = "Per-Key RGB (แทน 4 โซน)",
         ["window_topmost"] = "หน้าต่างอยู่บนสุดเสมอ",
         ["bw_tray_icon"] = "ไอคอนถาดขาวดำ",
         ["clamshell_mode"] = "โหมดปิดฝา (ปิดการพักเครื่องเมื่อปิดฝา)",
@@ -433,6 +432,7 @@ public static class Thai
         ["aura_gpu_mode"] = "โหมด GPU",
         ["aura_battery"] = "แบตเตอรี่",
         ["aura_gradient"] = "การไล่ระดับ",
+        ["aura_zone_test"] = "ทดสอบโซน",
         ["aura_no_modes"] = "ไม่มีโหมด",
 
         // AURA SPEEDS

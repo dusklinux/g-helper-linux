@@ -245,7 +245,6 @@ public static class Russian
 
         ["other_header"] = "Прочее",
         ["boot_sound"] = "Звук загрузки",
-        ["per_key_rgb"] = "Поклавишная RGB (вместо 4-зонной)",
         ["window_topmost"] = "Окно всегда поверх",
         ["bw_tray_icon"] = "Чёрно-белая иконка в трее",
         ["clamshell_mode"] = "Режим «раскладушки» (не засыпать при закрытии крышки)",
@@ -430,6 +429,7 @@ public static class Russian
         ["aura_gpu_mode"] = "Режим GPU",
         ["aura_battery"] = "Батарея",
         ["aura_gradient"] = "Градиент",
+        ["aura_zone_test"] = "Тест зон",
         ["aura_no_modes"] = "Нет режимов",
 
         // AURA SPEEDS

@@ -248,7 +248,6 @@ public static class Danish
 
         ["other_header"] = "Andet",
         ["boot_sound"] = "Opstartslyd",
-        ["per_key_rgb"] = "Per-tast RGB (i stedet for 4-zone)",
         ["window_topmost"] = "Vindue altid øverst",
         ["bw_tray_icon"] = "Sort-hvid statusikon",
         ["clamshell_mode"] = "Skaltilstand (deaktiver dvale ved lukning af låg)",
@@ -433,6 +432,7 @@ public static class Danish
         ["aura_gpu_mode"] = "GPU-tilstand",
         ["aura_battery"] = "Batteri",
         ["aura_gradient"] = "Gradient",
+        ["aura_zone_test"] = "Zonetest",
         ["aura_no_modes"] = "Ingen tilstande",
 
         // AURA SPEEDS

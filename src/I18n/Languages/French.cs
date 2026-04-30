@@ -245,7 +245,6 @@ public static class French
 
         ["other_header"] = "Autres",
         ["boot_sound"] = "Son de démarrage",
-        ["per_key_rgb"] = "RGB par touche (au lieu de 4 zones)",
         ["window_topmost"] = "Fenêtre toujours au premier plan",
         ["bw_tray_icon"] = "Icône de barre des tâches N&B",
         ["clamshell_mode"] = "Mode coquille (pas de veille à la fermeture du couvercle)",
@@ -430,6 +429,7 @@ public static class French
         ["aura_gpu_mode"] = "Mode GPU",
         ["aura_battery"] = "Batterie",
         ["aura_gradient"] = "Dégradé",
+        ["aura_zone_test"] = "Test des zones",
         ["aura_no_modes"] = "Aucun mode",
 
         // AURA SPEEDS

@@ -378,23 +378,14 @@ public static class AppConfig
     public static bool IsClampFanDots() => IsNotFalse("fan_clamp");
 
     // RGB / AURA
-    public static bool IsSingleColor() => ContainsModel("GA401") || ContainsModel("FX517Z") || ContainsModel("FX516P") || ContainsModel("X13") || IsARCNM() || ContainsModel("FA617N") || ContainsModel("FA617X") || NoAura() || Is("no_rgb");
+    public static bool IsWhite() => ContainsModel("GA401") || ContainsModel("FX517Z") || ContainsModel("FX516P") || ContainsModel("X13") || IsARCNM() || ContainsModel("FA617N") || ContainsModel("FA617X") || NoAura() || Is("no_rgb");
     public static bool NoAura() => (ContainsModel("GA401I") && !ContainsModel("GA401IHR")) || ContainsModel("GA502IU") || ContainsModel("HN7306") || ContainsModel("M6500X");
-    public static bool IsAdvancedRGB() => IsStrix() || ContainsModel("GX650");
     public static bool IsBacklightZones() => IsStrix() || IsZ13();
-    public static bool IsStrixLimitedRGB() =>
-        ContainsModel("G614PM") || ContainsModel("G614PP") || ContainsModel("G614PR") || ContainsModel("G512LI") ||
-        ContainsModel("G513R") || ContainsModel("G713QM") || ContainsModel("G713PV") || ContainsModel("G513IE") ||
-        ContainsModel("G513IC") || ContainsModel("G713RC") || ContainsModel("G713IC") || ContainsModel("G713PU") ||
-        ContainsModel("G513QE") || ContainsModel("G513QM") || ContainsModel("G513QC") || ContainsModel("G531G") ||
-        ContainsModel("G615JMR") || ContainsModel("G615LM") || ContainsModel("G815LR");
-    public static bool IsPossible4ZoneRGB() =>
-        ContainsModel("G614JI") || ContainsModel("G614JV") || ContainsModel("G614JZ") ||
-        ContainsModel("G614JU") || IsStrixLimitedRGB();
-    public static bool Is4ZoneRGB() => IsPossible4ZoneRGB() && !Is("per_key_rgb");
+    /// <summary>True for chassis whose lightbar is wired L→R instead of R→L
+    /// (G513 family). Selects the alternate 4-zone packet map in Aura.cs.</summary>
+    public static bool IsStrix4ZoneFlipped() => ContainsModel("G513");
     public static bool IsNoDirectRGB() =>
-        ContainsModel("GA503") || ContainsModel("G533Q") || ContainsModel("GU502") ||
-        ContainsModel("GU603") || IsSlash() || IsAlly();
+        ContainsModel("GA503") || ContainsModel("G533Q") || ContainsModel("GU502");
     public static bool IsSlash() => ContainsModel("GA403") || ContainsModel("GU605") || ContainsModel("GA605") || ContainsModel("GU405") || ContainsModel("GU606") || ContainsModel("GX651");
     public static bool IsSlashAura() => ContainsModel("GA605") || ContainsModel("GU605C") || ContainsModel("GA403W") || ContainsModel("GA403UM") || ContainsModel("GA403UP") || ContainsModel("GA403UH") || ContainsModel("GU405") || ContainsModel("GU606");
     public static bool IsAnimeMatrix() => ContainsModel("GA401") || ContainsModel("GA402") || ContainsModel("GU604V") || ContainsModel("G835") || ContainsModel("G815") || ContainsModel("G635") || ContainsModel("G615");
@@ -405,7 +396,6 @@ public static class AppConfig
     public static bool IsDynamicLightingInit() => ContainsModel("FA608") || Is("lighting_init");
 
     // Keyboard / input
-    public static bool IsInputBacklight() => ContainsModel("GA503") || IsSlash() || IsVivoZenPro();
     public static bool IsStrixNumpad() => ContainsModel("G713R");
     public static bool NoMKeys() => (ContainsModel("Z13") && !IsARCNM()) || ContainsModel("FX706") || ContainsModel("FA706") || ContainsModel("FA506") || ContainsModel("FX506") || ContainsModel("Duo") || ContainsModel("FX505");
     public static bool IsM4Button() => IsDUO() || ContainsModel("GZ302EA");
@@ -440,7 +430,6 @@ public static class AppConfig
     // Form factor / misc
     public static bool HasTabletMode() => ContainsModel("X16") || ContainsModel("X13") || ContainsModel("Z13");
     public static bool IsSleepBacklight() => ContainsModel("FA617") || ContainsModel("FX507") || ContainsModel("FA507");
-    public static bool IsNoSleepEvent() => ContainsModel("FX505");
     public static bool NoWMI() => ContainsModel("GL704G") || ContainsModel("GM501G") || ContainsModel("GX501G");
 
     // UI / config-only

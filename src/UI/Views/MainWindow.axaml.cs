@@ -213,7 +213,7 @@ public partial class MainWindow : Window
             else
                 gpuFanStr = "0RPM";
 
-            // Match Windows layout: "CPU: 32°C Fan: 0RPM" on the right
+            // Right-aligned compact format: "CPU: 32°C Fan: 0RPM"
             labelCPUFan.Text = Labels.Format("cpu_fan_info", cpuTempStr, cpuFanStr);
 
             // GPU fan info - compact for right-aligned display
@@ -277,7 +277,7 @@ public partial class MainWindow : Window
             _ => Labels.Get("mode_unknown")
         };
 
-        // Combined header: "Mode: Balanced" (matches Windows layout)
+        // Combined header: "Mode: Balanced".
         labelPerf.Text = Labels.Format("mode_prefix", modeName);
         labelPerfMode.Text = modeName;
         UpdatePerfButtons();
@@ -412,7 +412,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Lock GPU mode buttons during a switch operation (like Windows G-Helper's LockGPUModes).
+    /// Lock GPU mode buttons during a switch operation (like upstream's LockGPUModes).
     /// Writing dgpu_disable can block in the kernel for 30-60 seconds while the GPU powers down.
     /// </summary>
     private void LockGpuButtons(string statusText)
@@ -858,7 +858,7 @@ public partial class MainWindow : Window
         // Send AURA HID init handshake (wake up the LED controller).
         // This is critical for I2C-HID keyboards (e.g., FA608PP) that need
         // the handshake before they respond to any RGB commands.
-        // On Windows, G-Helper's Aura.Init() does this in InputDispatcher.AutoKeyboard().
+        // Upstream G-Helper's Aura.Init() does this in InputDispatcher.AutoKeyboard().
         Aura.Init();
 
         // Load saved values into static fields BEFORE applying to hardware
@@ -937,10 +937,18 @@ public partial class MainWindow : Window
             Color.FromRgb(Aura.ColorR, Aura.ColorG, Aura.ColorB));
         buttonColor2.Background = new SolidColorBrush(
             Color.FromRgb(Aura.Color2R, Aura.Color2G, Aura.Color2B));
-        buttonColor2.IsVisible = Aura.HasSecondColor();
 
-        // Hide color buttons for modes that don't use color
-        buttonColor1.IsVisible = Aura.UsesColor();
+        // White-only keyboards (probe FEAT2_ONE_ZONE_RED_EFFECT or
+        // AppConfig.IsWhite model list) ignore G/B channels - hide color
+        // pickers entirely so the user can't pick blue and get white instead.
+        buttonColor1.IsVisible = !Aura.isWhite && Aura.UsesColor();
+        buttonColor2.IsVisible = !Aura.isWhite && Aura.HasSecondColor();
+
+        // Speed dropdown - hide for modes where it has no effect (Static / the
+        // software-driven modes Heatmap/GpuMode/Battery / static paints
+        // Gradient/ZoneTest). Cleaner than always showing a non-functional
+        // dropdown; diverges from upstream which always shows speed.
+        comboAuraSpeed.IsVisible = Aura.UsesSpeed();
     }
 
     /// <summary>Rebuild Aura mode/speed combo items with current language strings.</summary>
@@ -1094,12 +1102,12 @@ public partial class MainWindow : Window
             sliderBattery.Value = limit;
             _updatingBatterySlider = false;
             labelBatteryLimit.Text = $"{limit}%";
-            // Combined header: "Battery Charge Limit: 80%" (matches Windows)
+            // Combined header: "Battery Charge Limit: 80%".
             labelBattery.Text = Labels.Format("battery_limit_prefix", limit);
         }
 
         // Show discharge/charge rate in battery section header (right side)
-        // and charge percentage in footer (like Windows "Charge: 71.5%")
+        // and charge percentage in footer ("Charge: 71.5%").
         var power = App.Power;
         if (power != null)
         {
@@ -1218,7 +1226,7 @@ public partial class MainWindow : Window
 
         string model = sys.GetModelName() ?? Labels.Get("unknown_asus");
 
-        // Show model in window title (like Windows G-Helper)
+        // Show model in window title (like upstream)
         Title = Labels.Format("title_prefix", model);
 
         // Version + model in footer
@@ -1296,9 +1304,9 @@ public partial class MainWindow : Window
     ///   ON  (blue accent)     - software remapper running with media keys
     ///                          mode active.
     /// State is held by FnLockRemapper.IsActive (not persisted, off by default
-    /// each session). Mirrors Windows g-helper button behavior. Delegates to
-    /// <see cref="App.SetFnLockEnabled"/> so the tray menu and any other UI
-    /// surface go through the same authoritative path.
+    /// each session). Delegates to <see cref="App.SetFnLockEnabled"/> so the
+    /// tray menu and any other UI surface go through the same authoritative
+    /// path.
     /// </summary>
     private void ButtonFnLock_Click(object? sender, RoutedEventArgs e)
     {

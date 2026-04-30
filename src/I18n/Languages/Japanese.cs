@@ -248,7 +248,6 @@ public static class Japanese
 
         ["other_header"] = "その他",
         ["boot_sound"] = "起動音",
-        ["per_key_rgb"] = "Per-Key RGB（4ゾーンの代わり）",
         ["window_topmost"] = "ウィンドウを常に最前面に表示",
         ["bw_tray_icon"] = "白黒トレイアイコン",
         ["clamshell_mode"] = "クラムシェルモード（蓋を閉じてもスリープしない）",
@@ -433,6 +432,7 @@ public static class Japanese
         ["aura_gpu_mode"] = "GPU モード",
         ["aura_battery"] = "バッテリー",
         ["aura_gradient"] = "グラデーション",
+        ["aura_zone_test"] = "ゾーンテスト",
         ["aura_no_modes"] = "モードなし",
 
         // AURA SPEEDS

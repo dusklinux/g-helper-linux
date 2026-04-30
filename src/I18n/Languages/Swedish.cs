@@ -248,7 +248,6 @@ public static class Swedish
 
         ["other_header"] = "Övrigt",
         ["boot_sound"] = "Uppstartsljud",
-        ["per_key_rgb"] = "Per-tangent RGB (istället för 4-zon)",
         ["window_topmost"] = "Fönster alltid överst",
         ["bw_tray_icon"] = "Svartvit systemfältsikon",
         ["clamshell_mode"] = "Clamshell-läge (inaktivera viloläge vid stängning av lock)",
@@ -433,6 +432,7 @@ public static class Swedish
         ["aura_gpu_mode"] = "GPU-läge",
         ["aura_battery"] = "Batteri",
         ["aura_gradient"] = "Gradient",
+        ["aura_zone_test"] = "Zontest",
         ["aura_no_modes"] = "Inga lägen",
 
         // AURA SPEEDS

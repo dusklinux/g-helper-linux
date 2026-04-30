@@ -245,7 +245,6 @@ public static class Czech
 
         ["other_header"] = "Ostatní",
         ["boot_sound"] = "Zvuk při spuštění",
-        ["per_key_rgb"] = "RGB per klávesa (místo 4-zónového)",
         ["window_topmost"] = "Okno vždy nahoře",
         ["bw_tray_icon"] = "Černobílá ikona v panelu",
         ["clamshell_mode"] = "Režim zavřeného víka (zakázat spánek při zavření)",
@@ -430,6 +429,7 @@ public static class Czech
         ["aura_gpu_mode"] = "Režim GPU",
         ["aura_battery"] = "Baterie",
         ["aura_gradient"] = "Gradient",
+        ["aura_zone_test"] = "Test zón",
         ["aura_no_modes"] = "Žádné režimy",
 
         // AURA SPEEDS

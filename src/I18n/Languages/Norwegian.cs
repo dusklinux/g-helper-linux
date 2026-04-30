@@ -248,7 +248,6 @@ public static class Norwegian
 
         ["other_header"] = "Annet",
         ["boot_sound"] = "Oppstartslyd",
-        ["per_key_rgb"] = "Per-tast RGB (i stedet for 4-sone)",
         ["window_topmost"] = "Vindu alltid øverst",
         ["bw_tray_icon"] = "Svart-hvitt systemstatusikon",
         ["clamshell_mode"] = "Skallmodus (deaktiver hvilemodus ved lukking av lokk)",
@@ -433,6 +432,7 @@ public static class Norwegian
         ["aura_gpu_mode"] = "GPU-modus",
         ["aura_battery"] = "Batteri",
         ["aura_gradient"] = "Gradient",
+        ["aura_zone_test"] = "Sonetest",
         ["aura_no_modes"] = "Ingen moduser",
 
         // AURA SPEEDS

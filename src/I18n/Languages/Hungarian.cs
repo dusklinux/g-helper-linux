@@ -245,7 +245,6 @@ public static class Hungarian
 
         ["other_header"] = "Egyéb",
         ["boot_sound"] = "Indítási hang",
-        ["per_key_rgb"] = "Billentyűnkénti RGB (4 zóna helyett)",
         ["window_topmost"] = "Ablak mindig felül",
         ["bw_tray_icon"] = "Fekete-fehér tálca ikon",
         ["clamshell_mode"] = "Zárt fedél mód (alvás letiltása fedél bezárásakor)",
@@ -430,6 +429,7 @@ public static class Hungarian
         ["aura_gpu_mode"] = "GPU mód",
         ["aura_battery"] = "Akkumulátor",
         ["aura_gradient"] = "Színátmenet",
+        ["aura_zone_test"] = "Zónateszt",
         ["aura_no_modes"] = "Nincs mód",
 
         // AURA SPEEDS

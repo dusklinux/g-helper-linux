@@ -245,7 +245,6 @@ public static class Turkish
 
         ["other_header"] = "Diğer",
         ["boot_sound"] = "Açılış Sesi",
-        ["per_key_rgb"] = "Tuş Başına RGB (4 bölge yerine)",
         ["window_topmost"] = "Pencere Her Zaman Üstte",
         ["bw_tray_icon"] = "Siyah-Beyaz Tepsi Simgesi",
         ["clamshell_mode"] = "Kapaklı Mod (kapak kapatıldığında uykuyu devre dışı bırak)",
@@ -430,6 +429,7 @@ public static class Turkish
         ["aura_gpu_mode"] = "GPU Modu",
         ["aura_battery"] = "Pil",
         ["aura_gradient"] = "Gradyan",
+        ["aura_zone_test"] = "Bölge testi",
         ["aura_no_modes"] = "Mod yok",
 
         // AURA SPEEDS
