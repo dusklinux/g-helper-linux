@@ -127,6 +127,23 @@
                         <CheckBox Grid.Column="4" x:Name="checkShutdownLid" HorizontalAlignment="Center" IsCheckedChanged="CheckPower_Changed" />
                         <CheckBox Grid.Column="5" x:Name="checkBatteryLid" HorizontalAlignment="Center" IsCheckedChanged="CheckPower_Changed" />
                     </Grid>
+
+                    <!-- Rear Light (Z13 only) - independent rear-glow zone with own mode + color -->
+                    <StackPanel x:Name="panelRearLight" IsVisible="False" Margin="0,12,0,0">
+                        <TextBlock x:Name="labelRearLight" Text="Rear Light"
+                                   Classes="label-dim" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <Grid ColumnDefinitions="80,*,40" Margin="0,4">
+                            <TextBlock Grid.Column="0" x:Name="labelRearMode" Text="Mode"
+                                       Classes="label-dim" FontSize="11" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1" x:Name="comboRearLight"
+                                      HorizontalAlignment="Stretch"
+                                      SelectionChanged="ComboRearLight_Changed" />
+                            <Border Grid.Column="2" x:Name="swatchRearColor"
+                                    Width="32" Height="24" Margin="4,0,0,0"
+                                    Background="White" BorderBrush="#666" BorderThickness="1"
+                                    Cursor="Hand" PointerPressed="SwatchRearColor_PointerPressed" />
+                        </Grid>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -245,10 +262,6 @@
                     <CheckBox x:Name="checkBootSound" Content="Boot Sound"
                               Margin="0,4"
                               IsCheckedChanged="CheckBootSound_Changed" />
-
-                    <CheckBox x:Name="checkPerKeyRGB" Content="Per-Key RGB (instead of 4-zone)"
-                              Margin="0,4" IsVisible="False"
-                              IsCheckedChanged="CheckPerKeyRGB_Changed" />
 
                     <CheckBox x:Name="checkTopmost" Content="Window Always on Top"
                               Margin="0,4"
@@ -382,6 +395,42 @@
                                   Width="220" Height="28"
                                   SelectionChanged="ComboKeyBinding_Changed" />
                     </Grid>
+
+                    <!-- Function Key Remap (software fn-lock) -->
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock x:Name="labelFnLockTeaser" Classes="label-dim"
+                                       Text="Function Key Remap" />
+                            <TextBlock x:Name="labelFnLockTeaserSub" Classes="label-dim"
+                                       Text="Remap F1-F12 to media keys"
+                                       FontSize="10" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <Button Grid.Column="1" x:Name="buttonFnLockDetails" Classes="ghelper"
+                                Height="28" VerticalAlignment="Center"
+                                Click="ButtonFnLockDetails_Click">
+                            <TextBlock x:Name="labelFnLockDetails" Text="Details..." FontSize="11" />
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ROG ALLY: APU UMA buffer (visible on Ally only when the
+                 asus-armoury kernel attribute is present) -->
+            <Border x:Name="panelApuMem" Classes="panel" IsVisible="False">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock x:Name="labelApuMemHeader" Classes="header" Text="APU Memory" />
+                    </Border>
+                    <Grid ColumnDefinitions="160,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelApuMemValue" Text="UMA Buffer Size"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboApuMem"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ComboApuMem_Changed" />
+                    </Grid>
+                    <TextBlock x:Name="labelApuMemReboot" Classes="label-dim" FontSize="10"
+                               Text="Requires reboot to apply"
+                               Margin="0,4,0,0" />
                 </StackPanel>
             </Border>
 
@@ -392,29 +441,27 @@
                         <TextBlock x:Name="headerPowerMgmt" Classes="header" Text="Power Management" />
                     </Border>
 
-                    <!-- Platform Profile -->
+                    <!-- Per-mode platform profile pickers.
+                         Items populated at runtime from /sys/firmware/acpi/platform_profile_choices.
+                         Each combo controls the platform_profile written when that ghelper
+                         performance mode is active. -->
                     <Grid ColumnDefinitions="120,*" Margin="0,4">
-                        <TextBlock Grid.Column="0" x:Name="labelPlatformProfileLabel" Text="Platform Profile"
+                        <TextBlock Grid.Column="0" x:Name="labelProfileSilent" Text="Silent profile"
                                    Classes="label-dim" VerticalAlignment="Center" />
-                        <ComboBox Grid.Column="1" x:Name="comboPlatformProfile"
-                                  Width="200" SelectionChanged="ComboPlatformProfile_Changed">
-                            <ComboBoxItem Content="low-power" />
-                            <ComboBoxItem Content="balanced" />
-                            <ComboBoxItem Content="performance" />
-                        </ComboBox>
+                        <ComboBox Grid.Column="1" x:Name="comboProfileSilent"
+                                  Width="200" SelectionChanged="ComboProfileSilent_Changed" />
                     </Grid>
-
-                    <!-- ASPM Policy -->
                     <Grid ColumnDefinitions="120,*" Margin="0,4">
-                        <TextBlock Grid.Column="0" x:Name="labelAspmLabel" Text="PCIe ASPM"
+                        <TextBlock Grid.Column="0" x:Name="labelProfileBalanced" Text="Balanced profile"
                                    Classes="label-dim" VerticalAlignment="Center" />
-                        <ComboBox Grid.Column="1" x:Name="comboAspm"
-                                  Width="200" SelectionChanged="ComboAspm_Changed">
-                            <ComboBoxItem Content="default" />
-                            <ComboBoxItem Content="performance" />
-                            <ComboBoxItem Content="powersave" />
-                            <ComboBoxItem Content="powersupersave" />
-                        </ComboBox>
+                        <ComboBox Grid.Column="1" x:Name="comboProfileBalanced"
+                                  Width="200" SelectionChanged="ComboProfileBalanced_Changed" />
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelProfileTurbo" Text="Turbo profile"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboProfileTurbo"
+                                  Width="200" SelectionChanged="ComboProfileTurbo_Changed" />
                     </Grid>
 
                     <!-- Battery Health -->

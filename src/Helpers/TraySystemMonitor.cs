@@ -228,6 +228,18 @@ public static class TraySystemMonitor
             // Swallow - we'd rather show stale data than crash the timer.
         }
 
+        // AMD iGPU fallback: ASUS WMI Temp_GPU (0x00120097) only reports the
+        // discrete GPU. On AMD-iGPU-only hardware (ROG Ally, GZ302E, GA403,
+        // all-AMD Z13) it returns -1 / 0 and the GPU surface stays empty.
+        // Fall back to amdgpu sysfs (read once, ~60 µs) so users on those
+        // machines get a populated GPU readout in the tray.
+        if (gpuTemp <= 0 && Gpu.LinuxAmdGpuMetrics.IsAvailable)
+        {
+            int? igpu = Gpu.LinuxAmdGpuMetrics.GetIgpuTempCelsius();
+            if (igpu != null)
+                gpuTemp = igpu.Value;
+        }
+
         // Surface 1: tooltip on main icon.
         PushTooltip(BuildTooltipBody(cpuTemp, gpuTemp));
 

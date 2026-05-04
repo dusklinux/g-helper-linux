@@ -19,6 +19,10 @@ public interface IPowerManager
     /// <summary>Get current platform profile.</summary>
     string GetPlatformProfile();
 
+    /// <summary>Get list of platform profile values the kernel/firmware accepts.
+    /// Empty array = sysfs not exposed at all.</summary>
+    string[] GetPlatformProfileChoices();
+
     /// <summary>Set PCIe ASPM policy. "default", "performance", "powersave", "powersupersave"</summary>
     void SetAspmPolicy(string policy);
 

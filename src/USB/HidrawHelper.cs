@@ -379,16 +379,24 @@ public static class HidrawHelper
     /// Query AURA device capabilities via SetFeature(0x05) + GetFeature(0x5D).
     /// Returns raw 64-byte response, or null on failure.
     /// Protocol (from Armoury Crate decompilation of AacNBDTHal):
-    ///   1. SetFeature [0x5D, 0x05, 0x20, 0x31, 0x00, 0x1A] - query command
+    ///   1. SetFeature [0x5D, 0x05, 0x20, 0x31, 0x00, queryLastByte] - query command
     ///   2. GetFeature [0x5D, ...] - read back capability response
     /// Response bytes of interest:
     ///   [9]  = KBBackLightType (0=single, 1=minimal, 2=multi-zone, 3=per-key, 4=four-zone)
-    ///   [10] = Keyboard version (> 0x22 enables extended fields [17]-[23])
-    ///   [13] = Zone bitfield (bit0=Logo, bit1=Lightbar, bit4=VCut, bit5=Aero, bit6=Bump, bit7=Rearglow)
-    ///   [17] = Model series (1=Strix, 2=Flow, 4=Zephyrus, 8=TUF, 0x10=SE, 0x20=Desktop)
+    ///   [10] = Keyboard year (>= 0x23 enables extended fields [17])
+    ///   [13] = Feat1 bitfield (bit0=Logo, bit1=Lightbar, bit4=VCut, bit5=Aero, bit6=Bump, bit7=Rearglow)
+    ///   [14] = Feat2 bitfield (bit2=DefaultColor, bit3=RGBWheel, bit4=OneZoneRedEffect, bit6=PerKeyMap)
+    ///   [17] = Model series/family (1=Strix, 2=Flow, 4=Zephyrus, 8=TUF, 0x10=NR2301/SE, 0x20=Desktop)
     ///   [18]-[23] = LED counts per zone (Lightbar, Logo, Aero, VCut, Rearglow, Bump)
+    /// <para>
+    /// <paramref name="queryLastByte"/> is the 6th query byte. Upstream G-Helper
+    /// uses 0x20; the Armoury Crate decompilation referenced 0x1A.
+    /// Both have been observed to return identical capability responses on Strix
+    /// hardware, but firmware variants may prefer one - <see cref="USB.Aura"/>'s
+    /// detector tries 0x20 first then falls back to 0x1A.
+    /// </para>
     /// </summary>
-    public static byte[]? QueryAuraCapabilities()
+    public static byte[]? QueryAuraCapabilities(byte queryLastByte = 0x20)
     {
         var path = GetAuraDevicePaths().FirstOrDefault();
         if (path == null)
@@ -414,11 +422,11 @@ public static class HidrawHelper
             query[2] = 0x20;
             query[3] = 0x31;
             query[4] = 0x00;
-            query[5] = 0x1A;
+            query[5] = queryLastByte;
             int ret = ioctl(fd, HIDIOCSFEATURE(64), query);
             if (ret < 0)
             {
-                Helpers.Logger.WriteLine($"AURA GetFeature: SetFeature(0x05) failed on {path}: errno={Marshal.GetLastPInvokeError()}");
+                Helpers.Logger.WriteLine($"AURA GetFeature: SetFeature(0x05,..,0x{queryLastByte:X2}) failed on {path}: errno={Marshal.GetLastPInvokeError()}");
                 return null;
             }
 
@@ -435,7 +443,7 @@ public static class HidrawHelper
                 return null;
             }
 
-            Helpers.Logger.WriteLine($"AURA GetFeature OK on {path}: {BitConverter.ToString(response, 0, Math.Min(ret, 32))}");
+            Helpers.Logger.WriteLine($"AURA GetFeature OK on {path} (q=0x{queryLastByte:X2}): {BitConverter.ToString(response, 0, Math.Min(ret, 32))}");
             return response;
         }
         catch (Exception ex)

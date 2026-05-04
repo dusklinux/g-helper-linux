@@ -7,6 +7,7 @@ using Avalonia.Platform;
 using GHelper.Linux.Gpu;
 using GHelper.Linux.Helpers;
 using GHelper.Linux.I18n;
+using GHelper.Linux.Input;
 using GHelper.Linux.Mode;
 using GHelper.Linux.Platform;
 using GHelper.Linux.Platform.Linux;
@@ -33,8 +34,26 @@ public class App : Application
     // Business logic orchestrator
     public static ModeControl? Mode { get; private set; }
 
+    // ROG Ally controller helper (HID bindings + auto-mode timer + TDP).
+    // Initialised on every model - internally short-circuits when
+    // AppConfig.IsAlly() is false, so it's safe to query unconditionally.
+    public static Ally.AllyControl? Ally { get; private set; }
+
     public static MainWindow? MainWindowInstance { get; set; }
     public static TrayIcon? TrayIconInstance { get; set; }
+
+    /// <summary>
+    /// Software fn-lock remapper. Singleton instance, lifetime bound to the app.
+    /// Null until <see cref="StartFnLock"/> is called for the first time.
+    /// </summary>
+    public static FnLockRemapper? FnLock { get; private set; }
+
+    /// <summary>
+    /// Tray menu item for the fn-lock toggle. Held so external state changes
+    /// (hotkey, MainWindow click) can refresh its header text + checkmark.
+    /// Always present in the tray menu once <see cref="BuildTrayMenu"/> runs.
+    /// </summary>
+    private static NativeMenuItem? _trayFnLockItem;
 
     /// <summary>
     /// Set to true when the app is on a shutdown path (tray Quit, MainWindow
@@ -86,36 +105,45 @@ public class App : Application
     /// </summary>
     public static readonly Dictionary<string, string> AvailableKeyActions = new()
     {
-        { "none",            "None" },
-        { "ghelper",         "Toggle G-Helper" },
-        { "performance",     "Cycle Performance Mode" },
-        { "aura",            "Cycle Aura Mode" },
-        { "brightness_up",   "Keyboard Brightness Up" },
-        { "brightness_down", "Keyboard Brightness Down" },
-        { "micmute",         "Toggle Microphone Mute" },
-        { "mute",            "Toggle Speaker Mute" },
-        { "gpu_eco",         "Toggle GPU Eco Mode" },
-        { "screen_refresh",  "Cycle Screen Refresh Rate" },
-        { "overdrive",       "Toggle Panel Overdrive" },
-        { "miniled",         "Toggle MiniLED" },
-        { "camera",          "Toggle Camera" },
-        { "touchpad",        "Toggle Touchpad" },
+        { "none",              "None" },
+        { "ghelper",           "Toggle G-Helper" },
+        { "performance",       "Cycle Performance Mode" },
+        { "aura",              "Cycle Aura Mode" },
+        { "brightness_up",     "Keyboard Brightness Up" },
+        { "brightness_down",   "Keyboard Brightness Down" },
+        { "micmute",           "Toggle Microphone Mute" },
+        { "mute",              "Toggle Speaker Mute" },
+        { "screen_refresh",    "Cycle Screen Refresh Rate" },
+        { "overdrive",         "Toggle Panel Overdrive" },
+        { "miniled",           "Toggle MiniLED" },
+        { "camera",            "Toggle Camera" },
+        { "touchpad",          "Toggle Touchpad" },
+        // ROG Ally controller-mode toggle. Bind this to the M1/M2 buttons on
+        // the Ally chassis. Evdev codes for those buttons vary by kernel /
+        // BIOS revision and aren't standard XInput - Ally users will need to
+        // discover them with `evtest` and map via the existing key-binding UI.
+        { "ally_toggle_mode",  "Ally: Toggle Controller Mode" },
     };
 
     /// <summary>Default actions for each configurable key (matches Windows G-Helper).</summary>
     private static readonly Dictionary<string, string> DefaultKeyActions = new()
     {
-        { "m4",   "ghelper" },     // ROG/M5 key → toggle window
-        { "fnf4", "aura" },        // Fn+F4 → cycle aura mode
-        { "fnf5", "performance" }, // Fn+F5 / M4 → cycle performance mode
+        { "m4",     "ghelper" },          // ROG/M5 key (laptop) / ROG button (Ally) → toggle window
+        { "fnf4",   "aura" },             // Fn+F4 → cycle aura mode (laptop only)
+        { "fnf5",   "performance" },      // Fn+F5 / M4 → cycle performance mode (laptop only)
+        // Ally hardware buttons (ExtraWindow remaps fnf4↔paddle, fnf5↔cc on Ally).
+        { "paddle", "ghelper" },          // Ally X back paddles → toggle window
+        { "cc",     "ally_toggle_mode" }, // Ally Cmd Center → cycle controller mode
     };
 
     /// <summary>Human-readable names for configurable keys (for UI labels).</summary>
     public static readonly Dictionary<string, string> ConfigurableKeyNames = new()
     {
-        { "m4",   "ROG / M5 Key" },
-        { "fnf4", "Fn+F4 (Aura)" },
-        { "fnf5", "Fn+F5 / M4 (Performance)" },
+        { "m4",     "ROG / M5 Key" },
+        { "fnf4",   "Fn+F4 (Aura)" },
+        { "fnf5",   "Fn+F5 / M4 (Performance)" },
+        { "paddle", "Ally Back Paddles" },
+        { "cc",     "Ally Cmd Center" },
     };
 
     public static string GetKeyActionDisplayName(string actionId)
@@ -130,12 +158,12 @@ public class App : Application
             "brightness_down" => Labels.Get("action_brightness_down"),
             "micmute" => Labels.Get("action_micmute"),
             "mute" => Labels.Get("action_mute"),
-            "gpu_eco" => Labels.Get("action_gpu_eco"),
             "screen_refresh" => Labels.Get("action_screen_refresh"),
             "overdrive" => Labels.Get("action_overdrive"),
             "miniled" => Labels.Get("action_miniled"),
             "camera" => Labels.Get("action_camera"),
             "touchpad" => Labels.Get("action_touchpad"),
+            "ally_toggle_mode" => Labels.Get("action_ally_toggle_mode"),
             _ => actionId
         };
     }
@@ -147,6 +175,8 @@ public class App : Application
             "m4" => Labels.Get("key_m4"),
             "fnf4" => Labels.Get("key_fnf4"),
             "fnf5" => Labels.Get("key_fnf5"),
+            "paddle" => Labels.Get("ally_extra_btn_paddle"),
+            "cc" => Labels.Get("ally_extra_btn_cc"),
             _ => bindingName
         };
     }
@@ -352,6 +382,12 @@ public class App : Application
         if (Wmi != null && Power != null)
             GpuModeCtrl = new GpuModeController(Wmi, Power);
 
+        // Create Ally controller helper. Constructor sets up the 300ms auto-
+        // mode timer when on RC71L/RC72L; on every other model the .ctor is
+        // a no-op so this is cheap and safe to call unconditionally.
+        Ally = new Ally.AllyControl();
+        Ally.Init();
+
         // Initialize GPU control (nvidia-smi / amdgpu sysfs for temp/load)
         InitializeGpuControl();
 
@@ -443,8 +479,32 @@ public class App : Application
         Input.StartListening();
     }
 
+    /// <summary>
+    /// Marshal an action to the UI thread and invoke it on the running App
+    /// instance. Shared dispatch helper for the FnLockRemapper bridge entry
+    /// points; the remapper fires from a background thread and event
+    /// handlers may touch UI state.
+    /// </summary>
+    private static void PostToApp(Action<App> action) =>
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (Current is App app)
+                action(app);
+        });
+
     /// <summary>Handle non-configurable hotkey events (brightness, etc.).</summary>
-    private void OnHotkeyPressed(int eventCode)
+    private void OnHotkeyPressed(int eventCode) => DispatchHotkey(eventCode);
+
+    /// <summary>
+    /// Re-entry point for the FnLockRemapper bridge. When fn-lock has
+    /// exclusively grabbed the device that would normally deliver brightness
+    /// hotkeys to LinuxAsusWmi, the remapper recognises the scancode and
+    /// calls this so the same action fires.
+    /// </summary>
+    public static void RaiseHotkeyFromFnLock(int eventCode) =>
+        PostToApp(app => app.DispatchHotkey(eventCode));
+
+    private void DispatchHotkey(int eventCode)
     {
         Logger.WriteLine($"Hotkey event: {eventCode}");
 
@@ -464,7 +524,26 @@ public class App : Application
     /// Handle configurable key binding events.
     /// Reads the assigned action from config, falls back to default.
     /// </summary>
-    private void OnKeyBindingPressed(string bindingName)
+    private void OnKeyBindingPressed(string bindingName) => DispatchKeyBinding(bindingName);
+
+    /// <summary>
+    /// Re-entry point for the FnLockRemapper bridge. Same purpose as
+    /// <see cref="RaiseHotkeyFromFnLock"/> but for the configurable
+    /// m4/fnf4/fnf5 bindings.
+    /// </summary>
+    public static void RaiseKeyBindingFromFnLock(string bindingName) =>
+        PostToApp(app => app.DispatchKeyBinding(bindingName));
+
+    /// <summary>
+    /// Re-entry point for the FnLockRemapper when an F-key is mapped to an
+    /// action target (e.g. F4 → "aura"). Bypasses the binding-name lookup
+    /// (m4/fnf4/fnf5) and dispatches the action directly via
+    /// <see cref="ExecuteKeyAction"/>.
+    /// </summary>
+    public static void RaiseActionFromFnLock(string action) =>
+        PostToApp(app => app.ExecuteKeyAction(action));
+
+    private void DispatchKeyBinding(string bindingName)
     {
         // Read configured action, fall back to default
         string? action = AppConfig.GetString(bindingName);
@@ -542,13 +621,6 @@ public class App : Application
                     spkMuted ? "audio-volume-muted" : "audio-volume-high");
                 break;
 
-            case "gpu_eco":
-                // Toggle between Eco and Standard via GpuModeController
-                var currentMode = GpuModeCtrl?.GetCurrentMode() ?? GpuMode.Standard;
-                var toggleTarget = (currentMode == GpuMode.Eco) ? GpuMode.Standard : GpuMode.Eco;
-                TrayGpuModeSwitch(toggleTarget);
-                break;
-
             case "screen_refresh":
                 CycleScreenRefreshRate();
                 break;
@@ -576,6 +648,12 @@ public class App : Application
                 System?.ShowNotification(Labels.Get("camera"),
                     !camOn ? Labels.Get("enabled") : Labels.Get("disabled"),
                     !camOn ? "camera-on" : "camera-off");
+                break;
+
+            case "ally_toggle_mode":
+                Ally?.ToggleModeHotkey();
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    MainWindowInstance?.RefreshAllyPanel());
                 break;
 
             case "touchpad":
@@ -859,6 +937,21 @@ public class App : Application
         settings.Click += (_, _) => ToggleMainWindow();
         menu.Add(settings);
 
+        // ROG Ally - surface the controller-mode toggle directly in the tray
+        // menu so handheld users don't have to open the main window for it.
+        // Only visible on RC71L/RC72L.
+        if (AppConfig.IsAlly())
+        {
+            var allyToggle = new NativeMenuItem(Labels.Get("action_ally_toggle_mode"));
+            allyToggle.Click += (_, _) =>
+            {
+                Ally?.ToggleModeHotkey();
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    MainWindowInstance?.RefreshAllyPanel());
+            };
+            menu.Add(allyToggle);
+        }
+
         menu.Add(new NativeMenuItemSeparator());
 
         string BuildBwIconHeader() =>
@@ -872,6 +965,25 @@ public class App : Application
             UpdateTrayIcon();
         };
         menu.Add(bwIcon);
+
+        // FN-Lock toggle. Always present in the menu; click routes through
+        // the authoritative App.SetFnLockEnabled which handles enable/disable
+        // + remapper start/stop + UI refresh in one place. Header carries a
+        // checkmark when fn-lock is currently active.
+        string BuildFnLockHeader() =>
+            ((FnLock?.IsActive ?? false) && (FnLock?.FnLockOn ?? false) ? "✓ " : "   ")
+            + Labels.Get("fnlock_tray_label");
+        var fnItem = new NativeMenuItem(BuildFnLockHeader());
+        _trayFnLockItem = fnItem;
+        fnItem.Click += (_, _) =>
+        {
+            // Click flips the master enable+state via the same path as the
+            // MainWindow button. The header is updated by RefreshTrayFnLockHeader
+            // on the resulting state change.
+            bool nowOn = (FnLock?.IsActive ?? false) && (FnLock?.FnLockOn ?? false);
+            SetFnLockEnabled(!nowOn);
+        };
+        menu.Add(fnItem);
 
         menu.Add(new NativeMenuItemSeparator());
 
@@ -1107,6 +1219,9 @@ public class App : Application
         { UI.Views.ExtraWindow.StopClamshellInhibit(); }
         catch { }
         try
+        { FnLock?.Stop(); }
+        catch { }
+        try
         { Input?.Dispose(); }
         catch { }
         try
@@ -1131,10 +1246,134 @@ public class App : Application
         // Cleanup
         Power?.StopPowerMonitoring();
         UI.Views.ExtraWindow.StopClamshellInhibit();
+        FnLock?.Stop();
         Input?.Dispose();
         Wmi?.Dispose();
 
         desktop.Shutdown();
+    }
+
+    /// <summary>
+    /// Starts or stops the remapper and refreshes MainWindow button + tray menu header.
+    /// State is held entirely in <see cref="FnLock"/>.IsActive - there is no
+    /// persisted enable flag, matching Windows g-helper's "off by default"
+    /// </summary>
+    public static void SetFnLockEnabled(bool enabled)
+    {
+        if (enabled)
+            StartFnLock();
+        else
+            StopFnLock();
+        RefreshTrayFnLockHeader();
+    }
+
+    /// <summary>
+    /// Re-render the tray menu's fn-lock header (checkmark + label) so it
+    /// stays in sync with the current state. Safe to call from any thread;
+    /// marshals to UI thread internally. No-op if the menu has not been built.
+    /// </summary>
+    public static void RefreshTrayFnLockHeader()
+    {
+        var item = _trayFnLockItem;
+        if (item == null)
+            return;
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            item.Header = ((FnLock?.IsActive ?? false) && (FnLock?.FnLockOn ?? false) ? "✓ " : "   ")
+                          + Labels.Get("fnlock_tray_label");
+        });
+    }
+
+    /// <summary>
+    /// Start the software fn-lock remapper. Reads saved hotkey from config
+    /// and wires OSD/tray refresh callbacks. Idempotent; returns early if
+    /// already running.
+    /// </summary>
+    public static void StartFnLock()
+    {
+        if (FnLock != null && FnLock.IsActive)
+            return;
+
+        if (FnLock == null)
+        {
+            FnLock = new FnLockRemapper();
+            FnLock.FnLockChanged += isOn =>
+            {
+                string title = Labels.Get("fnlock_tray_label");
+                string body = isOn ? Labels.Get("fnlock_osd_on") : Labels.Get("fnlock_osd_off");
+                System?.ShowNotification(title, body, "preferences-desktop-keyboard");
+            };
+            // Update the MainWindow quick-toggle button + tray menu header on
+            // every state change (covers hotkey toggles + external triggers).
+            FnLock.FnLockChanged += _ =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    MainWindowInstance?.RefreshFnLockButton());
+            FnLock.FnLockChanged += _ => RefreshTrayFnLockHeader();
+        }
+
+        // Pre-flight capability check FIRST so a failure path doesn't fire
+        // FnLockChanged (which would briefly show "FN-Lock: ON" toast + blue
+        // button before being undone by the failure path below).
+        var (avail, reason) = FnLockRemapper.CheckCapability();
+        if (!avail)
+        {
+            Helpers.Logger.WriteLine($"FnLockRemapper: capability check failed - {reason}");
+            System?.ShowNotification(
+                Labels.Get("fnlock_tray_label"),
+                reason,
+                "dialog-warning");
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                MainWindowInstance?.RefreshFnLockButton());
+            RefreshTrayFnLockHeader();
+            return;
+        }
+
+        // User clicked to turn fn-lock ON, so start in media-keys mode. The
+        // remapper boolean defaults to false at construction; we set it
+        // explicitly here so the OSD/tray reflect ON immediately on first start.
+        FnLock.FnLockOn = true;
+        FnLock.SetToggleHotkey(
+            (ushort)AppConfig.Get("fnlock_modifier", EvdevInterop.KEY_LEFTMETA),
+            (ushort)AppConfig.Get("fnlock_key", EvdevInterop.KEY_F2));
+
+        // Catch post-capability-check failures (UI_DEV_CREATE rejected, no
+        // devices grabbed, pipe() failed). Without this guard the UI would
+        // visually claim "ON" while no remapping actually happens.
+        if (!FnLock.Start())
+        {
+            Helpers.Logger.WriteLine("FnLockRemapper: Start failed - check log for details");
+            // Reset the in-memory flag so RefreshFnLockButton renders OFF.
+            FnLock.FnLockOn = false;
+            System?.ShowNotification(
+                Labels.Get("fnlock_tray_label"),
+                Labels.Get("fnlock_unavail_start_failed"),
+                "dialog-warning");
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                MainWindowInstance?.RefreshFnLockButton());
+            RefreshTrayFnLockHeader();
+            return;
+        }
+
+        // Make sure the main-window button + tray menu header show up immediately.
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            MainWindowInstance?.RefreshFnLockButton());
+        RefreshTrayFnLockHeader();
+    }
+
+    /// <summary>Stop and release the fn-lock remapper. Idempotent.</summary>
+    public static void StopFnLock()
+    {
+        FnLock?.Stop();
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            MainWindowInstance?.RefreshFnLockButton());
+        RefreshTrayFnLockHeader();
+    }
+
+    /// <summary>Stop and re-Start to pick up keymap or hotkey changes.</summary>
+    public static void RestartFnLock()
+    {
+        StopFnLock();
+        StartFnLock();
     }
 
     /// <summary>

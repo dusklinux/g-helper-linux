@@ -108,37 +108,18 @@ public class LinuxPowerManager : IPowerManager
         // Available profiles vary by firmware - read platform_profile_choices first
         if (SysfsHelper.Exists(SysfsHelper.PlatformProfile))
         {
-            string? choices = SysfsHelper.ReadAttribute(SysfsHelper.PlatformProfileChoices);
-            if (choices != null)
+            var available = GetPlatformProfileChoices();
+
+            if (available.Length > 0 && !available.Contains(profile))
             {
-                // choices is space-separated, e.g. "low-power balanced performance"
-                var available = choices.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-                if (!available.Contains(profile))
+                string? fallback = TryResolveSupportedProfile(profile, available);
+                if (fallback == null)
                 {
-                    // Try mapping to closest available:
-                    // "low-power" → "quiet" → "balanced"
-                    // "performance" → "balanced"
-                    string? fallback = profile switch
-                    {
-                        "low-power" when available.Contains("quiet") => "quiet",
-                        "low-power" when available.Contains("balanced") => "balanced",
-                        "performance" when available.Contains("balanced") => "balanced",
-                        "quiet" when available.Contains("low-power") => "low-power",
-                        _ => null
-                    };
-
-                    if (fallback != null)
-                    {
-                        Helpers.Logger.WriteLine($"Platform profile '{profile}' not available, using '{fallback}' (choices: {choices})");
-                        profile = fallback;
-                    }
-                    else
-                    {
-                        Helpers.Logger.WriteLine($"Platform profile '{profile}' not supported (choices: {choices}), skipping");
-                        return;
-                    }
+                    Helpers.Logger.WriteLine($"Platform profile '{profile}' not supported (choices: {string.Join(' ', available)}), skipping");
+                    return;
                 }
+                Helpers.Logger.WriteLine($"Platform profile '{profile}' not available, using '{fallback}' (choices: {string.Join(' ', available)})");
+                profile = fallback;
             }
 
             SysfsHelper.WriteAttribute(SysfsHelper.PlatformProfile, profile);
@@ -149,12 +130,54 @@ public class LinuxPowerManager : IPowerManager
         SysfsHelper.RunCommand("powerprofilesctl", $"set {profile}");
     }
 
+    /// <summary>
+    /// Map a canonical platform_profile name (e.g. "low-power", "balanced",
+    /// "performance") to one supported by the running kernel/firmware.
+    /// Returns:
+    ///   - <paramref name="canonical"/> if it's already in <paramref name="available"/>
+    ///   - a known synonym (e.g. "low-power" → "quiet") if one is available
+    ///   - <paramref name="canonical"/> when <paramref name="available"/> is empty (no choices file)
+    ///   - null when no equivalent exists in <paramref name="available"/>
+    /// Single source of truth for the synonym map; consumed by
+    /// <see cref="SetPlatformProfile"/> and by the Extra window's per-mode
+    /// profile dropdowns when a saved value isn't in the current kernel choices.
+    /// </summary>
+    public static string? TryResolveSupportedProfile(string canonical, string[] available)
+    {
+        if (available.Length == 0)
+            return canonical;
+        if (available.Contains(canonical))
+            return canonical;
+        return canonical switch
+        {
+            "low-power" when available.Contains("quiet") => "quiet",
+            "low-power" when available.Contains("balanced") => "balanced",
+            "quiet" when available.Contains("low-power") => "low-power",
+            "balanced" when available.Contains("balanced-performance") => "balanced-performance",
+            "balanced-performance" when available.Contains("balanced") => "balanced",
+            "performance" when available.Contains("balanced") => "balanced",
+            _ => null,
+        };
+    }
+
     public string GetPlatformProfile()
     {
         if (SysfsHelper.Exists(SysfsHelper.PlatformProfile))
             return SysfsHelper.ReadAttribute(SysfsHelper.PlatformProfile) ?? "balanced";
 
         return SysfsHelper.RunCommand("powerprofilesctl", "get") ?? "balanced";
+    }
+
+    public string[] GetPlatformProfileChoices()
+    {
+        if (!SysfsHelper.Exists(SysfsHelper.PlatformProfileChoices))
+            return Array.Empty<string>();
+
+        string? raw = SysfsHelper.ReadAttribute(SysfsHelper.PlatformProfileChoices);
+        if (string.IsNullOrWhiteSpace(raw))
+            return Array.Empty<string>();
+
+        return raw.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 
     private bool _aspmWritable = true; // Assume writable until proven otherwise

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using GHelper.Linux.I18n;
@@ -180,10 +181,19 @@ public partial class ExtraWindow : Window
         // Other
         headerOther.Text = Labels.Get("other_header");
         checkBootSound.Content = Labels.Get("boot_sound");
-        checkPerKeyRGB.Content = Labels.Get("per_key_rgb");
         checkTopmost.Content = Labels.Get("window_topmost");
         checkBWIcon.Content = Labels.Get("bw_tray_icon");
         checkClamshell.Content = Labels.Get("clamshell_mode");
+        // Ally has no lid - clamshell-mode toggle is meaningless on a handheld.
+        checkClamshell.IsVisible = !Helpers.AppConfig.IsAlly();
+
+        // ROG Ally: APU UMA buffer combo. Read possible_values from the
+        // kernel; show the panel only when the attribute is exposed (newer
+        // asus-armoury on AMD APU systems).
+        labelApuMemHeader.Text = Labels.Get("ally_apu_mem_header");
+        labelApuMemValue.Text = Labels.Get("ally_apu_mem_label");
+        labelApuMemReboot.Text = Labels.Get("ally_apu_mem_reboot_required");
+        InitApuMem();
         checkSilentStart.Content = Labels.Get("start_minimized");
         checkDisableOsd.Content = Labels.Get("disable_osd_label");
         checkCamera.Content = Labels.Get("camera");
@@ -209,13 +219,19 @@ public partial class ExtraWindow : Window
 
         // Power Management
         headerPowerMgmt.Text = Labels.Get("power_mgmt_header");
-        labelPlatformProfileLabel.Text = Labels.Get("platform_profile");
-        labelAspmLabel.Text = Labels.Get("pcie_aspm");
+        labelProfileSilent.Text = Labels.Get("profile_silent_label");
+        labelProfileBalanced.Text = Labels.Get("profile_balanced_label");
+        labelProfileTurbo.Text = Labels.Get("profile_turbo_label");
         labelBatteryDetails.Text = Labels.Get("details");
 
         // System Info
         headerSystemInfo.Text = Labels.Get("system_info_header");
         labelSystemInfoMore.Text = Labels.Get("details");
+
+        // Function Key Remap (Details button under Key Bindings)
+        labelFnLockTeaser.Text = Labels.Get("fnlock_header");
+        labelFnLockTeaserSub.Text = Labels.Get("fnlock_teaser_sub");
+        labelFnLockDetails.Text = Labels.Get("details");
 
         // Advanced
         headerAdvanced.Text = Labels.Get("advanced_header");
@@ -271,12 +287,29 @@ public partial class ExtraWindow : Window
 
     private void InitKeyboardBacklight()
     {
+        // Settings-form retry: if the AURA probe didn't run / didn't succeed
+        // earlier (e.g. hidraw races at startup, transient permission glitch),
+        // re-run Init() now so power-zone visibility + mode list reflect the
+        // hardware. skip_aura honors a user override for fully RGB-disabled
+        // setups.
+        if (!Aura.IsBacklightDetected
+            && !Helpers.AppConfig.Is("skip_aura")
+            && Aura.IsAvailable())
+        {
+            try
+            { Aura.Init(); }
+            catch (Exception ex) { Helpers.Logger.WriteLine($"ExtraWindow: Aura.Init retry failed: {ex.Message}"); }
+        }
+
         // Brightness (0-3)
         int brightness = App.Wmi?.GetKeyboardBrightness() ?? 3;
         sliderKbdBrightness.Value = brightness;
         labelKbdBrightness.Text = brightness.ToString();
 
-        // Speed combo
+        // Speed combo - populate items, then hide for modes where speed has
+        // no effect (Static / Heatmap / GpuMode / Battery / Gradient / ZoneTest).
+        // Cleaner than always showing a non-functional dropdown; diverges from
+        // Windows g-helper which always shows speed.
         var speeds = Aura.GetSpeeds();
         comboKbdSpeed.Items.Clear();
         int selectedSpeedIdx = 0;
@@ -289,10 +322,7 @@ public partial class ExtraWindow : Window
             idx++;
         }
         comboKbdSpeed.SelectedIndex = selectedSpeedIdx;
-
-        // Power zones
-        bool hasZones = Helpers.AppConfig.IsBacklightZones();
-        bool isLimited = Helpers.AppConfig.IsStrixLimitedRGB() || Helpers.AppConfig.IsARCNM();
+        comboKbdSpeed.IsVisible = Aura.UsesSpeed();
 
         // Keyboard
         checkAwake.IsChecked = Helpers.AppConfig.IsNotFalse("keyboard_awake");
@@ -322,25 +352,86 @@ public partial class ExtraWindow : Window
         checkShutdownLid.IsChecked = Helpers.AppConfig.IsNotFalse("keyboard_shutdown_lid");
         checkBatteryLid.IsChecked = Helpers.AppConfig.IsOnBattery("keyboard_awake_lid");
 
-        // Visibility rules from original
-        if (!hasZones || isLimited)
-        {
-            if (!Helpers.AppConfig.IsStrixLimitedRGB())
-            {
-                rowPowerBar.IsVisible = false;
-                rowPowerKeyboard.FindControl<CheckBox>("checkBattery")!.IsVisible =
-                    Helpers.AppConfig.IsBacklightZones();
-            }
+        // Power-zone row visibility:
+        //   - keyboard battery toggle: visible iff IsBacklightZones() && !IsARCNM()
+        //   - lightbar / logo / lid rows: visible iff probe says zone exists
+        // When BacklightType == Unknown (probe failed / not run) the Has* flags
+        // are all false, so chassis-light rows hide and only keyboard remains.
+        bool hideBattery = !Helpers.AppConfig.IsBacklightZones() || Helpers.AppConfig.IsARCNM();
+        rowPowerKeyboard.FindControl<CheckBox>("checkBattery")!.IsVisible = !hideBattery;
 
-            rowPowerLid.IsVisible = false;
-            rowPowerLogo.IsVisible = false;
+        rowPowerBar.IsVisible = Aura.HasLightbar;
+        rowPowerLogo.IsVisible = Aura.HasLogo;
+        rowPowerLid.IsVisible = Aura.HasRearglow;
+
+        // Z13 rear-glow zone (independent device, PID 0x18C6) - own mode + color.
+        InitRearLight();
+    }
+
+    /// <summary>
+    /// Populate the rear-light combo + swatch from AppConfig and show the panel
+    /// on Z13. Hidden on all other models (HasRearLight returns false).
+    /// </summary>
+    private void InitRearLight()
+    {
+        if (!Helpers.AppConfig.HasRearLight())
+        {
+            panelRearLight.IsVisible = false;
+            return;
         }
 
-        if (Helpers.AppConfig.IsZ13())
+        Aura.RearMode = (AuraMode)Helpers.AppConfig.Get("rear_mode");
+        Aura.SetRearColor(Helpers.AppConfig.Get("rear_color", unchecked((int)0xFFFFFFFF)));
+
+        var modes = Aura.GetRearModes();
+        comboRearLight.Items.Clear();
+        int selectedIdx = 0;
+        int idx = 0;
+        foreach (var kv in modes)
         {
-            rowPowerBar.IsVisible = false;
-            rowPowerLid.IsVisible = false;
+            comboRearLight.Items.Add(new ComboBoxItem { Content = kv.Value, Tag = (int)kv.Key });
+            if (kv.Key == Aura.RearMode)
+                selectedIdx = idx;
+            idx++;
         }
+        comboRearLight.SelectedIndex = selectedIdx;
+
+        UpdateRearSwatch();
+        labelRearLight.Text = Labels.Get("rear_light");
+        labelRearMode.Text = Labels.Get("rear_mode");
+        panelRearLight.IsVisible = true;
+    }
+
+    private void UpdateRearSwatch()
+    {
+        swatchRearColor.Background = new Avalonia.Media.SolidColorBrush(
+            Avalonia.Media.Color.FromRgb(Aura.RearR, Aura.RearG, Aura.RearB));
+    }
+
+    private void ComboRearLight_Changed(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        if (comboRearLight.SelectedItem is ComboBoxItem item && item.Tag is int modeVal)
+        {
+            Helpers.AppConfig.Set("rear_mode", modeVal);
+            Aura.RearMode = (AuraMode)modeVal;
+            // ApplyAura() invokes ApplyRearLight() at the end; saves a separate write.
+            Task.Run(() => Aura.ApplyAura());
+        }
+    }
+
+    private void SwatchRearColor_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        Helpers.ColorPicker.Show(this, Aura.RearR, Aura.RearG, Aura.RearB, (r, g, b) =>
+        {
+            Aura.RearR = r;
+            Aura.RearG = g;
+            Aura.RearB = b;
+            Helpers.AppConfig.Set("rear_color", Aura.GetRearColorArgb());
+            UpdateRearSwatch();
+            Task.Run(() => Aura.ApplyAura());
+        });
     }
 
     /// <summary>Update keyboard brightness slider from external change (physical Fn key press).</summary>
@@ -449,8 +540,24 @@ public partial class ExtraWindow : Window
             Helpers.AppConfig.Set("keyboard_awake_logo_bat", (checkBatteryLogo.IsChecked ?? false) ? 1 : 0);
         }
 
-        // Apply via HID
-        Task.Run(() => Aura.ApplyPower());
+        // Apply power message + re-apply current mode.
+        //
+        // The power message [5D BD 01 keyb bar lid rear FF] tells the firmware
+        // which zones stay lit on awake/boot/sleep/shutdown. For firmware modes
+        // (Static, Breathe, ColorCycle, etc.) the keyboard resumes its mode
+        // automatically when a zone is toggled back on - the firmware retains
+        // mode + color state internally.
+        //
+        // For animation / direct-RGB modes (Comet, Gradient, ZoneTest) the
+        // firmware drops the per-key buffer when the keyboard zone goes off,
+        // and toggling it back on leaves the zone dark with no buffer to
+        // render. Re-applying ApplyAura re-sends both the firmware mode (0xB3)
+        // and any direct-RGB packets (0xBC) so these modes restore correctly.
+        Task.Run(() =>
+        {
+            Aura.ApplyPower();
+            Aura.ApplyAura();
+        });
     }
 
     // KEY BINDINGS
@@ -460,9 +567,17 @@ public partial class ExtraWindow : Window
 
     private void InitKeyBindings()
     {
+        bool isAlly = Helpers.AppConfig.IsAlly();
         _keyBindingCombos[comboKeyM4] = "m4";
-        _keyBindingCombos[comboKeyFnF4] = "fnf4";
-        _keyBindingCombos[comboKeyFnF5] = "fnf5";
+        _keyBindingCombos[comboKeyFnF4] = isAlly ? "paddle" : "fnf4";
+        _keyBindingCombos[comboKeyFnF5] = isAlly ? "cc" : "fnf5";
+
+        if (isAlly)
+        {
+            labelKeyM4.Text = Labels.Get("ally_extra_btn_rog");
+            labelKeyFnF4.Text = Labels.Get("ally_extra_btn_paddle");
+            labelKeyFnF5.Text = Labels.Get("ally_extra_btn_cc");
+        }
 
         foreach (var (combo, bindingName) in _keyBindingCombos)
         {
@@ -682,10 +797,6 @@ public partial class ExtraWindow : Window
         int bootSound = Helpers.AppConfig.Get("boot_sound", 0);
         checkBootSound.IsChecked = bootSound == 1;
 
-        // Per-key RGB (only visible if 4-zone is possible)
-        checkPerKeyRGB.IsVisible = Helpers.AppConfig.IsPossible4ZoneRGB();
-        checkPerKeyRGB.IsChecked = Helpers.AppConfig.Is("per_key_rgb");
-
         // Window always on top
         checkTopmost.IsChecked = Helpers.AppConfig.Is("topmost");
         if (Helpers.AppConfig.Is("topmost"))
@@ -751,16 +862,6 @@ public partial class ExtraWindow : Window
         }
 
         Helpers.Logger.WriteLine($"Boot sound → {val}");
-    }
-
-    private void CheckPerKeyRGB_Changed(object? sender, RoutedEventArgs e)
-    {
-        if (_suppressEvents)
-            return;
-        Helpers.AppConfig.Set("per_key_rgb", (checkPerKeyRGB.IsChecked ?? false) ? 1 : 0);
-        Helpers.Logger.WriteLine($"Per-key RGB → {checkPerKeyRGB.IsChecked}");
-        // Re-apply aura so the mode change takes effect immediately
-        Task.Run(() => Aura.ApplyAura());
     }
 
     private void CheckTopmost_Changed(object? sender, RoutedEventArgs e)
@@ -1128,6 +1229,93 @@ public partial class ExtraWindow : Window
     }
 
     // POWER MANAGEMENT
+    //
+    // Three platform_profile dropdowns, one per ghelper performance mode (Silent /
+    // Balanced / Turbo). All combos are populated at runtime from
+    // /sys/firmware/acpi/platform_profile_choices so users only see kernel-supported
+    // values. Selections are persisted per-mode in AppConfig as platform_profile_<N>
+    // (where N = base mode index: 0=Balanced, 1=Turbo, 2=Silent).
+    //
+    // ModeControl.SetPerformanceMode reads the per-mode override on every mode switch
+    // (via AppConfig.GetModeString("platform_profile") which resolves to platform_profile_<currentMode>).
+    // If unset, ModeControl uses canonical defaults: Silent→low-power, Balanced→balanced,
+    // Turbo→performance. SetPlatformProfile then maps to firmware-supported names via
+    // its synonym table (e.g. low-power→quiet on legacy firmware).
+    //
+    // Changing a dropdown for the currently-active mode applies immediately. Changing
+    // dropdowns for inactive modes only persists - the value lands when the user
+    // switches into that mode.
+
+    private bool _powerInitialized;
+
+    /// <summary>Returns the canonical mode-derived platform_profile default for a
+    /// given base mode (matches ModeControl fallback). Used when no per-mode override
+    /// is saved yet, so dropdowns show the value the system would actually apply.</summary>
+    private static string CanonicalProfileForMode(int baseMode) => baseMode switch
+    {
+        0 => "balanced",
+        1 => "performance",
+        2 => "low-power",
+        _ => "balanced"
+    };
+
+    private void InitPowerCombos()
+    {
+        var power = App.Power;
+        if (power == null)
+            return;
+
+        var choices = power.GetPlatformProfileChoices();
+        var combos = new[] { comboProfileSilent, comboProfileBalanced, comboProfileTurbo };
+
+        foreach (var combo in combos)
+        {
+            combo.Items.Clear();
+            if (choices.Length == 0)
+            {
+                combo.IsEnabled = false;
+                combo.PlaceholderText = Labels.Get("platform_profile_unavailable");
+            }
+            else
+            {
+                combo.IsEnabled = true;
+                foreach (var choice in choices)
+                    combo.Items.Add(new ComboBoxItem { Content = choice });
+            }
+        }
+
+        _powerInitialized = true;
+    }
+
+    /// <summary>Selects the dropdown item with content matching value. No-op if
+    /// nothing matches (combo retains current selection or empty state).</summary>
+    private static void SelectComboValue(ComboBox combo, string value)
+    {
+        for (int i = 0; i < combo.Items.Count; i++)
+        {
+            if (combo.Items[i] is ComboBoxItem item &&
+                item.Content?.ToString() == value)
+            {
+                combo.SelectedIndex = i;
+                return;
+            }
+        }
+    }
+
+    /// <summary>Reads the saved per-mode profile (or canonical default if unset)
+    /// and selects the corresponding combo item. baseMode: 0=Balanced, 1=Turbo, 2=Silent.
+    /// If the saved value isn't a kernel-exposed choice (firmware change, stale config),
+    /// resolves through <see cref="LinuxPowerManager.TryResolveSupportedProfile"/> so
+    /// the dropdown shows the value that would actually land on sysfs; if no synonym
+    /// exists, falls back to the first available kernel choice.</summary>
+    private void RefreshProfileCombo(ComboBox combo, int baseMode, string[] choices)
+    {
+        string? saved = Helpers.AppConfig.GetString($"platform_profile_{baseMode}");
+        string desired = saved ?? CanonicalProfileForMode(baseMode);
+        desired = LinuxPowerManager.TryResolveSupportedProfile(desired, choices)
+                  ?? (choices.Length > 0 ? choices[0] : desired);
+        SelectComboValue(combo, desired);
+    }
 
     private void RefreshPower()
     {
@@ -1135,28 +1323,15 @@ public partial class ExtraWindow : Window
         if (power == null)
             return;
 
-        // Platform profile
-        string profile = power.GetPlatformProfile();
-        for (int i = 0; i < comboPlatformProfile.Items.Count; i++)
-        {
-            if (comboPlatformProfile.Items[i] is ComboBoxItem item &&
-                item.Content?.ToString() == profile)
-            {
-                comboPlatformProfile.SelectedIndex = i;
-                break;
-            }
-        }
+        if (!_powerInitialized)
+            InitPowerCombos();
 
-        // ASPM
-        string aspm = power.GetAspmPolicy();
-        for (int i = 0; i < comboAspm.Items.Count; i++)
+        var choices = power.GetPlatformProfileChoices();
+        if (choices.Length > 0)
         {
-            if (comboAspm.Items[i] is ComboBoxItem item &&
-                item.Content?.ToString() == aspm)
-            {
-                comboAspm.SelectedIndex = i;
-                break;
-            }
+            RefreshProfileCombo(comboProfileSilent, 2, choices);
+            RefreshProfileCombo(comboProfileBalanced, 0, choices);
+            RefreshProfileCombo(comboProfileTurbo, 1, choices);
         }
 
         // Battery health
@@ -1175,28 +1350,31 @@ public partial class ExtraWindow : Window
             labelPowerDraw.Text = Labels.Get("power_draw_unknown");
     }
 
-    private void ComboPlatformProfile_Changed(object? sender, SelectionChangedEventArgs e)
+    /// <summary>Common handler body for all three per-mode profile combos. Persists
+    /// the user's choice to AppConfig only. The selection lands on sysfs the next
+    /// time the user activates that mode via MainWindow buttons - this UI is
+    /// configuration-only, never the trigger for an active mode change. Avoids
+    /// the derived-policy trap on asus-armoury kernels where writing
+    /// platform_profile silently flips throttle_thermal_policy.</summary>
+    private void OnProfileComboChanged(int baseMode, ComboBox combo)
     {
         if (_suppressEvents)
             return;
-        if (comboPlatformProfile.SelectedItem is ComboBoxItem item && item.Content is string profile)
-        {
-            App.Power?.SetPlatformProfile(profile);
-            Helpers.Logger.WriteLine($"Platform profile → {profile}");
-            App.MainWindowInstance?.RefreshPerformanceMode();
-        }
+        if (combo.SelectedItem is not ComboBoxItem item || item.Content is not string profile)
+            return;
+
+        Helpers.AppConfig.Set($"platform_profile_{baseMode}", profile);
+        Helpers.Logger.WriteLine($"Platform profile (mode {baseMode}) saved → {profile}");
     }
 
-    private void ComboAspm_Changed(object? sender, SelectionChangedEventArgs e)
-    {
-        if (_suppressEvents)
-            return;
-        if (comboAspm.SelectedItem is ComboBoxItem item && item.Content is string policy)
-        {
-            App.Power?.SetAspmPolicy(policy);
-            Helpers.Logger.WriteLine($"ASPM policy → {policy}");
-        }
-    }
+    private void ComboProfileSilent_Changed(object? sender, SelectionChangedEventArgs e)
+        => OnProfileComboChanged(2, comboProfileSilent);
+
+    private void ComboProfileBalanced_Changed(object? sender, SelectionChangedEventArgs e)
+        => OnProfileComboChanged(0, comboProfileBalanced);
+
+    private void ComboProfileTurbo_Changed(object? sender, SelectionChangedEventArgs e)
+        => OnProfileComboChanged(1, comboProfileTurbo);
 
     private BatteryInfoWindow? _batteryInfoWindow;
     private SystemInfoWindow? _systemInfoWindow;
@@ -1391,5 +1569,95 @@ public partial class ExtraWindow : Window
         {
             Helpers.Logger.WriteLine("Failed to open config dir", ex);
         }
+    }
+
+
+    // FUNCTION KEY REMAP details button
+
+    private FnLockWindow? _fnLockWindow;
+
+    private void ButtonFnLockDetails_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_fnLockWindow == null || !_fnLockWindow.IsVisible)
+        {
+            _fnLockWindow = new FnLockWindow();
+            if (Helpers.AppConfig.Is("topmost"))
+                _fnLockWindow.Topmost = true;
+            Helpers.WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_fnLockWindow);
+            _fnLockWindow.Show();
+        }
+        else
+        {
+            _fnLockWindow.Activate();
+        }
+    }
+
+    private bool _suppressApuMem;
+
+    /// <summary>
+    /// Populate the APU memory combo from the kernel's possible_values list.
+    /// Hides the entire panel when the attribute isn't exposed (non-Ally,
+    /// or older kernels missing apu_mem support).
+    /// </summary>
+    private void InitApuMem()
+    {
+        var values = Platform.Linux.SysfsHelper.ReadPossibleValues(
+            Platform.Linux.AsusAttributes.ApuMem);
+
+        if (!Helpers.AppConfig.IsAlly() || values == null)
+        {
+            panelApuMem.IsVisible = false;
+            return;
+        }
+
+        panelApuMem.IsVisible = true;
+        comboApuMem.Items.Clear();
+
+        // Some kernels expose values like "0 1 2 3 ..." (enum index) and
+        // others like "256 512 1024 ..." (MB). Display whatever the kernel
+        // gave us - the user picks one and we write it back as-is.
+        foreach (var v in values)
+            comboApuMem.Items.Add(new ComboBoxItem { Content = v, Tag = v });
+
+        // Reflect the current value.
+        var path = Platform.Linux.SysfsHelper.ResolveAttrPath(
+            Platform.Linux.AsusAttributes.ApuMem);
+        if (path != null)
+        {
+            var current = Platform.Linux.SysfsHelper.ReadAttribute(path)?.Trim();
+            if (current != null)
+            {
+                _suppressApuMem = true;
+                try
+                {
+                    foreach (ComboBoxItem item in comboApuMem.Items.Cast<ComboBoxItem>())
+                    {
+                        if ((item.Tag as string) == current)
+                        {
+                            comboApuMem.SelectedItem = item;
+                            break;
+                        }
+                    }
+                }
+                finally { _suppressApuMem = false; }
+            }
+        }
+    }
+
+    private void ComboApuMem_Changed(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressApuMem)
+            return;
+        if (comboApuMem.SelectedItem is not ComboBoxItem item)
+            return;
+        if (item.Tag is not string value)
+            return;
+
+        bool ok = Platform.Linux.SysfsHelper.WriteToAllBackends(
+            Platform.Linux.AsusAttributes.ApuMem, value);
+        Helpers.Logger.WriteLine($"APU mem → {value} (ok={ok})");
+
+        App.System?.ShowNotification(Labels.Get("ally_apu_mem_header"),
+            Labels.Get("ally_apu_mem_reboot_required"), "system-reboot");
     }
 }

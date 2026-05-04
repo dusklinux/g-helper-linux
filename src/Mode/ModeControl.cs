@@ -117,8 +117,13 @@ public class ModeControl
 
         App.Wmi?.SetThrottleThermalPolicy(baseMode);
 
-        // 2. Set platform profile to match
-        string profile = baseMode switch
+        // 2. Set platform profile to match.
+        // User can override per-mode (per base mode 0/1/2) via Extra Settings → Power
+        // Management. Stored as platform_profile_<baseMode> with kernel-native token
+        // (read from platform_profile_choices), so it's known to be supported. Falls
+        // back to canonical defaults when unset (mapped to firmware-supported names
+        // by SetPlatformProfile's synonym table for legacy firmware).
+        string profile = Helpers.AppConfig.GetString($"platform_profile_{baseMode}") ?? baseMode switch
         {
             0 => "balanced",
             1 => "performance",
@@ -185,8 +190,10 @@ public class ModeControl
                 App.Power?.SetCpuBoost(autoBoost == 1);
             }
 
-            // ASPM - on by default (synced with upstream IsAutoASPM/IsNotFalse behavior)
-            if (Helpers.AppConfig.IsNotFalse("aspm"))
+            // ASPM - on by default. No UI (kernel writes often blocked by
+            // built-in pcie_aspm config). Auto-derived: powersave for Silent,
+            // default elsewhere.
+            if (Helpers.AppConfig.IsAutoASPM())
             {
                 App.Power?.SetAspmPolicy(baseMode == 2 ? "powersave" : "default");
             }
@@ -434,6 +441,13 @@ public class ModeControl
 
         // Verify PPT writes took effect - read back and warn on mismatches
         VerifyPptLimits(wmi, pl1, pl2, fppt, apuPlatCeiling > 0 ? apuPlatCeiling : -1);
+
+        if (Helpers.AppConfig.IsAlly())
+        {
+            int total = Helpers.AppConfig.GetMode("limit_total");
+            if (total > 0)
+                Ally.AllyControl.SetTDP(total, $"AutoPower mode {mode}");
+        }
     }
 
     // Ryzen Curve Optimizer undervolt (mirrors Windows ModeControl.AutoRyzen/SetRyzen/ResetRyzen/SetUV)

@@ -98,8 +98,26 @@ public partial class MainWindow : Window
         {
             _refreshTimer.Start();
             RefreshAll();
+            // Subscribe to fn-lock state changes so the button label/styling
+            // updates when the user flips state via hotkey, tray, or window.
+            HookFnLockChanged();
         };
     }
+
+    /// <summary>
+    /// Subscribe to FnLockChanged. Idempotent (un/re-subscribes safely so
+    /// repeated calls during App.RestartFnLock don't double-fire).
+    /// </summary>
+    private void HookFnLockChanged()
+    {
+        if (App.FnLock == null)
+            return;
+        App.FnLock.FnLockChanged -= OnFnLockChangedFromMain;
+        App.FnLock.FnLockChanged += OnFnLockChangedFromMain;
+    }
+
+    private void OnFnLockChangedFromMain(bool _) =>
+        Avalonia.Threading.Dispatcher.UIThread.Post(RefreshFnLockButton);
 
     // Refresh / Init
 
@@ -111,8 +129,10 @@ public partial class MainWindow : Window
         RefreshScreen();
         RefreshBattery();
         RefreshKeyboard();
+        RefreshFnLockButton();
         RefreshSensorData();
         RefreshFooter();
+        RefreshAllyPanel();
     }
 
     private void ApplyLabels()
@@ -137,6 +157,11 @@ public partial class MainWindow : Window
 
         labelKeyboard.Text = Labels.Get("keyboard_header");
         checkStartup.Content = Labels.Get("run_on_startup");
+
+        // ROG Ally panel - static labels. Dynamic ones (mode, backlight %)
+        // are refreshed by RefreshAllyPanel.
+        labelAllyHeader.Text = Labels.Get("ally_handheld_section");
+        labelOpenHandheld.Text = Labels.Get("ally_open_handheld");
 
         // Refresh dynamic labels
         RefreshPerformanceMode();
@@ -194,7 +219,7 @@ public partial class MainWindow : Window
             else
                 gpuFanStr = "0RPM";
 
-            // Match Windows layout: "CPU: 32°C Fan: 0RPM" on the right
+            // Right-aligned compact format: "CPU: 32°C Fan: 0RPM"
             labelCPUFan.Text = Labels.Format("cpu_fan_info", cpuTempStr, cpuFanStr);
 
             // GPU fan info - compact for right-aligned display
@@ -258,7 +283,7 @@ public partial class MainWindow : Window
             _ => Labels.Get("mode_unknown")
         };
 
-        // Combined header: "Mode: Balanced" (matches Windows layout)
+        // Combined header: "Mode: Balanced".
         labelPerf.Text = Labels.Format("mode_prefix", modeName);
         labelPerfMode.Text = modeName;
         UpdatePerfButtons();
@@ -393,7 +418,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Lock GPU mode buttons during a switch operation (like Windows G-Helper's LockGPUModes).
+    /// Lock GPU mode buttons during a switch operation (like upstream's LockGPUModes).
     /// Writing dgpu_disable can block in the kernel for 30-60 seconds while the GPU powers down.
     /// </summary>
     private void LockGpuButtons(string statusText)
@@ -839,7 +864,7 @@ public partial class MainWindow : Window
         // Send AURA HID init handshake (wake up the LED controller).
         // This is critical for I2C-HID keyboards (e.g., FA608PP) that need
         // the handshake before they respond to any RGB commands.
-        // On Windows, G-Helper's Aura.Init() does this in InputDispatcher.AutoKeyboard().
+        // Upstream G-Helper's Aura.Init() does this in InputDispatcher.AutoKeyboard().
         Aura.Init();
 
         // Load saved values into static fields BEFORE applying to hardware
@@ -918,10 +943,18 @@ public partial class MainWindow : Window
             Color.FromRgb(Aura.ColorR, Aura.ColorG, Aura.ColorB));
         buttonColor2.Background = new SolidColorBrush(
             Color.FromRgb(Aura.Color2R, Aura.Color2G, Aura.Color2B));
-        buttonColor2.IsVisible = Aura.HasSecondColor();
 
-        // Hide color buttons for modes that don't use color
-        buttonColor1.IsVisible = Aura.UsesColor();
+        // White-only keyboards (probe FEAT2_ONE_ZONE_RED_EFFECT or
+        // AppConfig.IsWhite model list) ignore G/B channels - hide color
+        // pickers entirely so the user can't pick blue and get white instead.
+        buttonColor1.IsVisible = !Aura.isWhite && Aura.UsesColor();
+        buttonColor2.IsVisible = !Aura.isWhite && Aura.HasSecondColor();
+
+        // Speed dropdown - hide for modes where it has no effect (Static / the
+        // software-driven modes Heatmap/GpuMode/Battery / static paints
+        // Gradient/ZoneTest). Cleaner than always showing a non-functional
+        // dropdown; diverges from upstream which always shows speed.
+        comboAuraSpeed.IsVisible = Aura.UsesSpeed();
     }
 
     /// <summary>Rebuild Aura mode/speed combo items with current language strings.</summary>
@@ -1075,12 +1108,12 @@ public partial class MainWindow : Window
             sliderBattery.Value = limit;
             _updatingBatterySlider = false;
             labelBatteryLimit.Text = $"{limit}%";
-            // Combined header: "Battery Charge Limit: 80%" (matches Windows)
+            // Combined header: "Battery Charge Limit: 80%".
             labelBattery.Text = Labels.Format("battery_limit_prefix", limit);
         }
 
         // Show discharge/charge rate in battery section header (right side)
-        // and charge percentage in footer (like Windows "Charge: 71.5%")
+        // and charge percentage in footer ("Charge: 71.5%").
         var power = App.Power;
         if (power != null)
         {
@@ -1199,7 +1232,7 @@ public partial class MainWindow : Window
 
         string model = sys.GetModelName() ?? Labels.Get("unknown_asus");
 
-        // Show model in window title (like Windows G-Helper)
+        // Show model in window title (like upstream)
         Title = Labels.Format("title_prefix", model);
 
         // Version + model in footer
@@ -1268,6 +1301,210 @@ public partial class MainWindow : Window
         {
             _extraWindow.Activate();
         }
+    }
+
+    private HandheldWindow? _handheldWindow;
+
+    /// <summary>Show the Ally panel + prime its labels when on RC71L/RC72L.</summary>
+    public void RefreshAllyPanel()
+    {
+        bool isAlly = Helpers.AppConfig.IsAlly();
+        panelAlly.IsVisible = isAlly;
+
+        // Hide the laptop GPU mode buttons (Eco / Standard / Optimized /
+        // Ultimate) on Ally - there's no MUX and no dGPU. Match Windows
+        // g-helper Settings.cs:1810-1821 which does the same thing.
+        panelGpuModes.IsVisible = !isAlly;
+
+        // Show / hide the GPU section title differently on Ally - the simple
+        // "GPU Mode: …" text is replaced by a fixed "GPU" so we don't show a
+        // status that doesn't apply.
+        if (isAlly && labelGPU != null)
+        {
+            labelGPU.Text = "GPU";
+        }
+
+        // XG Mobile (eGPU dock) - only relevant on Ally and only when the
+        // dock is physically connected. Read egpu_connected fw-attr.
+        RefreshXgMobile();
+
+        if (!isAlly)
+            return;
+
+        // Controller mode label - localized via i18n.
+        var saved = (Ally.ControllerMode)Helpers.AppConfig.Get(
+            "controller_mode", (int)Ally.ControllerMode.Auto);
+        string modeLabel = saved switch
+        {
+            Ally.ControllerMode.Auto => Labels.Get("controller_mode_auto"),
+            Ally.ControllerMode.Gamepad => Labels.Get("controller_mode_gamepad"),
+            Ally.ControllerMode.Mouse => Labels.Get("controller_mode_mouse"),
+            Ally.ControllerMode.WASD => Labels.Get("controller_mode_wasd"),
+            Ally.ControllerMode.Skip => Labels.Get("controller_mode_skip"),
+            _ => "?",
+        };
+        labelControllerMode.Text = Labels.Format("ally_mode_label_format", modeLabel);
+
+        // Backlight label (kbd brightness 0..3 → 0/33/66/100%).
+        int br = App.Wmi?.GetKeyboardBrightness() ?? 0;
+        labelAllyBacklight.Text = Labels.Format("ally_backlight_label_format",
+            (int)Math.Round(br * 33.33));
+
+        // iGPU sensors (refreshed lazily; the existing tray sensor timer
+        // could also call this, but for now a one-shot on panel show is
+        // enough to verify rendering).
+        int? busy = Gpu.LinuxAmdGpuMetrics.GetIgpuBusyPercent();
+        float? power = Gpu.LinuxAmdGpuMetrics.GetIgpuPowerWatts();
+        if (busy != null || power != null)
+        {
+            labelAllyMetrics.Text =
+                (busy != null ? $"{busy}% " : "") +
+                (power != null ? $"{power.Value:0.0}W" : "");
+        }
+    }
+
+    private void ButtonControllerMode_Click(object? sender, RoutedEventArgs e)
+    {
+        var ally = App.Ally;
+        if (ally == null)
+            return;
+        ally.ToggleMode();
+        RefreshAllyPanel();
+    }
+
+    private void ButtonAllyBacklight_Click(object? sender, RoutedEventArgs e)
+    {
+        var ally = App.Ally;
+        if (ally == null)
+            return;
+        ally.ToggleBacklight();
+        RefreshAllyPanel();
+    }
+
+    private void ButtonOpenHandheld_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_handheldWindow == null || !_handheldWindow.IsVisible)
+        {
+            _handheldWindow = new HandheldWindow();
+            if (Helpers.AppConfig.Is("topmost"))
+                _handheldWindow.Topmost = true;
+            WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_handheldWindow);
+            _handheldWindow.Show();
+        }
+        else
+        {
+            _handheldWindow.Activate();
+        }
+    }
+
+    /// <summary>
+    /// Refresh the XG Mobile dock button. Reads the asus-armoury fw-attr
+    /// <c>egpu_connected/current_value</c> - when present and equal to 1
+    /// the dock is physically attached and we expose a button that toggles
+    /// <c>egpu_enable</c>. Like other GPU-class fw-attrs this is BIOS-staged
+    /// and requires a reboot to fully apply.
+    /// </summary>
+    private void RefreshXgMobile()
+    {
+        if (!Helpers.AppConfig.IsAlly())
+        {
+            buttonXGM.IsVisible = false;
+            return;
+        }
+
+        // egpu_connected: 1 = dock attached, 0 = standalone, missing = no XGM
+        // path present at all.
+        var connectedPath = SysfsHelper.ResolveAttrPath(
+            Platform.Linux.AsusAttributes.EgpuConnected);
+        bool connected = false;
+        if (connectedPath != null)
+        {
+            var raw = SysfsHelper.ReadAttribute(connectedPath);
+            connected = raw != null && raw.Trim() == "1";
+        }
+        buttonXGM.IsVisible = connected;
+        if (!connected)
+            return;
+
+        // Reflect current egpu_enable state in the label so the user sees
+        // "XG Mobile: Enabled" vs "XG Mobile: Disabled".
+        var enablePath = SysfsHelper.ResolveAttrPath(
+            Platform.Linux.AsusAttributes.EgpuEnable);
+        bool enabled = false;
+        if (enablePath != null)
+        {
+            var raw = SysfsHelper.ReadAttribute(enablePath);
+            enabled = raw != null && raw.Trim() == "1";
+        }
+        labelXGM.Text = enabled
+            ? Labels.Get("xgm_button_disable")
+            : Labels.Get("xgm_button_enable");
+    }
+
+    private void ButtonXGM_Click(object? sender, RoutedEventArgs e)
+    {
+        var enablePath = SysfsHelper.ResolveAttrPath(
+            Platform.Linux.AsusAttributes.EgpuEnable);
+        if (enablePath == null)
+        {
+            App.System?.ShowNotification(Labels.Get("xgm_label"),
+                Labels.Get("xgm_unavailable"), "dialog-warning");
+            return;
+        }
+
+        var raw = SysfsHelper.ReadAttribute(enablePath);
+        bool currentlyEnabled = raw != null && raw.Trim() == "1";
+        string targetValue = currentlyEnabled ? "0" : "1";
+        bool ok = SysfsHelper.WriteToAllBackends(
+            Platform.Linux.AsusAttributes.EgpuEnable, targetValue);
+
+        Helpers.Logger.WriteLine($"XGMobile: egpu_enable {raw?.Trim()} → {targetValue} (ok={ok})");
+        App.System?.ShowNotification(Labels.Get("xgm_label"),
+            Labels.Get("xgm_reboot_required"), "system-reboot");
+
+        RefreshXgMobile();
+    }
+
+    /// <summary>
+    /// FN-Lock master toggle. Click flips between two states:
+    ///   OFF (default, grayed) - software remapper stopped, F1..F12 emit
+    ///                          natively.
+    ///   ON  (blue accent)     - software remapper running with media keys
+    ///                          mode active.
+    /// State is held by FnLockRemapper.IsActive (not persisted, off by default
+    /// each session). Delegates to <see cref="App.SetFnLockEnabled"/> so the
+    /// tray menu and any other UI surface go through the same authoritative
+    /// path.
+    /// </summary>
+    private void ButtonFnLock_Click(object? sender, RoutedEventArgs e)
+    {
+        bool currentlyOn = App.FnLock?.IsActive ?? false;
+        App.SetFnLockEnabled(!currentlyOn);
+        RefreshFnLockButton();
+    }
+
+    /// <summary>
+    /// Update the FN-Lock title-row button visual to reflect remapper state.
+    /// Always visible; styling flips between the default ghelper button (OFF /
+    /// grayed) and the fnlock-on accent class (solid blue, ON).
+    /// </summary>
+    public void RefreshFnLockButton()
+    {
+        // Source of truth: the remapper itself. IsActive means we're grabbing
+        // input devices; FnLockOn means media-keys mode is currently active.
+        bool active = (App.FnLock?.IsActive ?? false) && App.FnLock!.FnLockOn;
+
+        // Toggle the fnlock-on style class on/off without disturbing the
+        // base "ghelper" class.
+        const string accent = "fnlock-on";
+        if (active && !buttonFnLock.Classes.Contains(accent))
+            buttonFnLock.Classes.Add(accent);
+        else if (!active && buttonFnLock.Classes.Contains(accent))
+            buttonFnLock.Classes.Remove(accent);
+
+        ToolTip.SetTip(buttonFnLock, active
+            ? Labels.Get("fnlock_osd_on")
+            : Labels.Get("fnlock_osd_off"));
     }
 
 

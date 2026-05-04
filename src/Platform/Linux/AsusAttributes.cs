@@ -94,6 +94,12 @@ public static class AsusAttributes
     public static readonly AttrDef EgpuEnable = new("egpu_enable",
         description: "eGPU enable");
 
+    public static readonly AttrDef EgpuConnected = new("egpu_connected",
+        description: "eGPU dock connected (read-only)");
+
+    public static readonly AttrDef ApuMem = new("apu_mem",
+        description: "APU UMA buffer size");
+
     // Display
 
     public static readonly AttrDef PanelOd = new("panel_od", fwAttrName: "panel_overdrive",
@@ -114,7 +120,7 @@ public static class AsusAttributes
         ThrottleThermalPolicy,
         PptPl1Spl, PptPl2Sppt, PptFppt, PptApuSppt, PptPlatformSppt,
         NvDynamicBoost, NvTempTarget, NvBaseTgp, NvTgp,
-        DgpuDisable, GpuMuxMode, EgpuEnable,
+        DgpuDisable, GpuMuxMode, EgpuEnable, EgpuConnected, ApuMem,
         PanelOd, MiniLedMode,
         BootSound,
     };

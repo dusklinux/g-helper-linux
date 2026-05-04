@@ -1,0 +1,298 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="GHelper.Linux.UI.Views.HandheldWindow"
+        Title="ROG Ally Controller"
+        Width="640"
+        Height="780"
+        MinWidth="540"
+        MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        Background="#1C1C1C"
+        Icon="avares://ghelper/UI/Assets/standard.ico">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="10" Spacing="5">
+
+            <!-- BUTTON BINDINGS PANEL -->
+            <Border Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock x:Name="labelButtonBindingsHeader" Classes="header" Text="Button Bindings" />
+                    </Border>
+
+                    <TextBlock x:Name="labelClickToBind"
+                               Text="Click a button below to bind primary / secondary actions."
+                               Classes="label-dim" Margin="0,0,0,8" />
+
+                    <!-- 4-column grid of 18 binding buttons -->
+                    <UniformGrid Columns="4" Margin="0,0,0,4">
+                        <Button x:Name="buttonM1"      Content="M1"             Margin="2" />
+                        <Button x:Name="buttonM2"      Content="M2"             Margin="2" />
+                        <Button x:Name="buttonA"       Content="A"              Margin="2" />
+                        <Button x:Name="buttonB"       Content="B"              Margin="2" />
+                        <Button x:Name="buttonX"       Content="X"              Margin="2" />
+                        <Button x:Name="buttonY"       Content="Y"              Margin="2" />
+                        <Button x:Name="buttonDPU"     Content="D-Pad Up"       Margin="2" />
+                        <Button x:Name="buttonDPD"     Content="D-Pad Down"     Margin="2" />
+                        <Button x:Name="buttonDPL"     Content="D-Pad Left"     Margin="2" />
+                        <Button x:Name="buttonDPR"     Content="D-Pad Right"    Margin="2" />
+                        <Button x:Name="buttonLT"      Content="L-Trigger"      Margin="2" />
+                        <Button x:Name="buttonRT"      Content="R-Trigger"      Margin="2" />
+                        <Button x:Name="buttonLB"      Content="L-Bumper"       Margin="2" />
+                        <Button x:Name="buttonRB"      Content="R-Bumper"       Margin="2" />
+                        <Button x:Name="buttonLS"      Content="L-Stick Click"  Margin="2" />
+                        <Button x:Name="buttonRS"      Content="R-Stick Click"  Margin="2" />
+                        <Button x:Name="buttonView"    Content="View"           Margin="2" />
+                        <Button x:Name="buttonMenu"    Content="Menu"           Margin="2" />
+                    </UniformGrid>
+                </StackPanel>
+            </Border>
+
+            <!-- ACTIVE BINDING PANEL (shows when a button is selected) -->
+            <Border x:Name="panelBinding" Classes="panel" IsVisible="False">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock x:Name="labelBindingHeader" Classes="header" Text="Binding: M1" />
+                    </Border>
+
+                    <Grid ColumnDefinitions="120,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelPrimary" Text="Primary"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboPrimary"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ComboBinding_Primary_Changed" />
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelSecondary" Text="Secondary"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboSecondary"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ComboBinding_Secondary_Changed" />
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelTurboPrimary" Text="Turbo Primary"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboTurboPrimary"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ComboTurbo_Primary_Changed" />
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelTurboSecondary" Text="Turbo Secondary"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboTurboSecondary"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ComboTurbo_Secondary_Changed" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- DEADZONES PANEL -->
+            <Border Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock x:Name="labelDeadzonesHeader" Classes="header" Text="Deadzones &amp; Vibration" />
+                    </Border>
+
+                    <!-- Left stick -->
+                    <Grid ColumnDefinitions="100,*,*,80" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelLSRow" Text="L-Stick" Classes="label-dim" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="trackLSMin" Minimum="0" Maximum="100"
+                                ValueChanged="Track_LS_Changed" />
+                        <Slider Grid.Column="2" x:Name="trackLSMax" Minimum="0" Maximum="100"
+                                ValueChanged="Track_LS_Changed" />
+                        <TextBlock Grid.Column="3" x:Name="labelLS" Classes="value"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Right stick -->
+                    <Grid ColumnDefinitions="100,*,*,80" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelRSRow" Text="R-Stick" Classes="label-dim" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="trackRSMin" Minimum="0" Maximum="100"
+                                ValueChanged="Track_RS_Changed" />
+                        <Slider Grid.Column="2" x:Name="trackRSMax" Minimum="0" Maximum="100"
+                                ValueChanged="Track_RS_Changed" />
+                        <TextBlock Grid.Column="3" x:Name="labelRS" Classes="value"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Left trigger -->
+                    <Grid ColumnDefinitions="100,*,*,80" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelLTRow" Text="L-Trigger" Classes="label-dim" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="trackLTMin" Minimum="0" Maximum="100"
+                                ValueChanged="Track_LT_Changed" />
+                        <Slider Grid.Column="2" x:Name="trackLTMax" Minimum="0" Maximum="100"
+                                ValueChanged="Track_LT_Changed" />
+                        <TextBlock Grid.Column="3" x:Name="labelLT" Classes="value"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Right trigger -->
+                    <Grid ColumnDefinitions="100,*,*,80" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelRTRow" Text="R-Trigger" Classes="label-dim" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="trackRTMin" Minimum="0" Maximum="100"
+                                ValueChanged="Track_RT_Changed" />
+                        <Slider Grid.Column="2" x:Name="trackRTMax" Minimum="0" Maximum="100"
+                                ValueChanged="Track_RT_Changed" />
+                        <TextBlock Grid.Column="3" x:Name="labelRT" Classes="value"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Vibration -->
+                    <Grid ColumnDefinitions="100,*,80" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelVibraRow" Text="Vibration" Classes="label-dim" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="trackVibra" Minimum="0" Maximum="100"
+                                ValueChanged="Track_Vibra_Changed" />
+                        <TextBlock Grid.Column="2" x:Name="labelVibra" Classes="value"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- STICK CALIBRATION PANEL -->
+            <Border Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock x:Name="labelStickCalHeader" Classes="header" Text="Stick Calibration" />
+                    </Border>
+
+                    <TextBlock x:Name="labelStickCalHint"
+                               Text="Reset to factory defaults, or enter custom raw ADC values (0-4095)."
+                               Classes="label-dim" Margin="0,0,0,8" TextWrapping="Wrap" />
+
+                    <Button x:Name="buttonStickCalReset"
+                            Click="ButtonStickCalReset_Click"
+                            HorizontalAlignment="Stretch"
+                            Height="32" Margin="0,0,0,8">
+                        <TextBlock x:Name="labelStickCalReset" Text="Reset Calibration" HorizontalAlignment="Center" FontSize="11" />
+                    </Button>
+
+                    <TextBlock x:Name="labelStickCalAdvanced" Text="Advanced - left stick raw values"
+                               Classes="label-dim" Margin="0,4,0,4" />
+
+                    <Grid ColumnDefinitions="80,*,*,*" Margin="0,2">
+                        <TextBlock Grid.Column="0" x:Name="labelCalAxisX" Text="X axis"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Column="1" x:Name="numCalXStable" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" />
+                        <NumericUpDown Grid.Column="2" x:Name="numCalXMin" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" Margin="4,0" />
+                        <NumericUpDown Grid.Column="3" x:Name="numCalXMax" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" />
+                    </Grid>
+                    <Grid ColumnDefinitions="80,*,*,*" Margin="0,2">
+                        <TextBlock Grid.Column="0" x:Name="labelCalAxisY" Text="Y axis"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Column="1" x:Name="numCalYStable" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" />
+                        <NumericUpDown Grid.Column="2" x:Name="numCalYMin" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" Margin="4,0" />
+                        <NumericUpDown Grid.Column="3" x:Name="numCalYMax" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" />
+                    </Grid>
+                    <Grid ColumnDefinitions="80,*,*,*" Margin="0,2,0,8">
+                        <TextBlock Grid.Column="0" Text="" />
+                        <TextBlock Grid.Column="1" x:Name="labelCalStable" Text="Center"
+                                   Classes="label-dim" HorizontalAlignment="Center" FontSize="10" />
+                        <TextBlock Grid.Column="2" x:Name="labelCalMin" Text="Min"
+                                   Classes="label-dim" HorizontalAlignment="Center" FontSize="10" />
+                        <TextBlock Grid.Column="3" x:Name="labelCalMax" Text="Max"
+                                   Classes="label-dim" HorizontalAlignment="Center" FontSize="10" />
+                    </Grid>
+
+                    <Button x:Name="buttonStickCalApply"
+                            Click="ButtonStickCalApply_Click"
+                            HorizontalAlignment="Stretch"
+                            Height="32">
+                        <TextBlock x:Name="labelStickCalApply" Text="Apply Left Stick" HorizontalAlignment="Center" FontSize="11" />
+                    </Button>
+
+                    <!-- Right stick -->
+                    <TextBlock x:Name="labelStickCalAdvancedR" Text="Advanced - right stick raw values"
+                               Classes="label-dim" Margin="0,12,0,4" />
+
+                    <Grid ColumnDefinitions="80,*,*,*" Margin="0,2">
+                        <TextBlock Grid.Column="0" Text="X axis" Classes="label-dim" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Column="1" x:Name="numCalRXStable" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" />
+                        <NumericUpDown Grid.Column="2" x:Name="numCalRXMin" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" Margin="4,0" />
+                        <NumericUpDown Grid.Column="3" x:Name="numCalRXMax" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" />
+                    </Grid>
+                    <Grid ColumnDefinitions="80,*,*,*" Margin="0,2,0,8">
+                        <TextBlock Grid.Column="0" Text="Y axis" Classes="label-dim" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Column="1" x:Name="numCalRYStable" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" />
+                        <NumericUpDown Grid.Column="2" x:Name="numCalRYMin" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" Margin="4,0" />
+                        <NumericUpDown Grid.Column="3" x:Name="numCalRYMax" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" />
+                    </Grid>
+
+                    <Button x:Name="buttonStickCalApplyR"
+                            Click="ButtonStickCalApplyR_Click"
+                            HorizontalAlignment="Stretch"
+                            Height="32" Margin="0,0,0,8">
+                        <TextBlock x:Name="labelStickCalApplyR" Text="Apply Right Stick" HorizontalAlignment="Center" FontSize="11" />
+                    </Button>
+
+                    <!-- Triggers -->
+                    <TextBlock x:Name="labelTriggerCalAdvanced" Text="Advanced - trigger raw values (rest / max)"
+                               Classes="label-dim" Margin="0,4,0,4" />
+
+                    <Grid ColumnDefinitions="80,*,*" Margin="0,2">
+                        <TextBlock Grid.Column="0" Text="L-Trigger" Classes="label-dim" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Column="1" x:Name="numCalLTStable" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" />
+                        <NumericUpDown Grid.Column="2" x:Name="numCalLTMax" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" Margin="4,0,0,0" />
+                    </Grid>
+                    <Grid ColumnDefinitions="80,*,*" Margin="0,2,0,8">
+                        <TextBlock Grid.Column="0" Text="R-Trigger" Classes="label-dim" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Column="1" x:Name="numCalRTStable" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" />
+                        <NumericUpDown Grid.Column="2" x:Name="numCalRTMax" Minimum="0" Maximum="4095"
+                                       FormatString="0" ShowButtonSpinner="False" Margin="4,0,0,0" />
+                    </Grid>
+
+                    <Button x:Name="buttonTriggerCalApply"
+                            Click="ButtonTriggerCalApply_Click"
+                            HorizontalAlignment="Stretch"
+                            Height="32" Margin="0,0,0,8">
+                        <TextBlock x:Name="labelTriggerCalApply" Text="Apply Triggers" HorizontalAlignment="Center" FontSize="11" />
+                    </Button>
+
+                    <!-- Auto-capture: read live evdev for 3 seconds and
+                         fill all numeric inputs with observed min/max/stable. -->
+                    <Button x:Name="buttonStickCalCapture"
+                            Click="ButtonStickCalCapture_Click"
+                            HorizontalAlignment="Stretch"
+                            Height="32">
+                        <TextBlock x:Name="labelStickCalCapture" Text="Auto-Capture (move sticks &amp; triggers, 3s)"
+                                   HorizontalAlignment="Center" FontSize="11" />
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- FOOTER PANEL -->
+            <Border Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock x:Name="labelControllerHeader" Classes="header" Text="Controller" />
+                    </Border>
+                    <Grid ColumnDefinitions="*,*" Margin="0,4">
+                        <CheckBox Grid.Column="0" x:Name="checkController"
+                                  Content="Disable Controller"
+                                  IsCheckedChanged="CheckController_Changed"
+                                  VerticalAlignment="Center" />
+                        <Button Grid.Column="1" x:Name="buttonReset"
+                                Content="Reset to Defaults"
+                                HorizontalAlignment="Right"
+                                Click="ButtonReset_Click" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</Window>

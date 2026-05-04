@@ -1125,8 +1125,11 @@ public class LinuxAsusWmi : IAsusWmi
     /// <summary>
     /// Map Linux KEY_* codes to configurable key binding names.
     /// These are keys the user can assign actions to.
+    /// Internal so the FnLockRemapper bridge can reuse this mapping when it
+    /// has exclusively grabbed event6/event7 and needs to dispatch the same
+    /// binding names that LinuxAsusWmi would have dispatched.
     /// </summary>
-    private static string MapLinuxKeyToBindingName(ushort linuxKeyCode)
+    internal static string MapLinuxKeyToBindingName(ushort linuxKeyCode)
     {
         return linuxKeyCode switch
         {
@@ -1144,8 +1147,9 @@ public class LinuxAsusWmi : IAsusWmi
     /// Map MSC_SCAN values to configurable key binding names.
     /// MSC_SCAN values equal Windows WMI event codes and are consistent across
     /// all ASUS models (TUF, ROG, Vivobook) even when KEY_* codes differ.
+    /// Internal so the FnLockRemapper bridge can reuse it.
     /// </summary>
-    private static string MapScanCodeToBindingName(int scanCode)
+    internal static string MapScanCodeToBindingName(int scanCode)
     {
         return scanCode switch
         {
@@ -1159,8 +1163,9 @@ public class LinuxAsusWmi : IAsusWmi
     /// <summary>
     /// Map MSC_SCAN values to legacy G-Helper event codes for non-configurable keys.
     /// MSC_SCAN values ARE the Windows WMI event codes, so they pass through directly.
+    /// Internal so the FnLockRemapper bridge can reuse it.
     /// </summary>
-    private static int MapScanCodeToLegacyEvent(int scanCode)
+    internal static int MapScanCodeToLegacyEvent(int scanCode)
     {
         return scanCode switch
         {
@@ -1181,8 +1186,9 @@ public class LinuxAsusWmi : IAsusWmi
     /// <summary>
     /// Map Linux KEY_* codes to legacy G-Helper event codes for non-configurable keys
     /// (keyboard brightness, touchpad, etc.).
+    /// Internal so the FnLockRemapper bridge can reuse it.
     /// </summary>
-    private static int MapLinuxKeyToLegacyEvent(ushort linuxKeyCode)
+    internal static int MapLinuxKeyToLegacyEvent(ushort linuxKeyCode)
     {
         return linuxKeyCode switch
         {

@@ -61,9 +61,6 @@ public static class AppConfig
 
     static AppConfig()
     {
-        // Migrate from old config dir if it exists and new one doesn't
-        MigrateOldConfigDir();
-
         Directory.CreateDirectory(ConfigDir);
 
         if (File.Exists(ConfigFile))
@@ -89,41 +86,6 @@ public static class AppConfig
         _writeTimer = new System.Timers.Timer(2000);
         _writeTimer.Elapsed += (_, _) => FlushConfig();
         _writeTimer.AutoReset = false;
-    }
-
-    /// <summary>
-    /// One-time migration from ~/.config/ghelper-linux/ to ~/.config/ghelper/.
-    /// Moves config.json and backup if they exist. Removes old dir if empty.
-    /// </summary>
-    private static void MigrateOldConfigDir()
-    {
-        try
-        {
-            var oldDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".config", "ghelper-linux");
-
-            if (!Directory.Exists(oldDir) || Directory.Exists(ConfigDir))
-                return; // Nothing to migrate, or new dir already exists
-
-            Directory.CreateDirectory(ConfigDir);
-
-            foreach (var file in Directory.GetFiles(oldDir))
-            {
-                var dest = Path.Combine(ConfigDir, Path.GetFileName(file));
-                File.Move(file, dest);
-            }
-
-            // Remove old dir if now empty
-            if (Directory.GetFiles(oldDir).Length == 0 && Directory.GetDirectories(oldDir).Length == 0)
-                Directory.Delete(oldDir);
-
-            Logger.WriteLine($"Migrated config from {oldDir} → {ConfigDir}");
-        }
-        catch (Exception ex)
-        {
-            Logger.WriteLine($"Config migration failed (non-fatal): {ex.Message}");
-        }
     }
 
     // Core Get/Set
@@ -392,7 +354,7 @@ public static class AppConfig
     // GPU / power management
     public static bool NoGpu() => Is("no_gpu") || ContainsModel("UX540") || ContainsModel("M560") || ContainsModel("GZ302") || IsOnlyAIMAX();
     public static bool IsAMDiGPU() => ContainsModel("GV301RA") || ContainsModel("GV302XA") || ContainsModel("GZ302") || IsOnlyAIMAX() || IsAlly();
-    public static bool IsGPUFix() => Is("gpu_fix") || (ContainsModel("GA402X") && IsNotFalse("gpu_fix"));
+
     public static bool IsForceSetGPUMode() => Is("gpu_mode_force_set") || (ContainsModel("503") && IsNotFalse("gpu_mode_force_set"));
     public static bool IsNVPlatform() => Is("nv_platform");
     public static bool IsShutdownReset() => Is("shutdown_reset") || ContainsModel("FX507Z");
@@ -416,24 +378,15 @@ public static class AppConfig
     public static bool IsClampFanDots() => IsNotFalse("fan_clamp");
 
     // RGB / AURA
-    public static bool IsSingleColor() => ContainsModel("GA401") || ContainsModel("FX517Z") || ContainsModel("FX516P") || ContainsModel("X13") || IsARCNM() || ContainsModel("FA617N") || ContainsModel("FA617X") || NoAura() || Is("no_rgb");
+    public static bool IsWhite() => ContainsModel("GA401") || ContainsModel("FX517Z") || ContainsModel("FX516P") || ContainsModel("X13") || IsARCNM() || ContainsModel("FA617N") || ContainsModel("FA617X") || NoAura() || Is("no_rgb");
     public static bool NoAura() => (ContainsModel("GA401I") && !ContainsModel("GA401IHR")) || ContainsModel("GA502IU") || ContainsModel("HN7306") || ContainsModel("M6500X");
-    public static bool IsAdvancedRGB() => IsStrix() || ContainsModel("GX650");
     public static bool IsBacklightZones() => IsStrix() || IsZ13();
-    public static bool IsStrixLimitedRGB() =>
-        ContainsModel("G614PM") || ContainsModel("G614PP") || ContainsModel("G614PR") || ContainsModel("G512LI") ||
-        ContainsModel("G513R") || ContainsModel("G713QM") || ContainsModel("G713PV") || ContainsModel("G513IE") ||
-        ContainsModel("G513IC") || ContainsModel("G713RC") || ContainsModel("G713IC") || ContainsModel("G713PU") ||
-        ContainsModel("G513QE") || ContainsModel("G513QM") || ContainsModel("G513QC") || ContainsModel("G531G") ||
-        ContainsModel("G615JMR") || ContainsModel("G615LM") || ContainsModel("G815LR");
-    public static bool IsPossible4ZoneRGB() =>
-        ContainsModel("G614JI") || ContainsModel("G614JV") || ContainsModel("G614JZ") ||
-        ContainsModel("G614JU") || IsStrixLimitedRGB();
-    public static bool Is4ZoneRGB() => IsPossible4ZoneRGB() && !Is("per_key_rgb");
+    /// <summary>True for chassis whose lightbar is wired L→R instead of R→L
+    /// (G513 family). Selects the alternate 4-zone packet map in Aura.cs.</summary>
+    public static bool IsStrix4ZoneFlipped() => ContainsModel("G513");
     public static bool IsNoDirectRGB() =>
-        ContainsModel("GA503") || ContainsModel("G533Q") || ContainsModel("GU502") ||
-        ContainsModel("GU603") || IsSlash() || IsAlly();
-    public static bool IsSlash() => ContainsModel("GA403") || ContainsModel("GU605") || ContainsModel("GA605") || ContainsModel("GU405") || ContainsModel("GU606");
+        ContainsModel("GA503") || ContainsModel("G533Q") || ContainsModel("GU502");
+    public static bool IsSlash() => ContainsModel("GA403") || ContainsModel("GU605") || ContainsModel("GA605") || ContainsModel("GU405") || ContainsModel("GU606") || ContainsModel("GX651");
     public static bool IsSlashAura() => ContainsModel("GA605") || ContainsModel("GU605C") || ContainsModel("GA403W") || ContainsModel("GA403UM") || ContainsModel("GA403UP") || ContainsModel("GA403UH") || ContainsModel("GU405") || ContainsModel("GU606");
     public static bool IsAnimeMatrix() => ContainsModel("GA401") || ContainsModel("GA402") || ContainsModel("GU604V") || ContainsModel("G835") || ContainsModel("G815") || ContainsModel("G635") || ContainsModel("G615");
 
@@ -443,7 +396,6 @@ public static class AppConfig
     public static bool IsDynamicLightingInit() => ContainsModel("FA608") || Is("lighting_init");
 
     // Keyboard / input
-    public static bool IsInputBacklight() => ContainsModel("GA503") || IsSlash() || IsVivoZenPro();
     public static bool IsStrixNumpad() => ContainsModel("G713R");
     public static bool NoMKeys() => (ContainsModel("Z13") && !IsARCNM()) || ContainsModel("FX706") || ContainsModel("FA706") || ContainsModel("FA506") || ContainsModel("FX506") || ContainsModel("Duo") || ContainsModel("FX505");
     public static bool IsM4Button() => IsDUO() || ContainsModel("GZ302EA");
@@ -455,7 +407,7 @@ public static class AppConfig
     // CPU platform
     public static bool IsIntelHX() => ContainsModel("G814") || ContainsModel("G614") || ContainsModel("G834") || ContainsModel("G634") || ContainsModel("G835") || ContainsModel("G635") || ContainsModel("G815") || ContainsModel("G615");
     public static bool Is8Ecores() => ContainsModel("FX507Z") || ContainsModel("GU603ZV");
-    public static bool IsCPULight() => ContainsModel("GA402X") || ContainsModel("GA605") || ContainsModel("GA403") || ContainsModel("FA507N") || ContainsModel("FA507X") || ContainsModel("FA707N") || ContainsModel("FA707X") || ContainsModel("GZ302") || ContainsModel("GU405");
+    public static bool IsCPULight() => ContainsModel("GA402X") || ContainsModel("GA605") || ContainsModel("GA403") || ContainsModel("FA507N") || ContainsModel("FA507X") || ContainsModel("FA707N") || ContainsModel("FA707X") || ContainsModel("GZ302") || ContainsModel("GU405") || ContainsModel("GX651");
 
     // Display
     public static bool IsOLED() =>
@@ -478,7 +430,6 @@ public static class AppConfig
     // Form factor / misc
     public static bool HasTabletMode() => ContainsModel("X16") || ContainsModel("X13") || ContainsModel("Z13");
     public static bool IsSleepBacklight() => ContainsModel("FA617") || ContainsModel("FX507") || ContainsModel("FA507");
-    public static bool IsNoSleepEvent() => ContainsModel("FX505");
     public static bool NoWMI() => ContainsModel("GL704G") || ContainsModel("GM501G") || ContainsModel("GX501G");
 
     // UI / config-only
@@ -487,6 +438,29 @@ public static class AppConfig
 
     // Battery-specific config check (original logic: fallback to zone config if bat-specific not set)
     public static bool IsOnBattery(string zone) => Get(zone + "_bat", Get(zone)) != 0;
+
+    // Rear glow zone (Z13's rear-of-lid window/logo). Used by Aura.ApplyRearLight
+    // to early-return on hardware without the rear-light controller (PID 0x18C6).
+    public static bool HasRearLight() => IsZ13();
+
+    // Auto-ASPM (PCIe link power state) toggle - on by default; consumed by
+    // ModeControl when applying a performance mode. UI not exposed (kernel
+    // pcie_aspm config often blocks runtime writes).
+    public static bool IsAutoASPM() => IsNotFalse("aspm");
+
+    // Models that handle FN-Lock in firmware (no software remapper needed).
+    // Predicate added for upstream parity; Linux still runs the uinput
+    // remapper on these models since both paths coexist without conflict.
+    public static bool IsHardwareFnLock() => IsVivoZenPro() || ContainsModel("GZ302EA");
+
+    // Models with inverted FN-Lock semantics (FW state 0=locked / 1=unlocked).
+    // Predicate added for upstream parity; not consumed on Linux because the
+    // uinput remapper is independent of firmware FN-Lock state.
+    public static bool IsInvertedFNLock() =>
+        ContainsModel("M140") || ContainsModel("S550") || ContainsModel("P540") || IsTUF();
+
+    public static bool IsSleepReset() =>
+        ContainsModel("GU605MI") || ContainsModel("GU605MV");
 
     // Helpers
 

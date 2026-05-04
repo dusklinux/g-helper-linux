@@ -1,0 +1,143 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctrl="clr-namespace:GHelper.Linux.UI.Controls"
+        x:Class="GHelper.Linux.UI.Views.FnLockWindow"
+        Title="Function Key Remap"
+        Width="560"
+        Height="720"
+        MinWidth="480"
+        MinHeight="560"
+        WindowStartupLocation="CenterScreen"
+        CanResize="True"
+        Background="#1C1C1C"
+        Icon="avares://ghelper/UI/Assets/standard.ico">
+
+    <Window.Styles>
+        <!-- Section subhead -->
+        <Style Selector="TextBlock.subhead">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#C0C0C0" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+
+        <!-- Hint paragraph -->
+        <Style Selector="TextBlock.hint">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Foreground" Value="#808080" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="LineHeight" Value="14" />
+        </Style>
+
+        <!-- Subtle inset for the device list and per-key map -->
+        <Style Selector="Border.inset">
+            <Setter Property="Background" Value="#1F1F1F" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#333333" />
+            <Setter Property="Padding" Value="8" />
+        </Style>
+    </Window.Styles>
+
+    <DockPanel>
+        <!-- SCROLLABLE BODY (no hero banner; the FN-Lock master toggle now
+             lives on MainWindow's keyboard panel title row). -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,4,0,0">
+            <StackPanel Margin="14,14,14,14" Spacing="10">
+
+                <!-- HOTKEY -->
+                <Border Classes="panel">
+                    <StackPanel Spacing="8">
+                        <Border Classes="panel-header" Margin="0,0,0,4">
+                            <TextBlock x:Name="headerBehavior" Classes="header" Text="Behavior" />
+                        </Border>
+
+                        <Grid ColumnDefinitions="140,*,*">
+                            <TextBlock Grid.Column="0" x:Name="labelHotkey" Text="Toggle hotkey"
+                                       Classes="label-dim" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1" x:Name="comboModifier"
+                                      Height="30" Margin="0,0,4,0"
+                                      SelectionChanged="ComboHotkey_Changed" />
+                            <ComboBox Grid.Column="2" x:Name="comboKey"
+                                      Height="30" Margin="4,0,0,0"
+                                      SelectionChanged="ComboHotkey_Changed" />
+                        </Grid>
+
+                        <TextBlock Classes="hint"
+                                   x:Name="labelHotkeyHint"
+                                   Text="Tip: pick a combo your desktop environment doesn't use. The combo press is consumed by the remapper and won't reach apps."
+                                   Margin="140,0,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- DEVICES -->
+                <Border Classes="panel">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                            <Border Grid.Column="0" Classes="panel-header">
+                                <TextBlock x:Name="headerDevices" Classes="header" Text="Devices to capture" />
+                            </Border>
+                            <Button Grid.Column="1"
+                                    x:Name="buttonRescan"
+                                    Classes="ghelper"
+                                    Height="26" Padding="10,2"
+                                    HorizontalAlignment="Right"
+                                    Click="ButtonRescan_Click">
+                                <TextBlock x:Name="labelRescan" Text="Rescan" FontSize="11" />
+                            </Button>
+                        </Grid>
+                        <TextBlock Classes="hint" x:Name="labelDevicesIntro"
+                                   Text="Pick which input devices the remapper grabs. The integrated keyboard typically appears as one or two entries (i8042 + ASUS N-KEY)."
+                                   Margin="0,0,0,8" />
+                        <Border Classes="inset">
+                            <StackPanel x:Name="panelDevices" Spacing="3" />
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- PER-KEY MAP -->
+                <Border Classes="panel">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                            <Border Grid.Column="0" Classes="panel-header">
+                                <TextBlock x:Name="headerMap" Classes="header" Text="Per-key mapping" />
+                            </Border>
+                            <Button Grid.Column="1"
+                                    x:Name="buttonReset"
+                                    Classes="ghelper"
+                                    Height="26" Padding="10,2"
+                                    HorizontalAlignment="Right"
+                                    Click="ButtonReset_Click">
+                                <TextBlock x:Name="labelReset" Text="Reset to defaults" FontSize="11" />
+                            </Button>
+                        </Grid>
+                        <TextBlock Classes="hint" x:Name="labelMapIntro"
+                                   Text="What each F-key produces when fn-lock is OFF (media-keys mode). With fn-lock ON, all keys pass through unchanged."
+                                   Margin="0,0,0,8" />
+                        <Border Classes="inset">
+                            <StackPanel x:Name="panelMap" Spacing="3" />
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- ADVANCED -->
+                <Border Classes="panel">
+                    <StackPanel>
+                        <Border Classes="panel-header" Margin="0,0,0,8">
+                            <TextBlock x:Name="headerAdvanced" Classes="header" Text="Advanced" />
+                        </Border>
+                        <CheckBox x:Name="checkDebug"
+                                  Content="Debug logging (F-keys + toggle hotkey only)"
+                                  Margin="0,2"
+                                  IsCheckedChanged="CheckDebug_Changed" />
+                        <TextBlock Classes="hint" x:Name="labelDebugHint"
+                                   Text="Logs only the keys involved in remapping. Alphanumeric and other keys are never logged."
+                                   Margin="22,2,0,0" />
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+
+</Window>

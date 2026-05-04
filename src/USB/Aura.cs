@@ -10,7 +10,7 @@ namespace GHelper.Linux.USB;
 /// Values 20+ are software-driven "custom RGB" modes that don't use
 /// the firmware mode bytes - they timer-paint via ApplyDirect.
 /// 22 (AMBIENT) is intentionally reserved to keep numeric parity with
-/// upstream Windows g-helper; not yet implemented on Linux because
+/// upstream G-Helper; not yet implemented on Linux because
 /// Wayland screen capture needs xdg-desktop-portal Screencast wiring.
 /// </summary>
 public enum AuraMode : int
@@ -36,6 +36,24 @@ public enum AuraMode : int
     Battery = 23,
     // Two-color gradient across keyboard + lightbar zones (Strix only). Pick Color1 + Color2; blends left→right.
     Gradient = 24,
+    // 8-zone diagnostic rainbow (R/O/Y/G/C/B/M/W) painted across keyboard + lightbar.
+    // Used to verify zone wiring on per-key/multi-zone hardware after detection.
+    ZoneTest = 25,
+}
+
+/// <summary>
+/// Backlight type byte returned in <c>response[9]</c> from the AURA capability
+/// query (see <see cref="HidrawHelper.QueryAuraCapabilities"/>).
+/// </summary>
+public enum AuraBacklightType : byte
+{
+    Unknown = 0x00,
+    /// <summary>4-zone keyboard (Strix limited / G614 4-zone). Direct RGB targets 4 keyboard + 4 lightbar zones.</summary>
+    MultiZone = 0x02,
+    /// <summary>Per-key RGB Strix. Direct RGB targets ~167 individual keys + 11 lightbar/logo/lid zones.</summary>
+    PerKey = 0x03,
+    /// <summary>Single-zone (whole keyboard one color). Used by some lower-end Strix and dynamic-lighting models.</summary>
+    SingleZone = 0x04,
 }
 
 /// <summary>
@@ -92,6 +110,14 @@ public static class Aura
     public static byte Color2G = 0;
     public static byte Color2B = 0;
 
+    // Rear-light state (Z13 only). The rear glow window/logo on the lid is a
+    // separate AURA device (PID 0x18C6) and accepts its own AuraMessage with
+    // independent mode + color. Speed shares the main keyboard's speed value.
+    private static AuraMode _rearMode = AuraMode.AuraStatic;
+    public static byte RearR = 255;
+    public static byte RearG = 255;
+    public static byte RearB = 255;
+
     private static bool _backlight = true;
     private static bool _initDirect = false;
 
@@ -128,7 +154,7 @@ public static class Aura
     // Model detection
     //
     // _isACPI controls whether we use the sysfs kbd_rgb_mode path (TUF)
-    // in addition to the HID AURA protocol. On Windows, G-Helper always
+    // in addition to the HID AURA protocol. Upstream G-Helper always
     // sends BOTH HID and WMI/ACPI commands for TUF models simultaneously.
     // The WMI/ACPI path (sysfs kbd_rgb_mode on Linux) is what actually
     // controls the keyboard on TUF hardware. The HID commands also fire
@@ -138,54 +164,56 @@ public static class Aura
     // device was detected (FA608PP), but that disabled the sysfs path
     // which is the one that actually works.
     private static bool _isACPI = AppConfig.IsTUF() || AppConfig.IsVivoZenPro();
-    private static bool _isStrix = AppConfig.IsAdvancedRGB() && !AppConfig.IsNoDirectRGB();
-    private static bool _isStrix4Zone = AppConfig.Is4ZoneRGB();
-    private static bool _isSingleColor = AppConfig.IsSingleColor();
+
+    // Hardware-detected state (populated by DetectBacklightType())
+    //
+    // When the AURA capability probe succeeds, these describe the actual zones
+    // and features the keyboard reports. When BacklightType stays Unknown the
+    // device gets the basic AURA mode set - no model-list backstop.
+
+    /// <summary>The probed backlight type byte (response[9] from the capability query).</summary>
+    public static AuraBacklightType BacklightType { get; private set; } = AuraBacklightType.Unknown;
+
+    /// <summary>True if a successful capability probe set <see cref="BacklightType"/>.
+    /// When false the device falls through to the basic single-zone path.</summary>
+    public static bool IsBacklightDetected => BacklightType != AuraBacklightType.Unknown;
+
+    /// <summary>Probed: device has a logo zone (lid logo on Strix/Zephyrus).</summary>
+    public static bool HasLogo { get; private set; }
+
+    /// <summary>Probed: device has a front lightbar.</summary>
+    public static bool HasLightbar { get; private set; }
+
+    /// <summary>Probed: device has rear-glow (rear panel light, e.g. Strix Scar / Z13 lid).</summary>
+    public static bool HasRearglow { get; private set; }
+
+    /// <summary>White-only keyboard flag. Initialized from <see cref="Helpers.AppConfig.IsWhite"/>
+    /// (model list); FORCED to <c>true</c> by the probe FEAT2_ONE_ZONE_RED_EFFECT bit.
+    /// AuraMessage / GetModes / UI checks read it directly without a wrapper.</summary>
+    public static bool isWhite = AppConfig.IsWhite();
+
+    // Numpad keyboards (G713R) need an alternate per-key zone map - the extra
+    // numpad column shifts zone boundaries left of the modifier cluster.
+    // Static cache avoids re-querying AppConfig on every direct-RGB frame.
+    private static readonly bool _isStrixNumpad = AppConfig.IsStrixNumpad();
+
+    // Strix path selectors
+    // No AppConfig fallback: when BacklightType==Unknown both selectors are
+    // false, so the device takes the basic single-color direct-RGB path.
+    // IsNoDirectRGB still excludes GA503 / G533Q / GU502 (confirmed broken).
+
+    /// <summary>True for Strix per-key OR multi-zone keyboards (use direct-RGB packet path).</summary>
+    private static bool _isStrix =>
+        (BacklightType == AuraBacklightType.MultiZone || BacklightType == AuraBacklightType.PerKey)
+        && !AppConfig.IsNoDirectRGB();
+
+    /// <summary>True for 4-zone Strix keyboards (use the 4-zone direct-RGB packet path).</summary>
+    private static bool _isStrix4Zone => BacklightType == AuraBacklightType.MultiZone;
 
     /// <summary>True if this device exposes per-zone direct RGB
     /// (Strix per-key or 4-zone). Used by CustomRgb.ApplyGradient
     /// to decide between per-zone painting and single-color fallback.</summary>
     public static bool IsStrixZoned => _isStrix || _isStrix4Zone;
-
-    // Mode dictionaries
-
-    private static Dictionary<AuraMode, string> ModesSingleColor => new()
-    {
-        { AuraMode.AuraStatic, Labels.Get("aura_static") },
-        { AuraMode.AuraBreathe, Labels.Get("aura_breathe") },
-        { AuraMode.AuraStrobe, Labels.Get("aura_strobe") },
-    };
-
-    private static Dictionary<AuraMode, string> ModesStandard => new()
-    {
-        { AuraMode.AuraStatic, Labels.Get("aura_static") },
-        { AuraMode.AuraBreathe, Labels.Get("aura_breathe") },
-        { AuraMode.AuraColorCycle, Labels.Get("aura_color_cycle") },
-        { AuraMode.AuraRainbow, Labels.Get("aura_rainbow") },
-        { AuraMode.AuraStrobe, Labels.Get("aura_strobe") },
-        { AuraMode.Heatmap, Labels.Get("aura_heatmap") },
-        { AuraMode.GpuMode, Labels.Get("aura_gpu_mode") },
-        { AuraMode.Battery, Labels.Get("aura_battery") },
-    };
-
-    private static Dictionary<AuraMode, string> ModesStrix => new()
-    {
-        { AuraMode.AuraStatic, Labels.Get("aura_static") },
-        { AuraMode.AuraBreathe, Labels.Get("aura_breathe") },
-        { AuraMode.AuraColorCycle, Labels.Get("aura_color_cycle") },
-        { AuraMode.AuraRainbow, Labels.Get("aura_rainbow") },
-        { AuraMode.Star, Labels.Get("aura_star") },
-        { AuraMode.Rain, Labels.Get("aura_rain") },
-        { AuraMode.Highlight, Labels.Get("aura_highlight") },
-        { AuraMode.Laser, Labels.Get("aura_laser") },
-        { AuraMode.Ripple, Labels.Get("aura_ripple") },
-        { AuraMode.AuraStrobe, Labels.Get("aura_strobe") },
-        { AuraMode.Comet, Labels.Get("aura_comet") },
-        { AuraMode.Flash, Labels.Get("aura_flash") },
-        { AuraMode.Heatmap, Labels.Get("aura_heatmap") },
-        { AuraMode.Battery, Labels.Get("aura_battery") },
-        { AuraMode.Gradient, Labels.Get("aura_gradient") },
-    };
 
     // Properties
 
@@ -199,6 +227,15 @@ public static class Aura
     {
         get => _speed;
         set => _speed = GetSpeeds().ContainsKey(value) ? value : AuraSpeed.Normal;
+    }
+
+    /// <summary>Mode for the rear glow zone (Z13). Validated against
+    /// <see cref="GetRearModes"/> on set; falls back to <see cref="AuraMode.AuraStatic"/>
+    /// for unsupported values.</summary>
+    public static AuraMode RearMode
+    {
+        get => _rearMode;
+        set => _rearMode = GetRearModes().ContainsKey(value) ? value : AuraMode.AuraStatic;
     }
 
     /// <summary>Whether the current mode supports a second color (Breathe + Gradient, non-ACPI).</summary>
@@ -218,19 +255,115 @@ public static class Aura
             && _mode != AuraMode.Battery;
     }
 
+    /// <summary>Whether the current mode honours the speed dropdown.
+    /// <list type="bullet">
+    /// <item><c>AuraStatic</c>: no animation, speed has no effect.</item>
+    /// <item><c>Heatmap</c>/<c>GpuMode</c>/<c>Battery</c>: software-driven, polled at fixed intervals; speed has no effect.</item>
+    /// <item><c>Gradient</c>/<c>ZoneTest</c>: static paint, speed has no effect.</item>
+    /// <item>All other modes (Breathe / ColorCycle / Rainbow / Strobe / per-key effects):
+    /// firmware uses the speed byte to set animation rate.</item>
+    /// </list>
+    /// Used to hide the speed combo in MainWindow / ExtraWindow when speed has no effect.
+    /// </summary>
+    public static bool UsesSpeed()
+    {
+        return _mode != AuraMode.AuraStatic
+            && _mode != AuraMode.Heatmap
+            && _mode != AuraMode.GpuMode
+            && _mode != AuraMode.Battery
+            && _mode != AuraMode.Gradient
+            && _mode != AuraMode.ZoneTest;
+    }
+
     // Mode/Speed lists
 
     public static Dictionary<AuraMode, string> GetModes()
     {
-        if (_isSingleColor)
-            return ModesSingleColor;
+        // White-only / single-color: tiny fixed set (probe FEAT2 ONE_ZONE_RED_EFFECT
+        // or AppConfig.IsWhite model list).
+        if (isWhite)
+        {
+            return new Dictionary<AuraMode, string>
+            {
+                { AuraMode.AuraStatic, Labels.Get("aura_static") },
+                { AuraMode.AuraBreathe, Labels.Get("aura_breathe") },
+                { AuraMode.AuraStrobe, Labels.Get("aura_strobe") },
+            };
+        }
 
-        if (AppConfig.IsAdvancedRGB() && !AppConfig.Is4ZoneRGB())
-            return ModesStrix;
+        // Dynamic-Lighting-only models (S560, M540, UX760) - reduced firmware effects
+        if (AppConfig.IsDynamicLightingOnly())
+        {
+            return new Dictionary<AuraMode, string>
+            {
+                { AuraMode.AuraStatic, Labels.Get("aura_static") },
+                { AuraMode.AuraBreathe, Labels.Get("aura_color_cycle") },
+                { AuraMode.AuraRainbow, Labels.Get("aura_rainbow") },
+                { AuraMode.AuraStrobe, Labels.Get("aura_strobe") },
+            };
+        }
 
-        var modes = new Dictionary<AuraMode, string>(ModesStandard);
-        if (_isACPI)
-            modes.Remove(AuraMode.AuraRainbow);
+        // Detection-driven build. When BacklightType == Unknown (probe failed
+        // or not run), perKey & multiZone are both false, so the device gets
+        // the basic mode set: Static, Breathe, ColorCycle, [Rainbow], Strobe,
+        // Heatmap, GpuMode, Battery.
+        bool perKey = BacklightType == AuraBacklightType.PerKey;
+        bool multiZone = BacklightType == AuraBacklightType.MultiZone;
+        bool isStrixKb = perKey || multiZone;
+        bool isAlly = AppConfig.IsAlly();
+
+        var modes = new Dictionary<AuraMode, string>
+        {
+            [AuraMode.AuraStatic] = Labels.Get("aura_static"),
+            [AuraMode.AuraBreathe] = Labels.Get("aura_breathe"),
+            [AuraMode.AuraColorCycle] = Labels.Get("aura_color_cycle"),
+        };
+
+        // Rainbow not supported on TUF/ACPI sysfs path
+        if (!_isACPI)
+            modes[AuraMode.AuraRainbow] = Labels.Get("aura_rainbow");
+
+        if (perKey)
+        {
+            // Per-key animation effects. Comet (0x0B) and Flash (0x0C) are
+            // included here (NOT in the wider isStrixKb block) because the
+            // firmware only implements them on full per-key hardware - on
+            // 4-zone MultiZone keyboards (e.g. G614JVR) the firmware silently
+            // ignores these mode bytes. asusctl's authoritative model database
+            // (rog-aura/data/aura_support.ron) confirms: G614J/JJ/JZ list only
+            // basic firmware modes; G614JIR/JU (per-key advanced_type) list the
+            // full set including Comet/Flash. Diverges from upstream which
+            // offers these on MultiZone too.
+            modes[AuraMode.Star] = Labels.Get("aura_star");
+            modes[AuraMode.Rain] = Labels.Get("aura_rain");
+            modes[AuraMode.Highlight] = Labels.Get("aura_highlight");
+            modes[AuraMode.Laser] = Labels.Get("aura_laser");
+            modes[AuraMode.Ripple] = Labels.Get("aura_ripple");
+            modes[AuraMode.Comet] = Labels.Get("aura_comet");
+            modes[AuraMode.Flash] = Labels.Get("aura_flash");
+        }
+
+        modes[AuraMode.AuraStrobe] = Labels.Get("aura_strobe");
+
+        // Ally is a special case: only Battery custom mode (no Heatmap/GpuMode)
+        if (isAlly)
+        {
+            modes[AuraMode.Battery] = Labels.Get("aura_battery");
+            return modes;
+        }
+
+        // Software-driven Linux extras (always available outside Ally)
+        modes[AuraMode.Heatmap] = Labels.Get("aura_heatmap");
+        modes[AuraMode.GpuMode] = Labels.Get("aura_gpu_mode");
+        modes[AuraMode.Battery] = Labels.Get("aura_battery");
+
+        // Gradient + ZoneTest only on per-zone hardware (probe-confirmed)
+        if (isStrixKb)
+        {
+            modes[AuraMode.Gradient] = Labels.Get("aura_gradient");
+            modes[AuraMode.ZoneTest] = Labels.Get("aura_zone_test");
+        }
+
         return modes;
     }
 
@@ -241,6 +374,23 @@ public static class Aura
             { AuraSpeed.Slow, Labels.Get("speed_slow") },
             { AuraSpeed.Normal, Labels.Get("speed_normal") },
             { AuraSpeed.Fast, Labels.Get("speed_fast") },
+        };
+    }
+
+    /// <summary>
+    /// Modes available for the rear glow zone (Z13). Restricted to the 5 firmware
+    /// modes the rear-light controller supports - none of the per-key effects
+    /// (Star/Rain/etc.) or software-driven modes (Heatmap/Battery) apply.
+    /// </summary>
+    public static Dictionary<AuraMode, string> GetRearModes()
+    {
+        return new Dictionary<AuraMode, string>
+        {
+            { AuraMode.AuraStatic,     Labels.Get("aura_static") },
+            { AuraMode.AuraBreathe,    Labels.Get("aura_breathe") },
+            { AuraMode.AuraColorCycle, Labels.Get("aura_color_cycle") },
+            { AuraMode.AuraRainbow,    Labels.Get("aura_rainbow") },
+            { AuraMode.AuraStrobe,     Labels.Get("aura_strobe") },
         };
     }
 
@@ -270,16 +420,32 @@ public static class Aura
         return (255 << 24) | (Color2R << 16) | (Color2G << 8) | Color2B;
     }
 
+    public static void SetRearColor(int argb)
+    {
+        RearR = (byte)((argb >> 16) & 0xFF);
+        RearG = (byte)((argb >> 8) & 0xFF);
+        RearB = (byte)(argb & 0xFF);
+    }
+
+    public static int GetRearColorArgb()
+    {
+        return (255 << 24) | (RearR << 16) | (RearG << 8) | RearB;
+    }
+
     // Protocol messages
 
     /// <summary>
     /// Build the 17-byte AURA mode message.
     /// Format: [0x5D, 0xB3, zone, mode, R, G, B, speed, direction, random, R2, G2, B2]
+    /// <para>White-only keyboards (<see cref="isWhite"/>) zero out the G/B channels
+    /// so the firmware emits clean white instead of color-mixed. The mono flag is
+    /// read from the static field at message-build time.</para>
     /// </summary>
     public static byte[] AuraMessage(AuraMode mode, byte r, byte g, byte b,
                                       byte r2, byte g2, byte b2,
-                                      int speed, bool mono = false)
+                                      int speed)
     {
+        bool mono = isWhite;
         byte[] msg = new byte[17];
         msg[0] = AsusHid.AURA_ID;
         msg[1] = 0xB3;
@@ -301,65 +467,162 @@ public static class Aura
     }
 
     /// <summary>
-    /// Initialize the AURA device (handshake sequence).
+    /// Initialize the AURA device (handshake sequence) and probe hardware
+    /// capabilities to populate <see cref="BacklightType"/> + <c>Has*</c>
+    /// flags. TUF/ACPI models skip the probe (they don't speak the AURA
+    /// HID feature-report protocol; sysfs kbd_rgb_mode is the real path).
+    ///
+    /// <para>Synchronous so callers (MainWindow startup, ExtraWindow form-open
+    /// retry) see populated state immediately on return. Adds ~50-100ms blocking
+    /// to the calling thread for the SetFeature/GetFeature ioctl pair on first
+    /// call; subsequent calls early-exit in DetectBacklightType when state is
+    /// already populated.</para>
     /// </summary>
     public static void Init()
     {
-        AsusHid.Write(new List<byte[]>
-        {
-            new byte[] { AsusHid.AURA_ID, 0xB9 },
-            Encoding.ASCII.GetBytes("]ASUS Tech.Inc."),
-            new byte[] { AsusHid.AURA_ID, 0x05, 0x20, 0x31, 0, 0x1A },
-        }, "AuraInit");
+        // Modern AURA firmware prefers feature-report transport over output
+        // writes for the handshake (matches Armoury Crate and asusctl). Capability
+        // probe (0x05 0x20 0x31 0 0x20) runs from DetectBacklightType() below.
+        AsusHid.SetFeatureAura([AsusHid.AURA_ID, 0xB9]);
+        AsusHid.SetFeatureAura([AsusHid.AURA_ID, .. Encoding.ASCII.GetBytes("ASUS Tech.Inc.")]);
 
-        // Z13 and other Dynamic Lighting models need an additional init command
-        // to enable the rear window/logo RGB controller (Windows g-helper pattern)
+        // Run probe synchronously so callers see populated BacklightType + Has*
+        // flags on return. ~50-100ms first call; near-instant when re-invoked
+        // (DetectBacklightType early-exits via IsBacklightDetected).
+        DetectBacklightType();
+
+        // Dynamic Lighting init enables the rear window / logo RGB controller.
+        // Upstream only fires this for Z13; we extend to Slash + IntelHX + TUF
+        // (broader IsDynamicLighting set) because the I2C-HID + asus-armoury
+        // path on those chassis needs the same handshake before lights respond.
         if (AppConfig.IsDynamicLighting())
-            AsusHid.Write(new byte[] { AsusHid.AURA_ID, 0xC0, 0x03, 0x01 }, "DynamicLightingInit");
+            AsusHid.SetFeatureAura(new byte[] { AsusHid.AURA_ID, 0xC0, 0x03, 0x01 });
 
-        // Probe hardware capabilities via GetFeature (diagnostic - log raw response)
-        // This runs async to avoid blocking startup; results are logged for analysis.
-        Task.Run(() =>
+        // ProArt models need a separate INPUT_ID handshake to wake their
+        // RGB controller.
+        if (AppConfig.IsProArt())
+        {
+            AsusHid.WriteInput(new byte[] { AsusHid.INPUT_ID, 0x05, 0x20, 0x31, 0x00, 0x08 }, "ProArt Init");
+            AsusHid.WriteInput(new byte[] { AsusHid.INPUT_ID, 0xBA, 0xC5, 0xC4 }, "ProArt Init");
+            AsusHid.WriteInput(new byte[] { AsusHid.INPUT_ID, 0xD0, 0x8F, 0x01 }, "ProArt Init");
+            AsusHid.WriteInput(new byte[] { AsusHid.INPUT_ID, 0xD0, 0x85, 0xFF }, "ProArt Init");
+        }
+    }
+
+    /// <summary>
+    /// Send the AURA capability query and parse the response into
+    /// <see cref="BacklightType"/> / <c>Has*</c> / <see cref="isWhite"/> state.
+    /// Ported from upstream G-Helper's AURA detection (PR #5299).
+    ///
+    /// <para>Skipped on TUF/ACPI - those models are driven via sysfs and don't
+    /// expose the capability query.</para>
+    /// </summary>
+    private static void DetectBacklightType()
+    {
+        if (_isACPI)
+            return;
+
+        // Query: [AURA_ID, 0x05, 0x20, 0x31, 0x00, 0x20]
+        byte[] query = { AsusHid.AURA_ID, 0x05, 0x20, 0x31, 0x00, 0x20 };
+
+        // Already probed once - resend the query as a keep-alive so the firmware
+        // doesn't sleep its capability state, but skip the parse.
+        if (IsBacklightDetected)
         {
             try
             {
-                var response = HidrawHelper.QueryAuraCapabilities();
-                if (response != null)
-                {
-                    Logger.WriteLine($"AURA Capabilities (hardware query):");
-                    Logger.WriteLine($"  KBBackLightType[9]=0x{response[9]:X2} ({response[9] switch
-                    {
-                        0 => "SingleColor",
-                        1 => "MinimalZone",
-                        2 => "MultiZone",
-                        3 => "PerKey",
-                        4 => "FourZone",
-                        _ => "Unknown"
-                    }})");
-                    Logger.WriteLine($"  Zones[13]=0x{response[13]:X2} (Logo={((response[13] & 0x01) != 0 ? "yes" : "no")}" +
-                        $", Lightbar={((response[13] & 0x02) != 0 ? "yes" : "no")}" +
-                        $", VCut={((response[13] & 0x10) != 0 ? "yes" : "no")}" +
-                        $", Aero={((response[13] & 0x20) != 0 ? "yes" : "no")}" +
-                        $", Bump={((response[13] & 0x40) != 0 ? "yes" : "no")}" +
-                        $", Rearglow={((response[13] & 0x80) != 0 ? "yes" : "no")})");
-                    Logger.WriteLine($"  Version[10]=0x{response[10]:X2}, ModelSeries[17]=0x{response[17]:X2} ({response[17] switch
-                    {
-                        1 => "Strix",
-                        2 => "Flow",
-                        4 => "Zephyrus",
-                        8 => "TUF",
-                        0x10 => "SE",
-                        0x20 => "Desktop",
-                        _ => $"0x{response[17]:X2}"
-                    }})");
-                    Logger.WriteLine($"  LEDs: Bar={response[18]}, Logo={response[19]}, Aero={response[20]}, VCut={response[21]}, Rear={response[22]}, Bump={response[23]}");
-                }
+                AsusHid.AuraProbe(query);
             }
             catch (Exception ex)
             {
-                Logger.WriteLine($"AURA Capabilities probe failed: {ex.Message}");
+                Logger.WriteLine($"AURA probe keep-alive failed: {ex.Message}");
             }
-        });
+            return;
+        }
+
+        try
+        {
+            var response = AsusHid.AuraProbe(query);
+            if (response is null || response.Length < 18)
+                return;
+
+            byte typeByte = response[9];
+            byte year = response[10];
+            byte layout = response[12];
+            byte feat1 = response[13];
+            byte feat2 = response[14];
+            // [17] family is only valid when year >= 0x23; older firmware leaves it 0
+            byte family = year >= 0x23 ? response[17] : (byte)0;
+
+            // Feature bitmasks (firmware-defined)
+            const byte FEAT1_LOGO = 0x01;
+            const byte FEAT1_LIGHTBAR = 0x02;
+            const byte FEAT1_VCUT = 0x10;
+            const byte FEAT1_AERO = 0x20;
+            const byte FEAT1_BUMP = 0x40;
+            const byte FEAT1_REARGLOW = 0x80;
+            const byte FEAT2_DEFAULT_COLOR = 0x04;
+            const byte FEAT2_RGB_WHEEL = 0x08;
+            const byte FEAT2_ONE_ZONE_RED_EFFECT = 0x10;
+            const byte FEAT2_BIT_FORMAT_KEY_POS = 0x40;
+
+            string familyName = family switch
+            {
+                0x01 => "Strix",
+                0x02 => "Flow",
+                0x04 => "Zephyrus",
+                0x08 => "TUF",
+                0x10 => "NR2301",
+                0x20 => "Desktop",
+                0x00 => "(pre-2023)",
+                _ => $"unknown(0x{family:X2})"
+            };
+
+            Logger.WriteLine(
+                $"Aura Probe: Type=0x{typeByte:X2} Year=0x{year:X2} Layout=0x{layout:X2} " +
+                $"Feat1=0x{feat1:X2} Feat2=0x{feat2:X2} Family=0x{family:X2} ({familyName})");
+            Logger.WriteLine(
+                $"Aura Probe Feat1: Logo={(feat1 & FEAT1_LOGO) != 0} Lightbar={(feat1 & FEAT1_LIGHTBAR) != 0} " +
+                $"VCut={(feat1 & FEAT1_VCUT) != 0} Aero={(feat1 & FEAT1_AERO) != 0} " +
+                $"Bump={(feat1 & FEAT1_BUMP) != 0} Rearglow={(feat1 & FEAT1_REARGLOW) != 0}");
+            Logger.WriteLine(
+                $"Aura Probe Feat2: DefaultColor={(feat2 & FEAT2_DEFAULT_COLOR) != 0} RGBWheel={(feat2 & FEAT2_RGB_WHEEL) != 0} " +
+                $"OneZoneRedEffect={(feat2 & FEAT2_ONE_ZONE_RED_EFFECT) != 0} PerKeyMap={(feat2 & FEAT2_BIT_FORMAT_KEY_POS) != 0}");
+
+            // Map type byte → enum. Unknown values stay Unknown so the device
+            // falls through to the basic AURA mode set on next GetModes() call.
+            BacklightType = typeByte switch
+            {
+                (byte)AuraBacklightType.MultiZone => AuraBacklightType.MultiZone,
+                (byte)AuraBacklightType.PerKey => AuraBacklightType.PerKey,
+                (byte)AuraBacklightType.SingleZone => AuraBacklightType.SingleZone,
+                _ => AuraBacklightType.Unknown
+            };
+
+            if (!IsBacklightDetected)
+                return;
+
+            // Persist for diagnostics + future fast-path read on resume.
+            AppConfig.Set("backlight_type", typeByte);
+
+            HasLogo = (feat1 & FEAT1_LOGO) != 0;
+            HasLightbar = (feat1 & FEAT1_LIGHTBAR) != 0;
+            HasRearglow = (feat1 & FEAT1_REARGLOW) != 0;
+
+            // FEAT2 ONE_ZONE_RED_EFFECT means white-only keyboard (single-zone
+            // red firmware effect mapped to white). Force-flip the mutable static
+            // so GetModes / AuraMessage / UI all read the live value.
+            if ((feat2 & FEAT2_ONE_ZONE_RED_EFFECT) != 0)
+                isWhite = true;
+
+            Logger.WriteLine(
+                $"Aura Probe DONE: BacklightType={BacklightType} HasLogo={HasLogo} HasLightbar={HasLightbar} " +
+                $"HasRearglow={HasRearglow} isWhite={isWhite}");
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine($"AURA DetectBacklightType failed: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -406,10 +669,9 @@ public static class Aura
         if (brightness == 0)
             _backlight = false;
 
-        if (AppConfig.IsInputBacklight())
-            AsusHid.WriteInput(new byte[] { AsusHid.INPUT_ID, 0xBA, 0xC5, 0xC4, (byte)brightness }, log);
-        else
-            AsusHid.Write(new byte[] { AsusHid.AURA_ID, 0xBA, 0xC5, 0xC4, (byte)brightness }, log);
+        // All keyboards accept brightness via INPUT_ID (0x5A). The legacy
+        // AURA_ID (0x5D) path was a leftover from older firmware behaviour.
+        AsusHid.WriteInput(new byte[] { AsusHid.INPUT_ID, 0xBA, 0xC5, 0xC4, (byte)brightness }, log);
 
         // TUF/VivoZenPro: also write sysfs brightness (HID may not be available)
         if (_isACPI)
@@ -531,7 +793,7 @@ public static class Aura
 
         // Z13: rear window/logo is controlled by a mix of Logo + Bar + Lid flags.
         // Copy Logo state into Bar and Lid so the rear panel light responds to
-        // the "Logo" checkboxes in the UI (Windows g-helper pattern).
+        // the "Logo" checkboxes in the UI (upstream pattern).
         if (AppConfig.IsZ13())
         {
             flags.AwakeBar = flags.AwakeLogo;
@@ -556,21 +818,81 @@ public static class Aura
             }
         }
 
+        // Ally / Ally X: a separate report ID (0xD1 not 0xBD) and a different
+        // bit layout. Single byte packs all 4 power states for the gamepad
+        // backlight (no logo / lightbar / lid concept on a handheld). Matches
+        // asusctl rog-aura/src/keyboard/power.rs:113-118 (PowerZones::Ally).
+        if (AppConfig.IsAlly())
+        {
+            byte bits = 0;
+            if (flags.BootKeyb)
+                bits |= 1 << 0;
+            if (flags.AwakeKeyb)
+                bits |= 1 << 1;
+            if (flags.SleepKeyb)
+                bits |= 1 << 2;
+            if (flags.ShutdownKeyb)
+                bits |= 1 << 3;
+            AsusHid.Write(new byte[] { AsusHid.AURA_ID, 0xD1, 0x09, 0x01, bits }, "AuraPower(Ally)");
+            return;
+        }
+
         AsusHid.Write(AuraPowerMessage(flags));
+    }
+
+    /// <summary>
+    /// Apply the rear glow zone (Z13 only) - sends an AuraMessage routed to
+    /// the rear-light device (PID 0x18C6). Reads <c>rear_mode</c> + <c>rear_color</c>
+    /// from AppConfig; speed shares the main keyboard's <see cref="Speed"/> value.
+    /// Early-returns on non-<see cref="AppConfig.HasRearLight"/> models so it's
+    /// safe to call unconditionally from <see cref="ApplyAura"/>.
+    /// </summary>
+    public static void ApplyRearLight()
+    {
+        if (!AppConfig.HasRearLight())
+            return;
+
+        RearMode = (AuraMode)AppConfig.Get("rear_mode");
+        SetRearColor(AppConfig.Get("rear_color", unchecked((int)0xFFFFFFFF)));
+
+        int speedByte = Speed switch
+        {
+            AuraSpeed.Normal => 0xEB,
+            AuraSpeed.Fast => 0xF5,
+            AuraSpeed.Slow => 0xE1,
+            _ => 0xEB
+        };
+
+        var msg = AuraMessage(RearMode, RearR, RearG, RearB, RearR, RearG, RearB, speedByte);
+        AsusHid.Write(new List<byte[]> { msg, MESSAGE_SET, MESSAGE_APPLY }, "Rear", AsusHid.REAR_LIGHT_PIDS);
     }
 
     // 4-zone direct RGB map
 
     /// <summary>
-    /// Zone mapping for 4-zone Strix keyboards.
+    /// Zone mapping for 4-zone Strix keyboards (default wiring).
     /// 6 keyboard LEDs (Z1-Z4 + 2 unused) + 6 lightbar LEDs.
+    /// Lightbar is wired R→L (matches OpenRGB Value 169..174).
     /// </summary>
     private static readonly byte[] Packet4Zone = new byte[]
     {
         // Z1  Z2  Z3  Z4  NA  NA  (keyboard zones)
            0,  1,  2,  3,  0,  0,
-        // RR  R   RM  LM  L   LL  (lightbar)
+        // R1  R2  R3  L3  L2  L1  (lightbar, R->L wire ascending)
            7,  7,  6,  5,  4,  4,
+    };
+
+    /// <summary>
+    /// Zone mapping for the G513 family - lightbar is physically wired L→R
+    /// instead of R→L. Selected by <see cref="AppConfig.IsStrix4ZoneFlipped"/>
+    /// in <see cref="ApplyDirectZones"/> and <see cref="ApplyDirectLightbar"/>.
+    /// </summary>
+    private static readonly byte[] Packet4ZoneFlipped = new byte[]
+    {
+        // Z1  Z2  Z3  Z4  NA  NA  (keyboard zones)
+           0,  1,  2,  3,  0,  0,
+        // L1  L2  L3  R3  R2  R1  (lightbar, L->R wire ascending - G513 quirk)
+           4,  4,  5,  6,  7,  7,
     };
 
     // Per-key maps (for per-key RGB Strix)
@@ -615,6 +937,35 @@ public static class Aura
              0,   0,   0,   0,            1,              2,   2,   2,        3,   3,   3,   3,         3,   3,   3,
         /* LB1  LB1  LB3                                                    ARW? ARW? ARW? ARW?       LB4  LB5  LB6  */
              5,   5,   4,                                                     3,   3,   3,   3,         6,   7,   7,
+        /* KSTN LOGO LIDL LIDR */
+             3,   0,   0,   3,
+    };
+
+    /// <summary>
+    /// Per-key zone map for Strix numpad (G713R) keyboards. The numpad column
+    /// shifts the zone boundaries left of the modifier cluster: zones 0/1/2/3
+    /// span <i>five</i> columns each instead of four. Selected by
+    /// <see cref="_isStrixNumpad"/> in <see cref="ApplyDirectZones"/>; everywhere
+    /// else <see cref="PacketZone"/> applies.
+    /// </summary>
+    private static readonly byte[] PacketZoneNumpad = new byte[]
+    {
+        /*          VDN  VUP  MICM HPFN ARMC */
+                     0,   0,   0,   1,   1,
+        /* ESC       F1   F2   F3   F4   F5   F6   F7   F8   F9  F10  F11  F12            DEL15 DEL17 PAUS PRT  HOM */
+             0,       0,   0,   0,   1,   1,   1,   1,   1,   2,   2,   2,   2,              3,   3,   3,   3,   3,
+        /* BKTK  1    2    3    4    5    6    7    8    9    0    -    =  BSPC BSPC BSPC PLY15 NMLK NMDV NMTM NMMI */
+             0,   0,   0,   0,   0,   1,   1,   1,   1,   1,   2,   2,   2,   2,   2,   2,   3,   3,   3,   3,   3,
+        /* TAB   Q    W    E    R    T    Y    U    I    O    P    [    ]    \            STP15 NM7  NM8  NM9  NMPL */
+             0,   0,   0,   0,   0,   1,   1,   1,   1,   1,   2,   2,   2,   2,              3,   3,   3,   3,   3,
+        /* CPLK  A    S    D    F    G    H    J    K    L    ;    "    #  ENTR ENTR ENTR PRV15 NM4  NM5  NM6  NMPL */
+             0,   0,   0,   0,   0,   1,   1,   1,   1,   1,   2,   2,   2,   2,   2,   2,   3,   3,   3,   3,   3,
+        /* LSFT ISO\ Z    X    C    V    B    N    M    ,    .    /  RSFT RSFT RSFT ARWU NXT15 NM1  NM2  NM3  NMER */
+             0,   0,   0,   0,   0,   1,   1,   1,   1,   1,   2,   2,   2,   2,   2,   2,   3,   3,   3,   3,   3,
+        /* LCTL LFNC LWIN LALT           SPC            RALT RFNC RCTL      ARWL ARWD ARWR PRT15      NM0  NMPD NMER */
+             0,   0,   0,   0,            1,              1,   2,   2,        2,   2,   2,   3,         3,   3,   3,
+        /* LB1  LB1  LB3                                                    ARW? ARW? ARW? ARW?       LB4  LB5  LB6  */
+             5,   5,   4,                                                     2,   2,   2,   3,         6,   7,   7,
         /* KSTN LOGO LIDL LIDR */
              3,   0,   0,   3,
     };
@@ -687,6 +1038,9 @@ public static class Aura
             case AuraMode.Gradient:
                 CustomRgb.ApplyGradient();
                 return;  // static, no timer
+            case AuraMode.ZoneTest:
+                CustomRgb.ApplyZoneTest();
+                return;  // static diagnostic, no timer
         }
 
         // Map speed enum to protocol byte values
@@ -701,11 +1055,15 @@ public static class Aura
         // Build and send the mode message
         var msg = AuraMessage(Mode, ColorR, ColorG, ColorB,
                               Color2R, Color2G, Color2B,
-                              speedByte, _isSingleColor);
+                              speedByte);
 
         // Restrict to keyboard / lightbar PIDs so the rear-light device (Z13)
         // doesn't receive keyboard-protocol packets it can't interpret.
         AsusHid.Write(new List<byte[]> { msg, MESSAGE_SET, MESSAGE_APPLY }, "Aura", AsusHid.MAIN_AURA_PIDS);
+
+        // Z13 rear glow zone - independent device (PID 0x18C6), own mode/color.
+        // Early-returns on non-Z13 hardware (HasRearLight = IsZ13).
+        ApplyRearLight();
 
         // TUF/VivoZenPro: use sysfs kbd_rgb_mode (primary) + multi_intensity (fallback)
         if (_isACPI)
@@ -770,7 +1128,7 @@ public static class Aura
         {
             AsusHid.Write(new List<byte[]>
             {
-                AuraMessage(AuraMode.AuraStatic, r, g, b, r, g, b, 0xEB, _isSingleColor),
+                AuraMessage(AuraMode.AuraStatic, r, g, b, r, g, b, 0xEB),
                 MESSAGE_SET
             }, null, AsusHid.MAIN_AURA_PIDS);
             return;
@@ -794,8 +1152,11 @@ public static class Aura
         if (init || _initDirect)
         {
             _initDirect = false;
-            Init();
-            AsusHid.WriteAura(new byte[] { AsusHid.AURA_ID, 0xBC, 1 });
+            // Re-handshake with SetFeature + a small delay before the first
+            // direct packet keeps the firmware from dropping the next frame
+            // on cold-start.
+            AsusHid.SetFeatureAura(new byte[] { AsusHid.AURA_ID, 0xBC });
+            Thread.Sleep(50);
         }
 
         byte[] buffer = new byte[12];
@@ -807,7 +1168,7 @@ public static class Aura
         buffer[10] = g;
         buffer[11] = b;
 
-        AsusHid.WriteAura(buffer);
+        AsusHid.SetFeatureAura(buffer);
     }
 
     /// <summary>
@@ -839,17 +1200,22 @@ public static class Aura
         if (init || _initDirect)
         {
             _initDirect = false;
-            AsusHid.WriteAura(new byte[] { AsusHid.AURA_ID, 0xBC });
+            // SetFeature handshake instead of output write
+            AsusHid.SetFeatureAura(new byte[] { AsusHid.AURA_ID, 0xBC });
+            Thread.Sleep(50);
         }
 
         Array.Clear(keyBuf, 0, keyBuf.Length);
 
         if (!_isStrix4Zone) // per-key
         {
+            // G713R (numpad Strix) uses a wider zone map; everything else uses
+            // the 4-column PacketZone.
+            var zoneMap = _isStrixNumpad ? PacketZoneNumpad : PacketZone;
             for (int ledIndex = 0; ledIndex < PacketMap.Length; ledIndex++)
             {
                 ushort offset = (ushort)(3 * PacketMap[ledIndex]);
-                byte zone = PacketZone[ledIndex];
+                byte zone = zoneMap[ledIndex];
                 int colorOff = zone * 3;
 
                 if (colorOff + 2 < colors.Length)
@@ -868,7 +1234,8 @@ public static class Aura
 
                 buffer[6] = (byte)i;
                 Buffer.BlockCopy(keyBuf, 3 * i, buffer, 9, 3 * buffer[7]);
-                AsusHid.WriteAura(buffer);
+                AsusHid.SetFeatureAura(buffer);
+                Thread.Sleep(1);
             }
         }
 
@@ -879,11 +1246,13 @@ public static class Aura
 
         if (_isStrix4Zone)
         {
-            // 4-zone mode
-            int ledCount4Z = Packet4Zone.Length;
+            // 4-zone mode - choose the lightbar map by chassis quirk.
+            // G513 wires the lightbar L→R (Packet4ZoneFlipped); everything else R→L.
+            var map = AppConfig.IsStrix4ZoneFlipped() ? Packet4ZoneFlipped : Packet4Zone;
+            int ledCount4Z = map.Length;
             for (int ledIndex = 0; ledIndex < ledCount4Z; ledIndex++)
             {
-                byte zone = Packet4Zone[ledIndex];
+                byte zone = map[ledIndex];
                 int colorOff = zone * 3;
                 if (colorOff + 2 < colors.Length)
                 {
@@ -893,13 +1262,49 @@ public static class Aura
                 }
             }
             Buffer.BlockCopy(keyBuf, 0, buffer, 9, 3 * ledCount4Z);
-            AsusHid.WriteAura(buffer);
+            AsusHid.SetFeatureAura(buffer);
+            Thread.Sleep(1);
             return;
         }
 
         // Send remaining lightbar LEDs
         Buffer.BlockCopy(keyBuf, 3 * keySet, buffer, 9, 3 * (ledCount - keySet));
-        AsusHid.WriteAura(buffer);
+        AsusHid.SetFeatureAura(buffer);
+    }
+
+    /// <summary>
+    /// Send only the lightbar zones via direct RGB. Used by the ZoneTest mode
+    /// to verify chassis lightbar wiring independently of the keyboard payload.
+    /// <para>The same flipped-map quirk applies (G513). Argument <paramref name="colors"/>
+    /// must contain at least 8 zones × 3 bytes (RGB).</para>
+    /// </summary>
+    public static void ApplyDirectLightbar(byte[] colors)
+    {
+        if (!_backlight)
+            return;
+
+        var map = AppConfig.IsStrix4ZoneFlipped() ? Packet4ZoneFlipped : Packet4Zone;
+        byte[] buffer = new byte[64];
+        buffer[0] = AsusHid.AURA_ID;
+        buffer[1] = 0xBC;
+        buffer[2] = 0;
+        buffer[3] = 1;
+        buffer[4] = 0x04;
+
+        for (int i = 0; i < map.Length; i++)
+        {
+            byte zone = map[i];
+            int colorOff = zone * 3;
+            int o = 9 + i * 3;
+            if (colorOff + 2 < colors.Length)
+            {
+                buffer[o] = colors[colorOff];
+                buffer[o + 1] = colors[colorOff + 1];
+                buffer[o + 2] = colors[colorOff + 2];
+            }
+        }
+
+        AsusHid.SetFeatureAura(buffer);
     }
 
     /// <summary>

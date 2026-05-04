@@ -31,7 +31,7 @@ public static class AsusHid
     {
         0x1A30, 0x1854, 0x1869, 0x1866, 0x19B6, 0x1822, 0x1837,
         0x184A, 0x183D, 0x8502, 0x1807, 0x17E0, 0x1ABE,
-        0x1B4C, 0x1B6E, 0x1B2C, 0x8854
+        0x1B4C, 0x1B6E, 0x1B2C, 0x8854, 0x1CE7
     };
 
     /// <summary>
@@ -46,9 +46,48 @@ public static class AsusHid
     public static readonly int[] ALL_PIDS = MAIN_AURA_PIDS.Concat(REAR_LIGHT_PIDS).ToArray();
 
     private static HidStream? _auraStream;
+    private static int _auraFeatLen;
+    private static byte[]? _auraScratch;
 
     // Track whether we're using I2C-HID fallback (for logging / behavior)
     private static bool? _usingI2cFallback;
+
+    /// <summary>
+    /// Lazily open / cache the persistent AURA stream and its feature-report
+    /// scratch buffer. Caller is responsible for null-checking
+    /// <see cref="_auraStream"/> after.
+    /// </summary>
+    private static void EnsureAuraStream()
+    {
+        if (_auraStream != null)
+            return;
+        _auraStream = FindHidStream(AURA_ID, MAIN_AURA_PIDS);
+        if (_auraStream == null)
+            return;
+        try
+        {
+            _auraFeatLen = _auraStream.Device.GetMaxFeatureReportLength();
+        }
+        catch
+        {
+            _auraFeatLen = 0;
+        }
+        _auraScratch = _auraFeatLen > 0 ? new byte[_auraFeatLen] : null;
+    }
+
+    /// <summary>
+    /// Tear down the persistent AURA stream + scratch buffer (e.g. after I/O
+    /// error, so the next write re-opens).
+    /// </summary>
+    private static void DisposeAuraStream()
+    {
+        try
+        { _auraStream?.Dispose(); }
+        catch { }
+        _auraStream = null;
+        _auraFeatLen = 0;
+        _auraScratch = null;
+    }
 
     /// <summary>
     /// Whether we are using the native I2C-HID hidraw path instead of HidSharp.
@@ -252,45 +291,76 @@ public static class AsusHid
     }
 
     /// <summary>
-    /// Write data via persistent AURA stream (used for direct RGB / per-key updates).
-    /// Retries once if stream is stale. Falls back to hidraw for I2C-HID.
+    /// Send <paramref name="data"/> as a SetFeature report on the AURA stream.
+    /// <para>Direct-RGB / per-key paths in modern AURA firmware prefer the
+    /// feature-report transport over output reports - it's the same wire format
+    /// asusctl/Armoury Crate use. Falls back to <see cref="HidrawHelper.WriteAll"/>
+    /// for I2C-HID and unconditionally on stream open failure.</para>
+    /// <para>The buffer is padded to the device's max feature-report length
+    /// (typically 64 bytes for AURA endpoints) before submission.</para>
     /// </summary>
-    public static void WriteAura(byte[] data, bool retry = true)
+    public static void SetFeatureAura(byte[] data, bool retry = true)
     {
-        // If we're on I2C-HID, use hidraw directly (no persistent stream)
+        // I2C-HID path: HidrawHelper.WriteAll already uses HIDIOCSFEATURE
         if (UsingI2cHidraw)
         {
             HidrawHelper.WriteAll(AURA_ID, data, null);
             return;
         }
 
-        if (_auraStream == null)
-            _auraStream = FindHidStream(AURA_ID);
-
+        EnsureAuraStream();
         if (_auraStream == null)
         {
-            // Last resort: try I2C-HID
+            // Last resort: try I2C-HID even on Strix laptops if HidSharp lost the stream
             if (HidrawHelper.HasAsusAuraDevice())
             {
                 HidrawHelper.WriteAll(AURA_ID, data, null);
                 return;
             }
-            Helpers.Logger.WriteLine("Aura stream not found");
+            Helpers.Logger.WriteLine("Aura stream not found (SetFeature)");
             return;
         }
 
         try
         {
-            _auraStream.Write(data);
+            byte[] payload = data;
+            if (_auraScratch != null && data.Length < _auraFeatLen)
+            {
+                Array.Clear(_auraScratch, 0, _auraFeatLen);
+                Array.Copy(data, _auraScratch, data.Length);
+                payload = _auraScratch;
+            }
+            _auraStream.SetFeature(payload);
         }
         catch (Exception ex)
         {
-            Helpers.Logger.WriteLine($"Error writing to Aura HID: {ex.Message} {BitConverter.ToString(data)}");
-            _auraStream.Dispose();
-            _auraStream = null;
+            int n = Math.Min(16, data.Length);
+            Helpers.Logger.WriteLine(
+                $"Error SetFeature on Aura HID: {ex.Message} {BitConverter.ToString(data, 0, n)}");
+            DisposeAuraStream();
             if (retry)
-                WriteAura(data, false);
+                SetFeatureAura(data, false);
         }
+    }
+
+    /// <summary>
+    /// Send the AURA capability query (SetFeature) and read back the response
+    /// (GetFeature). Returns the 64-byte response or <c>null</c> on failure.
+    /// <para>Linux delegates to <see cref="HidrawHelper.QueryAuraCapabilities"/>
+    /// which uses raw hidraw <c>HIDIOCSFEATURE</c>/<c>HIDIOCGFEATURE</c> ioctls -
+    /// HidSharp on Linux can't enumerate I2C-HID devices (e.g. ASUS TUF FA608PP),
+    /// so the raw ioctl path is the universal way to reach AURA-capable nodes.
+    /// The query format is fixed: <c>[AURA_ID, 0x05, 0x20, 0x31, 0x00, last]</c>;
+    /// only the trailing byte varies between firmware revisions (0x20 by default,
+    /// 0x1A on older Armoury Crate variants).</para>
+    /// </summary>
+    public static byte[]? AuraProbe(byte[] query, string log = "Aura Probe")
+    {
+        // Query format: [AURA_ID, 0x05, 0x20, 0x31, 0x00, last_byte].
+        // We only need the last byte for HidrawHelper - it builds the query itself
+        // (writes report ID into byte 0).
+        byte lastByte = query.Length >= 6 ? query[5] : (byte)0x20;
+        return HidrawHelper.QueryAuraCapabilities(lastByte);
     }
 
     /// <summary>
