@@ -605,9 +605,9 @@ public static class Aura
             // Persist for diagnostics + future fast-path read on resume.
             AppConfig.Set("backlight_type", typeByte);
 
-            HasLogo = (feat1 & FEAT1_LOGO) != 0;
+            HasLogo = (feat1 & FEAT1_LOGO) != 0 || AppConfig.IsZ13();
             HasLightbar = (feat1 & FEAT1_LIGHTBAR) != 0;
-            HasRearglow = (feat1 & FEAT1_REARGLOW) != 0;
+            HasRearglow = (feat1 & FEAT1_REARGLOW) != 0 || AppConfig.IsZ13();
 
             // FEAT2 ONE_ZONE_RED_EFFECT means white-only keyboard (single-zone
             // red firmware effect mapped to white). Force-flip the mutable static
