@@ -486,9 +486,6 @@ public static class Aura
         AsusHid.SetFeatureAura([AsusHid.AURA_ID, 0xB9]);
         AsusHid.SetFeatureAura([AsusHid.AURA_ID, .. Encoding.ASCII.GetBytes("ASUS Tech.Inc.")]);
 
-        if (AppConfig.IsZ13())
-            AsusHid.SetFeatureAura([AsusHid.AURA_ID, 0x05, 0x20, 0x31, 0x00, 0x1A]);
-
         // Run probe synchronously so callers see populated BacklightType + Has*
         // flags on return. ~50-100ms first call; near-instant when re-invoked
         // (DetectBacklightType early-exits via IsBacklightDetected).
@@ -499,7 +496,7 @@ public static class Aura
         // (broader IsDynamicLighting set) because the I2C-HID + asus-armoury
         // path on those chassis needs the same handshake before lights respond.
         if (AppConfig.IsDynamicLighting())
-            AsusHid.SetFeatureAura(new byte[] { AsusHid.AURA_ID, 0xC0, 0x03, 0x01 });
+            AsusHid.Write([AsusHid.AURA_ID, 0xC0, 0x03, 0x01], "Dynamic Lighting Init");
 
         // ProArt models need a separate INPUT_ID handshake to wake their
         // RGB controller.
@@ -546,6 +543,13 @@ public static class Aura
         try
         {
             var response = AsusHid.AuraProbe(query);
+
+            if (AppConfig.IsZ13())
+            {
+                HasLogo = true;
+                HasRearglow = true;
+            }
+
             if (response is null || response.Length < 18)
                 return;
 
