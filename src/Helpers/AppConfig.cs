@@ -363,7 +363,7 @@ public static class AppConfig
 
     // Dynamic boost
     public static bool DynamicBoost5() => ContainsModel("GZ301ZE");
-    public static bool DynamicBoost15() => ContainsModel("FX507ZC4") || ContainsModel("GA403UM") || ContainsModel("GU605CP") || ContainsModel("FX608J") || ContainsModel("FX608L") || ContainsModel("FA608U") || ContainsModel("FA608P") || ContainsModel("FA608W") || ContainsModel("FA401K") || ContainsModel("FA401UM") || ContainsModel("FA401UH");
+    public static bool DynamicBoost15() => ContainsModel("FX507ZC4") || ContainsModel("GA403UM") || ContainsModel("GU605CP") || ContainsModel("FX608J") || ContainsModel("FX608L") || ContainsModel("FA608U") || ContainsModel("FA608P") || ContainsModel("FA401K") || ContainsModel("FA401UM") || ContainsModel("FA401UH");
     public static bool DynamicBoost20() => ContainsModel("GU605") || ContainsModel("GA605");
 
     // Performance mode

@@ -149,9 +149,6 @@ public static class HidrawHelper
     /// Enumerate all ASUS hidraw devices on the system, regardless of bus type.
     /// Results are cached for the lifetime of the process.
     ///
-    /// Multiple hidraw nodes that share the same physical USB parent device
-    /// are deduplicated - we keep only the first one encountered per parent.
-    /// Mirrors asusctl 6.3.7 fix (asusd/src/aura_manager.rs, GitLab 9cbf643b).
     /// </summary>
     public static IReadOnlyList<HidrawDeviceInfo> EnumerateAsusDevices()
     {
@@ -161,11 +158,13 @@ public static class HidrawHelper
                 return _cachedDevices;
 
             _cachedDevices = new List<HidrawDeviceInfo>();
-            var seenUsbParents = new HashSet<string>();
+
+            // Pass 1: probe all ASUS hidraws, bucket by USB parent syspath.
+            var byParent = new Dictionary<string, List<HidrawDeviceInfo>>();
+            var noParent = new List<HidrawDeviceInfo>(); // I2C-HID, no usb_device parent
 
             try
             {
-                // Scan /dev/hidraw0, hidraw1, ... up to hidraw31
                 for (int i = 0; i < 32; i++)
                 {
                     string path = $"/dev/hidraw{i}";
@@ -176,17 +175,48 @@ public static class HidrawHelper
                     if (info == null || info.Vendor != ASUS_VENDOR_ID)
                         continue;
 
-                    if (IsDuplicateUsbDevice(path, seenUsbParents, "HidrawHelper"))
+                    var parent = GetUsbParentSyspath(path);
+                    if (parent == null)
+                    {
+                        noParent.Add(info);
                         continue;
+                    }
 
-                    _cachedDevices.Add(info);
-                    Helpers.Logger.WriteLine(
-                        $"HidrawHelper: found ASUS device {path} PID=0x{info.Product:X4} Bus={info.BusName} Aura={info.HasAuraReport}");
+                    if (!byParent.TryGetValue(parent, out var group))
+                        byParent[parent] = group = new List<HidrawDeviceInfo>();
+                    group.Add(info);
                 }
             }
             catch (Exception ex)
             {
                 Helpers.Logger.WriteLine($"HidrawHelper: enumeration error: {ex.Message}");
+            }
+
+            // Pass 2: pick the best candidate per USB parent group.
+            foreach (var group in byParent.Values)
+            {
+                // Prefer the first Aura-capable interface; fall back to first in list.
+                var pick = group.FirstOrDefault(d => d.HasAuraReport) ?? group[0];
+
+                _cachedDevices.Add(pick);
+                Helpers.Logger.WriteLine(
+                    $"HidrawHelper: found ASUS device {pick.Path} PID=0x{pick.Product:X4} Bus={pick.BusName} Aura={pick.HasAuraReport}");
+
+                foreach (var sibling in group)
+                {
+                    if (sibling == pick)
+                        continue;
+                    Helpers.Logger.WriteLine(
+                        $"HidrawHelper: skipping {sibling.Path} - USB parent {GetUsbParentSyspath(sibling.Path)} already enumerated (kept {pick.Path} Aura={pick.HasAuraReport})");
+                }
+            }
+
+            // I2C-HID and other non-USB devices: no dedup needed.
+            foreach (var info in noParent)
+            {
+                _cachedDevices.Add(info);
+                Helpers.Logger.WriteLine(
+                    $"HidrawHelper: found ASUS device {info.Path} PID=0x{info.Product:X4} Bus={info.BusName} Aura={info.HasAuraReport}");
             }
 
             return _cachedDevices;

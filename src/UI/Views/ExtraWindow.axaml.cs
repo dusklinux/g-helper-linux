@@ -362,7 +362,7 @@ public partial class ExtraWindow : Window
 
         rowPowerBar.IsVisible = Aura.HasLightbar;
         rowPowerLogo.IsVisible = Aura.HasLogo;
-        rowPowerLid.IsVisible = Aura.HasRearglow;
+        rowPowerLid.IsVisible = Aura.HasRearglow && !Helpers.AppConfig.IsZ13();
 
         // Z13 rear-glow zone (independent device, PID 0x18C6) - own mode + color.
         InitRearLight();
