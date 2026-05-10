@@ -1455,7 +1455,7 @@ public partial class MainWindow : Window
             ? SysfsHelper.ReadAttribute(enablePath)?.Trim()
             : null;
         _xgmEnabledSnapshot = enabledRaw;
-        bool enabled = enabledRaw == "1";
+        bool enabled = !string.IsNullOrEmpty(enabledRaw) && enabledRaw != "0";
 
         labelXGM.Text = _xgmToggling
             ? Labels.Get("xgm_locking")
@@ -1557,7 +1557,7 @@ public partial class MainWindow : Window
         }
 
         var raw = SysfsHelper.ReadAttribute(enablePath)?.Trim();
-        bool currentlyEnabled = raw == "1";
+        bool currentlyEnabled = !string.IsNullOrEmpty(raw) && raw != "0";
         string targetValue = currentlyEnabled ? "0" : "1";
 
         if (currentlyEnabled)
