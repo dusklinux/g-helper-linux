@@ -486,15 +486,6 @@ public static class Aura
         AsusHid.SetFeatureAura([AsusHid.AURA_ID, 0xB9]);
         AsusHid.SetFeatureAura([AsusHid.AURA_ID, .. Encoding.ASCII.GetBytes("ASUS Tech.Inc.")]);
 
-        if (AppConfig.IsZ13())
-        {
-            AsusHid.Write(new List<byte[]> {
-                new byte[] { AsusHid.AURA_ID, 0xB9 },
-                Encoding.ASCII.GetBytes("]ASUS Tech.Inc."),
-                new byte[] { AsusHid.AURA_ID, 0x05, 0x20, 0x31, 0x00, 0x1A },
-            }, "Z13 Wake");
-        }
-
         // Run probe synchronously so callers see populated BacklightType + Has*
         // flags on return. ~50-100ms first call; near-instant when re-invoked
         // (DetectBacklightType early-exits via IsBacklightDetected).
