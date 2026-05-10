@@ -167,23 +167,50 @@ public static class SysfsHelper
     /// </summary>
     public static bool WriteToAllBackends(AttrDef attr, string value, params string[] legacyBases)
     {
+        var result = WriteToAllBackendsDetailed(attr, value, legacyBases);
+        return result.Any;
+    }
+
+    /// <summary>
+    /// Result of <see cref="WriteToAllBackendsDetailed"/>. Lets callers
+    /// distinguish a legacy-only write (firmware applies the change
+    /// immediately) from a fw-attr-only write (BIOS-staged, reboot needed)
+    /// so they can show the right user message.
+    /// </summary>
+    public readonly struct BackendWriteResult
+    {
+        public bool Legacy { get; init; }
+        public bool FwAttr { get; init; }
+        public bool Any => Legacy || FwAttr;
+    }
+
+    /// <summary>
+    /// Same as <see cref="WriteToAllBackends"/> but reports which backend
+    /// actually accepted the write. Used by the XG Mobile toggle to pick
+    /// between an "active in ~15 s" notification (legacy succeeded - ACPI
+    /// applies immediately) and a "reboot required" notification (only
+    /// fw-attr succeeded - asus-armoury stages until next boot).
+    /// </summary>
+    public static BackendWriteResult WriteToAllBackendsDetailed(AttrDef attr, string value, params string[] legacyBases)
+    {
         if (legacyBases.Length == 0)
             legacyBases = new[] { AsusWmiPlatform, AsusBusPlatform };
 
-        bool anySuccess = false;
+        bool legacyOk = false;
+        bool fwOk = false;
 
         // Try all legacy paths
         foreach (var basePath in legacyBases)
         {
             var legacyPath = Path.Combine(basePath, attr.LegacyName);
             if (WriteAttribute(legacyPath, value))
-                anySuccess = true;
+                legacyOk = true;
         }
 
         // Try firmware-attributes path (using FwAttrName, which may differ from LegacyName)
         var fwPath = Path.Combine(FirmwareAttributes, attr.FwAttrName, "current_value");
         if (WriteAttribute(fwPath, value))
-            anySuccess = true;
+            fwOk = true;
 
         // For aliased attrs (e.g. ppt_fppt → ppt_pl3_fppt), also try the legacy name
         // under firmware-attributes in case the kernel uses that naming
@@ -191,10 +218,10 @@ public static class SysfsHelper
         {
             var fwPathLegacy = Path.Combine(FirmwareAttributes, attr.LegacyName, "current_value");
             if (fwPathLegacy != fwPath && WriteAttribute(fwPathLegacy, value))
-                anySuccess = true;
+                fwOk = true;
         }
 
-        return anySuccess;
+        return new BackendWriteResult { Legacy = legacyOk, FwAttr = fwOk };
     }
 
     /// <summary>

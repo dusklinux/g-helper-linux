@@ -134,10 +134,14 @@
                         </Button>
                     </UniformGrid>
 
-                    <!-- XG Mobile (eGPU dock) toggle. Visible on Ally only,
-                         and only when egpu_connected reads 1. Click toggles
-                         egpu_enable + schedules a reboot for the change to
-                         apply (BIOS-staged, like dgpu_disable). -->
+                    <!-- XG Mobile (eGPU dock) toggle. Visible when an XG Mobile
+                         dock is detected via egpu_connected==1 - works on every
+                         ROG model with the receptacle (Flow X13/X16/Z13, Strix
+                         XG, ROG Ally). Click toggles egpu_enable; on dual-backend
+                         kernels the legacy asus-nb-wmi write usually takes effect
+                         immediately, on asus-armoury-only kernels a reboot is
+                         needed (the click handler picks the right user message
+                         based on which backend wrote successfully). -->
                     <Button x:Name="buttonXGM" Classes="ghelper"
                             Margin="0,4,0,0" Click="ButtonXGM_Click"
                             Height="36" IsVisible="False">

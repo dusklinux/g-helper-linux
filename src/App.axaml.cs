@@ -268,6 +268,7 @@ public class App : Application
             Task.Run(() =>
             {
                 MainWindow.InitAuraHardware();
+                USB.XGM.InitHardware();
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => MainWindowInstance?.RefreshKeyboard());
             });
 
@@ -1164,6 +1165,10 @@ public class App : Application
         {
             Logger.WriteLine("ApplyConfiguredBrightness failed", ex);
         }
+
+        try
+        { USB.XGM.InitLight(); }
+        catch (Exception ex) { Logger.WriteLine($"XGM.InitLight on power change failed: {ex.Message}"); }
     }
 
     // Unix signal handlers for clean shutdown on SIGTERM/SIGINT (logout/reboot)

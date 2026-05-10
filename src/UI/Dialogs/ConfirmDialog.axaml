@@ -1,0 +1,43 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="GHelper.Linux.UI.Dialogs.ConfirmDialog"
+        Width="420"
+        SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#1C1C1C"
+        Title="Confirm"
+        Icon="avares://ghelper/UI/Assets/standard.ico">
+
+    <Border Margin="20">
+        <StackPanel Spacing="14">
+            <TextBlock x:Name="textTitle"
+                       Classes="header"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Text="" />
+            <TextBlock x:Name="textMessage"
+                       Classes="label-dim"
+                       TextWrapping="Wrap"
+                       Text="" />
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="8"
+                        Margin="0,8,0,0">
+                <Button x:Name="buttonNo"
+                        Classes="ghelper"
+                        Width="92"
+                        Height="32"
+                        Click="ButtonNo_Click"
+                        Content="No" />
+                <Button x:Name="buttonYes"
+                        Classes="ghelper"
+                        Width="92"
+                        Height="32"
+                        Click="ButtonYes_Click"
+                        Content="Yes" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

@@ -119,7 +119,6 @@ jobs:
         run: |
           mkdir -p GHelper.AppDir/usr/bin
 
-          # Binary only — native .so libs are embedded and extracted at runtime
           cp artifacts/ghelper/ghelper             GHelper.AppDir/usr/bin/
           chmod +x GHelper.AppDir/usr/bin/ghelper
 
@@ -192,8 +191,6 @@ jobs:
 
             ![ghelper Downloads](https://img.shields.io/github/downloads/utajum/g-helper-linux/${{ needs.version.outputs.new_version }}/ghelper?style=flat-square&label=ghelper%20downloads)
             ![AppImage Downloads](https://img.shields.io/github/downloads/utajum/g-helper-linux/${{ needs.version.outputs.new_version }}/GHelper-x86_64.AppImage?style=flat-square&label=appimage%20downloads)
-
-            ASUS laptop control utility for Linux — native AOT binary, no runtime needed.
 
             ### Commits
             ${{ steps.changelog.outputs.changelog }}

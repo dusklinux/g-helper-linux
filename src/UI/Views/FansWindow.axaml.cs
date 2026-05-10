@@ -32,6 +32,7 @@ public partial class FansWindow : Window
         chartCPU.CurveChanged += (_, curve) => OnCurveChanged(0, curve);
         chartGPU.CurveChanged += (_, curve) => OnCurveChanged(1, curve);
         chartMid.CurveChanged += (_, curve) => OnCurveChanged(2, curve);
+        chartXGM.CurveChanged += (_, curve) => OnCurveChanged(3, curve);
 
         _sensorTimer = new DispatcherTimer
         {
@@ -123,6 +124,7 @@ public partial class FansWindow : Window
         chartCPU.FanLabel = Labels.Get("cpu_fan");
         chartGPU.FanLabel = Labels.Get("gpu_fan");
         chartMid.FanLabel = Labels.Get("mid_fan");
+        chartXGM.FanLabel = Labels.Get("xgm_fan");
         headerUndervolt.Text = Labels.Get("undervolt_header");
         labelUndervoltDesc.Text = Labels.Get("undervolt_desc");
         labelUndervoltCpu.Text = Labels.Get("undervolt_cpu");
@@ -194,6 +196,24 @@ public partial class FansWindow : Window
             Helpers.AppConfig.Set("mid_fan", 0);
         }
 
+        bool xgmConnected = false;
+        try
+        { xgmConnected = USB.XGM.IsConnected(); }
+        catch (Exception ex) { Helpers.Logger.WriteLine($"FansWindow.LoadFanCurves: XGM probe: {ex.Message}"); }
+
+        if (xgmConnected)
+        {
+            byte[]? xgmCurve = Helpers.AppConfig.GetFanConfig(3);
+            if (!IsValidCurve(xgmCurve))
+                xgmCurve = Helpers.AppConfig.GetDefaultCurve(3);
+            chartXGM.CurveData = xgmCurve;
+            chartXGM.IsVisible = true;
+        }
+        else
+        {
+            chartXGM.IsVisible = false;
+        }
+
         // Update mode label
         int mode = App.Wmi?.GetThrottleThermalPolicy() ?? -1;
         string modeName = mode switch
@@ -210,15 +230,46 @@ public partial class FansWindow : Window
         UpdateDisabledState();
     }
 
+    /// <summary>
+    /// Clamp the PWM half of an XGM 16-byte curve to <see cref="XgmFanMaxPercent"/>
+    /// before sending. The chart UI lets the user drag points up to 100% for
+    /// consistency with the other charts; the dock firmware caps at 72% so we
+    /// flatten anything above that on Apply.
+    /// </summary>
+    private const byte XgmFanMaxPercent = 72;
+
+    private static byte[] ClampXgmCurve(byte[] curve)
+    {
+        if (curve == null || curve.Length != 16)
+            return curve!;
+        var clamped = new byte[16];
+        Array.Copy(curve, clamped, 16);
+        for (int i = 8; i < 16; i++)
+        {
+            if (clamped[i] > XgmFanMaxPercent)
+                clamped[i] = XgmFanMaxPercent;
+        }
+        return clamped;
+    }
+
     private void OnCurveChanged(int fanIndex, byte[] curve)
     {
         // Save to config
         Helpers.AppConfig.SetFanConfig(fanIndex, curve);
 
-        // Auto-apply if enabled
+        // Auto-apply if enabled.
         if (checkApplyFans.IsChecked == true)
         {
-            App.Wmi?.SetFanCurve(fanIndex, curve);
+            if (fanIndex == 3)
+            {
+                try
+                { USB.XGM.SetFan(ClampXgmCurve(curve)); }
+                catch (Exception ex) { Helpers.Logger.WriteLine($"XGM.SetFan: {ex.Message}"); }
+            }
+            else
+            {
+                App.Wmi?.SetFanCurve(fanIndex, curve);
+            }
         }
     }
 
@@ -244,6 +295,21 @@ public partial class FansWindow : Window
         {
             wmi.SetFanCurve(2, chartMid.CurveData);
             Helpers.AppConfig.SetFanConfig(2, chartMid.CurveData);
+        }
+
+        if (chartXGM.IsVisible && chartXGM.CurveData is { Length: 16 })
+        {
+            var clamped = ClampXgmCurve(chartXGM.CurveData);
+            try
+            {
+                USB.XGM.SetFan(clamped);
+                Helpers.Logger.WriteLine($"XGM fan curve applied: {BitConverter.ToString(clamped)}");
+            }
+            catch (Exception ex)
+            {
+                Helpers.Logger.WriteLine($"XGM.SetFan: {ex.Message}");
+            }
+            Helpers.AppConfig.SetFanConfig(3, chartXGM.CurveData);
         }
 
         UpdateDisabledState();
@@ -279,6 +345,17 @@ public partial class FansWindow : Window
         {
             chartMid.CurveData = midCurve;
             Helpers.AppConfig.SetFanConfig(2, midCurve!);
+        }
+
+        if (chartXGM.IsVisible)
+        {
+            try
+            { USB.XGM.Reset(); }
+            catch (Exception ex) { Helpers.Logger.WriteLine($"XGM.Reset: {ex.Message}"); }
+
+            byte[] xgmCurve = Helpers.AppConfig.GetDefaultCurve(3);
+            chartXGM.CurveData = xgmCurve;
+            Helpers.AppConfig.SetFanConfig(3, xgmCurve);
         }
 
         // Phase 3: Re-apply ALL curves as active custom curves (pwm_enable=1).

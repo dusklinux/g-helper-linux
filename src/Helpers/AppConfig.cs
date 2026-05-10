@@ -218,6 +218,7 @@ public static class AppConfig
         {
             1 => "gpu",
             2 => "mid",
+            3 => "xgm",
             _ => "cpu"
         };
         return $"{paramName}_{fanName}_{mode}";
@@ -269,6 +270,7 @@ public static class AppConfig
             _ => fanIndex switch
             {
                 1 => StringToBytes("3A-3D-40-44-48-4D-51-62-0C-16-1D-1F-26-2D-34-4A"),
+                3 => StringToBytes("32-3C-46-50-5A-64-6E-78-1E-28-32-3C-46-48-48-48"), // XGM dock GPU
                 _ => StringToBytes("3A-3D-40-44-48-4D-51-62-08-11-16-1A-22-29-30-45"),
             },
         };

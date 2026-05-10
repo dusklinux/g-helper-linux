@@ -434,6 +434,35 @@
                 </StackPanel>
             </Border>
 
+            <!-- XG MOBILE DOCK LIGHTS
+                 Visible only when an XG Mobile dock is present on USB-HID
+                 (VID 0x0B05 + dock PID, see USB/XGM.cs). The toggle and slider
+                 control the dock's front-panel LED ring via HID feature report
+                 0x5E. State persists in xmg_light / xmg_brightness. -->
+            <Border x:Name="panelXGM" Classes="panel" IsVisible="False">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock x:Name="labelXgmHeader" Classes="header" Text="XG Mobile Dock" />
+                    </Border>
+                    <CheckBox x:Name="checkXGMLights" Content="Dock lights"
+                              Margin="0,4"
+                              IsCheckedChanged="CheckXGMLights_Changed" />
+                    <Grid ColumnDefinitions="120,*,40" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelXgmBrightnessLabel"
+                                   Text="Brightness" Classes="label-dim"
+                                   VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderXgmBrightness"
+                                Minimum="0" Maximum="3" Value="3"
+                                TickFrequency="1" IsSnapToTickEnabled="True"
+                                ValueChanged="SliderXgmBrightness_ValueChanged" />
+                        <TextBlock Grid.Column="2" x:Name="labelXgmBrightness"
+                                   Classes="value" Text="3"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
             <!-- POWER MANAGEMENT -->
             <Border Classes="panel">
                 <StackPanel>

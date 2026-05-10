@@ -637,17 +637,25 @@ public static class HidrawHelper
     /// </summary>
     private static bool WriteToFd(int fd, byte[] data, string path, string? log)
     {
-        // Pad to 64 bytes (standard AURA feature report size)
-        const int reportSize = 64;
+        return WriteToFdSized(fd, data, 64, path, log);
+    }
+
+    /// <summary>
+    /// Write data to an open hidraw fd with a caller-provided report size.
+    /// AURA uses 64-byte reports; XG Mobile uses 300-byte reports. Same
+    /// SetFeature-then-write fallback as <see cref="WriteToFd"/>.
+    /// </summary>
+    private static bool WriteToFdSized(int fd, byte[] data, int reportSize, string path, string? log)
+    {
         byte[] padded = new byte[reportSize];
         Array.Copy(data, padded, Math.Min(data.Length, reportSize));
 
-        // Try SetFeature first (this is how AURA protocol works)
+        // Try SetFeature first (this is how feature-report protocols work)
         int ret = ioctl(fd, HIDIOCSFEATURE(reportSize), padded);
         if (ret >= 0)
         {
             if (log != null)
-                Helpers.Logger.WriteLine($"HidrawHelper SetFeature {log}: {BitConverter.ToString(data, 0, Math.Min(data.Length, 17))}");
+                Helpers.Logger.WriteLine($"HidrawHelper SetFeature[{reportSize}] {log}: {BitConverter.ToString(data, 0, Math.Min(data.Length, 17))}");
             return true;
         }
 
@@ -656,11 +664,94 @@ public static class HidrawHelper
         if (written >= 0)
         {
             if (log != null)
-                Helpers.Logger.WriteLine($"HidrawHelper Write {log}: {BitConverter.ToString(data, 0, Math.Min(data.Length, 17))}");
+                Helpers.Logger.WriteLine($"HidrawHelper Write[{reportSize}] {log}: {BitConverter.ToString(data, 0, Math.Min(data.Length, 17))}");
             return true;
         }
 
-        Helpers.Logger.WriteLine($"HidrawHelper: both SetFeature and Write failed for {path}: errno={Marshal.GetLastPInvokeError()}");
+        Helpers.Logger.WriteLine($"HidrawHelper: both SetFeature[{reportSize}] and Write[{reportSize}] failed for {path}: errno={Marshal.GetLastPInvokeError()}");
         return false;
+    }
+
+    /// <summary>
+    /// Write multiple messages to every ASUS hidraw device whose product ID
+    /// matches one of <paramref name="pids"/>. Used by the XG Mobile
+    /// transport (PID set: 0x1970 / 0x1A9A / 0x1C29 / 0x1BC1) which uses a
+    /// 300-byte feature report on report id 0x5E. The <paramref name="reportSize"/>
+    /// parameter lets callers pick the correct padding (default 64 = AURA).
+    /// </summary>
+    public static bool WriteAllForPids(
+        byte reportId,
+        IEnumerable<byte[]> messages,
+        int[] pids,
+        int reportSize = 64,
+        string? log = null)
+    {
+        var pidSet = new HashSet<int>(pids);
+        var paths = EnumerateAsusDevices()
+            .Where(d => pidSet.Contains(d.Product))
+            .Select(d => d.Path)
+            .ToList();
+
+        if (paths.Count == 0)
+            return false;
+
+        bool anySuccess = false;
+        foreach (var path in paths)
+        {
+            int fd = -1;
+            try
+            {
+                fd = open(path, O_RDWR);
+                if (fd < 0)
+                {
+                    Helpers.Logger.WriteLine($"HidrawHelper: cannot open {path}: errno={Marshal.GetLastPInvokeError()}");
+                    continue;
+                }
+
+                foreach (var data in messages)
+                {
+                    if (WriteToFdSized(fd, data, reportSize, path, log))
+                        anySuccess = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Helpers.Logger.WriteLine($"HidrawHelper: error writing to {path}: {ex.Message}");
+            }
+            finally
+            {
+                if (fd >= 0)
+                    close(fd);
+            }
+        }
+
+        return anySuccess;
+    }
+
+    /// <summary>
+    /// Single-message overload of <see cref="WriteAllForPids(byte, IEnumerable{byte[]}, int[], int, string)"/>.
+    /// </summary>
+    public static bool WriteAllForPids(
+        byte reportId,
+        byte[] data,
+        int[] pids,
+        int reportSize = 64,
+        string? log = null)
+    {
+        return WriteAllForPids(reportId, new[] { data }, pids, reportSize, log);
+    }
+
+    /// <summary>
+    /// Returns the first hidraw path whose product ID matches one of
+    /// <paramref name="pids"/>, or null if none. Useful for callers that
+    /// need to identify the specific device path (e.g. diagnostics).
+    /// </summary>
+    public static string? GetFirstPathForPids(int[] pids)
+    {
+        var pidSet = new HashSet<int>(pids);
+        return EnumerateAsusDevices()
+            .Where(d => pidSet.Contains(d.Product))
+            .Select(d => d.Path)
+            .FirstOrDefault();
     }
 }

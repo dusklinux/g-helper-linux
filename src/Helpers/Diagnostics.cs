@@ -50,6 +50,12 @@ public static class Diagnostics
         // ROG Ally controller state (only emitted on RC71L/RC72L)
         AppendAllyState(sb);
 
+        // XG Mobile dock state (only emitted when egpu_connected=1 or
+        // a USB-HID dock is enumerated)
+        AppendXgmState(sb);
+
+        AppendLedSysfs(sb);
+
         // udev / tmpfiles
         AppendInstallState(sb);
 
@@ -538,6 +544,65 @@ public static class Diagnostics
         sb.AppendLine();
     }
 
+    private static void AppendXgmState(StringBuilder sb)
+    {
+        // Skip the entire block when there's no sign of an XG Mobile dock
+        // (no laptop receptacle reporting connected, no USB-HID dock).
+        var connectedPath = Platform.Linux.SysfsHelper.ResolveAttrPath(
+            Platform.Linux.AsusAttributes.EgpuConnected);
+        string? connectedRaw = connectedPath != null
+            ? Platform.Linux.SysfsHelper.ReadAttribute(connectedPath)?.Trim()
+            : null;
+        bool hidPresent = false;
+        string? hidPath = null;
+        try
+        {
+            hidPresent = USB.XGM.IsConnected();
+            hidPath = USB.XGM.GetDevicePath();
+        }
+        catch { }
+
+        if (connectedRaw != "1" && !hidPresent)
+            return;
+
+        sb.AppendLine("--- XG Mobile Dock ---");
+
+        // Sysfs side (laptop receptacle)
+        sb.AppendLine($"  egpu_connected     : {connectedRaw ?? "(n/a)"} (path={connectedPath ?? "(none)"})");
+
+        var enablePath = Platform.Linux.SysfsHelper.ResolveAttrPath(
+            Platform.Linux.AsusAttributes.EgpuEnable);
+        string? enabledRaw = enablePath != null
+            ? Platform.Linux.SysfsHelper.ReadAttribute(enablePath)?.Trim()
+            : null;
+        sb.AppendLine($"  egpu_enable        : {enabledRaw ?? "(n/a)"} (path={enablePath ?? "(none)"})");
+
+        // HID side (dock USB)
+        sb.AppendLine($"  HID dock present   : {hidPresent}");
+        if (hidPresent)
+            sb.AppendLine($"  HID dock path      : {hidPath}");
+
+        // Persisted dock prefs
+        sb.AppendLine($"  xmg_light          : {AppConfig.Get("xmg_light", 1)}");
+        sb.AppendLine($"  xmg_brightness     : {AppConfig.Get("xmg_brightness", 3)}");
+        sb.AppendLine($"  xgm_special (6850M): {AppConfig.Is("xgm_special")}");
+
+        // Per-mode dock fan curves (silent / balanced / turbo). Read the
+        // raw config strings directly so we don't have to mutate the
+        // current performance_mode just to query each variant.
+        for (int mode = 0; mode <= 2; mode++)
+        {
+            string label = mode switch { 1 => "turbo", 2 => "silent", _ => "balanced" };
+            string key = $"fan_xgm_{mode}";
+            string? raw = AppConfig.GetString(key);
+            sb.AppendLine(string.IsNullOrEmpty(raw)
+                ? $"  fan_xgm[{label}]      : (default)"
+                : $"  fan_xgm[{label}]      : {raw}");
+        }
+
+        sb.AppendLine();
+    }
+
     private static void AppendInputDevices(StringBuilder sb)
     {
         sb.AppendLine("--- Input Devices (ASUS) ---");
@@ -567,6 +632,66 @@ public static class Diagnostics
             }
         }
         catch { }
+
+        sb.AppendLine();
+    }
+
+    private static void AppendLedSysfs(StringBuilder sb)
+    {
+        // /sys/class/leds/asus::* - report each ASUS LED's perms, current
+        // brightness and max_brightness.
+        sb.AppendLine("--- LEDs (asus::*) ---");
+
+        const string ledRoot = "/sys/class/leds";
+        if (!Directory.Exists(ledRoot))
+        {
+            sb.AppendLine("  (no /sys/class/leds present)");
+            sb.AppendLine();
+            return;
+        }
+
+        string[] dirs;
+        try
+        {
+            dirs = Directory.GetDirectories(ledRoot, "asus::*");
+        }
+        catch (Exception ex)
+        {
+            sb.AppendLine($"  (enumeration failed: {ex.Message})");
+            sb.AppendLine();
+            return;
+        }
+
+        if (dirs.Length == 0)
+        {
+            sb.AppendLine("  (no asus::* LEDs found)");
+            sb.AppendLine();
+            return;
+        }
+
+        Array.Sort(dirs, StringComparer.Ordinal);
+        foreach (var dir in dirs)
+        {
+            string name = Path.GetFileName(dir);
+            string brightnessPath = Path.Combine(dir, "brightness");
+            string maxPath = Path.Combine(dir, "max_brightness");
+
+            string brightness = Platform.Linux.SysfsHelper.ReadAttribute(brightnessPath)?.Trim() ?? "(n/a)";
+            string max = Platform.Linux.SysfsHelper.ReadAttribute(maxPath)?.Trim() ?? "(n/a)";
+            string mode = "(n/a)";
+            try
+            {
+                if (File.Exists(brightnessPath))
+                {
+#pragma warning disable CA1416
+                    mode = "0" + Convert.ToString((int)File.GetUnixFileMode(brightnessPath) & 0x1FF, 8).PadLeft(3, '0');
+#pragma warning restore CA1416
+                }
+            }
+            catch { }
+
+            sb.AppendLine($"  {name,-28} brightness={brightness}/{max} mode={mode}");
+        }
 
         sb.AppendLine();
     }
