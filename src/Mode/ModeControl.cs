@@ -342,6 +342,40 @@ public class ModeControl
                 Helpers.Logger.WriteLine($"AutoFans: Applied fan {fan} curve for mode {mode}");
             }
         }
+
+        // XG Mobile dock GPU fan (fan index 3) lives on the dock's HID bus,
+        // not the laptop's WMI. Push our per-mode curve when the dock is
+        // present. Dock firmware caps PWM at 72%, so clamp before sending.
+        //
+        // Mirrors Windows g-helper AutoFans (post-ef4385a3): SetFan is
+        // pushed directly without an intervening Reset. The earlier
+        // Reset-before-SetFan pattern was a bug - it briefly reverted the
+        // dock to firmware-default in the same tick the new curve was
+        // applied, causing a transient fan glitch. Reset is now reserved
+        // for "stop managing" (dock disable), not "before each apply".
+        try
+        {
+            if (USB.XGM.IsConnected())
+            {
+                byte[] xgm = Helpers.AppConfig.GetFanConfig(3);
+                if (xgm.Length == 16)
+                {
+                    var clamped = new byte[16];
+                    Array.Copy(xgm, clamped, 16);
+                    for (int i = 8; i < 16; i++)
+                    {
+                        if (clamped[i] > 72)
+                            clamped[i] = 72;
+                    }
+                    USB.XGM.SetFan(clamped);
+                    Helpers.Logger.WriteLine($"AutoFans: Applied XGM dock curve for mode {mode}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"AutoFans: XGM apply failed: {ex.Message}");
+        }
     }
 
     /// <summary>Apply saved power limits for the given mode.</summary>

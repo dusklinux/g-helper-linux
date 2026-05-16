@@ -48,7 +48,7 @@
         </Border>
 
         <!-- CHARTS -->
-        <Grid x:Name="chartGrid" Grid.Row="1" Margin="10,5" RowDefinitions="*,*,Auto" MinHeight="580">
+        <Grid x:Name="chartGrid" Grid.Row="1" Margin="10,5" RowDefinitions="*,*,Auto,Auto" MinHeight="580">
             <!-- CPU Fan Chart -->
             <controls:FanCurveChart x:Name="chartCPU"
                                      Grid.Row="0"
@@ -69,6 +69,13 @@
                                      Margin="0,5,0,0"
                                      FanLabel="Mid Fan"
                                      LineColor="#44DD44"
+                                     IsVisible="False" />
+
+            <controls:FanCurveChart x:Name="chartXGM"
+                                     Grid.Row="3"
+                                     Margin="0,5,0,0"
+                                     FanLabel="XG Mobile Fan"
+                                     LineColor="#FFA500"
                                      IsVisible="False" />
         </Grid>
 

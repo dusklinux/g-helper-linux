@@ -194,6 +194,12 @@ public partial class ExtraWindow : Window
         labelApuMemValue.Text = Labels.Get("ally_apu_mem_label");
         labelApuMemReboot.Text = Labels.Get("ally_apu_mem_reboot_required");
         InitApuMem();
+
+        // XG Mobile dock controls. Visible only when a real dock is on the bus.
+        labelXgmHeader.Text = Labels.Get("xgm_extra_header");
+        checkXGMLights.Content = Labels.Get("xgm_extra_lights_label");
+        labelXgmBrightnessLabel.Text = Labels.Get("xgm_extra_brightness_label");
+        InitXgmPanel();
         checkSilentStart.Content = Labels.Get("start_minimized");
         checkDisableOsd.Content = Labels.Get("disable_osd_label");
         checkCamera.Content = Labels.Get("camera");
@@ -1659,5 +1665,70 @@ public partial class ExtraWindow : Window
 
         App.System?.ShowNotification(Labels.Get("ally_apu_mem_header"),
             Labels.Get("ally_apu_mem_reboot_required"), "system-reboot");
+    }
+
+    // XG Mobile dock controls
+    //
+    // Visibility is driven entirely by USB-HID enumeration via XGM.IsConnected;
+    // the laptop-side egpu_connected fw-attr can disagree (e.g. dock plugged
+    // in but never enabled), and this UI is purely about controlling the
+    // dock's own LED ring through report 0x5E.
+
+    private bool _suppressXgm;
+
+    private void InitXgmPanel()
+    {
+        bool present = USB.XGM.IsConnected();
+        panelXGM.IsVisible = present;
+        if (!present)
+            return;
+
+        bool light = Helpers.AppConfig.Get("xmg_light", 1) == 1;
+        int brightness = Helpers.AppConfig.Get("xmg_brightness", 3);
+        if (brightness < 0)
+            brightness = 0;
+        if (brightness > 3)
+            brightness = 3;
+
+        _suppressXgm = true;
+        try
+        {
+            checkXGMLights.IsChecked = light;
+            sliderXgmBrightness.Value = brightness;
+            labelXgmBrightness.Text = brightness.ToString();
+        }
+        finally { _suppressXgm = false; }
+    }
+
+    private void CheckXGMLights_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressXgm)
+            return;
+
+        bool on = checkXGMLights.IsChecked == true;
+        Helpers.AppConfig.Set("xmg_light", on ? 1 : 0);
+
+        try
+        { USB.XGM.Light(on); }
+        catch (Exception ex) { Helpers.Logger.WriteLine($"XGM.Light: {ex.Message}"); }
+    }
+
+    private void SliderXgmBrightness_ValueChanged(object? sender,
+        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        int level = (int)Math.Round(e.NewValue);
+        if (level < 0)
+            level = 0;
+        if (level > 3)
+            level = 3;
+        labelXgmBrightness.Text = level.ToString();
+
+        if (_suppressXgm)
+            return;
+
+        Helpers.AppConfig.Set("xmg_brightness", level);
+        try
+        { USB.XGM.LightBrightness((byte)level); }
+        catch (Exception ex) { Helpers.Logger.WriteLine($"XGM.LightBrightness: {ex.Message}"); }
     }
 }

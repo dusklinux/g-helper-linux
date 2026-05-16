@@ -42,6 +42,18 @@
         <Setter Property="Background" Value="#454545" />
     </Style>
 
+    <!-- Active state for ghelper buttons - red-orange border + slightly darker
+         fill to match Windows g-helper RButton "activated" appearance
+         (colorTurbo). Used by buttonXGM when XG Mobile is currently enabled. -->
+    <Style Selector="Button.ghelper.ghelper-active">
+        <Setter Property="BorderBrush" Value="#E84B2C" />
+        <Setter Property="Background" Value="#3A2A24" />
+    </Style>
+
+    <Style Selector="Button.ghelper.ghelper-active:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#4A3530" />
+    </Style>
+
     <!-- Tall mode-selector buttons (perf/GPU) with icon above text -->
     <Style Selector="Button.ghelper-tall">
         <Setter Property="Background" Value="#373737" />

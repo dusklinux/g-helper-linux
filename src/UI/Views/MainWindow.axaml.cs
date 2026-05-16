@@ -69,6 +69,7 @@ public partial class MainWindow : Window
                 _batteryRefreshCounter = 0;
                 RefreshBattery();
             }
+            PollXgmIfChanged();
         };
 
         // Tray-icon model: hide on user-initiated close, dispose only when the
@@ -1324,8 +1325,7 @@ public partial class MainWindow : Window
             labelGPU.Text = "GPU";
         }
 
-        // XG Mobile (eGPU dock) - only relevant on Ally and only when the
-        // dock is physically connected. Read egpu_connected fw-attr.
+        // XG Mobile (eGPU dock)
         RefreshXgMobile();
 
         if (!isAlly)
@@ -1398,51 +1398,155 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Refresh the XG Mobile dock button. Reads the asus-armoury fw-attr
-    /// <c>egpu_connected/current_value</c> - when present and equal to 1
+    /// Last-known snapshot of the kernel-reported dock state, used by the
+    /// hot-plug poll timer to decide when to call <see cref="RefreshXgMobile"/>.
+    /// "0", "1", or null when the attribute is unreadable.
+    /// </summary>
+    private string? _xgmConnectedSnapshot;
+    private string? _xgmEnabledSnapshot;
+
+    /// <summary>True while a toggle is in flight (15 s settle window).</summary>
+    private bool _xgmToggling;
+
+    /// <summary>
+    /// Refresh the XG Mobile dock button. Reads <c>egpu_connected</c> from
+    /// either the legacy asus-nb-wmi sysfs node or the asus-armoury fw-attr
+    /// (whichever is exposed by the running kernel). When the value is 1
     /// the dock is physically attached and we expose a button that toggles
-    /// <c>egpu_enable</c>. Like other GPU-class fw-attrs this is BIOS-staged
-    /// and requires a reboot to fully apply.
+    /// <c>egpu_enable</c>. Visibility is NOT gated on the model - any ROG
+    /// laptop with the XG Mobile receptacle (Flow X13/X16/Z13, Strix XG,
+    /// ROG Ally) is supported. Whether a reboot is required depends on
+    /// which backend handles the toggle write - see <see cref="ButtonXGM_Click"/>.
     /// </summary>
     private void RefreshXgMobile()
     {
-        if (!Helpers.AppConfig.IsAlly())
-        {
-            buttonXGM.IsVisible = false;
-            return;
-        }
-
         // egpu_connected: 1 = dock attached, 0 = standalone, missing = no XGM
         // path present at all.
         var connectedPath = SysfsHelper.ResolveAttrPath(
             Platform.Linux.AsusAttributes.EgpuConnected);
-        bool connected = false;
-        if (connectedPath != null)
-        {
-            var raw = SysfsHelper.ReadAttribute(connectedPath);
-            connected = raw != null && raw.Trim() == "1";
-        }
+        string? connectedRaw = connectedPath != null
+            ? SysfsHelper.ReadAttribute(connectedPath)?.Trim()
+            : null;
+        _xgmConnectedSnapshot = connectedRaw;
+
+        bool connected = connectedRaw == "1";
         buttonXGM.IsVisible = connected;
         if (!connected)
+        {
+            _xgmEnabledSnapshot = null;
+            // Make sure we don't leave the GPU mode buttons disabled if the
+            // dock was yanked while it was active - re-enable them so the
+            // user can switch back to a normal laptop GPU mode.
+            if (buttonEco != null)
+                buttonEco.IsEnabled = true;
+            if (buttonStandard != null)
+                buttonStandard.IsEnabled = true;
+            if (buttonUltimate != null)
+                buttonUltimate.IsEnabled = true;
+            if (buttonOptimized != null)
+                buttonOptimized.IsEnabled = true;
             return;
+        }
 
-        // Reflect current egpu_enable state in the label so the user sees
-        // "XG Mobile: Enabled" vs "XG Mobile: Disabled".
+        // Reflect current egpu_enable state.
         var enablePath = SysfsHelper.ResolveAttrPath(
             Platform.Linux.AsusAttributes.EgpuEnable);
-        bool enabled = false;
-        if (enablePath != null)
+        string? enabledRaw = enablePath != null
+            ? SysfsHelper.ReadAttribute(enablePath)?.Trim()
+            : null;
+        _xgmEnabledSnapshot = enabledRaw;
+        bool enabled = !string.IsNullOrEmpty(enabledRaw) && enabledRaw != "0";
+
+        labelXGM.Text = _xgmToggling
+            ? Labels.Get("xgm_locking")
+            : (enabled ? Labels.Get("xgm_button_disable") : Labels.Get("xgm_button_enable"));
+
+        var classes = "ghelper" + (enabled ? " ghelper-active" : "");
+        if (buttonXGM.Classes.ToString() != classes)
         {
-            var raw = SysfsHelper.ReadAttribute(enablePath);
-            enabled = raw != null && raw.Trim() == "1";
+            buttonXGM.Classes.Clear();
+            foreach (var c in classes.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                buttonXGM.Classes.Add(c);
         }
-        labelXGM.Text = enabled
-            ? Labels.Get("xgm_button_disable")
-            : Labels.Get("xgm_button_enable");
+
+        bool blockedByEco = false;
+        if (App.GpuControl is Platform.Linux.LinuxNvidiaGpuControl
+            && !Helpers.AppConfig.IsAMDiGPU()
+            && App.Wmi?.GetGpuEco() == true)
+        {
+            blockedByEco = true;
+        }
+        buttonXGM.IsEnabled = !_xgmToggling && !blockedByEco;
+
+        bool gpuModeButtonsEnabled = !enabled && !_xgmToggling;
+        if (buttonEco != null)
+            buttonEco.IsEnabled = gpuModeButtonsEnabled;
+        if (buttonStandard != null)
+            buttonStandard.IsEnabled = gpuModeButtonsEnabled;
+        if (buttonUltimate != null)
+            buttonUltimate.IsEnabled = gpuModeButtonsEnabled;
+        if (buttonOptimized != null)
+            buttonOptimized.IsEnabled = gpuModeButtonsEnabled;
+
+        // Tooltip mirrors Windows g-helper:
+        //   active   -> "Click to disable"
+        //   eco-grey -> "Switch out of Eco mode first"
+        //   else     -> "Click to enable"
+        string tip = blockedByEco
+            ? Labels.Get("xgm_tooltip_eco")
+            : (enabled ? Labels.Get("xgm_tooltip_disable") : Labels.Get("xgm_tooltip_enable"));
+        ToolTip.SetTip(buttonXGM, tip);
     }
 
-    private void ButtonXGM_Click(object? sender, RoutedEventArgs e)
+    /// <summary>
+    /// Hot-plug detection: re-read <c>egpu_connected</c> and
+    /// <c>egpu_enable</c> on every refresh tick (every 2 s while the
+    /// MainWindow is visible) and call <see cref="RefreshXgMobile"/> only
+    /// when something changed. Keeps the button in sync when the user
+    /// docks / undocks the XG Mobile without restarting the app.
+    /// </summary>
+    private void PollXgmIfChanged()
     {
+        // Skip the poll while a toggle is in flight - the click handler
+        // owns the UI state during the 15 s settle window.
+        if (_xgmToggling)
+            return;
+
+        try
+        {
+            var connectedPath = SysfsHelper.ResolveAttrPath(
+                Platform.Linux.AsusAttributes.EgpuConnected);
+            string? connected = connectedPath != null
+                ? SysfsHelper.ReadAttribute(connectedPath)?.Trim()
+                : null;
+
+            string? enabled = null;
+            if (connected == "1")
+            {
+                var enablePath = SysfsHelper.ResolveAttrPath(
+                    Platform.Linux.AsusAttributes.EgpuEnable);
+                if (enablePath != null)
+                    enabled = SysfsHelper.ReadAttribute(enablePath)?.Trim();
+            }
+
+            if (connected != _xgmConnectedSnapshot || enabled != _xgmEnabledSnapshot)
+            {
+                Helpers.Logger.WriteLine(
+                    $"XGMobile: poll detected change connected={_xgmConnectedSnapshot}->{connected} enabled={_xgmEnabledSnapshot}->{enabled}");
+                RefreshXgMobile();
+            }
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"PollXgmIfChanged: {ex.Message}");
+        }
+    }
+
+    private async void ButtonXGM_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_xgmToggling)
+            return;
+
         var enablePath = SysfsHelper.ResolveAttrPath(
             Platform.Linux.AsusAttributes.EgpuEnable);
         if (enablePath == null)
@@ -1452,17 +1556,140 @@ public partial class MainWindow : Window
             return;
         }
 
-        var raw = SysfsHelper.ReadAttribute(enablePath);
-        bool currentlyEnabled = raw != null && raw.Trim() == "1";
+        var raw = SysfsHelper.ReadAttribute(enablePath)?.Trim();
+        bool currentlyEnabled = !string.IsNullOrEmpty(raw) && raw != "0";
         string targetValue = currentlyEnabled ? "0" : "1";
-        bool ok = SysfsHelper.WriteToAllBackends(
-            Platform.Linux.AsusAttributes.EgpuEnable, targetValue);
 
-        Helpers.Logger.WriteLine($"XGMobile: egpu_enable {raw?.Trim()} → {targetValue} (ok={ok})");
-        App.System?.ShowNotification(Labels.Get("xgm_label"),
-            Labels.Get("xgm_reboot_required"), "system-reboot");
+        if (currentlyEnabled)
+        {
+            bool yes = await Dialogs.ConfirmDialog.ShowAsync(
+                this,
+                Labels.Get("xgm_disable_title"),
+                Labels.Get("xgm_disable_message"));
+            if (!yes)
+                return;
 
+            // On disable, also restore the dock fan to firmware-default to
+            // avoid the dock spinning a fan against a powered-down rail
+            // mid-transition. Mirrors Windows g-helper's pre-disable XGM.Reset.
+            try
+            { USB.XGM.Reset(); }
+            catch (Exception ex) { Helpers.Logger.WriteLine($"XGM.Reset (pre-disable): {ex.Message}"); }
+        }
+
+        _xgmToggling = true;
         RefreshXgMobile();
+
+        bool enabling = targetValue == "1";
+        await Task.Run(async () =>
+        {
+            var result = SysfsHelper.WriteToAllBackendsDetailed(
+                Platform.Linux.AsusAttributes.EgpuEnable, targetValue);
+
+            // Optional 6850M raw_wmi fallback: if the user has the special
+            // RX 6850M dock and only the fw-attr path took the write, also
+            // try the ACPI 0x101 magic value via raw debugfs. See
+            // Phase 9 in the plan.
+            if (Helpers.AppConfig.Is("xgm_special") && enabling && !result.Legacy)
+            {
+                try
+                {
+                    bool rawOk = Platform.Linux.AsusWmiDebugfs.WriteRaw(
+                        Platform.Linux.AsusWmiDebugfs.DEVID_EGPU, 0x101u);
+                    Helpers.Logger.WriteLine($"XGMobile: 6850M raw_wmi 0x101 fallback ok={rawOk}");
+                }
+                catch (Exception ex)
+                {
+                    Helpers.Logger.WriteLine($"XGMobile: raw_wmi 0x101 fallback failed: {ex.Message}");
+                }
+            }
+
+            Helpers.Logger.WriteLine(
+                $"XGMobile: egpu_enable {raw} -> {targetValue} (legacy={result.Legacy} fwAttr={result.FwAttr})");
+
+            if (enabling && result.Any)
+            {
+                try
+                { USB.XGM.Init(); }
+                catch (Exception ex) { Helpers.Logger.WriteLine($"XGMobile post-enable Init: {ex.Message}"); }
+            }
+
+            // Smart user message:
+            //   legacy succeeded -> ACPI applies immediately, ~15 s settle
+            //   only fw-attr     -> asus-armoury stages until next reboot
+            //   nothing wrote    -> hard error, surface "unavailable"
+            string body;
+            string icon;
+            if (!result.Any)
+            {
+                body = Labels.Get("xgm_unavailable");
+                icon = "dialog-warning";
+            }
+            else if (result.Legacy)
+            {
+                body = Labels.Get("xgm_toggled_immediate");
+                icon = "preferences-system";
+            }
+            else
+            {
+                body = Labels.Get("xgm_toggled_reboot");
+                icon = "system-reboot";
+            }
+
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                App.System?.ShowNotification(Labels.Get("xgm_label"), body, icon);
+            });
+
+            // 15 s settle - match Windows g-helper. After this we refresh
+            // the UI to reflect the new state regardless of which backend
+            // handled the write.
+            await Task.Delay(TimeSpan.FromSeconds(15));
+
+            // Post-enable steps that must run after the dock GPU has had
+            // time to enumerate on PCIe (mirrors Windows g-helper
+            // GPUModeControl.cs:320-323):
+            //
+            //   1. Push the saved fan curve when auto_apply_fans is on -
+            //      otherwise the dock runs the firmware default until the
+            //      next mode switch even if the user has a custom curve.
+            //   2. Probe for the RX 6850M and persist xgm_special so the
+            //      next enable cycle uses the ACPI 0x101 path automatically.
+            if (enabling && result.Any)
+            {
+                try
+                {
+                    if (Helpers.AppConfig.IsMode("auto_apply_fans") && USB.XGM.IsConnected())
+                    {
+                        byte[] curve = Helpers.AppConfig.GetFanConfig(3);
+                        if (curve.Length == 16)
+                        {
+                            // Apply the same 72% PWM clamp FansWindow uses.
+                            var clamped = new byte[16];
+                            Array.Copy(curve, clamped, 16);
+                            for (int i = 8; i < 16; i++)
+                            {
+                                if (clamped[i] > 72)
+                                    clamped[i] = 72;
+                            }
+                            USB.XGM.SetFan(clamped);
+                            Helpers.Logger.WriteLine("XGMobile post-enable: pushed saved fan curve");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Helpers.Logger.WriteLine($"XGMobile post-enable SetFan: {ex.Message}");
+                }
+            }
+
+            try
+            { Gpu.LinuxAmdDgpuDetect.RefreshXgmSpecialFlag(); }
+            catch (Exception ex) { Helpers.Logger.WriteLine($"XGM RX6850M probe: {ex.Message}"); }
+        });
+
+        _xgmToggling = false;
+        Avalonia.Threading.Dispatcher.UIThread.Post(RefreshXgMobile);
     }
 
     /// <summary>

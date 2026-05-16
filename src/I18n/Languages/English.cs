@@ -677,6 +677,22 @@ public static class English
         ["xgm_button_enable"] = "XG Mobile: Enable",
         ["xgm_button_disable"] = "XG Mobile: Disable",
         ["xgm_unavailable"] = "XG Mobile path unavailable on this kernel",
-        ["xgm_reboot_required"] = "Reboot required for XG Mobile change",
+        ["xgm_locking"] = "Toggling XG Mobile…",
+        ["xgm_tooltip_enable"] = "Click to enable the XG Mobile dock",
+        ["xgm_tooltip_disable"] = "Click to disable the XG Mobile dock",
+        ["xgm_tooltip_eco"] = "Switch out of Eco mode first",
+        ["xgm_disable_title"] = "Disabling XG Mobile",
+        ["xgm_disable_message"] = "Did you close all applications running on XG Mobile?",
+        ["xgm_toggled_immediate"] = "XG Mobile toggled - active in ~15 seconds",
+        ["xgm_toggled_reboot"] = "XG Mobile toggled - reboot to apply",
+        ["xgm_extra_header"] = "XG Mobile Dock",
+        ["xgm_extra_lights_label"] = "Dock lights",
+        ["xgm_extra_brightness_label"] = "Brightness",
+        ["xgm_fan"] = "XG Mobile Fan",
+
+        // Reusable confirm-dialog buttons (used by ConfirmDialog and any
+        // future Yes/No prompt).
+        ["confirm_yes"] = "Yes",
+        ["confirm_no"] = "No",
     };
 }

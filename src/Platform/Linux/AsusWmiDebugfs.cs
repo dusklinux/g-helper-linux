@@ -162,6 +162,38 @@ public static class AsusWmiDebugfs
         return ParseResult(output);
     }
 
+    /// <summary>
+    /// User-friendly wrapper around <see cref="Devs"/> that gates on
+    /// raw_wmi being enabled in the config and the asus-nb-wmi debugfs
+    /// being mounted. Used by the XG Mobile RX 6850M fallback path
+    /// (writes <c>0x101</c> to ACPI device <c>0x00090019</c>) - silently
+    /// returns false if raw_wmi isn't available, callers shouldn't crash
+    /// when the user hasn't enabled it.
+    /// </summary>
+    public static bool WriteRaw(uint deviceId, uint ctrlParam)
+    {
+        if (!IsAvailable())
+        {
+            Logger.WriteLine($"Raw WMI WriteRaw(0x{deviceId:X8}, 0x{ctrlParam:X}): asus-nb-wmi module not loaded");
+            return false;
+        }
+        if (!AppConfig.Is("raw_wmi"))
+        {
+            Logger.WriteLine($"Raw WMI WriteRaw(0x{deviceId:X8}, 0x{ctrlParam:X}): raw_wmi config disabled - skipping");
+            return false;
+        }
+
+        var result = Devs(deviceId, ctrlParam);
+        if (result == null)
+        {
+            Logger.WriteLine($"Raw WMI WriteRaw(0x{deviceId:X8}, 0x{ctrlParam:X}): pkexec/parse failed");
+            return false;
+        }
+
+        Logger.WriteLine($"Raw WMI WriteRaw(0x{deviceId:X8}, 0x{ctrlParam:X}) = 0x{result.Value:X}");
+        return true;
+    }
+
     // Diagnostics (no pkexec)
 
     /// <summary>
