@@ -122,8 +122,7 @@ public static class Arabic
 
         ["gpu_mux_reboot_auto"] = "تم تغيير مفتاح MUX - يتطلب إعادة تشغيل، ثم سيبدأ التبديل التلقائي",
         ["gpu_mux_reboot"] = "يجب إعادة التشغيل لتطبيق التغييرات",
-        ["gpu_eco_blocked"] = "وضع Eco محظور - تم تغيير MUX إلى Ultimate في هذه الجلسة. أعد التشغيل أولاً.",
-        ["gpu_eco_blocked_detail"] = "وضع Eco محظور: تم تغيير MUX إلى Ultimate في هذه الجلسة. أعد التشغيل أولاً، ثم انتقل إلى Eco.",
+        ["gpu_eco_blocked_mux"] = "أعد التشغيل أولاً، Ultimate قيد الانتظار.",
         ["gpu_eco_pending"] = "وضع Eco قيد الانتظار - أعد التشغيل للتطبيق",
         ["gpu_eco_after_reboot"] = "سيتم تفعيل وضع Eco بعد إعادة التشغيل",
         ["gpu_switch_failed"] = "فشل تبديل وضع GPU - تحقق من السجلات",
@@ -142,15 +141,12 @@ public static class Arabic
         ["gpu_switching_standard"] = "جارٍ التبديل إلى وضع Standard...",
         ["gpu_switching_generic"] = "جارٍ تبديل وضع GPU...",
         ["gpu_switching_ultimate"] = "جارٍ التبديل إلى وضع Ultimate...",
-        ["gpu_releasing_driver"] = "جارٍ تحرير تعريف GPU، يرجى الانتظار...",
-        ["gpu_driver_eco_scheduled"] = "GPU مشغول بنظام العرض - تم جدولة وضع Eco لإعادة التشغيل",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "تعريف GPU نشط",
-        ["gpu_driver_body"] = "GPU قيد الاستخدام حالياً بواسطة نظام العرض.\nالتبديل إلى وضع Eco يتطلب تحرير التعريف أولاً.",
-        ["gpu_driver_switch_now"] = "التبديل الآن",
+        ["gpu_driver_title"] = "إعادة التشغيل مطلوبة",
+        ["gpu_driver_body"] = "GPU قيد الاستخدام حالياً بواسطة نظام العرض.\nالتبديل إلى وضع Eco يتطلب إعادة التشغيل ليُطبَّق بأمان.",
         ["gpu_driver_after_reboot"] = "بعد إعادة التشغيل",
-        ["gpu_driver_footer"] = "\"التبديل الآن\" يحاول إلغاء تحميل تعريف GPU (قد تكون كلمة مرور\nالمسؤول مطلوبة). \"بعد إعادة التشغيل\" يحفظ للتشغيل التالي.",
+        ["gpu_driver_footer"] = "\"بعد إعادة التشغيل\" يحفظ تغيير الوضع ليُطبَّق عند التشغيل التالي.\n\"إلغاء\" يحتفظ بوضع GPU الحالي.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "إيقاف  \u25cb\u25cb\u25cb",
@@ -291,7 +287,11 @@ public static class Arabic
         ["reapply_power_hint"] = "إعادة كتابة حدود طاقة CPU/GPU بهذا الفاصل الزمني. مفيد عندما يقوم BIOS بإعادة ضبط PPT.",
         ["auto_apply_power"] = "تطبيق حدود الطاقة تلقائياً عند تغيير الوضع",
         ["raw_wmi_mode"] = "وضع WMI الخام (تجريبي - GPU Eco عبر ACPI debugfs)",
-        ["raw_wmi_hint"] = "للحواسيب المحمولة بدون GPU Eco sysfs. سيُعاد تشغيل التطبيق عند التبديل.",
+        ["raw_wmi_hint"] = "يتواصل مع طريقة GPUEco لبرنامج ASUS الثابت عبر /sys/kernel/debug/asus-nb-wmi مباشرة، متجاوزاً فحص حضور sysfs في النواة. استخدم هذا فقط على إصدارات Vivobook / Zenbook القديمة حيث dgpu_disable مفقود لكن طريقة ACPI لا تزال تعمل. كل استدعاء يحتاج إلى مطالبة pkexec ويعاد تشغيل ghelper عند تبديل الخيار. يتم تجاهله تماماً عند تمكين وضع PCI أعلاه.",
+        ["gpu_backend_header"] = "خلفية GPU",
+        ["gpu_backend_intro"] = "اختر كيف يقوم ghelper بتشغيل وإيقاف dGPU. ASUS WMI (البرنامج الثابت) هو الافتراضي؛ الخيارات أدناه تساعد عندما يكون مسار البرنامج الثابت مفقوداً أو غير موثوق على جهازك.",
+        ["gpu_backend_pci_label"] = "استخدم تعطيل PCI dGPU",
+        ["gpu_backend_pci_hint"] = "يعطل dGPU عبر قائمة modprobe السوداء وقاعدة udev للإزالة الفورية. مطلوب على الحواسيب المحمولة بخلاف ASUS حيث لا يوجد برنامج ثابت ASUS للتحدث إليه، اختياري على ASUS إذا كنت تفضل المسار النواة فقط. كل تغيير وضع يتطلب إعادة تشغيل لأن القواعد تطبق فقط عند الإقلاع التالي.",
         ["auto_switch_refresh"] = "تبديل معدل التحديث تلقائياً (تيار متردد/بطارية)",
         ["cpu_cores"] = "أنوية CPU",
         ["cpu_cores_format"] = "{0}/{1}",

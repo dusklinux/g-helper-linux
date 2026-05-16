@@ -122,8 +122,7 @@ public static class Finnish
 
         ["gpu_mux_reboot_auto"] = "MUX-kytkin vaihdettu - uudelleenkäynnistys vaaditaan, sitten automaattinen vaihto alkaa",
         ["gpu_mux_reboot"] = "Sinun täytyy käynnistää uudelleen, jotta muutokset tulevat voimaan",
-        ["gpu_eco_blocked"] = "Eco-tila estetty - MUX vaihdettiin Ultimate-tilaan tässä istunnossa. Käynnistä ensin uudelleen.",
-        ["gpu_eco_blocked_detail"] = "Eco-tila estetty: MUX vaihdettiin Ultimate-tilaan tässä istunnossa. Käynnistä ensin uudelleen, vaihda sitten Eco-tilaan.",
+        ["gpu_eco_blocked_mux"] = "Käynnistä ensin uudelleen, Ultimate odottaa.",
         ["gpu_eco_pending"] = "Eco-tila odottaa - käynnistä uudelleen",
         ["gpu_eco_after_reboot"] = "Eco-tila aktivoituu uudelleenkäynnistyksen jälkeen",
         ["gpu_switch_failed"] = "GPU-tilan vaihto epäonnistui - tarkista lokit",
@@ -142,15 +141,12 @@ public static class Finnish
         ["gpu_switching_standard"] = "Vaihdetaan standarditilaan...",
         ["gpu_switching_generic"] = "Vaihdetaan GPU-tilaa...",
         ["gpu_switching_ultimate"] = "Vaihdetaan Ultimate-tilaan...",
-        ["gpu_releasing_driver"] = "Vapautetaan GPU-ajuria, odota...",
-        ["gpu_driver_eco_scheduled"] = "GPU on näyttöjärjestelmän käytössä - Eco-tila ajastettu uudelleenkäynnistykseen",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "GPU-ajuri aktiivinen",
-        ["gpu_driver_body"] = "GPU on tällä hetkellä näyttöjärjestelmän käytössä.\nEco-tilaan vaihtaminen vaatii ajurin vapauttamisen ensin.",
-        ["gpu_driver_switch_now"] = "Vaihda nyt",
+        ["gpu_driver_title"] = "Uudelleenkäynnistys vaaditaan",
+        ["gpu_driver_body"] = "GPU on tällä hetkellä näyttöjärjestelmän käytössä.\nEco-tilaan vaihtaminen vaatii uudelleenkäynnistyksen turvalliseksi voimaan astumiseksi.",
         ["gpu_driver_after_reboot"] = "Uudelleenkäynnistyksen jälkeen",
-        ["gpu_driver_footer"] = "Vaihda nyt yrittää vapauttaa GPU-ajurin (järjestelmänvalvojan salasana\nvoidaan tarvita). Uudelleenkäynnistyksen jälkeen tallennetaan seuraavaan käynnistykseen.",
+        ["gpu_driver_footer"] = "Uudelleenkäynnistyksen jälkeen tallentaa tilan muutoksen seuraavalle käynnistykselle.\nPeruuta säilyttää nykyisen GPU-tilan.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Pois  \u25cb\u25cb\u25cb",
@@ -291,7 +287,11 @@ public static class Finnish
         ["reapply_power_hint"] = "Kirjoita CPU/GPU-tehorajat uudelleen tällä välillä. Hyödyllinen, kun BIOS ylikirjoittaa PPT:n.",
         ["auto_apply_power"] = "Ota tehorajat automaattisesti käyttöön tilan vaihtuessa",
         ["raw_wmi_mode"] = "Raaka WMI-tila (kokeellinen - GPU Eco ACPI debugfs:n kautta)",
-        ["raw_wmi_hint"] = "Kannettaville ilman GPU Eco sysfs-tukea. Sovellus käynnistyy uudelleen vaihdettaessa.",
+        ["raw_wmi_hint"] = "Keskustelee suoraan ASUS-laiteohjelmiston GPUEco-menetelmän kanssa /sys/kernel/debug/asus-nb-wmi:n kautta, ohittaen ytimen sysfs-läsnäolotarkistuksen. Käytä tätä vain vanhemmassa Vivobook / Zenbook -laiteohjelmistossa, jossa dgpu_disable puuttuu mutta ACPI-menetelmä toimii edelleen. Jokainen kutsu vaatii pkexec-kehotuksen ja ghelper käynnistyy uudelleen valintaa vaihdettaessa. Ohitetaan kokonaan kun yllä oleva PCI-tila on käytössä.",
+        ["gpu_backend_header"] = "GPU-taustajärjestelmä",
+        ["gpu_backend_intro"] = "Valitse miten ghelper kytkee dGPU:n päälle ja pois. ASUS WMI (laiteohjelmisto) on oletus; alla olevat vaihtoehdot auttavat kun laiteohjelmistopolku puuttuu tai on epäluotettava laitteistossasi.",
+        ["gpu_backend_pci_label"] = "Käytä PCI dGPU disable -tilaa",
+        ["gpu_backend_pci_hint"] = "Poistaa dGPU:n käytöstä modprobe-mustalistalla ja udev hot-remove -säännöllä. Vaaditaan ei-ASUS kannettavissa joissa ei ole ASUS-laiteohjelmistoa keskusteltavaksi, valinnainen ASUS:lla jos suosit vain ytimen polkua. Jokainen tilan vaihto vaatii uudelleenkäynnistyksen koska säännöt astuvat voimaan vain seuraavalla käynnistyksellä.",
         ["auto_switch_refresh"] = "Automaattinen virkistystaajuuden vaihto (verkkovirta/akku)",
         ["cpu_cores"] = "CPU-ytimet",
         ["cpu_cores_format"] = "{0}/{1}",

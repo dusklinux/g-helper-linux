@@ -119,8 +119,7 @@ public static class Turkish
 
         ["gpu_mux_reboot_auto"] = "MUX anahtarı değiştirildi - yeniden başlatma gerekli, ardından otomatik geçiş başlayacak",
         ["gpu_mux_reboot"] = "Değişikliklerin geçerli olması için yeniden başlatmanız gerekiyor",
-        ["gpu_eco_blocked"] = "Eco modu engellendi - bu oturumda MUX Ultimate'a değiştirildi. Önce yeniden başlatın.",
-        ["gpu_eco_blocked_detail"] = "Eco modu engellendi: Bu oturumda MUX Ultimate'a değiştirildi. Önce yeniden başlatın, sonra Eco'ya geçin.",
+        ["gpu_eco_blocked_mux"] = "Önce yeniden başlatın, Ultimate bekliyor.",
         ["gpu_eco_pending"] = "Eco modu bekliyor - uygulamak için yeniden başlatın",
         ["gpu_eco_after_reboot"] = "Eco modu yeniden başlatmadan sonra etkinleşecek",
         ["gpu_switch_failed"] = "GPU modu geçişi başarısız - günlükleri kontrol edin",
@@ -139,15 +138,12 @@ public static class Turkish
         ["gpu_switching_standard"] = "Standard moduna geçiliyor...",
         ["gpu_switching_generic"] = "GPU modu değiştiriliyor...",
         ["gpu_switching_ultimate"] = "Ultimate moduna geçiliyor...",
-        ["gpu_releasing_driver"] = "GPU sürücüsü serbest bırakılıyor, lütfen bekleyin...",
-        ["gpu_driver_eco_scheduled"] = "GPU görüntü sistemi tarafından kullanılıyor - Eco modu yeniden başlatma için planlandı",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "GPU Sürücüsü Aktif",
-        ["gpu_driver_body"] = "GPU şu anda görüntü sistemi tarafından kullanılıyor.\nEco moduna geçmek için önce sürücünün serbest bırakılması gerekiyor.",
-        ["gpu_driver_switch_now"] = "Şimdi Geç",
+        ["gpu_driver_title"] = "Yeniden Başlatma Gerekli",
+        ["gpu_driver_body"] = "GPU şu anda görüntü sistemi tarafından kullanılıyor.\nEco moduna geçmek, güvenli bir şekilde uygulanması için yeniden başlatma gerektirir.",
         ["gpu_driver_after_reboot"] = "Yeniden Başlatmadan Sonra",
-        ["gpu_driver_footer"] = "Şimdi Geç, GPU sürücüsünü kaldırmaya çalışır (yönetici şifresi\ngerekebilir). Yeniden Başlatmadan Sonra, sonraki açılış için kaydeder.",
+        ["gpu_driver_footer"] = "Yeniden Başlatmadan Sonra mod değişikliğini sonraki açılışa kaydeder.\nİptal mevcut GPU modunu korur.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Kapalı  \u25cb\u25cb\u25cb",
@@ -288,7 +284,11 @@ public static class Turkish
         ["reapply_power_hint"] = "Bu aralıkta CPU/GPU güç limitlerini yeniden yazar. BIOS, PPT'yi ezdiğinde kullanışlıdır.",
         ["auto_apply_power"] = "Mod değişikliğinde güç limitlerini otomatik uygula",
         ["raw_wmi_mode"] = "Ham WMI modu (deneysel - ACPI debugfs üzerinden GPU Eco)",
-        ["raw_wmi_hint"] = "GPU Eco sysfs'i olmayan laptoplar için. Açıldığında uygulama yeniden başlayacak.",
+        ["raw_wmi_hint"] = "ASUS bellenimi GPUEco yöntemiyle /sys/kernel/debug/asus-nb-wmi aracılığıyla doğrudan konuşur, çekirdeğin sysfs varlık kontrolünü atlar. Bunu yalnızca dgpu_disable'ın eksik olduğu ancak ACPI yönteminin hala çalıştığı eski Vivobook / Zenbook belleniminde kullanın. Her çağrı bir pkexec istemi gerektirir ve ghelper seçenek değiştirildiğinde yeniden başlatılır. Yukarıdaki PCI modu etkinleştirildiğinde tamamen göz ardı edilir.",
+        ["gpu_backend_header"] = "GPU Arka Ucu",
+        ["gpu_backend_intro"] = "ghelper'ın dGPU'yu nasıl açıp kapattığını seçin. ASUS WMI (bellenim) varsayılandır; aşağıdaki alternatifler, bellenim yolunun donanımınızda eksik veya güvenilmez olduğu durumlarda yardımcı olur.",
+        ["gpu_backend_pci_label"] = "PCI dGPU devre dışı bırakmayı kullan",
+        ["gpu_backend_pci_hint"] = "dGPU'yu modprobe kara listesi artı udev hot-remove kuralı ile devre dışı bırakır. Konuşacak ASUS bellenimi olmayan ASUS olmayan laptoplarda gereklidir, yalnızca çekirdek yolunu tercih ettiğiniz ASUS'ta isteğe bağlıdır. Her mod değişikliği yeniden başlatma gerektirir çünkü kurallar yalnızca bir sonraki açılışta uygulanır.",
         ["auto_switch_refresh"] = "Yenileme hızını otomatik değiştir (Şarj/Pil)",
         ["cpu_cores"] = "CPU Çekirdekleri",
         ["cpu_cores_format"] = "{0}/{1}",

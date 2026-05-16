@@ -119,8 +119,7 @@ public static class Hungarian
 
         ["gpu_mux_reboot_auto"] = "MUX kapcsoló megváltoztatva - újraindítás szükséges, utána megkezdődik az automatikus váltás",
         ["gpu_mux_reboot"] = "Újra kell indítania a változtatások érvénybe lépéséhez",
-        ["gpu_eco_blocked"] = "Eco mód blokkolva - ebben a munkamenetben a MUX Ultimate-re lett állítva. Először indítsa újra.",
-        ["gpu_eco_blocked_detail"] = "Eco mód blokkolva: ebben a munkamenetben a MUX Ultimate-re lett állítva. Először indítsa újra, majd váltson Eco-ra.",
+        ["gpu_eco_blocked_mux"] = "Először indítsa újra, Ultimate függőben van.",
         ["gpu_eco_pending"] = "Eco mód függőben - indítsa újra az alkalmazáshoz",
         ["gpu_eco_after_reboot"] = "Az Eco mód az újraindítás után aktiválódik",
         ["gpu_switch_failed"] = "GPU mód váltás sikertelen - ellenőrizze a naplókat",
@@ -139,15 +138,12 @@ public static class Hungarian
         ["gpu_switching_standard"] = "Váltás Standard módra...",
         ["gpu_switching_generic"] = "GPU mód váltása...",
         ["gpu_switching_ultimate"] = "Váltás Ultimate módra...",
-        ["gpu_releasing_driver"] = "GPU illesztőprogram felszabadítása, kérem várjon...",
-        ["gpu_driver_eco_scheduled"] = "GPU-t a megjelenítő rendszer használja - Eco mód ütemezve újraindításra",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "GPU illesztőprogram aktív",
-        ["gpu_driver_body"] = "A GPU-t jelenleg a megjelenítő rendszer használja.\nAz Eco módra váltáshoz először fel kell szabadítani az illesztőprogramot.",
-        ["gpu_driver_switch_now"] = "Váltás most",
+        ["gpu_driver_title"] = "Újraindítás szükséges",
+        ["gpu_driver_body"] = "A GPU-t jelenleg a megjelenítő rendszer használja.\nAz Eco módra való váltáshoz a biztonságos érvénybe lépéshez újraindítás szükséges.",
         ["gpu_driver_after_reboot"] = "Újraindítás után",
-        ["gpu_driver_footer"] = "A Váltás most megpróbálja eltávolítani a GPU illesztőprogramot (rendszergazda\njelszó szükséges lehet). Az Újraindítás után elmenti a következő indításra.",
+        ["gpu_driver_footer"] = "Az Újraindítás után elmenti a módváltást a következő indításhoz.\nA Mégse megtartja az aktuális GPU módot.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Ki  \u25cb\u25cb\u25cb",
@@ -288,7 +284,11 @@ public static class Hungarian
         ["reapply_power_hint"] = "Újraírja a CPU/GPU teljesítménykorlátokat ennyi időnként. Hasznos, ha a BIOS felülírja a PPT-t.",
         ["auto_apply_power"] = "Teljesítmény korlátok automatikus alkalmazása mód váltáskor",
         ["raw_wmi_mode"] = "Nyers WMI mód (kísérleti - GPU Eco ACPI debugfs-en keresztül)",
-        ["raw_wmi_hint"] = "GPU Eco sysfs nélküli laptopokhoz. Az alkalmazás újraindul váltáskor.",
+        ["raw_wmi_hint"] = "Közvetlenül kommunikál az ASUS firmware GPUEco metódusával a /sys/kernel/debug/asus-nb-wmi-n keresztül, megkerülve a kernel sysfs jelenlét-ellenőrzését. Csak régebbi Vivobook / Zenbook firmware-eken használja, ahol a dgpu_disable hiányzik, de az ACPI metódus még működik. Minden hívás pkexec promptot igényel, és a ghelper újraindul a beállítás váltásakor. Teljesen figyelmen kívül hagyva, ha a fenti PCI mód engedélyezve van.",
+        ["gpu_backend_header"] = "GPU Backend",
+        ["gpu_backend_intro"] = "Válassza ki, hogyan kapcsolja a ghelper be és ki a dGPU-t. Az ASUS WMI (firmware) az alapértelmezett; az alábbi alternatívák segítenek, ha a firmware útvonal hiányzik vagy megbízhatatlan a hardverén.",
+        ["gpu_backend_pci_label"] = "PCI dGPU letiltás használata",
+        ["gpu_backend_pci_hint"] = "Letiltja a dGPU-t modprobe feketelistával és udev hot-remove szabállyal. Kötelező nem-ASUS laptopokon, ahol nincs ASUS firmware amivel beszélni lehetne, opcionális ASUS-on, ha a csak-kernel útvonalat részesíti előnyben. Minden módváltás újraindítást igényel, mert a szabályok csak a következő indításkor lépnek érvénybe.",
         ["auto_switch_refresh"] = "Frissítési ráta automatikus váltása (hálózat/akkumulátor)",
         ["cpu_cores"] = "CPU magok",
         ["cpu_cores_format"] = "{0}/{1}",

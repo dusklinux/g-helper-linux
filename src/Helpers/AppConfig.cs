@@ -27,12 +27,54 @@ internal partial class ConfigJsonContext : JsonSerializerContext { }
 /// </summary>
 public static class AppConfig
 {
-    private static readonly string ConfigDir = Path.Combine(
+    // ConfigDir/ConfigFile/BackupFile are intentionally NOT readonly so the
+    // C# test harness can redirect them at runtime via ResetForTest(...).
+    // In production they are written once at static-ctor time and never
+    // mutated again.
+    private static string ConfigDir = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
         ".config", "ghelper");
 
-    private static readonly string ConfigFile = Path.Combine(ConfigDir, "config.json");
-    private static readonly string BackupFile = ConfigFile + ".bak";
+    private static string ConfigFile = Path.Combine(ConfigDir, "config.json");
+    private static string BackupFile = ConfigFile + ".bak";
+
+    /// <summary>
+    /// Reset all in-memory state and redirect on-disk storage to a fresh
+    /// directory. Used by the C# scenario test harness so each test starts
+    /// with a clean config without forking a new process. No-op outside
+    /// tests - production code never calls this.
+    /// </summary>
+    internal static void ResetForTest(string newConfigDir)
+    {
+        lock (_lock)
+        {
+            _writeTimer?.Stop();
+            _config.Clear();
+            _lastWrite = 0;
+            _model = null;
+            _modelShort = null;
+            _bios = null;
+
+            ConfigDir = newConfigDir;
+            ConfigFile = Path.Combine(newConfigDir, "config.json");
+            BackupFile = ConfigFile + ".bak";
+            Directory.CreateDirectory(ConfigDir);
+
+            if (File.Exists(ConfigFile))
+            {
+                try
+                {
+                    string text = File.ReadAllText(ConfigFile);
+                    _config = JsonSerializer.Deserialize(text, ConfigJsonContext.Default.DictionaryStringJsonElement)
+                        ?? new Dictionary<string, JsonElement>();
+                }
+                catch
+                {
+                    _config = new Dictionary<string, JsonElement>();
+                }
+            }
+        }
+    }
 
     private static Dictionary<string, JsonElement> _config = new();
     private static readonly object _lock = new();
@@ -396,6 +438,78 @@ public static class AppConfig
     public static bool IsDynamicLighting() => IsSlash() || IsIntelHX() || IsTUF() || IsZ13();
     public static bool IsDynamicLightingOnly() => ContainsModel("S560") || ContainsModel("M540") || ContainsModel("UX760");
     public static bool IsDynamicLightingInit() => ContainsModel("FA608") || Is("lighting_init");
+
+    /// <summary>
+    /// GPU mode UI flag. Optimized (auto AC/DC dGPU switching) is hidden by
+    /// default because the underlying mechanism live dgpu_disable writes
+    /// can stall the kernel for 30-60s on many firmware revisions (issue #94).
+    /// The only reliable path to disable the dGPU is reboot-based, so auto
+    /// switching is not safe. Power users can re-enable the Optimized button
+    /// and the tray entry by setting "gpu_optimized_enabled": 1 in
+    /// ~/.config/ghelper/config.json.
+    /// </summary>
+    public static bool IsOptimizedGpuModeEnabled() => Is("gpu_optimized_enabled");
+
+    /// <summary>
+    /// GPU backend selector. Two values are supported:
+    ///   "asus-wmi" - the boot service writes dgpu_disable=1 via firmware
+    ///                (asus-nb-wmi / asus-armoury). The modprobe + udev block
+    ///                files are temporary trampolines cleaned up on success.
+    ///   "pci"        The boot service never touches
+    ///                firmware sysfs. The modprobe block + udev hot-remove
+    ///                rule ARE the persistent Eco state and survive across
+    ///                reboots until the user switches to Standard.
+    /// Default "asus-wmi" so existing ASUS users see no behavioural change.
+    /// Auto-detected on first run: <see cref="AutoDetectGpuBackendIfUnset"/>
+    /// sets "pci" when no asus-nb-wmi / asus-armoury platform device is
+    /// present, since the WMI path cannot work on those systems.
+    /// </summary>
+    public static string GetGpuBackend()
+    {
+        string? raw = GetString("gpu_backend");
+        if (string.IsNullOrWhiteSpace(raw))
+            return "asus-wmi";
+        string normalized = raw.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "pci" => "pci",
+            "asus-wmi" => "asus-wmi",
+            _ => "asus-wmi"
+        };
+    }
+
+    /// <summary>True when the user (or first-run auto-detect) selected the
+    /// PCI backend instead of the default ASUS WMI flow.</summary>
+    public static bool IsPciGpuBackend() => GetGpuBackend() == "pci";
+
+    /// <summary>
+    /// On first run, choose a sane default for the GPU backend if the user
+    /// has not yet set one. Non-ASUS systems (no asus-nb-wmi / asus-armoury
+    /// platform device) cannot use the WMI flow at all, so we silently
+    /// default them to "pci". ASUS systems keep the historical default of
+    /// "asus-wmi" unless the user explicitly opts in.
+    /// </summary>
+    public static void AutoDetectGpuBackendIfUnset()
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(GetString("gpu_backend")))
+                return; // user already chose
+            bool hasAsusPlatform =
+                Directory.Exists("/sys/bus/platform/devices/asus-nb-wmi") ||
+                Directory.Exists("/sys/devices/platform/asus-nb-wmi") ||
+                Directory.Exists("/sys/class/firmware-attributes/asus-armoury");
+            if (!hasAsusPlatform)
+            {
+                Set("gpu_backend", "pci");
+                Logger.WriteLine("AppConfig: no ASUS platform device detected - defaulting gpu_backend=pci");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine($"AppConfig: AutoDetectGpuBackendIfUnset failed: {ex.Message}");
+        }
+    }
 
     // Keyboard / input
     public static bool IsStrixNumpad() => ContainsModel("G713R");

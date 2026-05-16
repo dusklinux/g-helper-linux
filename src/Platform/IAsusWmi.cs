@@ -140,4 +140,12 @@ public interface IAsusWmi : IDisposable
     /// or raw WMI debugfs (when raw_wmi opt-in is enabled and firmware supports it).
     /// </summary>
     bool IsGpuEcoAvailable();
+
+    /// <summary>
+    /// True if the user could conceivably toggle the GPU backend selector
+    /// (ASUS WMI dgpu, NVIDIA dGPU detected, PCI mode already on, block
+    /// artifacts on disk, or nvidia/nouveau modules installed). Drives the
+    /// visibility of the GPU Backend checkbox in the Extra window.
+    /// </summary>
+    bool CanToggleGpuBackend();
 }

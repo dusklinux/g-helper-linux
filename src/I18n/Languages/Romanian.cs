@@ -119,8 +119,7 @@ public static class Romanian
 
         ["gpu_mux_reboot_auto"] = "Comutatorul MUX schimbat - repornire necesară, apoi comutarea automată va începe",
         ["gpu_mux_reboot"] = "Trebuie să reporniți pentru ca modificările să aibă efect",
-        ["gpu_eco_blocked"] = "Mod Eco blocat - MUX a fost schimbat la Ultimate în această sesiune. Reporniți mai întâi.",
-        ["gpu_eco_blocked_detail"] = "Mod Eco blocat: MUX a fost schimbat la Ultimate în această sesiune. Reporniți mai întâi, apoi comutați la Eco.",
+        ["gpu_eco_blocked_mux"] = "Reporniți mai întâi, Ultimate așteaptă.",
         ["gpu_eco_pending"] = "Mod Eco în așteptare - reporniți pentru a aplica",
         ["gpu_eco_after_reboot"] = "Modul Eco se va activa după repornire",
         ["gpu_switch_failed"] = "Comutarea modului GPU a eșuat - verificați jurnalele",
@@ -139,15 +138,12 @@ public static class Romanian
         ["gpu_switching_standard"] = "Se comută la modul Standard...",
         ["gpu_switching_generic"] = "Se comută modul GPU...",
         ["gpu_switching_ultimate"] = "Se comută la modul Ultimate...",
-        ["gpu_releasing_driver"] = "Se eliberează driverul GPU, vă rugăm așteptați...",
-        ["gpu_driver_eco_scheduled"] = "GPU utilizat de sistemul de afișare - modul Eco programat pentru repornire",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "Driver GPU activ",
-        ["gpu_driver_body"] = "GPU este utilizat în prezent de sistemul de afișare.\nComutarea la modul Eco necesită eliberarea driverului mai întâi.",
-        ["gpu_driver_switch_now"] = "Comută acum",
+        ["gpu_driver_title"] = "Repornire necesară",
+        ["gpu_driver_body"] = "GPU este utilizat în prezent de sistemul de afișare.\nComutarea la modul Eco necesită o repornire pentru a se aplica în siguranță.",
         ["gpu_driver_after_reboot"] = "După repornire",
-        ["gpu_driver_footer"] = "Comută acum încearcă să descarce driverul GPU (poate fi\nnecesară parola de administrator). După repornire salvează pentru următoarea pornire.",
+        ["gpu_driver_footer"] = "După repornire salvează schimbarea modului pentru a fi aplicată la următoarea pornire.\nAnulează păstrează modul GPU actual.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Oprit  \u25cb\u25cb\u25cb",
@@ -288,7 +284,11 @@ public static class Romanian
         ["reapply_power_hint"] = "Rescrie limitele de putere CPU/GPU la acest interval. Util când BIOS-ul suprascrie PPT.",
         ["auto_apply_power"] = "Aplică automat limitele de putere la schimbarea modului",
         ["raw_wmi_mode"] = "Mod WMI brut (experimental - GPU Eco prin ACPI debugfs)",
-        ["raw_wmi_hint"] = "Pentru laptopuri fără GPU Eco sysfs. Aplicația va reporni la comutare.",
+        ["raw_wmi_hint"] = "Comunică direct cu metoda GPUEco a firmware-ului ASUS prin /sys/kernel/debug/asus-nb-wmi, ocolind verificarea de prezență sysfs a kernelului. Utilizați doar pe firmware-uri Vivobook / Zenbook mai vechi unde dgpu_disable lipsește dar metoda ACPI încă funcționează. Fiecare apel necesită un prompt pkexec și ghelper repornește la comutarea opțiunii. Ignorat complet când modul PCI de mai sus este activat.",
+        ["gpu_backend_header"] = "Backend GPU",
+        ["gpu_backend_intro"] = "Alegeți cum ghelper pornește și oprește dGPU. ASUS WMI (firmware) este implicit; alternativele de mai jos ajută când calea firmware lipsește sau nu este fiabilă pe hardware-ul dvs.",
+        ["gpu_backend_pci_label"] = "Folosește dezactivarea PCI dGPU",
+        ["gpu_backend_pci_hint"] = "Dezactivează dGPU printr-o blacklist modprobe plus o regulă udev hot-remove. Necesar pe laptopurile non-ASUS unde nu există firmware ASUS cu care să comunice, opțional pe ASUS unde preferați calea doar-kernel. Fiecare schimbare de mod necesită o repornire deoarece regulile se aplică doar la următoarea pornire.",
         ["auto_switch_refresh"] = "Comutare automată rată de reîmprospătare (alimentare/baterie)",
         ["cpu_cores"] = "Nuclee CPU",
         ["cpu_cores_format"] = "{0}/{1}",

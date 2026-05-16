@@ -122,8 +122,7 @@ public static class Swedish
 
         ["gpu_mux_reboot_auto"] = "MUX-switch ändrad - omstart krävs, sedan börjar auto-växling",
         ["gpu_mux_reboot"] = "Du måste starta om för att ändringarna ska börja gälla",
-        ["gpu_eco_blocked"] = "Eco-läge blockerat - MUX ändrades till Ultimate denna session. Starta om först.",
-        ["gpu_eco_blocked_detail"] = "Eco-läge blockerat: MUX ändrades till Ultimate denna session. Starta om först, byt sedan till Eco.",
+        ["gpu_eco_blocked_mux"] = "Starta om först, Ultimate väntar.",
         ["gpu_eco_pending"] = "Eco-läge väntar - starta om för att tillämpa",
         ["gpu_eco_after_reboot"] = "Eco-läge aktiveras efter omstart",
         ["gpu_switch_failed"] = "GPU-lägsbyte misslyckades - kontrollera loggar",
@@ -142,15 +141,12 @@ public static class Swedish
         ["gpu_switching_standard"] = "Byter till standardläge...",
         ["gpu_switching_generic"] = "Byter GPU-läge...",
         ["gpu_switching_ultimate"] = "Byter till Ultimate-läge...",
-        ["gpu_releasing_driver"] = "Frigör GPU-drivrutin, vänta...",
-        ["gpu_driver_eco_scheduled"] = "GPU hålls av displaysystemet - Eco-läge schemalagt till omstart",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "GPU-drivrutin aktiv",
-        ["gpu_driver_body"] = "GPU:n används för närvarande av displaysystemet.\nFör att byta till Eco-läge måste drivrutinen frigöras först.",
-        ["gpu_driver_switch_now"] = "Byt nu",
+        ["gpu_driver_title"] = "Omstart krävs",
+        ["gpu_driver_body"] = "GPU:n används för närvarande av displaysystemet.\nFör att byta till Eco-läge krävs en omstart för säker tillämpning.",
         ["gpu_driver_after_reboot"] = "Efter omstart",
-        ["gpu_driver_footer"] = "Byt nu försöker avlasta GPU-drivrutinen (administratörslösenord\nkan krävas). Efter omstart sparas till nästa uppstart.",
+        ["gpu_driver_footer"] = "Efter omstart sparar lägesändringen för nästa uppstart.\nAvbryt behåller nuvarande GPU-läge.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Av  \u25cb\u25cb\u25cb",
@@ -291,7 +287,11 @@ public static class Swedish
         ["reapply_power_hint"] = "Skriv om CPU/GPU-effektgränser med detta intervall. Användbart när BIOS skriver över PPT.",
         ["auto_apply_power"] = "Auto-tillämpa effektgränser vid lägsbyte",
         ["raw_wmi_mode"] = "Rått WMI-läge (experimentellt - GPU Eco via ACPI debugfs)",
-        ["raw_wmi_hint"] = "För bärbara datorer utan GPU Eco sysfs. Appen startar om vid växling.",
+        ["raw_wmi_hint"] = "Pratar direkt med ASUS firmware GPUEco-metoden via /sys/kernel/debug/asus-nb-wmi, kringgår kärnans sysfs-närvarokontroll. Använd detta endast på äldre Vivobook / Zenbook firmware där dgpu_disable saknas men ACPI-metoden fortfarande fungerar. Varje anrop kräver en pkexec-prompt och ghelper startar om när alternativet växlas. Helt ignorerat när PCI-läge ovan är aktiverat.",
+        ["gpu_backend_header"] = "GPU-backend",
+        ["gpu_backend_intro"] = "Välj hur ghelper slår på och av dGPU. ASUS WMI (firmware) är standard; alternativen nedan hjälper när firmware-vägen saknas eller är opålitlig på din hårdvara.",
+        ["gpu_backend_pci_label"] = "Använd PCI dGPU-inaktivering",
+        ["gpu_backend_pci_hint"] = "Inaktiverar dGPU via en modprobe svartlista plus en udev hot-remove regel. Krävs på icke-ASUS bärbara där det inte finns någon ASUS-firmware att prata med, valfritt på ASUS där du föredrar enbart-kärna-vägen. Varje lägesändring kräver en omstart eftersom reglerna endast gäller vid nästa start.",
         ["auto_switch_refresh"] = "Auto-växla uppdateringsfrekvens (nätström/batteri)",
         ["cpu_cores"] = "CPU-kärnor",
         ["cpu_cores_format"] = "{0}/{1}",

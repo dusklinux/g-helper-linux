@@ -119,8 +119,7 @@ public static class French
 
         ["gpu_mux_reboot_auto"] = "Commutateur MUX modifié - redémarrage requis, puis la commutation automatique débutera",
         ["gpu_mux_reboot"] = "Redémarrage nécessaire pour appliquer les changements",
-        ["gpu_eco_blocked"] = "Mode Eco bloqué - MUX basculé sur Ultimate durant cette session. Redémarrez d'abord.",
-        ["gpu_eco_blocked_detail"] = "Mode Eco bloqué : MUX basculé sur Ultimate durant cette session. Redémarrez d'abord, puis passez en Eco.",
+        ["gpu_eco_blocked_mux"] = "Redémarrez d'abord, Ultimate est en attente.",
         ["gpu_eco_pending"] = "Mode Eco en attente - redémarrage requis",
         ["gpu_eco_after_reboot"] = "Le mode Eco sera activé après le redémarrage",
         ["gpu_switch_failed"] = "Échec du changement de mode GPU - consultez les logs",
@@ -139,15 +138,12 @@ public static class French
         ["gpu_switching_standard"] = "Passage en mode Standard...",
         ["gpu_switching_generic"] = "Changement du mode GPU...",
         ["gpu_switching_ultimate"] = "Passage en mode Ultimate...",
-        ["gpu_releasing_driver"] = "Libération du pilote GPU, veuillez patienter...",
-        ["gpu_driver_eco_scheduled"] = "GPU utilisé par le système d'affichage - mode Eco programmé au redémarrage",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "Pilote GPU actif",
-        ["gpu_driver_body"] = "Le GPU est actuellement utilisé par le système d'affichage.\nPasser en mode Eco nécessite de libérer le pilote d'abord.",
-        ["gpu_driver_switch_now"] = "Basculer maintenant",
+        ["gpu_driver_title"] = "Redémarrage requis",
+        ["gpu_driver_body"] = "Le GPU est actuellement utilisé par le système d'affichage.\nPasser en mode Eco nécessite un redémarrage pour s'appliquer en toute sécurité.",
         ["gpu_driver_after_reboot"] = "Après redémarrage",
-        ["gpu_driver_footer"] = "\"Basculer maintenant\" tente de décharger le pilote GPU (mot de passe\nadmin peut être requis). \"Après redémarrage\" enregistre pour le prochain démarrage.",
+        ["gpu_driver_footer"] = "\"Après redémarrage\" enregistre le changement de mode pour l'appliquer au prochain démarrage.\n\"Annuler\" conserve le mode GPU actuel.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Désactivé  \u25cb\u25cb\u25cb",
@@ -288,7 +284,11 @@ public static class French
         ["reapply_power_hint"] = "Réécrit les limites de puissance CPU/GPU à cet intervalle. Utile quand le BIOS écrase le PPT.",
         ["auto_apply_power"] = "Appliquer automatiquement les limites de puissance au changement de mode",
         ["raw_wmi_mode"] = "Mode WMI brut (expérimental - GPU Eco via ACPI debugfs)",
-        ["raw_wmi_hint"] = "Pour les portables sans sysfs GPU Eco. L'application redémarrera lors du basculement.",
+        ["raw_wmi_hint"] = "Communique directement avec la méthode GPUEco du firmware ASUS via /sys/kernel/debug/asus-nb-wmi, contournant la vérification de présence sysfs du noyau. Utilisez ceci uniquement sur les anciens firmwares Vivobook / Zenbook où dgpu_disable est absent mais la méthode ACPI fonctionne encore. Chaque appel nécessite une invite pkexec et ghelper redémarre lors du basculement. Entièrement ignoré lorsque le mode PCI ci-dessus est activé.",
+        ["gpu_backend_header"] = "Backend GPU",
+        ["gpu_backend_intro"] = "Choisissez comment ghelper allume et éteint le dGPU. ASUS WMI (firmware) est la valeur par défaut ; les alternatives ci-dessous aident lorsque le chemin firmware est absent ou peu fiable sur votre matériel.",
+        ["gpu_backend_pci_label"] = "Utiliser la désactivation PCI dGPU",
+        ["gpu_backend_pci_hint"] = "Désactive le dGPU via une liste noire modprobe plus une règle de suppression à chaud udev. Requis sur les portables non ASUS où il n'y a pas de firmware ASUS à interroger, optionnel sur ASUS où vous préférez la voie noyau seul. Chaque changement de mode nécessite un redémarrage car les règles ne s'appliquent qu'au démarrage suivant.",
         ["auto_switch_refresh"] = "Changement automatique du taux de rafraîchissement (secteur/batterie)",
         ["cpu_cores"] = "Cœurs CPU",
         ["cpu_cores_format"] = "{0}/{1}",

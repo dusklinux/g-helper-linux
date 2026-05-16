@@ -122,8 +122,7 @@ public static class Serbian
 
         ["gpu_mux_reboot_auto"] = "MUX прекидач је промењен - потребан рестарт, затим ће почети ауто-пребацивање",
         ["gpu_mux_reboot"] = "Морате рестартовати да би промене ступиле на снагу",
-        ["gpu_eco_blocked"] = "Eco режим блокиран - MUX је промењен на Ultimate у овој сесији. Прво рестартујте.",
-        ["gpu_eco_blocked_detail"] = "Eco режим блокиран: MUX је промењен на Ultimate у овој сесији. Прво рестартујте, затим пребаците на Eco.",
+        ["gpu_eco_blocked_mux"] = "Прво рестартујте, Ultimate чека.",
         ["gpu_eco_pending"] = "Eco режим на чекању - рестартујте за примену",
         ["gpu_eco_after_reboot"] = "Eco режим ће се активирати после рестарта",
         ["gpu_switch_failed"] = "Пребацивање GPU режима није успело - проверите логове",
@@ -142,15 +141,12 @@ public static class Serbian
         ["gpu_switching_standard"] = "Пребацивање на Standard режим...",
         ["gpu_switching_generic"] = "Пребацивање GPU режима...",
         ["gpu_switching_ultimate"] = "Пребацивање на Ultimate режим...",
-        ["gpu_releasing_driver"] = "Ослобађање GPU драјвера, молимо сачекајте...",
-        ["gpu_driver_eco_scheduled"] = "GPU је задржан од стране дисплеј система - Eco режим заказан за рестарт",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "GPU драјвер је активан",
-        ["gpu_driver_body"] = "GPU тренутно користи дисплеј систем.\nПребацивање на Eco режим захтева претходно ослобађање драјвера.",
-        ["gpu_driver_switch_now"] = "Пребаци сада",
+        ["gpu_driver_title"] = "Потребан рестарт",
+        ["gpu_driver_body"] = "GPU тренутно користи дисплеј систем.\nПребацивање на Eco режим захтева рестарт за безбедну примену.",
         ["gpu_driver_after_reboot"] = "После рестарта",
-        ["gpu_driver_footer"] = "Пребаци сада покушава да искључи GPU драјвер (можда ће бити\nпотребна администраторска лозинка). После рестарта чува за следеће покретање.",
+        ["gpu_driver_footer"] = "После рестарта чува промену режима за следеће покретање.\nОткажи задржава тренутни GPU режим.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Искључено  \u25cb\u25cb\u25cb",
@@ -291,7 +287,11 @@ public static class Serbian
         ["reapply_power_hint"] = "Поново уписује ограничења снаге CPU/GPU на овом интервалу. Корисно када BIOS преписује PPT.",
         ["auto_apply_power"] = "Аутоматски примени ограничења снаге при промени режима",
         ["raw_wmi_mode"] = "Сиров WMI режим (експериментално - GPU Eco преко ACPI debugfs)",
-        ["raw_wmi_hint"] = "За лаптопове без GPU Eco sysfs. Апликација ће се рестартовати при промени.",
+        ["raw_wmi_hint"] = "Комуницира директно са методом GPUEco ASUS firmware-а преко /sys/kernel/debug/asus-nb-wmi, заобилазећи проверу присуства sysfs у кернелу. Користите ово само на старијем firmware-у Vivobook / Zenbook где dgpu_disable недостаје али ACPI метода и даље ради. Сваки позив захтева pkexec промпт и ghelper се рестартује када се опција мења. Потпуно се игнорише када је режим PCI горе омогућен.",
+        ["gpu_backend_header"] = "GPU позадина",
+        ["gpu_backend_intro"] = "Изаберите како ghelper укључује и искључује dGPU. ASUS WMI (firmware) је подразумевано; алтернативе испод помажу када firmware путања недостаје или је непоуздана на вашем хардверу.",
+        ["gpu_backend_pci_label"] = "Користи PCI dGPU онемогућавање",
+        ["gpu_backend_pci_hint"] = "Онемогућава dGPU преко modprobe црне листе плус udev hot-remove правила. Потребно на не-ASUS лаптоповима где нема ASUS firmware за комуникацију, опционо на ASUS где претпостављате путању само за кернел. Свака промена режима захтева рестарт јер се правила примењују само при следећем подизању.",
         ["auto_switch_refresh"] = "Ауто-промена учестаности освежавања (напајање/батерија)",
         ["cpu_cores"] = "CPU језгра",
         ["cpu_cores_format"] = "{0}/{1}",

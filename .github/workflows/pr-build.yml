@@ -19,6 +19,31 @@ jobs:
       - name: Validate translation key parity
         run: ./scripts/i18n-check.sh
 
+  csharp-tests:
+    name: C# scenario tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0'
+
+      - name: Run GpuModeController scenarios
+        run: dotnet run -c Debug --project tests/GHelper.Linux.Tests
+
+  bash-tests:
+    name: Boot script scenario tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run ghelper-gpu-boot.sh scenarios
+        run: bash install/tests/test-ghelper-gpu-boot.sh
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -89,7 +114,7 @@ jobs:
           retention-days: 7
 
   appimage:
-    needs: [build]
+    needs: [build, csharp-tests, bash-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

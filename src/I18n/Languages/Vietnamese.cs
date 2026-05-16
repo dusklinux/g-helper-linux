@@ -119,8 +119,7 @@ public static class Vietnamese
 
         ["gpu_mux_reboot_auto"] = "Công tắc MUX đã thay đổi - cần khởi động lại, sau đó chuyển đổi tự động sẽ bắt đầu",
         ["gpu_mux_reboot"] = "Bạn cần khởi động lại để các thay đổi có hiệu lực",
-        ["gpu_eco_blocked"] = "Chế độ Eco bị chặn - MUX đã được đổi sang Ultimate trong phiên này. Hãy khởi động lại trước.",
-        ["gpu_eco_blocked_detail"] = "Chế độ Eco bị chặn: MUX đã được đổi sang Ultimate trong phiên này. Hãy khởi động lại trước, rồi chuyển sang Eco.",
+        ["gpu_eco_blocked_mux"] = "Khởi động lại trước, Ultimate đang chờ.",
         ["gpu_eco_pending"] = "Chế độ Eco đang chờ - khởi động lại để áp dụng",
         ["gpu_eco_after_reboot"] = "Chế độ Eco sẽ kích hoạt sau khi khởi động lại",
         ["gpu_switch_failed"] = "Chuyển chế độ GPU thất bại - kiểm tra nhật ký",
@@ -139,15 +138,12 @@ public static class Vietnamese
         ["gpu_switching_standard"] = "Đang chuyển sang chế độ Standard...",
         ["gpu_switching_generic"] = "Đang chuyển chế độ GPU...",
         ["gpu_switching_ultimate"] = "Đang chuyển sang chế độ Ultimate...",
-        ["gpu_releasing_driver"] = "Đang giải phóng trình điều khiển GPU, vui lòng đợi...",
-        ["gpu_driver_eco_scheduled"] = "GPU đang được hệ thống hiển thị sử dụng - chế độ Eco đã lên lịch cho lần khởi động lại",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "Trình điều khiển GPU đang hoạt động",
-        ["gpu_driver_body"] = "GPU hiện đang được hệ thống hiển thị sử dụng.\nChuyển sang chế độ Eco cần giải phóng trình điều khiển trước.",
-        ["gpu_driver_switch_now"] = "Chuyển ngay",
+        ["gpu_driver_title"] = "Cần khởi động lại",
+        ["gpu_driver_body"] = "GPU hiện đang được hệ thống hiển thị sử dụng.\nChuyển sang chế độ Eco cần khởi động lại để có hiệu lực an toàn.",
         ["gpu_driver_after_reboot"] = "Sau khi khởi động lại",
-        ["gpu_driver_footer"] = "Chuyển ngay sẽ cố gỡ trình điều khiển GPU (có thể cần\nmật khẩu quản trị). Sau khi khởi động lại sẽ lưu cho lần khởi động tiếp theo.",
+        ["gpu_driver_footer"] = "Sau khi khởi động lại sẽ lưu thay đổi chế độ để áp dụng vào lần khởi động sau.\nHủy giữ nguyên chế độ GPU hiện tại.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Tắt  \u25cb\u25cb\u25cb",
@@ -288,7 +284,11 @@ public static class Vietnamese
         ["reapply_power_hint"] = "Ghi lại giới hạn công suất CPU/GPU theo khoảng thời gian này. Hữu ích khi BIOS ghi đè PPT.",
         ["auto_apply_power"] = "Tự động áp dụng giới hạn công suất khi đổi chế độ",
         ["raw_wmi_mode"] = "Chế độ WMI thô (thử nghiệm - GPU Eco qua ACPI debugfs)",
-        ["raw_wmi_hint"] = "Dành cho laptop không có GPU Eco sysfs. Ứng dụng sẽ khởi động lại khi chuyển đổi.",
+        ["raw_wmi_hint"] = "Nói chuyện trực tiếp với phương thức GPUEco của firmware ASUS qua /sys/kernel/debug/asus-nb-wmi, bỏ qua kiểm tra hiện diện sysfs của kernel. Chỉ sử dụng cái này trên firmware Vivobook / Zenbook cũ hơn nơi dgpu_disable bị thiếu nhưng phương thức ACPI vẫn hoạt động. Mỗi lần gọi cần một dấu nhắc pkexec và ghelper khởi động lại khi tùy chọn được chuyển. Bị bỏ qua hoàn toàn khi chế độ PCI ở trên được bật.",
+        ["gpu_backend_header"] = "Backend GPU",
+        ["gpu_backend_intro"] = "Chọn cách ghelper bật và tắt dGPU. ASUS WMI (firmware) là mặc định; các tùy chọn thay thế bên dưới hỗ trợ khi đường dẫn firmware bị thiếu hoặc không đáng tin cậy trên phần cứng của bạn.",
+        ["gpu_backend_pci_label"] = "Dùng tắt PCI dGPU",
+        ["gpu_backend_pci_hint"] = "Tắt dGPU thông qua danh sách đen modprobe cộng với quy tắc udev hot-remove. Bắt buộc trên laptop không phải ASUS nơi không có firmware ASUS để giao tiếp, tùy chọn trên ASUS nơi bạn muốn đường dẫn chỉ kernel. Mỗi thay đổi chế độ đều cần khởi động lại vì các quy tắc chỉ áp dụng vào lần khởi động tiếp theo.",
         ["auto_switch_refresh"] = "Tự động chuyển tần số quét (sạc/pin)",
         ["cpu_cores"] = "Lõi CPU",
         ["cpu_cores_format"] = "{0}/{1}",

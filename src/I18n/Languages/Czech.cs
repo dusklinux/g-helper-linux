@@ -119,8 +119,7 @@ public static class Czech
 
         ["gpu_mux_reboot_auto"] = "Přepínač MUX změněn - vyžadován restart, poté začne automatické přepínání",
         ["gpu_mux_reboot"] = "Pro projevení změn je nutné restartovat",
-        ["gpu_eco_blocked"] = "Režim Eco blokován - MUX byl v této relaci změněn na Ultimate. Nejdříve restartujte.",
-        ["gpu_eco_blocked_detail"] = "Režim Eco blokován: MUX byl v této relaci změněn na Ultimate. Nejdříve restartujte a poté přepněte na Eco.",
+        ["gpu_eco_blocked_mux"] = "Nejdříve restartujte, Ultimate čeká.",
         ["gpu_eco_pending"] = "Režim Eco čeká - restartujte pro použití",
         ["gpu_eco_after_reboot"] = "Režim Eco se aktivuje po restartu",
         ["gpu_switch_failed"] = "Přepnutí režimu GPU selhalo - zkontrolujte logy",
@@ -139,15 +138,12 @@ public static class Czech
         ["gpu_switching_standard"] = "Přepínání na režim Standard...",
         ["gpu_switching_generic"] = "Přepínání režimu GPU...",
         ["gpu_switching_ultimate"] = "Přepínání na režim Ultimate...",
-        ["gpu_releasing_driver"] = "Uvolňování ovladače GPU, prosím čekejte...",
-        ["gpu_driver_eco_scheduled"] = "GPU je využíván zobrazovacím systémem - režim Eco naplánován na restart",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "Ovladač GPU aktivní",
-        ["gpu_driver_body"] = "GPU je aktuálně využíván zobrazovacím systémem.\nPřepnutí na režim Eco vyžaduje nejdříve uvolnění ovladače.",
-        ["gpu_driver_switch_now"] = "Přepnout nyní",
+        ["gpu_driver_title"] = "Vyžadováno restartování",
+        ["gpu_driver_body"] = "GPU je aktuálně využíván zobrazovacím systémem.\nPřepnutí na režim Eco vyžaduje pro bezpečné použití restart.",
         ["gpu_driver_after_reboot"] = "Po restartu",
-        ["gpu_driver_footer"] = "Přepnout nyní se pokusí odebrat ovladač GPU (může být\nvyžadováno heslo správce). Po restartu uloží na příští spuštění.",
+        ["gpu_driver_footer"] = "Po restartu uloží změnu režimu, aby se použila při příštím spuštění.\nZrušit ponechá aktuální režim GPU.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Vyp.  \u25cb\u25cb\u25cb",
@@ -288,7 +284,11 @@ public static class Czech
         ["reapply_power_hint"] = "V tomto intervalu znovu zapíše limity výkonu CPU/GPU. Užitečné, když BIOS přepisuje PPT.",
         ["auto_apply_power"] = "Automaticky použít limity výkonu při změně režimu",
         ["raw_wmi_mode"] = "Surový režim WMI (experimentální - GPU Eco přes ACPI debugfs)",
-        ["raw_wmi_hint"] = "Pro notebooky bez GPU Eco sysfs. Aplikace se po přepnutí restartuje.",
+        ["raw_wmi_hint"] = "Komunikuje s metodou GPUEco firmwaru ASUS přímo přes /sys/kernel/debug/asus-nb-wmi, obchází kontrolu přítomnosti sysfs v jádře. Používejte pouze na starším firmwaru Vivobook / Zenbook, kde dgpu_disable chybí, ale ACPI metoda stále funguje. Každé volání vyžaduje výzvu pkexec a ghelper se restartuje při přepnutí možnosti. Při povoleném režimu PCI výše se zcela ignoruje.",
+        ["gpu_backend_header"] = "GPU Backend",
+        ["gpu_backend_intro"] = "Vyberte, jak ghelper zapíná a vypíná dGPU. ASUS WMI (firmware) je výchozí; možnosti níže pomohou, pokud cesta přes firmware chybí nebo není spolehlivá na vašem hardwaru.",
+        ["gpu_backend_pci_label"] = "Použít PCI dGPU disable",
+        ["gpu_backend_pci_hint"] = "Vypne dGPU pomocí modprobe blacklistu a pravidla udev pro horké odstranění. Nutné na ne-ASUS noteboocích, kde není ASUS firmware ke komunikaci, volitelné na ASUS, pokud preferujete cestu pouze přes jádro. Každá změna režimu vyžaduje restart, protože pravidla se uplatňují až při příštím startu.",
         ["auto_switch_refresh"] = "Automatické přepínání obnovovací frekvence (napájení/baterie)",
         ["cpu_cores"] = "Jádra CPU",
         ["cpu_cores_format"] = "{0}/{1}",

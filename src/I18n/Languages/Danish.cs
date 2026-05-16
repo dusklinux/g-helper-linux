@@ -122,8 +122,7 @@ public static class Danish
 
         ["gpu_mux_reboot_auto"] = "MUX-kontakt ændret - genstart påkrævet, derefter begynder automatisk skift",
         ["gpu_mux_reboot"] = "Du skal genstarte for at ændringerne træder i kraft",
-        ["gpu_eco_blocked"] = "Eco-tilstand blokeret - MUX blev ændret til Ultimate i denne session. Genstart først.",
-        ["gpu_eco_blocked_detail"] = "Eco-tilstand blokeret: MUX blev ændret til Ultimate i denne session. Genstart først, skift derefter til Eco.",
+        ["gpu_eco_blocked_mux"] = "Genstart først, Ultimate venter.",
         ["gpu_eco_pending"] = "Eco-tilstand afventer - genstart for at anvende",
         ["gpu_eco_after_reboot"] = "Eco-tilstand aktiveres efter genstart",
         ["gpu_switch_failed"] = "GPU-tilstandsskift mislykkedes - tjek logfiler",
@@ -142,15 +141,12 @@ public static class Danish
         ["gpu_switching_standard"] = "Skifter til standardtilstand...",
         ["gpu_switching_generic"] = "Skifter GPU-tilstand...",
         ["gpu_switching_ultimate"] = "Skifter til Ultimate-tilstand...",
-        ["gpu_releasing_driver"] = "Frigiver GPU-driver, vent venligst...",
-        ["gpu_driver_eco_scheduled"] = "GPU holdes af skærmsystemet - Eco-tilstand planlagt til genstart",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "GPU-driver aktiv",
-        ["gpu_driver_body"] = "GPU'en er i øjeblikket i brug af skærmsystemet.\nSkift til Eco-tilstand kræver, at driveren frigives først.",
-        ["gpu_driver_switch_now"] = "Skift nu",
+        ["gpu_driver_title"] = "Genstart påkrævet",
+        ["gpu_driver_body"] = "GPU'en er i øjeblikket i brug af skærmsystemet.\nSkift til Eco-tilstand kræver en genstart for at træde sikkert i kraft.",
         ["gpu_driver_after_reboot"] = "Efter genstart",
-        ["gpu_driver_footer"] = "Skift nu forsøger at afloade GPU-driveren (administratoradgangskode\nkan være nødvendig). Efter genstart gemmes til næste opstart.",
+        ["gpu_driver_footer"] = "Efter genstart gemmer tilstandsændringen, så den anvendes ved næste opstart.\nAnnuller bevarer den nuværende GPU-tilstand.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Fra  \u25cb\u25cb\u25cb",
@@ -291,7 +287,11 @@ public static class Danish
         ["reapply_power_hint"] = "Genskriv CPU/GPU-effektgrænser med dette interval. Nyttigt når BIOS overskriver PPT.",
         ["auto_apply_power"] = "Auto-anvend effektgrænser ved tilstandsskift",
         ["raw_wmi_mode"] = "Rå WMI-tilstand (eksperimentel - GPU Eco via ACPI debugfs)",
-        ["raw_wmi_hint"] = "Til bærbare uden GPU Eco sysfs. Appen genstarter ved skift.",
+        ["raw_wmi_hint"] = "Taler direkte med ASUS firmware GPUEco-metoden gennem /sys/kernel/debug/asus-nb-wmi, omgår kernens sysfs tilstedeværelseskontrol. Brug kun dette på ældre Vivobook / Zenbook firmware hvor dgpu_disable mangler men ACPI-metoden stadig virker. Hvert kald kræver en pkexec prompt og ghelper genstarter når indstillingen ændres. Ignoreres helt når PCI-tilstand ovenfor er aktiveret.",
+        ["gpu_backend_header"] = "GPU-backend",
+        ["gpu_backend_intro"] = "Vælg hvordan ghelper tænder og slukker dGPU. ASUS WMI (firmware) er standard; alternativerne nedenfor hjælper når firmware-stien mangler eller er upålidelig på din hardware.",
+        ["gpu_backend_pci_label"] = "Brug PCI dGPU deaktivering",
+        ["gpu_backend_pci_hint"] = "Deaktiverer dGPU via en modprobe blacklist plus en udev hot-remove regel. Krævet på ikke-ASUS bærbare hvor der ikke er nogen ASUS firmware at tale med, valgfri på ASUS hvor du foretrækker kun-kerne-stien. Hver tilstandsændring kræver en genstart fordi reglerne kun gælder ved næste opstart.",
         ["auto_switch_refresh"] = "Auto-skift opdateringshastighed (strøm/batteri)",
         ["cpu_cores"] = "CPU-kerner",
         ["cpu_cores_format"] = "{0}/{1}",

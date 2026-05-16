@@ -140,6 +140,37 @@ public class GpuModeController
     }
 
     /// <summary>
+    /// Clear the persistent MUX=0 latch flag (config "mux_zero_latched_boot_id")
+    /// when the stored boot_id no longer matches /proc/sys/kernel/random/boot_id.
+    /// The flag is intentionally session-scoped - it exists to make
+    /// WouldCreateImpossibleState resilient to app restarts within the same
+    /// boot, but must NOT leak across reboots or across backend switches.
+    ///
+    /// Called from ApplyPendingOnStartup before any backend-specific code so
+    /// PCI users also benefit; otherwise WouldCreateImpossibleState would
+    /// permanently refuse Eco on any system that previously latched Ultimate.
+    /// </summary>
+    private static void ClearStaleMuxLatchFlag()
+    {
+        try
+        {
+            string? storedBootId = AppConfig.GetString("mux_zero_latched_boot_id");
+            if (string.IsNullOrEmpty(storedBootId))
+                return;
+            string currentBootId = File.ReadAllText("/proc/sys/kernel/random/boot_id").Trim();
+            if (storedBootId != currentBootId)
+            {
+                AppConfig.Set("mux_zero_latched_boot_id", "");
+                Logger.WriteLine("GpuModeController: reboot detected - cleared MUX=0 latch flag");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine($"GpuModeController: MUX=0 latch reboot check failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// SAFETY: Would the given target mode create an impossible post-reboot state?
     /// The ONE impossible state: MUX=0 (dGPU sole display) + dgpu_disable=1 (dGPU off)
     /// = guaranteed black screen.
@@ -392,32 +423,47 @@ public class GpuModeController
     /// </summary>
     public GpuSwitchResult ApplyPendingOnStartup()
     {
+        // Clear stale MUX=0 latch flag on reboot detection. Runs FIRST,
+        // before any backend-specific path, because the persistent flag is
+        // session-scoped and must not leak across boots regardless of which
+        // backend the user is on. Skipping this lets WouldCreateImpossibleState
+        // misfire (Eco refused with "MUX=0 was written this boot session"
+        // even though we are in a fresh boot or in PCI mode where MUX is
+        // irrelevant).
+        ClearStaleMuxLatchFlag();
+
+        // PCI backend: the boot service is solely responsible for applying
+        // any pending mode at boot. By the time ghelper starts up, the
+        // transition has already happened (or failed and been recorded in
+        // /etc/ghelper/last-eco-failed). Just sync config with the actual
+        // file state so the UI shows the right active mode, no firmware
+        // pokes needed.
+        if (AppConfig.IsPciGpuBackend())
+        {
+            // Do NOT touch mux_zero_latched_boot_id here. The shared
+            // ClearStaleMuxLatchFlag() above already cleared it on a
+            // cross-boot stale match; anything still set is from THIS
+            // boot session and represents a genuine pending firmware
+            // latch that must keep blocking PCI Eco until the user
+            // reboots (else the next boot lands in MUX=0 + udev-removed
+            // dGPU = black screen). Same logic for _pendingMuxLatch.
+
+            GpuMode actual = GetCurrentMode();
+            string? saved = AppConfig.GetString("gpu_mode");
+            if (saved != actual.ToString().ToLowerInvariant())
+            {
+                SaveModeToConfig(actual);
+                Logger.WriteLine($"GpuModeController: PCI backend startup - synced config gpu_mode='{actual}' to match block-file state");
+            }
+            return GpuSwitchResult.AlreadySet;
+        }
+
         // Boot safety check (supergfxctl pattern)
         // If MUX=0 (Ultimate/dGPU-direct) AND dgpu_disable=1, that's an impossible
         // state that causes boot hangs. Force dgpu_disable=0 to recover.
         // This shouldn't happen with the modprobe.d approach but could occur from
         // manual sysfs tinkering or stale tmpfiles from a previous version.
         BootSafetyCheck();
-
-        // Clear MUX=0 latch on reboot detection
-        // If the stored boot_id differs from current, a reboot happened - safe to clear.
-        try
-        {
-            string? storedBootId = AppConfig.GetString("mux_zero_latched_boot_id");
-            if (!string.IsNullOrEmpty(storedBootId))
-            {
-                string currentBootId = File.ReadAllText("/proc/sys/kernel/random/boot_id").Trim();
-                if (storedBootId != currentBootId)
-                {
-                    AppConfig.Set("mux_zero_latched_boot_id", "");
-                    Logger.WriteLine("GpuModeController: reboot detected - cleared MUX=0 latch flag");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.WriteLine($"GpuModeController: MUX=0 latch reboot check failed: {ex.Message}");
-        }
 
         string? savedMode = AppConfig.GetString("gpu_mode");
         if (string.IsNullOrEmpty(savedMode))
@@ -605,6 +651,14 @@ public class GpuModeController
     {
         try
         {
+            // PCI backend: the boot service applies pending modes on the
+            // NEXT startup, not on shutdown. There is no live dgpu_disable
+            // path to take here. Skip silently so we don't accidentally
+            // call into the WMI sysfs layer on non-ASUS systems where it
+            // does not exist.
+            if (AppConfig.IsPciGpuBackend())
+                return;
+
             string? savedMode = AppConfig.GetString("gpu_mode");
             if (savedMode != "eco")
                 return;
@@ -650,8 +704,20 @@ public class GpuModeController
     /// </summary>
     public GpuSwitchResult AutoGpuSwitch()
     {
+        if (!AppConfig.IsOptimizedGpuModeEnabled())
+            return GpuSwitchResult.AlreadySet;
+
         if (!AppConfig.Is("gpu_auto"))
             return GpuSwitchResult.AlreadySet;
+
+        // PCI backend has no live switching path - Optimized auto-toggle is
+        // meaningless when every transition requires a reboot. The UI hides
+        // the Optimized button in PCI mode, so this is a defensive guard.
+        if (AppConfig.IsPciGpuBackend())
+        {
+            Logger.WriteLine("GpuModeController: AutoGpuSwitch - PCI backend, no live switching available");
+            return GpuSwitchResult.AlreadySet;
+        }
 
         // Don't auto-switch if in Ultimate (MUX=0)
         int mux = _wmi.GetGpuMuxMode();
@@ -727,6 +793,22 @@ public class GpuModeController
     /// </summary>
     public GpuMode GetCurrentMode()
     {
+        // Block files (modprobe blacklist + udev hot-remove rule) are the
+        // persistent Eco state for the PCI backend. They are also written
+        // briefly during an ASUS-WMI eco transition. Either way, when they
+        // exist the dGPU is effectively disabled - it is hot-removed by
+        // udev on every boot, so `dgpu_disable=0` is meaningless until the
+        // blocks are removed. Treat their presence as the source of truth
+        // for "in Eco" regardless of the configured backend, so the UI
+        // doesn't claim Standard while reality is "dGPU vanished from the
+        // PCI bus".
+        bool blocksPresent = File.Exists(ModprobeBlockPath) || File.Exists(UdevRemovePath);
+
+        // PCI backend: blocks are the only signal. No MUX, no auto, no
+        // firmware sysfs to query.
+        if (AppConfig.IsPciGpuBackend())
+            return blocksPresent ? GpuMode.Eco : GpuMode.Standard;
+
         bool gpuAuto = AppConfig.Is("gpu_auto");
         bool ecoEnabled = _wmi.GetGpuEco();
         int mux = _wmi.GetGpuMuxMode();
@@ -735,7 +817,12 @@ public class GpuModeController
             return GpuMode.Ultimate;
         if (gpuAuto)
             return GpuMode.Optimized;
-        if (ecoEnabled)
+        // Either dgpu_disable=1 live OR PCI-style blocks still on disk →
+        // Eco. The latter happens after the user toggled the backend from
+        // PCI to asus-wmi while still in eco: dgpu_disable reads 0 but the
+        // dGPU is gone from the PCI bus until the user explicitly switches
+        // to Standard (which removes the blocks via RemoveDriverBlock).
+        if (ecoEnabled || blocksPresent)
             return GpuMode.Eco;
         return GpuMode.Standard;
     }
@@ -746,6 +833,11 @@ public class GpuModeController
     /// </summary>
     public bool IsPendingReboot()
     {
+        // PCI backend: the trigger file is the single source of truth.
+        // Boot script applies and removes it; while present, a reboot is pending.
+        if (AppConfig.IsPciGpuBackend())
+            return File.Exists(TriggerPath);
+
         string? saved = AppConfig.GetString("gpu_mode");
         if (string.IsNullOrEmpty(saved))
             return false;
@@ -778,6 +870,13 @@ public class GpuModeController
     /// </summary>
     private GpuSwitchResult ComputeAndExecute(GpuMode target)
     {
+        // PCI backend short-circuits the WMI matrix entirely. The
+        // modprobe + udev files ARE the persistent Eco state and the boot
+        // script handles the actual transition on the next reboot. We only
+        // need to write the right trigger / block artifacts here.
+        if (AppConfig.IsPciGpuBackend())
+            return ComputeAndExecutePci(target);
+
         // 4×4 Transition Matrix
         // From\To     | Eco         | Standard    | Optimized   | Ultimate
         // Eco         | AlreadySet  | Applied     | Applied*    | RebootReq
@@ -957,6 +1056,95 @@ public class GpuModeController
         }
     }
 
+    /// <summary>
+    /// PCI backend switching. There are only two effective modes - Eco
+    /// (block artifacts present) and Standard (no block artifacts). The
+    /// transition is always deferred to reboot; the boot script does the
+    /// actual rmmod / PCI rescan work. Optimized and Ultimate fall through
+    /// to Standard since they have no meaning without ASUS firmware.
+    /// </summary>
+    private GpuSwitchResult ComputeAndExecutePci(GpuMode target)
+    {
+        // Optimized / Ultimate are not meaningful in PCI mode. Treat them as
+        // Standard so the dGPU is enabled at next boot. The UI should be
+        // hiding these buttons but the controller stays defensive in case
+        // the tray menu or a config import triggers them.
+        if (target == GpuMode.Optimized || target == GpuMode.Ultimate)
+        {
+            Logger.WriteLine($"GpuModeController: PCI backend - {target} not applicable, treating as Standard");
+            target = GpuMode.Standard;
+        }
+
+        bool ecoBlocksPresent = File.Exists(ModprobeBlockPath) || File.Exists(UdevRemovePath);
+        bool wantEco = (target == GpuMode.Eco);
+        bool wantStandard = (target == GpuMode.Standard);
+
+        // Already in the desired persistent state and no pending switch?
+        // Mirror the WMI flow and report AlreadySet so the UI clears its
+        // "reboot pending" tip.
+        if (!File.Exists(TriggerPath))
+        {
+            if (wantEco && ecoBlocksPresent)
+            {
+                Logger.WriteLine("GpuModeController: PCI backend - already in Eco (blocks present), no-op");
+                SaveModeToConfig(GpuMode.Eco);
+                return GpuSwitchResult.AlreadySet;
+            }
+            if (wantStandard && !ecoBlocksPresent)
+            {
+                Logger.WriteLine("GpuModeController: PCI backend - already in Standard (no blocks), no-op");
+                SaveModeToConfig(GpuMode.Standard);
+                return GpuSwitchResult.AlreadySet;
+            }
+        }
+
+        // Live Eco → Standard transition. Removing the persistent blocks +
+        // reloading udev + rescanning PCI brings the dGPU back online
+        // without a reboot, mirroring the asus-wmi SetGpuEco(false) live
+        // path. Only Eco→Standard can be live; going INTO Eco still
+        // requires a reboot because rmmod nvidia would fail while Xorg
+        // holds the GPU. On any failure (sudo cancelled, sysfs read-only)
+        // we fall through to the deferred reboot path below so the user
+        // can still get out of Eco eventually.
+        if (wantStandard && ecoBlocksPresent)
+        {
+            var live = TryLiveRemovePciBlocks();
+            if (live == GpuSwitchResult.Applied)
+            {
+                SaveModeToConfig(GpuMode.Standard);
+                Logger.WriteLine("GpuModeController: PCI backend - live Eco→Standard applied (no reboot)");
+                return GpuSwitchResult.Applied;
+            }
+            Logger.WriteLine("GpuModeController: PCI backend - live transition failed, falling back to deferred reboot");
+        }
+
+        // Schedule the change for the next reboot. WriteDriverBlock knows
+        // how to handle both Eco (writes blocks) and non-Eco (clears blocks
+        // and writes only the trigger) in PCI mode.
+        SaveModeToConfig(target);
+        WriteDriverBlock(target);
+
+        if (File.Exists(TriggerPath))
+        {
+            Logger.WriteLine($"GpuModeController: PCI backend - scheduled {target} for next reboot");
+            return GpuSwitchResult.RebootRequired;
+        }
+
+        // WriteDriverBlock did not produce a trigger file. Two reasons:
+        //   1. Authentication was cancelled (pkexec dialog dismissed).
+        //   2. The internal safety guard refused (Eco + MUX=0 latched).
+        // In case (2) the earlier "WriteDriverBlock REFUSED" log line
+        // explains why; the EcoBlocked result lets the UI surface a
+        // friendlier reason than a generic failure toast.
+        if (target == GpuMode.Eco && WouldCreateImpossibleState(target))
+        {
+            Logger.WriteLine("GpuModeController: PCI backend - Eco refused (MUX=0 latched, would cause black screen)");
+            return GpuSwitchResult.EcoBlocked;
+        }
+        Logger.WriteLine("GpuModeController: PCI backend - trigger write failed (pkexec cancelled or write error)");
+        return GpuSwitchResult.Failed;
+    }
+
     // Atomic operations
 
     /// <summary>Always safe. Write dgpu_disable=0 (enable dGPU). Returns Applied.</summary>
@@ -1063,7 +1251,7 @@ public class GpuModeController
     private bool IsNvidiaDriverActive()
     {
         // Check if nvidia_drm module is loaded
-        if (!Directory.Exists("/sys/module/nvidia_drm"))
+        if (!Directory.Exists(TestPathPrefix + "/sys/module/nvidia_drm"))
         {
             Logger.WriteLine("GpuModeController: nvidia_drm module not loaded - safe");
             return false;
@@ -1137,7 +1325,7 @@ public class GpuModeController
             "pkexec", $"rmmod {modules}", 120000);
 
         // Check if modules are gone
-        if (!Directory.Exists("/sys/module/nvidia_drm"))
+        if (!Directory.Exists(TestPathPrefix + "/sys/module/nvidia_drm"))
         {
             Logger.WriteLine("GpuModeController: NVIDIA modules unloaded successfully");
             return true;
@@ -1151,7 +1339,7 @@ public class GpuModeController
             Logger.WriteLine("GpuModeController: nvidia_drm still loaded but refcnt=0, retrying without wmi_ec_backlight");
             SysfsHelper.RunCommandWithTimeout("pkexec", "rmmod nvidia_drm nvidia_modeset nvidia_uvm nvidia", 120000);
 
-            if (!Directory.Exists("/sys/module/nvidia_drm"))
+            if (!Directory.Exists(TestPathPrefix + "/sys/module/nvidia_drm"))
             {
                 Logger.WriteLine("GpuModeController: NVIDIA modules unloaded on retry");
                 return true;
@@ -1194,7 +1382,7 @@ public class GpuModeController
     /// <summary>True if the NVIDIA kernel module is loaded.</summary>
     private static bool IsNvidiaGpu()
     {
-        return Directory.Exists("/sys/module/nvidia");
+        return Directory.Exists(TestPathPrefix + "/sys/module/nvidia");
     }
 
     /// <summary>True if an AMD discrete GPU is present (vendor=0x1002, boot_vga=0).</summary>
@@ -1206,13 +1394,13 @@ public class GpuModeController
     /// <summary>Read /sys/module/nvidia_drm/refcnt. Returns -1 if not readable.</summary>
     private static int ReadNvidiaDrmRefcount()
     {
-        return SysfsHelper.ReadInt("/sys/module/nvidia_drm/refcnt", -1);
+        return SysfsHelper.ReadInt(TestPathPrefix + "/sys/module/nvidia_drm/refcnt", -1);
     }
 
     /// <summary>Read power/runtime_status for a PCI device. Returns "active"/"suspended"/etc.</summary>
     private static string ReadDgpuRuntimeStatus(string pciAddr)
     {
-        string path = $"/sys/bus/pci/devices/{pciAddr}/power/runtime_status";
+        string path = TestPathPrefix + $"/sys/bus/pci/devices/{pciAddr}/power/runtime_status";
         return SysfsHelper.ReadAttribute(path) ?? "active";
     }
 
@@ -1282,6 +1470,13 @@ public class GpuModeController
     {
         try
         {
+            // PCI backend has no MUX hardware and no live dgpu_disable, so
+            // the impossible-state pair this check defends against simply
+            // cannot occur. Skip silently to avoid touching WMI sysfs that
+            // may not exist on non-ASUS systems.
+            if (AppConfig.IsPciGpuBackend())
+                return;
+
             int mux = _wmi.GetGpuMuxMode();
             bool ecoEnabled = _wmi.GetGpuEco();
 
@@ -1302,14 +1497,103 @@ public class GpuModeController
 
     // Driver block - prevent dGPU driver loading + remove PCI devices for Eco boot
 
+    /// <summary>
+    /// Optional root prefix for the four ghelper system paths. Empty in
+    /// production (paths resolve under real /etc); the test harness sets
+    /// <c>GHELPER_TEST_ROOT=/tmp/scenario-N</c> so writes are confined to a
+    /// sandbox and the sudo / pkexec branches can be skipped.
+    /// Mirrors the same env var the boot-script test harness uses.
+    /// </summary>
+    internal static readonly string TestPathPrefix =
+        Environment.GetEnvironmentVariable("GHELPER_TEST_ROOT") ?? "";
+
+    internal static bool IsTestMode => !string.IsNullOrEmpty(TestPathPrefix);
+
     /// <summary>Path to modprobe.d file that blocks dGPU driver loading (NVIDIA + AMD).</summary>
-    private const string ModprobeBlockPath = "/etc/modprobe.d/ghelper-gpu-block.conf";
+    internal static readonly string ModprobeBlockPath = TestPathPrefix + "/etc/modprobe.d/ghelper-gpu-block.conf";
 
     /// <summary>Path to udev rule that removes dGPU PCI devices from the bus (NVIDIA + AMD).</summary>
-    private const string UdevRemovePath = "/etc/udev/rules.d/50-ghelper-remove-dgpu.rules";
+    internal static readonly string UdevRemovePath = TestPathPrefix + "/etc/udev/rules.d/50-ghelper-remove-dgpu.rules";
 
     /// <summary>Path to trigger file read by ghelper on startup.</summary>
-    private const string TriggerPath = "/etc/ghelper/pending-gpu-mode";
+    internal static readonly string TriggerPath = TestPathPrefix + "/etc/ghelper/pending-gpu-mode";
+
+    /// <summary>Path to backend selector file. Content "asus-wmi" or "pci".</summary>
+    internal static readonly string BackendPath = TestPathPrefix + "/etc/ghelper/backend";
+
+    /// <summary>
+    /// In-process replacement for the sudo/pkexec helper calls when running
+    /// under the C# test harness. Performs the exact same file-system effect
+    /// the helper script would, but without any privilege escalation.
+    /// Mirrors gpu-block-helper.sh write/clean/set-backend semantics.
+    /// </summary>
+    private static void RunHelperInTestMode(string action, GpuMode? target = null, string? backend = null)
+    {
+        try
+        {
+            string? mkdir(string p)
+            { var d = Path.GetDirectoryName(p); if (!string.IsNullOrEmpty(d)) Directory.CreateDirectory(d); return d; }
+            switch (action)
+            {
+                case "write":
+                    string modeStr = (target ?? GpuMode.Eco) switch
+                    {
+                        GpuMode.Eco => "eco",
+                        GpuMode.Standard => "standard",
+                        GpuMode.Optimized => "optimized",
+                        GpuMode.Ultimate => "ultimate",
+                        _ => "eco",
+                    };
+                    string be = backend ?? "asus-wmi";
+                    mkdir(BackendPath);
+                    File.WriteAllText(BackendPath, be);
+                    if (modeStr == "eco")
+                    {
+                        mkdir(ModprobeBlockPath);
+                        File.WriteAllText(ModprobeBlockPath, ModprobeBlockContent);
+                        mkdir(UdevRemovePath);
+                        File.WriteAllText(UdevRemovePath, UdevRemoveContent);
+                    }
+                    else
+                    {
+                        if (File.Exists(ModprobeBlockPath))
+                            File.Delete(ModprobeBlockPath);
+                        if (File.Exists(UdevRemovePath))
+                            File.Delete(UdevRemovePath);
+                    }
+                    mkdir(TriggerPath);
+                    File.WriteAllText(TriggerPath, modeStr);
+                    break;
+                case "clean":
+                    if (File.Exists(ModprobeBlockPath))
+                        File.Delete(ModprobeBlockPath);
+                    if (File.Exists(UdevRemovePath))
+                        File.Delete(UdevRemovePath);
+                    if (File.Exists(TriggerPath))
+                        File.Delete(TriggerPath);
+                    break;
+                case "set-backend":
+                    mkdir(BackendPath);
+                    File.WriteAllText(BackendPath, backend ?? "asus-wmi");
+                    break;
+                case "live-standard":
+                    // Mirror the bash helper: remove blocks + trigger.
+                    // udevadm + PCI rescan + modprobe are out-of-scope
+                    // for a userland test sandbox (no real kernel).
+                    if (File.Exists(ModprobeBlockPath))
+                        File.Delete(ModprobeBlockPath);
+                    if (File.Exists(UdevRemovePath))
+                        File.Delete(UdevRemovePath);
+                    if (File.Exists(TriggerPath))
+                        File.Delete(TriggerPath);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine($"RunHelperInTestMode({action}) failed: {ex.Message}");
+        }
+    }
 
     /// <summary>Known locations for the GPU block helper script (installed by install-local.sh).</summary>
     private static readonly string[] HelperSearchPaths = new[]
@@ -1384,8 +1668,141 @@ public class GpuModeController
         "ACTION==\"add\", SUBSYSTEM==\"pci\", ATTR{vendor}==\"0x1002\", ATTR{class}==\"0x040300\", ATTR{power/control}=\"auto\", ATTR{remove}=\"1\"\n";
 
     /// <summary>
+    /// Push the backend selector marker (/etc/ghelper/backend) without
+    /// touching any block artifacts. Called when the user toggles the
+    /// "Use PCI dGPU disable" checkbox so the boot service sees the new
+    /// backend on the next boot even if the user never schedules a mode
+    /// change. Idempotent - no-op if the marker already matches.
+    /// </summary>
+    public void PushBackendMarker(string backend)
+    {
+        if (backend != "pci" && backend != "asus-wmi")
+        {
+            Logger.WriteLine($"GpuModeController: PushBackendMarker rejected invalid backend '{backend}'");
+            return;
+        }
+
+        // The MUX=0 latch flag and in-memory pending latch encode REAL
+        // firmware state (gpu_mux_mode=0 is pending an actual reboot). The
+        // backend selector is a UI preference - toggling it does not change
+        // firmware state. Clearing the latch here would re-introduce the
+        // exact impossible-state chain this guard is designed to prevent:
+        // user clicks Ultimate -> toggles PCI -> clicks Eco -> blocks
+        // written -> reboot -> MUX=0 settles + udev removes dGPU = black
+        // screen. Keep the latch; rely on WouldCreateImpossibleState to
+        // refuse the subsequent Eco click and surface the new toast.
+
+        try
+        {
+            // Skip the privileged call when the file already reflects the
+            // chosen backend. Saves a polkit prompt on every checkbox tick.
+            if (File.Exists(BackendPath))
+            {
+                string current = File.ReadAllText(BackendPath).Trim();
+                if (current == backend)
+                    return;
+            }
+
+            if (IsTestMode)
+            {
+                RunHelperInTestMode("set-backend", backend: backend);
+                return;
+            }
+
+            string? helper = FindHelperScript();
+            if (helper != null)
+            {
+                // Match the WriteDriverBlock invocation style - no nested
+                // quoting, no `sh -c`. The helper has a dedicated
+                // `set-backend` subcommand that writes only the marker.
+                Logger.WriteLine($"GpuModeController: PushBackendMarker via helper: {backend}");
+                SysfsHelper.RunCommandWithTimeout("sudo", $"{helper} set-backend {backend}", 30000);
+            }
+            else
+            {
+                // pkexec fallback uses RunPkexecBash so the script body is
+                // passed as a single argument (no quoting hazards).
+                Logger.WriteLine($"GpuModeController: PushBackendMarker via pkexec: {backend}");
+                SysfsHelper.RunPkexecBash(
+                    $"mkdir -p /etc/ghelper\necho {backend} > {BackendPath}\nchmod 644 {BackendPath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine($"GpuModeController: PushBackendMarker failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Live PCI Eco → Standard recovery: atomically remove the modprobe
+    /// block + udev hot-remove rule + trigger file, reload udev so the
+    /// rule is forgotten, rescan the PCI bus to re-enumerate the dGPU,
+    /// and kick modprobe explicitly to bring the driver back. No reboot
+    /// required. Mirrors the asus-wmi SetGpuEco(false) live path.
+    ///
+    /// Returns Applied on success (verified by block files being gone),
+    /// Failed otherwise. Callers fall through to the deferred-reboot path
+    /// when this returns Failed so the user can still escape Eco mode.
+    /// </summary>
+    private GpuSwitchResult TryLiveRemovePciBlocks()
+    {
+        try
+        {
+            if (IsTestMode)
+            {
+                // Honour the test-harness failure switch so the
+                // C# scenario suite can exercise the fall-through path.
+                if (Environment.GetEnvironmentVariable("GHELPER_TEST_FAIL_LIVE_STANDARD") == "1")
+                {
+                    Logger.WriteLine("TryLiveRemovePciBlocks: test harness requested failure");
+                    return GpuSwitchResult.Failed;
+                }
+                RunHelperInTestMode("live-standard");
+            }
+            else
+            {
+                string? helper = FindHelperScript();
+                if (helper != null)
+                {
+                    Logger.WriteLine($"GpuModeController: live Eco→Standard via helper: {helper}");
+                    SysfsHelper.RunCommandWithTimeout("sudo", $"{helper} live-standard", 30000);
+                }
+                else
+                {
+                    Logger.WriteLine("GpuModeController: live Eco→Standard via pkexec fallback");
+                    // RunPkexecBash passes the script body as a single
+                    // ArgumentList entry, so the interpolated path
+                    // constants below cannot escape into argv parsing.
+                    // The paths themselves are private const strings -
+                    // not user input.
+                    string script =
+                        $"rm -f {ModprobeBlockPath} {UdevRemovePath} {TriggerPath}\n" +
+                        "udevadm control --reload-rules 2>/dev/null || true\n" +
+                        "echo 1 > /sys/bus/pci/rescan 2>/dev/null || true\n" +
+                        "modprobe nvidia 2>/dev/null || true\n" +
+                        "modprobe amdgpu 2>/dev/null || true";
+                    SysfsHelper.RunPkexecBash(script);
+                }
+            }
+
+            // Verify the recovery actually happened. The helper script
+            // returns 0 even when individual operations fail (the trailing
+            // `|| true`); the only reliable signal is file-state.
+            bool stillBlocked = File.Exists(ModprobeBlockPath) || File.Exists(UdevRemovePath);
+            return stillBlocked ? GpuSwitchResult.Failed : GpuSwitchResult.Applied;
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine($"TryLiveRemovePciBlocks failed: {ex.Message}");
+            return GpuSwitchResult.Failed;
+        }
+    }
+
+    /// <summary>
     /// True if any driver block artifacts (current or legacy) exist on disk.
     /// Used to decide if cleanup is needed - avoids unnecessary pkexec prompts.
+    /// BackendPath is intentionally excluded - it is a persistent user
+    /// preference managed independently of Eco state.
     /// </summary>
     private static bool DriverBlockExists()
     {
@@ -1398,7 +1815,6 @@ public class GpuModeController
     /// Write three artifacts that prevent dGPU drivers from loading on the next boot,
     /// allowing ghelper to safely write dgpu_disable=1 at startup.
     ///
-    /// The EnvyControl-proven approach (1.8k+ stars, no systemd service):
     ///
     /// 1. modprobe.d `install /bin/false` - the STRONGEST modprobe block.
     ///    Unlike `blacklist` (which only prevents autoload and can be overridden
@@ -1423,9 +1839,13 @@ public class GpuModeController
     {
         try
         {
-            if (target != GpuMode.Eco)
+            bool isPci = AppConfig.IsPciGpuBackend();
+            bool isEco = (target == GpuMode.Eco);
+
+            if (!isEco && !isPci)
             {
-                // Non-Eco: dGPU driver should be available - remove block if it exists
+                // ASUS WMI backend, non-eco target: dGPU driver should be
+                // available immediately, no block artifacts needed.
                 RemoveDriverBlock();
                 return;
             }
@@ -1433,14 +1853,14 @@ public class GpuModeController
             // SAFETY: Never write Eco block artifacts when MUX is latched to 0 (Ultimate).
             // After reboot, MUX=0 means dGPU is the sole display - blocking dGPU driver and
             // writing dgpu_disable=1 would cause a black screen (impossible state).
-            if (WouldCreateImpossibleState(target))
+            // WouldCreateImpossibleState only triggers on ASUS hardware with a real MUX;
+            // PCI backend on non-ASUS naturally returns false.
+            if (isEco && WouldCreateImpossibleState(target))
             {
                 Logger.WriteLine("GpuModeController: WriteDriverBlock REFUSED - Eco + MUX=0 is impossible state, removing any stale artifacts instead");
                 RemoveDriverBlock();
                 return;
             }
-
-            Logger.WriteLine("GpuModeController: writing driver block (modprobe + udev + trigger) for Eco boot");
 
             // Convert target mode to string for trigger file (boot script reads this)
             string modeStr = target switch
@@ -1452,31 +1872,70 @@ public class GpuModeController
                 _ => "eco"
             };
 
-            string? helper = FindHelperScript();
-            if (helper != null)
+            // Pass the active backend through to the helper so it writes the
+            // marker file the boot script reads. Default "asus-wmi" preserves
+            // legacy behaviour for any caller that hasn't opted into PCI mode.
+            string backend = AppConfig.GetGpuBackend();
+
+            if (isEco)
+                Logger.WriteLine($"GpuModeController: writing driver block (modprobe + udev + trigger=eco, backend={backend})");
+            else
+                Logger.WriteLine($"GpuModeController: PCI backend - writing trigger={modeStr} (no blocks, backend={backend})");
+
+            if (IsTestMode)
             {
-                Logger.WriteLine($"GpuModeController: using sudo helper: {helper}");
-                SysfsHelper.RunCommandWithTimeout("sudo", $"{helper} write {modeStr}", 120000);
+                // Bypass privilege escalation entirely under the test harness.
+                RunHelperInTestMode("write", target, backend);
             }
             else
             {
-                // Fallback: pkexec with inline content
-                Logger.WriteLine("GpuModeController: using pkexec fallback");
-                string script = $"mkdir -p /etc/ghelper\n" +
-                    $"cat > {ModprobeBlockPath} << 'GHELPER_BLOCK'\n{ModprobeBlockContent}GHELPER_BLOCK\n" +
-                    $"chmod 644 {ModprobeBlockPath}\n" +
-                    $"cat > {UdevRemovePath} << 'GHELPER_BLOCK'\n{UdevRemoveContent}GHELPER_BLOCK\n" +
-                    $"chmod 644 {UdevRemovePath}\n" +
-                    $"echo {modeStr} > {TriggerPath}";
-                SysfsHelper.RunPkexecBash(script);
+                string? helper = FindHelperScript();
+                if (helper != null)
+                {
+                    Logger.WriteLine($"GpuModeController: using sudo helper: {helper}");
+                    SysfsHelper.RunCommandWithTimeout("sudo", $"{helper} write {modeStr} {backend}", 120000);
+                }
+                else
+                {
+                    // Fallback: pkexec with inline content. Eco writes the full
+                    // block artifact set; non-eco (only reachable in PCI mode
+                    // here) writes just the trigger + backend marker and removes
+                    // any stale modprobe/udev artifacts.
+                    Logger.WriteLine($"GpuModeController: using pkexec fallback (mode={modeStr}, backend={backend})");
+                    string script;
+                    if (isEco)
+                    {
+                        script = $"mkdir -p /etc/ghelper\n" +
+                            $"cat > {ModprobeBlockPath} << 'GHELPER_BLOCK'\n{ModprobeBlockContent}GHELPER_BLOCK\n" +
+                            $"chmod 644 {ModprobeBlockPath}\n" +
+                            $"cat > {UdevRemovePath} << 'GHELPER_BLOCK'\n{UdevRemoveContent}GHELPER_BLOCK\n" +
+                            $"chmod 644 {UdevRemovePath}\n" +
+                            $"echo {modeStr} > {TriggerPath}\n" +
+                            $"echo {backend} > {BackendPath}\n" +
+                            $"chmod 644 {BackendPath}";
+                    }
+                    else
+                    {
+                        script = $"mkdir -p /etc/ghelper\n" +
+                            $"rm -f {ModprobeBlockPath} {UdevRemovePath}\n" +
+                            $"echo {modeStr} > {TriggerPath}\n" +
+                            $"echo {backend} > {BackendPath}\n" +
+                            $"chmod 644 {BackendPath}";
+                    }
+                    SysfsHelper.RunPkexecBash(script);
+                }
             }
 
             if (File.Exists(TriggerPath))
             {
-                Logger.WriteLine($"GpuModeController: driver block artifacts written successfully (mode={modeStr})");
-                Logger.WriteLine($"  modprobe: {ModprobeBlockPath}");
-                Logger.WriteLine($"  udev:     {UdevRemovePath}");
+                Logger.WriteLine($"GpuModeController: trigger written successfully (mode={modeStr})");
+                if (isEco)
+                {
+                    Logger.WriteLine($"  modprobe: {ModprobeBlockPath}");
+                    Logger.WriteLine($"  udev:     {UdevRemovePath}");
+                }
                 Logger.WriteLine($"  trigger:  {TriggerPath} (content: {modeStr})");
+                Logger.WriteLine($"  backend:  {BackendPath} (content: {backend})");
             }
             else
             {
@@ -1509,10 +1968,19 @@ public class GpuModeController
 
             Logger.WriteLine("GpuModeController: removing driver block artifacts (current + legacy)");
 
+            if (IsTestMode)
+            {
+                RunHelperInTestMode("clean");
+                return;
+            }
+
             string? helper = FindHelperScript();
             if (helper != null)
             {
-                // Helper already handles both current and legacy files (Phase 6)
+                // Helper `clean` removes only the ephemeral Eco artifacts.
+                // The backend marker is a persistent user preference and is
+                // intentionally preserved here so the next boot still uses
+                // the correct backend.
                 SysfsHelper.RunCommandWithTimeout("sudo", $"{helper} clean", 120000);
             }
             else

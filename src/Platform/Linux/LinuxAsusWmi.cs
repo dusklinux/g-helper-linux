@@ -390,12 +390,21 @@ public class LinuxAsusWmi : IAsusWmi
     private bool? _rawWmiGpuEcoAvailable;
 
     /// <summary>
-    /// True if GPU Eco switching is available - either via sysfs (dgpu_disable)
-    /// or via raw WMI debugfs (when raw_wmi is enabled and firmware supports it).
+    /// True if GPU Eco switching is available - either via sysfs (dgpu_disable),
+    /// via raw WMI debugfs (when raw_wmi is enabled and firmware supports it),
+    /// or via the PCI backend (modprobe block + udev hot-remove; works on any
+    /// laptop with a discrete NVIDIA GPU, no ASUS firmware required).
     /// </summary>
     public bool IsGpuEcoAvailable()
     {
         if (IsFeatureSupported(AsusAttributes.DgpuDisable))
+            return true;
+
+        // PCI backend: enabled iff the user opted in AND we can see a
+        // discrete NVIDIA GPU on the PCI bus. Skip the check entirely on
+        // hardware without an Nvidia dGPU so unsupported users don't see a
+        // panel they cannot use.
+        if (Helpers.AppConfig.IsPciGpuBackend() && HasDiscreteNvidiaGpu())
             return true;
 
         if (!Helpers.AppConfig.Is("raw_wmi") || !AsusWmiDebugfs.IsAvailable())
@@ -409,6 +418,147 @@ public class LinuxAsusWmi : IAsusWmi
         }
 
         return _rawWmiGpuEcoAvailable.Value;
+    }
+
+    /// <summary>
+    /// Cheap PCI bus scan: returns true if at least one device has vendor
+    /// 0x10de (NVIDIA) and a VGA/3D-controller class. Results are cached
+    /// because PCI topology cannot change without a reboot or hot-plug.
+    /// </summary>
+    private static bool? _hasDiscreteNvidiaCache;
+    internal static bool HasDiscreteNvidiaGpu()
+    {
+        if (_hasDiscreteNvidiaCache.HasValue)
+            return _hasDiscreteNvidiaCache.Value;
+        try
+        {
+            const string pciDir = "/sys/bus/pci/devices";
+            if (!Directory.Exists(pciDir))
+            {
+                _hasDiscreteNvidiaCache = false;
+                return false;
+            }
+            foreach (var dev in Directory.EnumerateDirectories(pciDir))
+            {
+                try
+                {
+                    string vendorPath = Path.Combine(dev, "vendor");
+                    string classPath = Path.Combine(dev, "class");
+                    if (!File.Exists(vendorPath) || !File.Exists(classPath))
+                        continue;
+                    string vendor = File.ReadAllText(vendorPath).Trim();
+                    if (vendor != "0x10de")
+                        continue;
+                    string klass = File.ReadAllText(classPath).Trim();
+                    // VGA controller (0x0300xx) or 3D controller (0x0302xx)
+                    if (klass.StartsWith("0x0300") || klass.StartsWith("0x0302"))
+                    {
+                        _hasDiscreteNvidiaCache = true;
+                        return true;
+                    }
+                }
+                catch
+                {
+                    // sysfs read race: ignore this device and continue
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"HasDiscreteNvidiaGpu: PCI scan failed: {ex.Message}");
+        }
+        _hasDiscreteNvidiaCache = false;
+        return false;
+    }
+
+    /// <summary>
+    /// Broader check used to decide whether to expose the GPU-backend
+    /// checkbox in the Extra window. Returns true whenever the user could
+    /// conceivably switch GPU modes - even if the dGPU is currently
+    /// invisible to the PCI bus (udev hot-remove rule already applied,
+    /// BIOS power-off state, etc.).
+    ///
+    /// Conditions (any one is sufficient):
+    ///   1. ASUS dgpu_disable WMI is exposed (ASUS hardware with dGPU)
+    ///   2. A discrete NVIDIA GPU is currently on the PCI bus
+    ///   3. The user has already opted into the PCI backend (config flag)
+    ///   4. The persistent eco block artifacts exist (PCI mode active)
+    ///   5. The nvidia or nouveau kernel module is installed on disk
+    ///      (a dGPU once was - or will be - present even if hot-removed now)
+    /// </summary>
+    public bool CanToggleGpuBackend()
+    {
+        if (IsFeatureSupported(AsusAttributes.DgpuDisable))
+            return true;
+        if (HasDiscreteNvidiaGpu())
+            return true;
+        if (Helpers.AppConfig.IsPciGpuBackend())
+            return true;
+        try
+        {
+            if (File.Exists("/etc/modprobe.d/ghelper-gpu-block.conf") ||
+                File.Exists("/etc/udev/rules.d/50-ghelper-remove-dgpu.rules"))
+                return true;
+        }
+        catch
+        {
+            // Permissions: ignore and fall through
+        }
+        if (HasNvidiaModuleAvailable())
+            return true;
+        return false;
+    }
+
+    private static bool? _hasNvidiaModuleCache;
+    private static bool HasNvidiaModuleAvailable()
+    {
+        if (_hasNvidiaModuleCache.HasValue)
+            return _hasNvidiaModuleCache.Value;
+        try
+        {
+            // Loaded right now (driver bound)?
+            if (Directory.Exists("/sys/module/nvidia") || Directory.Exists("/sys/module/nouveau"))
+            {
+                _hasNvidiaModuleCache = true;
+                return true;
+            }
+            // Installed on disk for the running kernel?
+            string release;
+            try
+            { release = File.ReadAllText("/proc/sys/kernel/osrelease").Trim(); }
+            catch { release = ""; }
+            string[] roots = string.IsNullOrEmpty(release)
+                ? new[] { "/lib/modules" }
+                : new[] { $"/lib/modules/{release}/updates", $"/lib/modules/{release}/kernel/drivers/gpu/drm/nouveau", "/lib/modules" };
+            foreach (var root in roots)
+            {
+                if (!Directory.Exists(root))
+                    continue;
+                try
+                {
+                    foreach (var f in Directory.EnumerateFiles(root, "nvidia*.ko*", SearchOption.AllDirectories))
+                    {
+                        _hasNvidiaModuleCache = true;
+                        return true;
+                    }
+                    foreach (var f in Directory.EnumerateFiles(root, "nouveau*.ko*", SearchOption.AllDirectories))
+                    {
+                        _hasNvidiaModuleCache = true;
+                        return true;
+                    }
+                }
+                catch
+                {
+                    // permission denied on a sub-tree - ignore and continue
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"HasNvidiaModuleAvailable: scan failed: {ex.Message}");
+        }
+        _hasNvidiaModuleCache = false;
+        return false;
     }
 
     public bool GetGpuEco()

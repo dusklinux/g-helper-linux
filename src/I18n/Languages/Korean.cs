@@ -122,8 +122,7 @@ public static class Korean
 
         ["gpu_mux_reboot_auto"] = "MUX 스위치 변경 - 재부팅 필요, 이후 자동 전환이 시작됩니다",
         ["gpu_mux_reboot"] = "변경 사항을 적용하려면 재부팅해야 합니다",
-        ["gpu_eco_blocked"] = "Eco 모드 차단됨 - 이번 세션에서 MUX가 Ultimate로 변경되었습니다. 먼저 재부팅하세요.",
-        ["gpu_eco_blocked_detail"] = "Eco 모드 차단됨: 이번 세션에서 MUX가 Ultimate로 변경되었습니다. 먼저 재부팅한 후 Eco로 전환하세요.",
+        ["gpu_eco_blocked_mux"] = "먼저 재부팅하세요, Ultimate가 대기 중입니다.",
         ["gpu_eco_pending"] = "Eco 모드 대기 중 - 재부팅하여 적용",
         ["gpu_eco_after_reboot"] = "재부팅 후 Eco 모드가 활성화됩니다",
         ["gpu_switch_failed"] = "GPU 모드 전환 실패 - 로그를 확인하세요",
@@ -142,15 +141,12 @@ public static class Korean
         ["gpu_switching_standard"] = "Standard 모드로 전환 중...",
         ["gpu_switching_generic"] = "GPU 모드 전환 중...",
         ["gpu_switching_ultimate"] = "Ultimate 모드로 전환 중...",
-        ["gpu_releasing_driver"] = "GPU 드라이버 해제 중, 잠시 기다려 주세요...",
-        ["gpu_driver_eco_scheduled"] = "GPU가 디스플레이 시스템에서 사용 중 - 재부팅 시 Eco 모드 예약됨",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "GPU 드라이버 활성 중",
-        ["gpu_driver_body"] = "GPU가 현재 디스플레이 시스템에서 사용 중입니다.\nEco 모드로 전환하려면 먼저 드라이버를 해제해야 합니다.",
-        ["gpu_driver_switch_now"] = "지금 전환",
+        ["gpu_driver_title"] = "재부팅 필요",
+        ["gpu_driver_body"] = "GPU가 현재 디스플레이 시스템에서 사용 중입니다.\nEco 모드로 전환하려면 안전한 적용을 위해 재부팅이 필요합니다.",
         ["gpu_driver_after_reboot"] = "재부팅 후",
-        ["gpu_driver_footer"] = "\"지금 전환\"은 GPU 드라이버 언로드를 시도합니다(관리자\n비밀번호가 필요할 수 있습니다). \"재부팅 후\"는 다음 시작 시 저장됩니다.",
+        ["gpu_driver_footer"] = "\"재부팅 후\"는 모드 변경을 저장하여 다음 시작 시 적용합니다.\n\"취소\"는 현재 GPU 모드를 유지합니다.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "끄기  \u25cb\u25cb\u25cb",
@@ -291,7 +287,11 @@ public static class Korean
         ["reapply_power_hint"] = "이 간격으로 CPU/GPU 전력 제한을 다시 기록합니다. BIOS가 PPT를 덮어쓸 때 유용합니다.",
         ["auto_apply_power"] = "모드 변경 시 전력 제한 자동 적용",
         ["raw_wmi_mode"] = "Raw WMI 모드 (실험적 - ACPI debugfs를 통한 GPU Eco)",
-        ["raw_wmi_hint"] = "GPU Eco sysfs가 없는 노트북용. 전환 시 앱이 재시작됩니다.",
+        ["raw_wmi_hint"] = "/sys/kernel/debug/asus-nb-wmi를 통해 ASUS 펌웨어 GPUEco 메서드와 직접 통신하여 커널의 sysfs 존재 확인을 우회합니다. dgpu_disable이 없지만 ACPI 메서드가 여전히 작동하는 구형 Vivobook / Zenbook 펌웨어에서만 사용하세요. 각 호출에는 pkexec 프롬프트가 필요하며 옵션을 전환하면 ghelper가 재시작됩니다. 위의 PCI 모드가 활성화된 경우 완전히 무시됩니다.",
+        ["gpu_backend_header"] = "GPU 백엔드",
+        ["gpu_backend_intro"] = "ghelper가 dGPU를 켜고 끄는 방법을 선택하세요. ASUS WMI(펌웨어)가 기본값입니다. 아래 대안은 하드웨어에서 펌웨어 경로가 없거나 신뢰할 수 없을 때 도움이 됩니다.",
+        ["gpu_backend_pci_label"] = "PCI dGPU 비활성화 사용",
+        ["gpu_backend_pci_hint"] = "modprobe 블랙리스트와 udev 핫 리무브 규칙을 통해 dGPU를 비활성화합니다. 통신할 ASUS 펌웨어가 없는 비ASUS 노트북에서 필수, 커널 전용 경로를 선호하는 ASUS에서는 선택 사항. 규칙은 다음 부팅 시에만 적용되므로 모드 변경은 항상 재부팅이 필요합니다.",
         ["auto_switch_refresh"] = "주사율 자동 전환 (AC/배터리)",
         ["cpu_cores"] = "CPU 코어",
         ["cpu_cores_format"] = "{0}/{1}",

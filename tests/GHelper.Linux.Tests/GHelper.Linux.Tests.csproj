@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    GpuModeController scenario tests.
+
+    Validates every (PCI backend, raw-WMI backend, current hw state,
+    button press) combination so the UI never lies about the active GPU
+    mode and the configured backend is honoured end-to-end. The runner
+    is a plain Main(string[]) console executable so it works without
+    pulling xUnit / dotnet-test into the AOT main binary.
+
+    Build and run:
+      dotnet run -c Debug (project tests/GHelper.Linux.Tests)
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>GHelper.Linux.Tests</RootNamespace>
+    <AssemblyName>ghelper-tests</AssemblyName>
+
+    <!-- NOT AOT - tests use reflection, dynamic dispatch, etc. -->
+    <PublishAot>false</PublishAot>
+    <InvariantGlobalization>false</InvariantGlobalization>
+
+    <!-- Suppress accidental TrimMode inheritance -->
+    <TrimMode>partial</TrimMode>
+
+    <!-- We don't want to compile any Avalonia .axaml from the main proj. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Only compile the C# files we strictly need. Avoids dragging in
+      Avalonia UI, Skia, HID, etc. Keeps the test build fast and
+      side-effect-free.
+    -->
+    <Compile Include="*.cs" />
+
+    <Compile Include="../../src/Gpu/GpuModeController.cs" />
+    <Compile Include="../../src/Platform/IAsusWmi.cs" />
+    <Compile Include="../../src/Platform/IPowerManager.cs" />
+    <Compile Include="../../src/Platform/Linux/AsusAttributes.cs" />
+    <Compile Include="../../src/Platform/Linux/SysfsHelper.cs" />
+    <Compile Include="../../src/Helpers/AppConfig.cs" />
+    <Compile Include="../../src/Helpers/Logger.cs" />
+  </ItemGroup>
+
+</Project>
