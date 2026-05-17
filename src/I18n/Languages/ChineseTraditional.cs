@@ -122,8 +122,7 @@ public static class ChineseTraditional
 
         ["gpu_mux_reboot_auto"] = "MUX 開關已變更 - 需要重新開機，之後自動切換將開始",
         ["gpu_mux_reboot"] = "您必須重新開機以使變更生效",
-        ["gpu_eco_blocked"] = "Eco 模式被阻擋 - 本次工作階段中 MUX 已變更為 Ultimate。請先重新開機。",
-        ["gpu_eco_blocked_detail"] = "Eco 模式被阻擋：本次工作階段中 MUX 已變更為 Ultimate。請先重新開機，然後再切換到 Eco。",
+        ["gpu_eco_blocked_mux"] = "請先重新開機，Ultimate 正在等待。",
         ["gpu_eco_pending"] = "Eco 模式待處理 - 重新開機以套用",
         ["gpu_eco_after_reboot"] = "重新開機後將啟用 Eco 模式",
         ["gpu_switch_failed"] = "GPU 模式切換失敗 - 請查看日誌",
@@ -142,15 +141,12 @@ public static class ChineseTraditional
         ["gpu_switching_standard"] = "正在切換至 Standard 模式...",
         ["gpu_switching_generic"] = "正在切換 GPU 模式...",
         ["gpu_switching_ultimate"] = "正在切換至 Ultimate 模式...",
-        ["gpu_releasing_driver"] = "正在釋放 GPU 驅動程式，請稍候...",
-        ["gpu_driver_eco_scheduled"] = "GPU 被顯示系統佔用 - Eco 模式已排程於重新開機時生效",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "GPU 驅動程式活動中",
-        ["gpu_driver_body"] = "GPU 目前正被顯示系統使用。\n切換至 Eco 模式需要先釋放驅動程式。",
-        ["gpu_driver_switch_now"] = "立即切換",
+        ["gpu_driver_title"] = "需要重新開機",
+        ["gpu_driver_body"] = "GPU 目前正被顯示系統使用。\n切換至 Eco 模式需要重新開機才能安全生效。",
         ["gpu_driver_after_reboot"] = "重新開機後",
-        ["gpu_driver_footer"] = "「立即切換」將嘗試卸載 GPU 驅動程式（可能需要管理員\n密碼）。「重新開機後」將儲存至下次啟動時。",
+        ["gpu_driver_footer"] = "「重新開機後」儲存模式變更以在下次啟動時套用。\n「取消」保留目前的 GPU 模式。",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "關  \u25cb\u25cb\u25cb",
@@ -291,7 +287,11 @@ public static class ChineseTraditional
         ["reapply_power_hint"] = "依此間隔重新寫入 CPU/GPU 功率限制。在 BIOS 覆蓋 PPT 時有用。",
         ["auto_apply_power"] = "切換模式時自動套用功率限制",
         ["raw_wmi_mode"] = "Raw WMI 模式（實驗性 - 透過 ACPI debugfs 控制 GPU Eco）",
-        ["raw_wmi_hint"] = "適用於沒有 GPU Eco sysfs 的筆電。切換時應用程式將重新啟動。",
+        ["raw_wmi_hint"] = "直接透過 /sys/kernel/debug/asus-nb-wmi 與 ASUS 韌體 GPUEco 方法通訊，繞過內核的 sysfs 存在檢查。僅在 dgpu_disable 缺失但 ACPI 方法仍可運作的較舊 Vivobook / Zenbook 韌體上使用。每次呼叫都需要 pkexec 提示，切換選項時 ghelper 會重新啟動。當上方 PCI 模式啟用時此選項被完全忽略。",
+        ["gpu_backend_header"] = "GPU 後端",
+        ["gpu_backend_intro"] = "選擇 ghelper 如何開啟和關閉 dGPU。預設使用 ASUS WMI（韌體）；當韌體路徑在您的硬體上缺失或不可靠時，下方備選項有幫助。",
+        ["gpu_backend_pci_label"] = "使用 PCI dGPU 停用",
+        ["gpu_backend_pci_hint"] = "透過 modprobe 黑名單加 udev 熱移除規則停用 dGPU。在沒有 ASUS 韌體可通訊的非 ASUS 筆電上必需；在 ASUS 上可選，適合偏好僅內核路徑的使用者。每次模式切換都需要重新開機，因為規則僅在下次啟動時生效。",
         ["auto_switch_refresh"] = "自動切換更新率（交流電源/電池）",
         ["cpu_cores"] = "CPU 核心",
         ["cpu_cores_format"] = "{0}/{1}",

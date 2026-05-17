@@ -119,8 +119,7 @@ public static class PortugueseBR
 
         ["gpu_mux_reboot_auto"] = "Chave MUX alterada - reinício necessário, depois a comutação automática iniciará",
         ["gpu_mux_reboot"] = "É necessário reiniciar para que as alterações tenham efeito",
-        ["gpu_eco_blocked"] = "Modo Eco bloqueado - MUX foi alterado para Ultimate nesta sessão. Reinicie primeiro.",
-        ["gpu_eco_blocked_detail"] = "Modo Eco bloqueado: MUX foi alterado para Ultimate nesta sessão. Reinicie primeiro, depois mude para Eco.",
+        ["gpu_eco_blocked_mux"] = "Reinicie primeiro, Ultimate aguarda.",
         ["gpu_eco_pending"] = "Modo Eco pendente - reinicie para aplicar",
         ["gpu_eco_after_reboot"] = "O modo Eco será ativado após o reinício",
         ["gpu_switch_failed"] = "Falha ao mudar o modo GPU - verifique os logs",
@@ -139,15 +138,12 @@ public static class PortugueseBR
         ["gpu_switching_standard"] = "Mudando para o modo Standard...",
         ["gpu_switching_generic"] = "Mudando modo GPU...",
         ["gpu_switching_ultimate"] = "Mudando para o modo Ultimate...",
-        ["gpu_releasing_driver"] = "Liberando driver GPU, aguarde...",
-        ["gpu_driver_eco_scheduled"] = "GPU ocupada pelo sistema de exibição - modo Eco agendado para o reinício",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "Driver GPU ativo",
-        ["gpu_driver_body"] = "A GPU está sendo usada pelo sistema de exibição.\nMudar para o modo Eco requer liberar o driver primeiro.",
-        ["gpu_driver_switch_now"] = "Mudar agora",
+        ["gpu_driver_title"] = "Reinício necessário",
+        ["gpu_driver_body"] = "A GPU está sendo usada pelo sistema de exibição.\nMudar para o modo Eco requer um reinício para aplicar com segurança.",
         ["gpu_driver_after_reboot"] = "Após reinício",
-        ["gpu_driver_footer"] = "\"Mudar agora\" tenta descarregar o driver GPU (senha de administrador\npode ser necessária). \"Após reinício\" salva para a próxima inicialização.",
+        ["gpu_driver_footer"] = "\"Após reinício\" salva a mudança de modo para aplicar na próxima inicialização.\n\"Cancelar\" mantém o modo GPU atual.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Desligado  \u25cb\u25cb\u25cb",
@@ -288,7 +284,11 @@ public static class PortugueseBR
         ["reapply_power_hint"] = "Reescreve os limites de potência da CPU/GPU neste intervalo. Útil quando a BIOS sobrescreve o PPT.",
         ["auto_apply_power"] = "Aplicar automaticamente os limites de potência ao mudar de modo",
         ["raw_wmi_mode"] = "Modo WMI direto (experimental - GPU Eco via ACPI debugfs)",
-        ["raw_wmi_hint"] = "Para notebooks sem sysfs GPU Eco. O app reiniciará ao alternar.",
+        ["raw_wmi_hint"] = "Conversa diretamente com o método GPUEco do firmware ASUS através de /sys/kernel/debug/asus-nb-wmi, contornando a verificação de presença sysfs do kernel. Use isto apenas em firmware Vivobook / Zenbook mais antigo onde dgpu_disable está ausente, mas o método ACPI ainda funciona. Cada chamada precisa de um prompt pkexec e o ghelper reinicia quando a opção é alternada. Totalmente ignorado quando o modo PCI acima está ativado.",
+        ["gpu_backend_header"] = "Backend GPU",
+        ["gpu_backend_intro"] = "Escolha como o ghelper liga e desliga a dGPU. ASUS WMI (firmware) é o padrão; as alternativas abaixo ajudam quando o caminho do firmware está ausente ou não é confiável em seu hardware.",
+        ["gpu_backend_pci_label"] = "Usar desativação PCI dGPU",
+        ["gpu_backend_pci_hint"] = "Desativa a dGPU via uma blacklist modprobe mais uma regra udev hot-remove. Necessário em laptops não ASUS onde não há firmware ASUS para conversar, opcional em ASUS onde você prefere o caminho apenas kernel. Cada mudança de modo requer um reinício porque as regras só se aplicam na próxima inicialização.",
         ["auto_switch_refresh"] = "Alternar taxa de atualização automaticamente (tomada/bateria)",
         ["cpu_cores"] = "Núcleos de CPU",
         ["cpu_cores_format"] = "{0}/{1}",

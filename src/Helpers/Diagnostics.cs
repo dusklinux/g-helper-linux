@@ -747,11 +747,41 @@ public static class Diagnostics
     {
         sb.AppendLine("--- Boot Service Log (ghelper-gpu-boot) ---");
         var output = Platform.Linux.SysfsHelper.RunCommand("journalctl",
-            "-t ghelper-gpu-boot --no-pager -n 50");
+            "-t ghelper-gpu-boot --no-pager -n 200");
         if (string.IsNullOrWhiteSpace(output))
             sb.AppendLine("  (no entries or journalctl not available)");
         else
             sb.AppendLine(output);
+        sb.AppendLine();
+
+        sb.AppendLine("--- Boot Service State (/etc/ghelper/*) ---");
+        string[] stateFiles =
+        {
+            "/etc/ghelper/pending-gpu-mode",
+            "/etc/ghelper/eco-retry-count",
+            "/etc/ghelper/last-eco-failed",
+            "/etc/ghelper/last-recovery",
+        };
+        foreach (var path in stateFiles)
+        {
+            var name = Path.GetFileName(path);
+            if (!File.Exists(path))
+            {
+                sb.AppendLine($"  {name}: (not present)");
+                continue;
+            }
+            try
+            {
+                var content = File.ReadAllText(path).Trim();
+                if (string.IsNullOrEmpty(content))
+                    content = "(empty)";
+                sb.AppendLine($"  {name}: {content}");
+            }
+            catch (Exception ex)
+            {
+                sb.AppendLine($"  {name}: (read error: {ex.Message})");
+            }
+        }
         sb.AppendLine();
     }
 

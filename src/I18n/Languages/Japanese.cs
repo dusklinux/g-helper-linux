@@ -122,8 +122,7 @@ public static class Japanese
 
         ["gpu_mux_reboot_auto"] = "MUX スイッチ変更 - 再起動が必要、その後自動切替が開始されます",
         ["gpu_mux_reboot"] = "変更を適用するには再起動が必要です",
-        ["gpu_eco_blocked"] = "Eco モードがブロックされました - このセッションで MUX が Ultimate に変更されました。先に再起動してください。",
-        ["gpu_eco_blocked_detail"] = "Eco モードがブロックされました: このセッションで MUX が Ultimate に変更されました。先に再起動してから Eco に切り替えてください。",
+        ["gpu_eco_blocked_mux"] = "先に再起動してください、Ultimate が保留中です。",
         ["gpu_eco_pending"] = "Eco モード保留中 - 再起動して適用",
         ["gpu_eco_after_reboot"] = "再起動後に Eco モードが有効になります",
         ["gpu_switch_failed"] = "GPU モードの切り替えに失敗 - ログを確認してください",
@@ -142,15 +141,12 @@ public static class Japanese
         ["gpu_switching_standard"] = "Standard モードに切り替え中...",
         ["gpu_switching_generic"] = "GPU モードを切り替え中...",
         ["gpu_switching_ultimate"] = "Ultimate モードに切り替え中...",
-        ["gpu_releasing_driver"] = "GPU ドライバーを解放中、お待ちください...",
-        ["gpu_driver_eco_scheduled"] = "GPU がディスプレイシステムに使用中 - 再起動時に Eco モードが予約されました",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "GPU ドライバーがアクティブ",
-        ["gpu_driver_body"] = "GPU は現在ディスプレイシステムによって使用されています。\nEco モードへの切り替えにはドライバーの解放が必要です。",
-        ["gpu_driver_switch_now"] = "今すぐ切り替え",
+        ["gpu_driver_title"] = "再起動が必要",
+        ["gpu_driver_body"] = "GPU は現在ディスプレイシステムによって使用されています。\nEco モードへの切り替えは安全に適用するため再起動が必要です。",
         ["gpu_driver_after_reboot"] = "再起動後に",
-        ["gpu_driver_footer"] = "「今すぐ切り替え」は GPU ドライバーのアンロードを試みます（管理者\nパスワードが必要な場合があります）。「再起動後に」は次回起動時に保存されます。",
+        ["gpu_driver_footer"] = "「再起動後に」はモード変更を保存し、次回起動時に適用します。\n「キャンセル」は現在の GPU モードを維持します。",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "オフ  \u25cb\u25cb\u25cb",
@@ -291,7 +287,11 @@ public static class Japanese
         ["reapply_power_hint"] = "この間隔で CPU/GPU の電力制限を再書き込みします。BIOS が PPT を上書きする場合に有用です。",
         ["auto_apply_power"] = "モード変更時に電力制限を自動適用",
         ["raw_wmi_mode"] = "Raw WMI モード（実験的 - ACPI debugfs 経由の GPU Eco）",
-        ["raw_wmi_hint"] = "GPU Eco sysfs が無いノートPC向け。切り替え時にアプリが再起動します。",
+        ["raw_wmi_hint"] = "/sys/kernel/debug/asus-nb-wmi 経由で ASUS ファームウェアの GPUEco メソッドと直接通信し、カーネルの sysfs 存在チェックをバイパスします。これは dgpu_disable がないが ACPI メソッドがまだ動作する古い Vivobook / Zenbook ファームウェアでのみ使用してください。各呼び出しには pkexec プロンプトが必要で、オプションを切り替えると ghelper が再起動します。上記の PCI モードが有効な場合は完全に無視されます。",
+        ["gpu_backend_header"] = "GPU バックエンド",
+        ["gpu_backend_intro"] = "ghelper が dGPU をどのようにオンオフするかを選択します。ASUS WMI（ファームウェア）がデフォルトです。下記の代替手段は、ファームウェアパスがハードウェアで欠落している、または信頼できない場合に役立ちます。",
+        ["gpu_backend_pci_label"] = "PCI dGPU 無効化を使用",
+        ["gpu_backend_pci_hint"] = "modprobe ブラックリストと udev ホットリムーブルールを使って dGPU を無効化します。話しかける ASUS ファームウェアがない非 ASUS ノート PC で必須、カーネルのみのパスを好む ASUS ではオプション。ルールは次回起動時にのみ適用されるため、モード変更は常に再起動が必要です。",
         ["auto_switch_refresh"] = "リフレッシュレート自動切替（AC/バッテリー）",
         ["cpu_cores"] = "CPU コア",
         ["cpu_cores_format"] = "{0}/{1}",

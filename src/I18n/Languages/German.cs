@@ -119,8 +119,7 @@ public static class German
 
         ["gpu_mux_reboot_auto"] = "MUX-Schalter geändert - Neustart erforderlich, danach beginnt das automatische Umschalten",
         ["gpu_mux_reboot"] = "Neustart erforderlich, damit die Änderungen wirksam werden",
-        ["gpu_eco_blocked"] = "Eco-Modus blockiert - MUX wurde in dieser Sitzung auf Ultimate umgestellt. Zuerst neu starten.",
-        ["gpu_eco_blocked_detail"] = "Eco-Modus blockiert: MUX wurde in dieser Sitzung auf Ultimate umgestellt. Zuerst neu starten, dann auf Eco wechseln.",
+        ["gpu_eco_blocked_mux"] = "Zuerst neu starten, Ultimate steht an.",
         ["gpu_eco_pending"] = "Eco-Modus ausstehend - Neustart erforderlich",
         ["gpu_eco_after_reboot"] = "Eco-Modus wird nach dem Neustart aktiviert",
         ["gpu_switch_failed"] = "GPU-Moduswechsel fehlgeschlagen - Logs prüfen",
@@ -139,15 +138,12 @@ public static class German
         ["gpu_switching_standard"] = "Wechsel in den Standard-Modus...",
         ["gpu_switching_generic"] = "GPU-Modus wird gewechselt...",
         ["gpu_switching_ultimate"] = "Wechsel in den Ultimate-Modus...",
-        ["gpu_releasing_driver"] = "GPU-Treiber wird freigegeben, bitte warten...",
-        ["gpu_driver_eco_scheduled"] = "GPU vom Anzeigesystem belegt - Eco-Modus für Neustart geplant",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "GPU-Treiber aktiv",
-        ["gpu_driver_body"] = "Die GPU wird derzeit vom Anzeigesystem verwendet.\nZum Wechsel in den Eco-Modus muss der Treiber zuerst freigegeben werden.",
-        ["gpu_driver_switch_now"] = "Jetzt wechseln",
+        ["gpu_driver_title"] = "Neustart erforderlich",
+        ["gpu_driver_body"] = "Die GPU wird derzeit vom Anzeigesystem verwendet.\nDer Wechsel in den Eco-Modus erfordert einen Neustart zur sicheren Aktivierung.",
         ["gpu_driver_after_reboot"] = "Nach Neustart",
-        ["gpu_driver_footer"] = "\"Jetzt wechseln\" versucht den GPU-Treiber zu entladen (Admin-Passwort\nggf. erforderlich). \"Nach Neustart\" speichert die Einstellung.",
+        ["gpu_driver_footer"] = "\"Nach Neustart\" speichert den Moduswechsel für den nächsten Start.\n\"Abbrechen\" behält den aktuellen GPU-Modus bei.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Aus  \u25cb\u25cb\u25cb",
@@ -288,7 +284,11 @@ public static class German
         ["reapply_power_hint"] = "Schreibt CPU/GPU-Leistungslimits in diesem Intervall neu. Nützlich, wenn BIOS PPT überschreibt.",
         ["auto_apply_power"] = "Leistungslimits automatisch bei Moduswechsel anwenden",
         ["raw_wmi_mode"] = "Raw WMI-Modus (experimentell - GPU Eco über ACPI debugfs)",
-        ["raw_wmi_hint"] = "Für Laptops ohne GPU Eco sysfs. App wird beim Umschalten neu gestartet.",
+        ["raw_wmi_hint"] = "Spricht die ASUS Firmware GPUEco-Methode direkt über /sys/kernel/debug/asus-nb-wmi an und umgeht die sysfs-Präsenzprüfung des Kernels. Verwenden Sie dies nur auf älterer Vivobook / Zenbook Firmware, wo dgpu_disable fehlt, die ACPI-Methode aber noch funktioniert. Jeder Aufruf benötigt eine pkexec-Aufforderung und ghelper startet beim Umschalten der Option neu. Wird vollständig ignoriert, wenn der PCI-Modus oben aktiviert ist.",
+        ["gpu_backend_header"] = "GPU-Backend",
+        ["gpu_backend_intro"] = "Wählen Sie, wie ghelper die dGPU ein- und ausschaltet. ASUS WMI (Firmware) ist die Standardeinstellung; die Alternativen unten helfen, wenn der Firmware-Pfad auf Ihrer Hardware fehlt oder unzuverlässig ist.",
+        ["gpu_backend_pci_label"] = "PCI dGPU-Deaktivierung verwenden",
+        ["gpu_backend_pci_hint"] = "Deaktiviert die dGPU über eine modprobe Blacklist plus eine udev Hot-Remove Regel. Erforderlich auf Nicht-ASUS-Laptops, wo keine ASUS-Firmware zum Ansprechen vorhanden ist, optional auf ASUS, wenn Sie den reinen Kernel-Pfad bevorzugen. Jede Modusänderung erfordert einen Neustart, da die Regeln nur beim nächsten Start angewendet werden.",
         ["auto_switch_refresh"] = "Bildwiederholrate automatisch umschalten (Netz/Akku)",
         ["cpu_cores"] = "CPU-Kerne",
         ["cpu_cores_format"] = "{0}/{1}",

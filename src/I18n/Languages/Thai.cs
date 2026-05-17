@@ -122,8 +122,7 @@ public static class Thai
 
         ["gpu_mux_reboot_auto"] = "เปลี่ยนสวิตช์ MUX แล้ว - ต้องรีบูต จากนั้นจะเริ่มสลับอัตโนมัติ",
         ["gpu_mux_reboot"] = "คุณต้องรีบูตเพื่อให้การเปลี่ยนแปลงมีผล",
-        ["gpu_eco_blocked"] = "โหมด Eco ถูกบล็อก - MUX ถูกเปลี่ยนเป็น Ultimate ในเซสชันนี้ กรุณารีบูตก่อน",
-        ["gpu_eco_blocked_detail"] = "โหมด Eco ถูกบล็อก: MUX ถูกเปลี่ยนเป็น Ultimate ในเซสชันนี้ กรุณารีบูตก่อน แล้วจึงสลับไปยัง Eco",
+        ["gpu_eco_blocked_mux"] = "รีบูตก่อน Ultimate รออยู่",
         ["gpu_eco_pending"] = "โหมด Eco รอดำเนินการ - รีบูตเพื่อนำไปใช้",
         ["gpu_eco_after_reboot"] = "โหมด Eco จะเปิดใช้งานหลังรีบูต",
         ["gpu_switch_failed"] = "การสลับโหมด GPU ล้มเหลว - ตรวจสอบบันทึก",
@@ -142,15 +141,12 @@ public static class Thai
         ["gpu_switching_standard"] = "กำลังสลับไปยังโหมด Standard...",
         ["gpu_switching_generic"] = "กำลังสลับโหมด GPU...",
         ["gpu_switching_ultimate"] = "กำลังสลับไปยังโหมด Ultimate...",
-        ["gpu_releasing_driver"] = "กำลังปล่อยไดรเวอร์ GPU กรุณารอ...",
-        ["gpu_driver_eco_scheduled"] = "GPU ถูกใช้งานโดยระบบแสดงผล - โหมด Eco ถูกตั้งเวลาสำหรับรีบูต",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "ไดรเวอร์ GPU ทำงานอยู่",
-        ["gpu_driver_body"] = "GPU กำลังถูกใช้งานโดยระบบแสดงผลอยู่\nการสลับไปยังโหมด Eco ต้องปล่อยไดรเวอร์ก่อน",
-        ["gpu_driver_switch_now"] = "สลับตอนนี้",
+        ["gpu_driver_title"] = "ต้องรีบูต",
+        ["gpu_driver_body"] = "GPU กำลังถูกใช้งานโดยระบบแสดงผลอยู่\nการสลับไปยังโหมด Eco ต้องใช้การรีบูตเพื่อให้มีผลอย่างปลอดภัย",
         ["gpu_driver_after_reboot"] = "หลังรีบูต",
-        ["gpu_driver_footer"] = "\"สลับตอนนี้\" จะพยายามยกเลิกการโหลดไดรเวอร์ GPU (อาจต้องใช้\nรหัสผ่านผู้ดูแลระบบ) \"หลังรีบูต\" จะบันทึกสำหรับการเริ่มต้นครั้งถัดไป",
+        ["gpu_driver_footer"] = "\"หลังรีบูต\" จะบันทึกการเปลี่ยนโหมดเพื่อใช้ในการเริ่มต้นครั้งถัดไป\n\"ยกเลิก\" จะคงโหมด GPU ปัจจุบันไว้",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "ปิด  \u25cb\u25cb\u25cb",
@@ -291,7 +287,11 @@ public static class Thai
         ["reapply_power_hint"] = "เขียนขีดจำกัดพลังงาน CPU/GPU ใหม่ที่ช่วงเวลานี้ มีประโยชน์เมื่อ BIOS เขียนทับ PPT",
         ["auto_apply_power"] = "นำขีดจำกัดพลังงานไปใช้อัตโนมัติเมื่อเปลี่ยนโหมด",
         ["raw_wmi_mode"] = "โหมด WMI ดิบ (ทดลอง - GPU Eco ผ่าน ACPI debugfs)",
-        ["raw_wmi_hint"] = "สำหรับแล็ปท็อปที่ไม่มี GPU Eco sysfs แอปจะรีสตาร์ทเมื่อสลับ",
+        ["raw_wmi_hint"] = "พูดคุยกับเมธอด GPUEco ของเฟิร์มแวร์ ASUS โดยตรงผ่าน /sys/kernel/debug/asus-nb-wmi โดยข้ามการตรวจสอบการมีอยู่ของ sysfs ของเคอร์เนล ใช้สิ่งนี้เฉพาะบนเฟิร์มแวร์ Vivobook / Zenbook รุ่นเก่าที่ dgpu_disable ขาดหายไปแต่เมธอด ACPI ยังคงทำงาน การเรียกใช้ทุกครั้งต้องมี pkexec prompt และ ghelper จะรีสตาร์ทเมื่อสลับตัวเลือก ถูกละเว้นทั้งหมดเมื่อโหมด PCI ด้านบนเปิดใช้งาน",
+        ["gpu_backend_header"] = "แบ็กเอนด์ GPU",
+        ["gpu_backend_intro"] = "เลือกวิธีที่ ghelper เปิดและปิด dGPU ASUS WMI (เฟิร์มแวร์) เป็นค่าเริ่มต้น ทางเลือกด้านล่างช่วยเมื่อเส้นทางเฟิร์มแวร์ขาดหายไปหรือไม่น่าเชื่อถือบนฮาร์ดแวร์ของคุณ",
+        ["gpu_backend_pci_label"] = "ใช้การปิด PCI dGPU",
+        ["gpu_backend_pci_hint"] = "ปิดการใช้งาน dGPU ผ่านบัญชีดำ modprobe บวกกฎ udev hot-remove จำเป็นในแล็ปท็อปที่ไม่ใช่ ASUS ที่ไม่มีเฟิร์มแวร์ ASUS ให้สื่อสารด้วย เป็นทางเลือกใน ASUS ที่คุณต้องการเส้นทางเคอร์เนลเท่านั้น การเปลี่ยนโหมดทุกครั้งต้องรีบูตเนื่องจากกฎจะมีผลเฉพาะในการบูตครั้งถัดไป",
         ["auto_switch_refresh"] = "สลับอัตรารีเฟรชอัตโนมัติ (เสียบปลั๊ก/แบตเตอรี่)",
         ["cpu_cores"] = "คอร์ CPU",
         ["cpu_cores_format"] = "{0}/{1}",

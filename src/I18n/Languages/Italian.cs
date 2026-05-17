@@ -119,8 +119,7 @@ public static class Italian
 
         ["gpu_mux_reboot_auto"] = "Commutatore MUX cambiato - riavvio richiesto, poi inizierà la commutazione automatica",
         ["gpu_mux_reboot"] = "È necessario riavviare per applicare le modifiche",
-        ["gpu_eco_blocked"] = "Modalità Eco bloccata - MUX cambiato in Ultimate durante questa sessione. Prima riavviare.",
-        ["gpu_eco_blocked_detail"] = "Modalità Eco bloccata: MUX cambiato in Ultimate durante questa sessione. Prima riavviare, poi passare a Eco.",
+        ["gpu_eco_blocked_mux"] = "Prima riavviare, Ultimate è in sospeso.",
         ["gpu_eco_pending"] = "Modalità Eco in sospeso - riavviare per applicare",
         ["gpu_eco_after_reboot"] = "La modalità Eco si attiverà dopo il riavvio",
         ["gpu_switch_failed"] = "Cambio modalità GPU fallito - controllare i log",
@@ -139,15 +138,12 @@ public static class Italian
         ["gpu_switching_standard"] = "Passaggio alla modalità Standard...",
         ["gpu_switching_generic"] = "Cambio modalità GPU...",
         ["gpu_switching_ultimate"] = "Passaggio alla modalità Ultimate...",
-        ["gpu_releasing_driver"] = "Rilascio del driver GPU, attendere...",
-        ["gpu_driver_eco_scheduled"] = "GPU occupata dal sistema di visualizzazione - modalità Eco programmata per il riavvio",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "Driver GPU attivo",
-        ["gpu_driver_body"] = "La GPU è attualmente utilizzata dal sistema di visualizzazione.\nPer passare alla modalità Eco è necessario prima rilasciare il driver.",
-        ["gpu_driver_switch_now"] = "Cambia ora",
+        ["gpu_driver_title"] = "Riavvio richiesto",
+        ["gpu_driver_body"] = "La GPU è attualmente utilizzata dal sistema di visualizzazione.\nPer passare alla modalità Eco è necessario un riavvio per applicarla in sicurezza.",
         ["gpu_driver_after_reboot"] = "Al riavvio",
-        ["gpu_driver_footer"] = "\"Cambia ora\" tenta di scaricare il driver GPU (potrebbe essere\nrichiesta la password di amministratore). \"Al riavvio\" salva per il prossimo avvio.",
+        ["gpu_driver_footer"] = "\"Al riavvio\" salva la modifica della modalità per applicarla al prossimo avvio.\n\"Annulla\" mantiene la modalità GPU attuale.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Spento  \u25cb\u25cb\u25cb",
@@ -288,7 +284,11 @@ public static class Italian
         ["reapply_power_hint"] = "Riscrive i limiti di potenza CPU/GPU a questo intervallo. Utile quando il BIOS sovrascrive il PPT.",
         ["auto_apply_power"] = "Applica automaticamente i limiti di potenza al cambio modalità",
         ["raw_wmi_mode"] = "Modalità WMI diretta (sperimentale - GPU Eco tramite ACPI debugfs)",
-        ["raw_wmi_hint"] = "Per portatili senza sysfs GPU Eco. L'app si riavvierà al cambio.",
+        ["raw_wmi_hint"] = "Parla direttamente con il metodo GPUEco del firmware ASUS attraverso /sys/kernel/debug/asus-nb-wmi, bypassando il controllo di presenza sysfs del kernel. Usa questo solo su firmware Vivobook / Zenbook più vecchi dove dgpu_disable è mancante ma il metodo ACPI funziona ancora. Ogni chiamata richiede un prompt pkexec e ghelper si riavvia quando l'opzione viene commutata. Completamente ignorato quando la modalità PCI sopra è abilitata.",
+        ["gpu_backend_header"] = "Backend GPU",
+        ["gpu_backend_intro"] = "Scegli come ghelper accende e spegne la dGPU. ASUS WMI (firmware) è il predefinito; le alternative sottostanti aiutano quando il percorso firmware è mancante o inaffidabile sull'hardware.",
+        ["gpu_backend_pci_label"] = "Usa disabilitazione PCI dGPU",
+        ["gpu_backend_pci_hint"] = "Disabilita la dGPU tramite una blacklist modprobe più una regola udev hot-remove. Richiesto su portatili non ASUS dove non c'è firmware ASUS con cui parlare, opzionale su ASUS dove preferisci il percorso solo kernel. Ogni cambio di modalità richiede un riavvio perché le regole si applicano solo al prossimo avvio.",
         ["auto_switch_refresh"] = "Cambio automatico frequenza di aggiornamento (rete/batteria)",
         ["cpu_cores"] = "Core CPU",
         ["cpu_cores_format"] = "{0}/{1}",

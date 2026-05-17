@@ -276,6 +276,13 @@ public class App : Application
             bool autostart = AppConfig.IsNotFalse("autostart");
             System?.SetAutostart(autostart);
 
+            if (!AppConfig.IsOptimizedGpuModeEnabled() && AppConfig.Is("gpu_auto"))
+            {
+                Logger.WriteLine("Startup: gpu_optimized_enabled=0 - clearing stale gpu_auto");
+                AppConfig.Set("gpu_auto", 0);
+            }
+            AppConfig.AutoDetectGpuBackendIfUnset();
+
             // Update tray icon to match current mode
             UpdateTrayIcon();
 
@@ -918,9 +925,12 @@ public class App : Application
             standard.Click += (_, _) => TrayGpuModeSwitch(GpuMode.Standard);
             menu.Add(standard);
 
-            var optimized = new NativeMenuItem(Labels.Get("tray_gpu_optimized"));
-            optimized.Click += (_, _) => TrayGpuModeSwitch(GpuMode.Optimized);
-            menu.Add(optimized);
+            if (AppConfig.IsOptimizedGpuModeEnabled())
+            {
+                var optimized = new NativeMenuItem(Labels.Get("tray_gpu_optimized"));
+                optimized.Click += (_, _) => TrayGpuModeSwitch(GpuMode.Optimized);
+                menu.Add(optimized);
+            }
 
             // Ultimate (MUX switch) - only on models with gpu_mux_mode support
             if (Wmi?.IsFeatureSupported(AsusAttributes.GpuMuxMode) == true)
@@ -1075,7 +1085,7 @@ public class App : Application
 
                 case GpuSwitchResult.EcoBlocked:
                     System?.ShowNotification(Labels.Get("gpu_mode"),
-                        Labels.Get("gpu_eco_blocked_detail"),
+                        Labels.Get("gpu_eco_blocked_mux"),
                         "dialog-warning");
                     break;
 

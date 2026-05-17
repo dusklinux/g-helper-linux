@@ -122,8 +122,7 @@ public static class Norwegian
 
         ["gpu_mux_reboot_auto"] = "MUX-bryter endret - omstart kreves, deretter starter automatisk veksling",
         ["gpu_mux_reboot"] = "Du må starte på nytt for at endringene skal tre i kraft",
-        ["gpu_eco_blocked"] = "Eco-modus blokkert - MUX ble endret til Ultimate denne økten. Start på nytt først.",
-        ["gpu_eco_blocked_detail"] = "Eco-modus blokkert: MUX ble endret til Ultimate denne økten. Start på nytt først, bytt deretter til Eco.",
+        ["gpu_eco_blocked_mux"] = "Start på nytt først, Ultimate venter.",
         ["gpu_eco_pending"] = "Eco-modus venter - start på nytt for å ta i bruk",
         ["gpu_eco_after_reboot"] = "Eco-modus aktiveres etter omstart",
         ["gpu_switch_failed"] = "GPU-modusbytte mislyktes - sjekk logger",
@@ -142,15 +141,12 @@ public static class Norwegian
         ["gpu_switching_standard"] = "Bytter til standardmodus...",
         ["gpu_switching_generic"] = "Bytter GPU-modus...",
         ["gpu_switching_ultimate"] = "Bytter til Ultimate-modus...",
-        ["gpu_releasing_driver"] = "Frigjør GPU-driver, vennligst vent...",
-        ["gpu_driver_eco_scheduled"] = "GPU holdes av skjermsystemet - Eco-modus planlagt til omstart",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "GPU-driver aktiv",
-        ["gpu_driver_body"] = "GPU-en er for øyeblikket i bruk av skjermsystemet.\nBytte til Eco-modus krever at driveren frigjøres først.",
-        ["gpu_driver_switch_now"] = "Bytt nå",
+        ["gpu_driver_title"] = "Omstart kreves",
+        ["gpu_driver_body"] = "GPU-en er for øyeblikket i bruk av skjermsystemet.\nBytte til Eco-modus krever omstart for sikker bruk.",
         ["gpu_driver_after_reboot"] = "Etter omstart",
-        ["gpu_driver_footer"] = "Bytt nå forsøker å laste ut GPU-driveren (administratorpassord\nkan være nødvendig). Etter omstart lagres til neste oppstart.",
+        ["gpu_driver_footer"] = "Etter omstart lagrer modusendringen for neste oppstart.\nAvbryt beholder gjeldende GPU-modus.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Av  \u25cb\u25cb\u25cb",
@@ -291,7 +287,11 @@ public static class Norwegian
         ["reapply_power_hint"] = "Skriv CPU/GPU-effektgrenser på nytt med dette intervallet. Nyttig når BIOS overskriver PPT.",
         ["auto_apply_power"] = "Automatisk bruk av effektgrenser ved modusbytte",
         ["raw_wmi_mode"] = "Rå WMI-modus (eksperimentell - GPU Eco via ACPI debugfs)",
-        ["raw_wmi_hint"] = "For bærbare uten GPU Eco sysfs. Appen starter på nytt ved veksling.",
+        ["raw_wmi_hint"] = "Snakker direkte med ASUS-fastvarens GPUEco-metode gjennom /sys/kernel/debug/asus-nb-wmi, omgår kjernens sysfs-tilstedeværelseskontroll. Bruk dette bare på eldre Vivobook / Zenbook-fastvare hvor dgpu_disable mangler men ACPI-metoden fortsatt fungerer. Hvert anrop trenger en pkexec-forespørsel og ghelper starter på nytt når alternativet veksles. Ignoreres fullstendig når PCI-modus over er aktivert.",
+        ["gpu_backend_header"] = "GPU-backend",
+        ["gpu_backend_intro"] = "Velg hvordan ghelper slår dGPU på og av. ASUS WMI (fastvare) er standard; alternativene nedenfor hjelper når fastvarestien mangler eller er upålitelig på maskinvaren din.",
+        ["gpu_backend_pci_label"] = "Bruk PCI dGPU deaktivering",
+        ["gpu_backend_pci_hint"] = "Deaktiverer dGPU via en modprobe svarteliste pluss en udev hot-remove regel. Påkrevd på ikke-ASUS bærbare hvor det ikke er noen ASUS-fastvare å snakke med, valgfritt på ASUS hvor du foretrekker kun-kjerne-stien. Hver modusendring krever en omstart fordi reglene bare gjelder ved neste oppstart.",
         ["auto_switch_refresh"] = "Automatisk bytte av oppdateringsfrekvens (nettstrøm/batteri)",
         ["cpu_cores"] = "CPU-kjerner",
         ["cpu_cores_format"] = "{0}/{1}",

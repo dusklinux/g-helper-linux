@@ -124,8 +124,7 @@ public static class English
 
         ["gpu_mux_reboot_auto"] = "MUX switch changed - reboot required, then auto-switching will begin",
         ["gpu_mux_reboot"] = "You must reboot for changes to take effect",
-        ["gpu_eco_blocked"] = "Eco mode blocked - MUX was changed to Ultimate this session. Reboot first.",
-        ["gpu_eco_blocked_detail"] = "Eco mode blocked: MUX was changed to Ultimate this session. Reboot first, then switch to Eco.",
+        ["gpu_eco_blocked_mux"] = "Reboot first, Ultimate is pending.",
         ["gpu_eco_pending"] = "Eco mode pending - reboot to apply",
         ["gpu_eco_after_reboot"] = "Eco mode will activate after reboot",
         ["gpu_switch_failed"] = "GPU mode switch failed - check logs",
@@ -144,15 +143,12 @@ public static class English
         ["gpu_switching_standard"] = "Switching to Standard mode...",
         ["gpu_switching_generic"] = "Switching GPU mode...",
         ["gpu_switching_ultimate"] = "Switching to Ultimate mode...",
-        ["gpu_releasing_driver"] = "Releasing GPU driver, please wait...",
-        ["gpu_driver_eco_scheduled"] = "GPU held by display system - Eco mode scheduled for reboot",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "GPU Driver Active",
-        ["gpu_driver_body"] = "The GPU is currently in use by the display system.\nSwitching to Eco mode requires releasing the driver first.",
-        ["gpu_driver_switch_now"] = "Switch Now",
+        ["gpu_driver_title"] = "Reboot Required",
+        ["gpu_driver_body"] = "The GPU is currently in use by the display system.\nSwitching to Eco mode requires a reboot to take effect safely.",
         ["gpu_driver_after_reboot"] = "After Reboot",
-        ["gpu_driver_footer"] = "Switch Now attempts to unload the GPU driver (admin password\nmay be required). After Reboot saves for next startup.",
+        ["gpu_driver_footer"] = "After Reboot saves the mode change so it applies on next startup.\nCancel keeps the current GPU mode.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Off  \u25cb\u25cb\u25cb",
@@ -337,7 +333,11 @@ public static class English
         ["reapply_power_hint"] = "Re-write CPU/GPU power limits at this interval. Useful when BIOS clobbers PPT.",
         ["auto_apply_power"] = "Auto-apply power limits on mode change",
         ["raw_wmi_mode"] = "Raw WMI mode (experimental - GPU Eco via ACPI debugfs)",
-        ["raw_wmi_hint"] = "For laptops without GPU Eco sysfs. App will restart when toggled.",
+        ["raw_wmi_hint"] = "Talks to the ASUS firmware GPUEco method through /sys/kernel/debug/asus-nb-wmi directly, bypassing the kernel's sysfs presence check. Use this only on older Vivobook / Zenbook firmware where dgpu_disable is missing but the ACPI method still works. Every call needs a pkexec prompt and ghelper restarts when the option is toggled. Ignored entirely when PCI mode above is enabled.",
+        ["gpu_backend_header"] = "GPU Backend",
+        ["gpu_backend_intro"] = "Choose how ghelper switches the dGPU on and off. ASUS WMI (firmware) is the default; the alternatives below help when the firmware path is missing or unreliable on your hardware.",
+        ["gpu_backend_pci_label"] = "Use PCI dGPU disable",
+        ["gpu_backend_pci_hint"] = "Disables the dGPU via a modprobe blacklist plus a udev hot-remove rule. Required on non-ASUS laptops where there is no ASUS firmware to talk to, optional on ASUS where you prefer the kernel-only path. Every mode change requires a reboot because the rules only apply on the next boot.",
         ["auto_switch_refresh"] = "Auto-switch refresh rate (AC/Battery)",
         ["cpu_cores"] = "CPU Cores",
         ["cpu_cores_format"] = "{0}/{1}",

@@ -42,6 +42,7 @@ public partial class ExtraWindow : Window
             InitKeyBindings();
             RefreshDisplay();
             RefreshGpuTuning();
+            RefreshGpuBackend();
             RefreshOther();
             RefreshTrayIcons();
             RefreshPower();
@@ -242,11 +243,19 @@ public partial class ExtraWindow : Window
         // Advanced
         headerAdvanced.Text = Labels.Get("advanced_header");
         checkAutoApplyPower.Content = Labels.Get("auto_apply_power");
-        checkRawWmi.Content = Labels.Get("raw_wmi_mode");
-        labelRawWmiHint.Text = Labels.Get("raw_wmi_hint");
         checkScreenAuto.Content = Labels.Get("auto_switch_refresh");
         labelCpuCoresLabel.Text = Labels.Get("cpu_cores");
         buttonOpenLog.Content = Labels.Get("open_log");
+
+        // GPU Backend - both opt-in flags live here so users can compare
+        // the two approaches side by side instead of hunting through
+        // Advanced for the second one.
+        headerGpuBackend.Text = Labels.Get("gpu_backend_header");
+        labelGpuBackendIntro.Text = Labels.Get("gpu_backend_intro");
+        checkPciGpuBackend.Content = Labels.Get("gpu_backend_pci_label");
+        labelPciGpuBackendHint.Text = Labels.Get("gpu_backend_pci_hint");
+        checkRawWmi.Content = Labels.Get("raw_wmi_mode");
+        labelRawWmiHint.Text = Labels.Get("raw_wmi_hint");
 
         // Rebuild combo items with new language strings
         RefreshSpeedCombo();
@@ -257,6 +266,7 @@ public partial class ExtraWindow : Window
         RefreshSystemInfo();
         RefreshPower();
         RefreshGpuTuning();
+        RefreshGpuBackend();
     }
 
     /// <summary>Rebuild keyboard speed combo with current language strings.</summary>
@@ -1469,9 +1479,10 @@ public partial class ExtraWindow : Window
 
     private void RefreshAdvanced()
     {
+        // checkRawWmi moved to the GPU Backend panel (RefreshGpuBackend
+        // owns its IsChecked state now).
         checkAutoApplyPower.IsChecked = Helpers.AppConfig.IsMode("auto_apply_power");
         checkScreenAuto.IsChecked = Helpers.AppConfig.Is("screen_auto");
-        checkRawWmi.IsChecked = Helpers.AppConfig.Is("raw_wmi");
 
         // CPU cores
         int total = LinuxSystemIntegration.GetCpuCount();
@@ -1531,6 +1542,69 @@ public partial class ExtraWindow : Window
             System.Diagnostics.Process.Start(exePath);
             Environment.Exit(0);
         }
+    }
+
+    /// <summary>
+    /// Show the GPU Backend panel whenever the user could plausibly switch
+    /// dGPU modes: ASUS WMI present, NVIDIA dGPU on the PCI bus, PCI mode
+    /// already opted in, block artifacts on disk (PCI eco currently
+    /// active), or NVIDIA modules installed on disk. This covers the case
+    /// where the dGPU was hot-removed by the udev rule (vendor 0x10de
+    /// vanishes from the PCI tree) but is otherwise functional.
+    /// </summary>
+    private void RefreshGpuBackend()
+    {
+        var wmi = App.Wmi;
+        bool canToggle = wmi?.CanToggleGpuBackend() ?? false;
+        panelGpuBackend.IsVisible = canToggle;
+        if (!canToggle)
+            return;
+
+        // Match the RefreshAdvanced pattern: the outer Loaded handler may
+        // hold _suppressEvents=true, so save and restore it instead of
+        // unconditionally clearing.
+        bool prevSuppress = _suppressEvents;
+        _suppressEvents = true;
+        try
+        {
+            checkPciGpuBackend.IsChecked = Helpers.AppConfig.IsPciGpuBackend();
+            checkRawWmi.IsChecked = Helpers.AppConfig.Is("raw_wmi");
+        }
+        finally
+        {
+            _suppressEvents = prevSuppress;
+        }
+    }
+
+    private void CheckPciGpuBackend_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool enabled = checkPciGpuBackend.IsChecked ?? false;
+        string newBackend = enabled ? "pci" : "asus-wmi";
+        if (newBackend == Helpers.AppConfig.GetGpuBackend())
+            return;
+
+        Helpers.AppConfig.Set("gpu_backend", newBackend);
+        Helpers.AppConfig.Flush();
+        Helpers.Logger.WriteLine($"GPU backend → {newBackend}");
+
+        // Push the backend marker file so the boot service knows which flow
+        // to run on the next boot, even before the user requests a mode
+        // change. Best-effort: failure here just delays the marker write
+        // until the next eco/standard switch.
+        try
+        {
+            App.GpuModeCtrl?.PushBackendMarker(newBackend);
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"GpuBackend toggle: marker push failed: {ex.Message}");
+        }
+
+        // Refresh main window so the GPU panel re-evaluates which buttons
+        // to show (Ultimate/Optimized are hidden in PCI mode).
+        App.MainWindowInstance?.RefreshGpuModePublic();
     }
 
     private void SliderCpuCores_ValueChanged(object? sender,

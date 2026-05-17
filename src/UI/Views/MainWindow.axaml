@@ -102,31 +102,38 @@
                     <!-- GPU mode buttons, 4 modes matching Windows G-Helper.
                          Hidden entirely on Ally (no dGPU / no MUX) - replaced
                          by the XGM dock button below when an XG Mobile is
-                         attached. Match Windows g-helper Settings.cs:1810. -->
-                    <UniformGrid x:Name="panelGpuModes" Rows="1" Columns="4" Margin="0,0">
+                         attached. Match Windows g-helper Settings.cs:1810.
+                         Columns is set at runtime to the count of visible
+                         buttons (RefreshGpuMode) so hidden Ultimate/Optimized
+                         slots collapse instead of leaving blank space.
+                         ColumnSpacing replaces per-button margins so the
+                         spacing stays uniform regardless of which buttons
+                         are visible. -->
+                    <UniformGrid x:Name="panelGpuModes" Rows="1" Columns="4"
+                                 ColumnSpacing="6" Margin="0,0">
                         <Button x:Name="buttonEco" Classes="ghelper-tall"
-                                Margin="0,0,3,0" Click="ButtonEco_Click">
+                                Click="ButtonEco_Click">
                             <StackPanel HorizontalAlignment="Center" Spacing="4">
                                 <ctrl:Icon IconName="herb" Width="24" Height="24" HorizontalAlignment="Center" />
                                 <TextBlock Text="Eco" HorizontalAlignment="Center" FontSize="11" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="buttonStandard" Classes="ghelper-tall"
-                                Margin="3,0" Click="ButtonStandard_Click">
+                                Click="ButtonStandard_Click">
                             <StackPanel HorizontalAlignment="Center" Spacing="4">
                                 <ctrl:Icon IconName="desktop" Width="24" Height="24" HorizontalAlignment="Center" />
                                 <TextBlock Text="Standard" HorizontalAlignment="Center" FontSize="11" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="buttonUltimate" Classes="ghelper-tall"
-                                Margin="3,0" Click="ButtonUltimate_Click">
+                                Click="ButtonUltimate_Click">
                             <StackPanel HorizontalAlignment="Center" Spacing="4">
                                 <ctrl:Icon IconName="gamepad" Width="24" Height="24" HorizontalAlignment="Center" />
                                 <TextBlock Text="Ultimate" HorizontalAlignment="Center" FontSize="11" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="buttonOptimized" Classes="ghelper-tall"
-                                Margin="3,0,0,0" Click="ButtonOptimized_Click">
+                                Click="ButtonOptimized_Click">
                             <StackPanel HorizontalAlignment="Center" Spacing="4">
                                 <ctrl:Icon IconName="bulb" Width="24" Height="24" HorizontalAlignment="Center" />
                                 <TextBlock Text="Optimized" HorizontalAlignment="Center" FontSize="11" />

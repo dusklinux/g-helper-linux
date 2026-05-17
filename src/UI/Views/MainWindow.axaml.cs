@@ -407,7 +407,14 @@ public partial class MainWindow : Window
             };
         }
 
-        buttonUltimate.IsVisible = wmi.IsFeatureSupported(AsusAttributes.GpuMuxMode);
+        bool pciBackend = Helpers.AppConfig.IsPciGpuBackend();
+        buttonUltimate.IsVisible = !pciBackend && wmi.IsFeatureSupported(AsusAttributes.GpuMuxMode);
+        buttonOptimized.IsVisible = !pciBackend && Helpers.AppConfig.IsOptimizedGpuModeEnabled();
+
+        int visibleGpuButtons = 2
+            + (buttonUltimate.IsVisible ? 1 : 0)
+            + (buttonOptimized.IsVisible ? 1 : 0);
+        panelGpuModes.Columns = visibleGpuButtons;
     }
 
     private void UpdateGpuButtons()
@@ -435,7 +442,9 @@ public partial class MainWindow : Window
     {
         buttonEco.IsEnabled = true;
         buttonStandard.IsEnabled = true;
-        buttonOptimized.IsEnabled = true;
+        // Only re-enable Optimized if the config flag enables it; otherwise it
+        // stays disabled to match its hidden state.
+        buttonOptimized.IsEnabled = Helpers.AppConfig.IsOptimizedGpuModeEnabled();
         buttonUltimate.IsEnabled = true;
     }
 
@@ -518,9 +527,9 @@ public partial class MainWindow : Window
                 break;
 
             case GpuSwitchResult.EcoBlocked:
-                labelTipGPU.Text = Labels.Get("gpu_eco_blocked");
+                labelTipGPU.Text = Labels.Get("gpu_eco_blocked_mux");
                 App.System?.ShowNotification(Labels.Get("gpu_mode"),
-                    Labels.Get("gpu_eco_blocked_detail"),
+                    Labels.Get("gpu_eco_blocked_mux"),
                     "dialog-warning");
                 break;
 
@@ -631,44 +640,12 @@ public partial class MainWindow : Window
             };
         }
 
-        var btnSwitchNow = MakeDialogButton(Labels.Get("gpu_driver_switch_now"), "#4CC2FF", "#000000", bold: true);
-        var btnAfterReboot = MakeDialogButton(Labels.Get("gpu_driver_after_reboot"), "#373737", "#F0F0F0");
+        var btnAfterReboot = MakeDialogButton(Labels.Get("gpu_driver_after_reboot"), "#4CC2FF", "#000000", bold: true);
         var btnCancel = MakeDialogButton(Labels.Get("cancel"), "#2A2A2A", "#888888");
 
-        btnSwitchNow.Margin = new Avalonia.Thickness(0, 0, 8, 0);
         btnAfterReboot.Margin = new Avalonia.Thickness(0, 0, 8, 0);
 
         // Button click handlers
-        btnSwitchNow.Click += (_, _) =>
-        {
-            dialog.Close();
-            LockGpuButtons(Labels.Get("gpu_releasing_driver"));
-
-            Task.Run(() =>
-            {
-                var gpu = App.GpuModeCtrl;
-                var result = gpu?.TryReleaseAndSwitch() ?? GpuSwitchResult.Failed;
-
-                Dispatcher.UIThread.Post(() =>
-                {
-                    UnlockGpuButtons();
-
-                    if (result == GpuSwitchResult.Deferred)
-                    {
-                        // Driver release failed (rmmod failed, pkexec cancelled, etc.)
-                        labelTipGPU.Text = Labels.Get("gpu_eco_pending");
-                        RefreshGpuMode();
-                        App.System?.ShowNotification(Labels.Get("gpu_mode"),
-                            Labels.Get("gpu_driver_eco_scheduled"),
-                            "dialog-warning");
-                        return;
-                    }
-
-                    HandleGpuSwitchResult(result, target);
-                });
-            });
-        };
-
         btnAfterReboot.Click += (_, _) =>
         {
             dialog.Close();
@@ -691,7 +668,6 @@ public partial class MainWindow : Window
             Orientation = Avalonia.Layout.Orientation.Horizontal,
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
         };
-        buttonPanel.Children.Add(btnSwitchNow);
         buttonPanel.Children.Add(btnAfterReboot);
         buttonPanel.Children.Add(btnCancel);
 

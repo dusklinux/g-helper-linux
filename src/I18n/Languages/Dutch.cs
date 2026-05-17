@@ -119,8 +119,7 @@ public static class Dutch
 
         ["gpu_mux_reboot_auto"] = "MUX-schakelaar gewijzigd - herstart vereist, daarna begint automatisch schakelen",
         ["gpu_mux_reboot"] = "Herstart nodig om wijzigingen toe te passen",
-        ["gpu_eco_blocked"] = "Eco-modus geblokkeerd - MUX is deze sessie naar Ultimate geschakeld. Herstart eerst.",
-        ["gpu_eco_blocked_detail"] = "Eco-modus geblokkeerd: MUX is deze sessie naar Ultimate geschakeld. Herstart eerst en schakel dan naar Eco.",
+        ["gpu_eco_blocked_mux"] = "Herstart eerst, Ultimate staat klaar.",
         ["gpu_eco_pending"] = "Eco-modus in behandeling - herstart om toe te passen",
         ["gpu_eco_after_reboot"] = "Eco-modus wordt geactiveerd na herstart",
         ["gpu_switch_failed"] = "GPU-moduswissel mislukt - controleer de logs",
@@ -139,15 +138,12 @@ public static class Dutch
         ["gpu_switching_standard"] = "Overschakelen naar Standard-modus...",
         ["gpu_switching_generic"] = "GPU-modus wordt gewisseld...",
         ["gpu_switching_ultimate"] = "Overschakelen naar Ultimate-modus...",
-        ["gpu_releasing_driver"] = "GPU-driver wordt vrijgegeven, even geduld...",
-        ["gpu_driver_eco_scheduled"] = "GPU in gebruik door beeldscherm - Eco-modus gepland voor herstart",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "GPU-driver actief",
-        ["gpu_driver_body"] = "De GPU wordt momenteel gebruikt door het beeldscherm.\nOm naar Eco-modus te schakelen moet de driver eerst worden vrijgegeven.",
-        ["gpu_driver_switch_now"] = "Nu wisselen",
+        ["gpu_driver_title"] = "Herstart vereist",
+        ["gpu_driver_body"] = "De GPU wordt momenteel gebruikt door het beeldscherm.\nOmschakelen naar Eco-modus vereist een herstart om veilig in werking te treden.",
         ["gpu_driver_after_reboot"] = "Na herstart",
-        ["gpu_driver_footer"] = "\"Nu wisselen\" probeert de GPU-driver te ontladen (beheerderswachtwoord\nkan nodig zijn). \"Na herstart\" slaat op voor de volgende start.",
+        ["gpu_driver_footer"] = "\"Na herstart\" slaat de moduswijziging op zodat deze bij de volgende start wordt toegepast.\n\"Annuleren\" behoudt de huidige GPU-modus.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Uit  \u25cb\u25cb\u25cb",
@@ -288,7 +284,11 @@ public static class Dutch
         ["reapply_power_hint"] = "Schrijf CPU/GPU-vermogenslimieten opnieuw in dit interval. Handig als BIOS de PPT overschrijft.",
         ["auto_apply_power"] = "Vermogenslimieten automatisch toepassen bij moduswissel",
         ["raw_wmi_mode"] = "Raw WMI-modus (experimenteel - GPU Eco via ACPI debugfs)",
-        ["raw_wmi_hint"] = "Voor laptops zonder GPU Eco sysfs. App wordt herstart bij schakelen.",
+        ["raw_wmi_hint"] = "Praat rechtstreeks met de ASUS firmware GPUEco-methode via /sys/kernel/debug/asus-nb-wmi, omzeilt de sysfs aanwezigheidscontrole van de kernel. Gebruik dit alleen op oudere Vivobook / Zenbook firmware waar dgpu_disable ontbreekt maar de ACPI-methode nog werkt. Elke aanroep vereist een pkexec prompt en ghelper herstart wanneer de optie wordt geschakeld. Volledig genegeerd wanneer PCI-modus hierboven is ingeschakeld.",
+        ["gpu_backend_header"] = "GPU Backend",
+        ["gpu_backend_intro"] = "Kies hoe ghelper de dGPU in- en uitschakelt. ASUS WMI (firmware) is de standaard; de alternatieven hieronder helpen wanneer het firmware-pad ontbreekt of onbetrouwbaar is op uw hardware.",
+        ["gpu_backend_pci_label"] = "Gebruik PCI dGPU uitschakelen",
+        ["gpu_backend_pci_hint"] = "Schakelt de dGPU uit via een modprobe blacklist plus een udev hot-remove regel. Vereist op niet-ASUS laptops waar geen ASUS firmware is om mee te praten, optioneel op ASUS waar u het alleen-kernel pad verkiest. Elke moduswijziging vereist een herstart omdat de regels alleen bij de volgende start van toepassing zijn.",
         ["auto_switch_refresh"] = "Verversingssnelheid automatisch schakelen (netstroom/accu)",
         ["cpu_cores"] = "CPU-kernen",
         ["cpu_cores_format"] = "{0}/{1}",

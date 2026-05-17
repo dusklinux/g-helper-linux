@@ -207,6 +207,41 @@
             </Border>
 
 
+            <!-- GPU BACKEND how ghelper disables the dGPU.
+                 Two orthogonal options:
+                   * PCI mode:      modprobe block + udev hot-remove rule
+                   * Raw WMI mode:  ACPI debugfs DSTS/DEVS
+                 Both ship with explanatory hints so the user can pick the
+                 right one for their laptop. Panel visibility is gated by
+                 IAsusWmi.CanToggleGpuBackend(). -->
+            <Border Classes="panel" x:Name="panelGpuBackend" IsVisible="False">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock x:Name="headerGpuBackend" Classes="header" Text="GPU Backend" />
+                    </Border>
+
+                    <TextBlock x:Name="labelGpuBackendIntro" Classes="label-dim"
+                               Text="Choose how ghelper switches the dGPU on and off. ASUS WMI (firmware) is the default; the alternatives below help when the firmware path is missing or unreliable on your hardware."
+                               FontSize="11" Margin="0,0,0,8" TextWrapping="Wrap" />
+
+                    <CheckBox x:Name="checkPciGpuBackend"
+                              Content="Use PCI dGPU disable"
+                              Margin="0,4"
+                              IsCheckedChanged="CheckPciGpuBackend_Changed" />
+                    <TextBlock x:Name="labelPciGpuBackendHint" Classes="label-dim"
+                               Text="Disables the dGPU via a modprobe blacklist plus a udev hot-remove rule. Required on non-ASUS laptops where there is no ASUS firmware to talk to, optional on ASUS where you prefer the kernel-only path. Every mode change requires a reboot because the rules only apply on the next boot."
+                               FontSize="10" Margin="20,0,0,8" TextWrapping="Wrap" />
+
+                    <CheckBox x:Name="checkRawWmi"
+                              Content="Raw WMI mode (experimental - GPU Eco via ACPI debugfs)"
+                              Margin="0,4"
+                              IsCheckedChanged="CheckRawWmi_Changed" />
+                    <TextBlock x:Name="labelRawWmiHint" Classes="label-dim"
+                               Text="Talks to the ASUS firmware GPUEco method through /sys/kernel/debug/asus-nb-wmi directly, bypassing the kernel's sysfs presence check. Use this only on older Vivobook / Zenbook firmware where dgpu_disable is missing but the ACPI method still works. Every call needs a pkexec prompt and ghelper restarts when the option is toggled. Ignored entirely when PCI mode above is enabled."
+                               FontSize="10" Margin="20,0,0,4" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
             <Border Classes="panel" x:Name="panelGpuTuning" IsVisible="False">
                 <StackPanel>
                     <Border Classes="panel-header" Margin="0,0,0,8">
@@ -547,14 +582,6 @@
                     <CheckBox x:Name="checkAutoApplyPower" Content="Auto-apply power limits on mode change"
                               Margin="0,4"
                               IsCheckedChanged="CheckAutoApplyPower_Changed" />
-
-                    <CheckBox x:Name="checkRawWmi"
-                              Content="Raw WMI mode (experimental - GPU Eco via ACPI debugfs)"
-                              Margin="0,4"
-                              IsCheckedChanged="CheckRawWmi_Changed" />
-                    <TextBlock x:Name="labelRawWmiHint" Classes="label-dim"
-                               Text="For laptops without GPU Eco sysfs. App will restart when toggled."
-                               FontSize="10" Margin="20,0,0,4" />
 
                     <CheckBox x:Name="checkScreenAuto" Content="Auto-switch refresh rate (AC/Battery)"
                               Margin="0,4"

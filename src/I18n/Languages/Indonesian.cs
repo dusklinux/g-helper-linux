@@ -122,8 +122,7 @@ public static class Indonesian
 
         ["gpu_mux_reboot_auto"] = "Sakelar MUX telah diubah - perlu mulai ulang, lalu pergantian otomatis akan dimulai",
         ["gpu_mux_reboot"] = "Anda harus mulai ulang agar perubahan diterapkan",
-        ["gpu_eco_blocked"] = "Mode Eco diblokir - MUX diubah ke Ultimate pada sesi ini. Mulai ulang terlebih dahulu.",
-        ["gpu_eco_blocked_detail"] = "Mode Eco diblokir: MUX diubah ke Ultimate pada sesi ini. Mulai ulang terlebih dahulu, lalu beralih ke Eco.",
+        ["gpu_eco_blocked_mux"] = "Mulai ulang dulu, Ultimate menunggu.",
         ["gpu_eco_pending"] = "Mode Eco tertunda - mulai ulang untuk menerapkan",
         ["gpu_eco_after_reboot"] = "Mode Eco akan aktif setelah mulai ulang",
         ["gpu_switch_failed"] = "Gagal beralih mode GPU - periksa log",
@@ -142,15 +141,12 @@ public static class Indonesian
         ["gpu_switching_standard"] = "Beralih ke mode Standard...",
         ["gpu_switching_generic"] = "Mengubah mode GPU...",
         ["gpu_switching_ultimate"] = "Beralih ke mode Ultimate...",
-        ["gpu_releasing_driver"] = "Melepaskan driver GPU, harap tunggu...",
-        ["gpu_driver_eco_scheduled"] = "GPU digunakan oleh sistem tampilan - mode Eco dijadwalkan saat mulai ulang",
 
         // GPU Driver Active dialog
-        ["gpu_driver_title"] = "Driver GPU Aktif",
-        ["gpu_driver_body"] = "GPU sedang digunakan oleh sistem tampilan.\nBeralih ke mode Eco memerlukan pelepasan driver terlebih dahulu.",
-        ["gpu_driver_switch_now"] = "Beralih Sekarang",
+        ["gpu_driver_title"] = "Perlu Memulai Ulang",
+        ["gpu_driver_body"] = "GPU sedang digunakan oleh sistem tampilan.\nBeralih ke mode Eco memerlukan mulai ulang agar berlaku dengan aman.",
         ["gpu_driver_after_reboot"] = "Setelah Mulai Ulang",
-        ["gpu_driver_footer"] = "\"Beralih Sekarang\" mencoba membongkar driver GPU (kata sandi\nadmin mungkin diperlukan). \"Setelah Mulai Ulang\" menyimpan untuk startup berikutnya.",
+        ["gpu_driver_footer"] = "\"Setelah Mulai Ulang\" menyimpan perubahan mode agar diterapkan pada startup berikutnya.\n\"Batal\" mempertahankan mode GPU saat ini.",
 
         // KEYBOARD NOTIFICATIONS
         ["kbd_off"] = "Mati  \u25cb\u25cb\u25cb",
@@ -291,7 +287,11 @@ public static class Indonesian
         ["reapply_power_hint"] = "Menulis ulang batas daya CPU/GPU pada interval ini. Berguna saat BIOS menimpa PPT.",
         ["auto_apply_power"] = "Terapkan batas daya otomatis saat ganti mode",
         ["raw_wmi_mode"] = "Mode WMI mentah (eksperimental - GPU Eco via ACPI debugfs)",
-        ["raw_wmi_hint"] = "Untuk laptop tanpa GPU Eco sysfs. Aplikasi akan dimulai ulang saat dialihkan.",
+        ["raw_wmi_hint"] = "Berbicara langsung dengan metode GPUEco firmware ASUS melalui /sys/kernel/debug/asus-nb-wmi, melewati pemeriksaan keberadaan sysfs kernel. Gunakan ini hanya pada firmware Vivobook / Zenbook yang lebih lama di mana dgpu_disable hilang tetapi metode ACPI masih berfungsi. Setiap panggilan memerlukan prompt pkexec dan ghelper dimulai ulang ketika opsi dialihkan. Diabaikan sepenuhnya ketika mode PCI di atas diaktifkan.",
+        ["gpu_backend_header"] = "Backend GPU",
+        ["gpu_backend_intro"] = "Pilih bagaimana ghelper menghidupkan dan mematikan dGPU. ASUS WMI (firmware) adalah default; alternatif di bawah ini membantu ketika jalur firmware tidak ada atau tidak dapat diandalkan pada perangkat keras Anda.",
+        ["gpu_backend_pci_label"] = "Gunakan penonaktifan PCI dGPU",
+        ["gpu_backend_pci_hint"] = "Menonaktifkan dGPU melalui modprobe blacklist ditambah aturan udev hot-remove. Diperlukan pada laptop non-ASUS di mana tidak ada firmware ASUS untuk diajak bicara, opsional pada ASUS di mana Anda lebih suka jalur kernel saja. Setiap perubahan mode memerlukan mulai ulang karena aturan hanya berlaku pada boot berikutnya.",
         ["auto_switch_refresh"] = "Ganti laju penyegaran otomatis (AC/Baterai)",
         ["cpu_cores"] = "Inti CPU",
         ["cpu_cores_format"] = "{0}/{1}",
