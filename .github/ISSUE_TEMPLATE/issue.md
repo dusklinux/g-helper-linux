@@ -33,6 +33,14 @@ Read the README first: https://github.com/utajum/g-helper-linux#readme
 (paste Copy Diagnostics output here)
 ```
 
+### GPU switching (fill in if this issue involves GPU / Eco / Standard / Ultimate mode)
+
+<!-- Tick every option you have already tried before opening this issue. -->
+
+- [ ] Normal GPU switching (ASUS WMI backend, default)
+- [ ] PCI GPU disable option (Extra settings > GPU Backend > Use PCI dGPU disable)
+- [ ] Raw WMI mode (Extra settings > GPU Backend > Raw WMI, where applicable)
+
 ### Additional info
 
 <!-- Screenshots, config files, anything else relevant. -->
