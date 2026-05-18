@@ -1723,7 +1723,7 @@ public class GpuModeController
                 // quoting, no `sh -c`. The helper has a dedicated
                 // `set-backend` subcommand that writes only the marker.
                 Logger.WriteLine($"GpuModeController: PushBackendMarker via helper: {backend}");
-                SysfsHelper.RunCommandWithTimeout("sudo", $"{helper} set-backend {backend}", 30000);
+                SysfsHelper.RunCommandWithTimeout(SysfsHelper.SudoPath, $"{helper} set-backend {backend}", 30000);
             }
             else
             {
@@ -1772,7 +1772,7 @@ public class GpuModeController
                 if (helper != null)
                 {
                     Logger.WriteLine($"GpuModeController: live Eco→Standard via helper: {helper}");
-                    SysfsHelper.RunCommandWithTimeout("sudo", $"{helper} live-standard", 30000);
+                    SysfsHelper.RunCommandWithTimeout(SysfsHelper.SudoPath, $"{helper} live-standard", 30000);
                 }
                 else
                 {
@@ -1904,7 +1904,7 @@ public class GpuModeController
                 if (helper != null)
                 {
                     Logger.WriteLine($"GpuModeController: using sudo helper: {helper}");
-                    SysfsHelper.RunCommandWithTimeout("sudo", $"{helper} write {modeStr} {backend}", 120000);
+                    SysfsHelper.RunCommandWithTimeout(SysfsHelper.SudoPath, $"{helper} write {modeStr} {backend}", 120000);
                 }
                 else
                 {
@@ -1992,7 +1992,7 @@ public class GpuModeController
                 // The backend marker is a persistent user preference and is
                 // intentionally preserved here so the next boot still uses
                 // the correct backend.
-                SysfsHelper.RunCommandWithTimeout("sudo", $"{helper} clean", 120000);
+                SysfsHelper.RunCommandWithTimeout(SysfsHelper.SudoPath, $"{helper} clean", 120000);
             }
             else
             {
