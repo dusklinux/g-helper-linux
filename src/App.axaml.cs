@@ -388,7 +388,11 @@ public class App : Application
 
         // Create GPU mode switching controller
         if (Wmi != null && Power != null)
+        {
             GpuModeCtrl = new GpuModeController(Wmi, Power);
+            GpuModeController.OnLivePciTransition =
+                Platform.Linux.LinuxAsusWmi.InvalidateGpuPresenceCache;
+        }
 
         // Create Ally controller helper. Constructor sets up the 300ms auto-
         // mode timer when on RC71L/RC72L; on every other model the .ctor is

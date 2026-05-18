@@ -12,6 +12,7 @@
 
 using GHelper.Linux.Gpu;
 using GHelper.Linux.Helpers;
+using GHelper.Linux.Platform.Linux;
 using static GHelper.Linux.Tests.Harness;
 
 namespace GHelper.Linux.Tests;
@@ -84,6 +85,18 @@ public static class Scenarios
         Pci_MuxLatched_ClickEco_EcoBlocked();
         Pci_MuxLiveZero_ClickEco_EcoBlocked();
         Pci_FromStandard_ClickEco_StillRequiresReboot();
+
+        Console.WriteLine("\n GPU panel visibility (LinuxAsusWmi direct, no dgpu_disable firmware) ");
+        IsPciBackendUsable_PciDisabled_ReturnsFalse();
+        IsPciBackendUsable_PciEnabled_DGpuOnBus_ReturnsTrue();
+        IsPciBackendUsable_PciEnabled_NoDGpu_BlockArtifactsPresent_ReturnsTrue();
+        IsPciBackendUsable_PciEnabled_NoDGpu_NvidiaModuleLoaded_ReturnsTrue();
+        IsPciBackendUsable_PciEnabled_NoDGpu_NvidiaOnDisk_ReturnsTrue();
+        IsPciBackendUsable_PciEnabled_NoEvidence_ReturnsFalse();
+        InvalidateGpuPresenceCache_FlushesAfterPciRescan();
+        Regression_ProArt_PciEco_PanelStaysVisible();
+        Regression_DGpuLessLaptop_NoPanelEvenWithPciFlag();
+        Regression_LivePciTransitionCallback_InvalidatesCache();
     }
 
     // 
@@ -926,5 +939,178 @@ public static class Scenarios
 
             var result = sb.Controller.RequestModeSwitch(GpuMode.Ultimate);
             AssertEqual(GpuSwitchResult.AlreadySet, result, "Ultimate is the current mode → no-op");
+        });
+
+    static void IsPciBackendUsable_PciDisabled_ReturnsFalse()
+        => Scenario(nameof(IsPciBackendUsable_PciDisabled_ReturnsFalse), sb =>
+        {
+            // User has not opted into the PCI backend (default config).
+            // Even if a real NVIDIA dGPU is on the bus, IsPciBackendUsable
+            // must return false - it speaks only to the PCI-backend pathway.
+            AppConfig.Set("gpu_backend", "asus-wmi");
+            sb.WriteFakeNvidiaPciDevice();
+
+            Assert(!LinuxAsusWmi.IsPciBackendUsable(),
+                "PCI backend disabled in config → not usable regardless of hardware");
+        });
+
+    static void IsPciBackendUsable_PciEnabled_DGpuOnBus_ReturnsTrue()
+        => Scenario(nameof(IsPciBackendUsable_PciEnabled_DGpuOnBus_ReturnsTrue), sb =>
+        {
+            // Steady state in PCI Standard mode: user opted in and the
+            // dGPU is sitting on the PCI bus normally.
+            AppConfig.Set("gpu_backend", "pci");
+            sb.WriteFakeNvidiaPciDevice();
+
+            Assert(LinuxAsusWmi.IsPciBackendUsable(),
+                "PCI + dGPU on bus → panel must show");
+        });
+
+    static void IsPciBackendUsable_PciEnabled_NoDGpu_BlockArtifactsPresent_ReturnsTrue()
+        => Scenario(nameof(IsPciBackendUsable_PciEnabled_NoDGpu_BlockArtifactsPresent_ReturnsTrue), sb =>
+        {
+            AppConfig.Set("gpu_backend", "pci");
+            sb.WriteBlockArtifacts();
+            // intentionally NO WriteFakeNvidiaPciDevice() - dGPU is gone
+
+            Assert(LinuxAsusWmi.IsPciBackendUsable(),
+                "PCI + hot-removed dGPU + our block artifacts → panel must stay visible so user can click Standard");
+        });
+
+    static void IsPciBackendUsable_PciEnabled_NoDGpu_NvidiaModuleLoaded_ReturnsTrue()
+        => Scenario(nameof(IsPciBackendUsable_PciEnabled_NoDGpu_NvidiaModuleLoaded_ReturnsTrue), sb =>
+        {
+            // PCI mode active, dGPU not on bus, blocks not yet on disk
+            // (e.g., user toggled PCI mode in Extra Settings but has not
+            // clicked Eco yet). Module-loaded fallback keeps panel visible.
+            AppConfig.Set("gpu_backend", "pci");
+            sb.WriteFakeNvidiaModule();
+
+            Assert(LinuxAsusWmi.IsPciBackendUsable(),
+                "PCI + nvidia module loaded → panel visible (driver is present, dGPU expected)");
+        });
+
+    static void IsPciBackendUsable_PciEnabled_NoDGpu_NvidiaOnDisk_ReturnsTrue()
+        => Scenario(nameof(IsPciBackendUsable_PciEnabled_NoDGpu_NvidiaOnDisk_ReturnsTrue), sb =>
+        {
+            // Driver installed for a future kernel boot but not yet
+            // loaded in the running kernel. Disk-side module check is the
+            // final fallback before we give up.
+            AppConfig.Set("gpu_backend", "pci");
+            sb.WriteFakeNvidiaModuleOnDisk();
+
+            Assert(LinuxAsusWmi.IsPciBackendUsable(),
+                "PCI + nvidia.ko on disk → panel visible (driver installed, dGPU expected after reload)");
+        });
+
+    static void IsPciBackendUsable_PciEnabled_NoEvidence_ReturnsFalse()
+        => Scenario(nameof(IsPciBackendUsable_PciEnabled_NoEvidence_ReturnsFalse), sb =>
+        {
+            // dGPU-less laptop where someone (or imported config) flipped
+            // gpu_backend=pci. No dGPU on bus, no block artifacts, no
+            // nvidia/nouveau modules. We must NOT show the GPU panel
+            // because there is nothing to manage.
+            AppConfig.Set("gpu_backend", "pci");
+            // No fakes written - sandbox wipes everything in ctor.
+
+            Assert(!LinuxAsusWmi.IsPciBackendUsable(),
+                "PCI flag but zero dGPU evidence → panel hidden (matches requirement: don't show on dGPU-less laptops)");
+        });
+
+    static void InvalidateGpuPresenceCache_FlushesAfterPciRescan()
+        => Scenario(nameof(InvalidateGpuPresenceCache_FlushesAfterPciRescan), sb =>
+        {
+            // Live PCI Eco→Standard transition: before the rescan the bus
+            // shows no dGPU, after the rescan the dGPU is back. Without
+            // cache invalidation the second probe would return the stale
+            // "not present" reading and the panel could mis-render.
+            AppConfig.Set("gpu_backend", "pci");
+
+            // First probe: no device, cache primes to false.
+            Assert(!LinuxAsusWmi.HasDiscreteNvidiaGpu(),
+                "cache primed: no dGPU yet on the sandbox bus");
+
+            // Simulate the rescan adding the dGPU back. WriteFakeNvidiaPciDevice
+            // calls InvalidateGpuPresenceCache itself; this scenario asserts
+            // that the next probe sees the new state.
+            sb.WriteFakeNvidiaPciDevice();
+
+            Assert(LinuxAsusWmi.HasDiscreteNvidiaGpu(),
+                "after invalidation + fake device written, probe sees dGPU on bus");
+        });
+
+    static void Regression_ProArt_PciEco_PanelStaysVisible()
+        => Scenario(nameof(Regression_ProArt_PciEco_PanelStaysVisible), sb =>
+        {
+            // End-to-end regression for issue #84: ProArt P16-class
+            // hardware (no dgpu_disable firmware attribute) running PCI
+            // backend. User clicks Eco, reboots, dGPU is hot-removed by
+            // udev. Pre-fix the GPU panel disappeared because the only
+            // PCI-mode condition was HasDiscreteNvidiaGpu() which is now
+            // false. Post-fix the eco-block-artifact condition keeps the
+            // panel visible.
+            AppConfig.Set("gpu_backend", "pci");
+            sb.WriteBlockArtifacts();
+            sb.RemoveFakeNvidiaPciDevice();          // dGPU is gone from bus
+
+            Assert(LinuxAsusWmi.IsPciBackendUsable(),
+                "ProArt PCI-Eco state must keep panel visible (issue #84 regression)");
+
+            // Also assert the controller agrees this is an Eco state so
+            // the next button click is Standard.
+            AssertEqual(GpuMode.Eco, sb.Controller.GetCurrentMode(),
+                "blocks present + PCI backend = Eco");
+        });
+
+    static void Regression_DGpuLessLaptop_NoPanelEvenWithPciFlag()
+        => Scenario(nameof(Regression_DGpuLessLaptop_NoPanelEvenWithPciFlag), sb =>
+        {
+            // A truly dGPU-less laptop (e.g., AMD APU only, Intel Iris).
+            // Even with the stale gpu_backend=pci config, no dGPU, no
+            // blocks we installed, no nvidia/nouveau anything = no panel.
+            // Requirement #3 from the project owner.
+            AppConfig.Set("gpu_backend", "pci");
+            // No fakes - empty sandbox state.
+
+            Assert(!LinuxAsusWmi.IsPciBackendUsable(),
+                "dGPU-less laptop must never see the GPU panel even with PCI flag set");
+        });
+
+    static void Regression_LivePciTransitionCallback_InvalidatesCache()
+        => Scenario(nameof(Regression_LivePciTransitionCallback_InvalidatesCache), sb =>
+        {
+            // The live Eco→Standard transition rescans /sys/bus/pci and
+            // brings the dGPU back. GpuModeController fires
+            // OnLivePciTransition which production wires to
+            // LinuxAsusWmi.InvalidateGpuPresenceCache. This scenario
+            // asserts the callback contract is honoured end-to-end so the
+            // panel reflects post-rescan state without an app restart.
+            AppConfig.Set("gpu_backend", "pci");
+
+            // Prime the cache as if we were post-Eco (no dGPU on bus).
+            Assert(!LinuxAsusWmi.HasDiscreteNvidiaGpu(), "cache primed to no-dGPU");
+
+            // Wire the callback the way App.axaml.cs does in production
+            // and fire it after simulating the rescan effect.
+            GpuModeController.OnLivePciTransition = LinuxAsusWmi.InvalidateGpuPresenceCache;
+            try
+            {
+                Directory.CreateDirectory(Path.Combine(sb.TempRoot, "sys", "bus", "pci", "devices", "0000:01:00.0"));
+                File.WriteAllText(Path.Combine(sb.TempRoot, "sys", "bus", "pci", "devices", "0000:01:00.0", "vendor"), "0x10de\n");
+                File.WriteAllText(Path.Combine(sb.TempRoot, "sys", "bus", "pci", "devices", "0000:01:00.0", "class"), "0x030000\n");
+
+                // Without firing the callback the probe would still return false (stale cache).
+                Assert(!LinuxAsusWmi.HasDiscreteNvidiaGpu(),
+                    "before callback fires: cache still says no-dGPU");
+
+                GpuModeController.OnLivePciTransition?.Invoke();
+
+                Assert(LinuxAsusWmi.HasDiscreteNvidiaGpu(),
+                    "after callback fires: probe re-scans and sees the dGPU");
+            }
+            finally
+            {
+                GpuModeController.OnLivePciTransition = null;
+            }
         });
 }

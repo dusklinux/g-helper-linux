@@ -75,6 +75,13 @@ public class GpuModeController
     private string? _cachedDgpuPciAddress;
     private bool _dgpuPciScanned;
 
+    /// <summary>
+    /// Invoked after the controller mutates PCI bus topology in-process
+    /// (the live PCI Eco-to-Standard transition rescans /sys/bus/pci so
+    /// the dGPU reappears without a reboot).
+    /// </summary>
+    public static Action? OnLivePciTransition;
+
     public GpuModeController(IAsusWmi wmi, IPowerManager power)
     {
         _wmi = wmi;
@@ -1789,7 +1796,11 @@ public class GpuModeController
             // returns 0 even when individual operations fail (the trailing
             // `|| true`); the only reliable signal is file-state.
             bool stillBlocked = File.Exists(ModprobeBlockPath) || File.Exists(UdevRemovePath);
-            return stillBlocked ? GpuSwitchResult.Failed : GpuSwitchResult.Applied;
+            if (stillBlocked)
+                return GpuSwitchResult.Failed;
+
+            OnLivePciTransition?.Invoke();
+            return GpuSwitchResult.Applied;
         }
         catch (Exception ex)
         {

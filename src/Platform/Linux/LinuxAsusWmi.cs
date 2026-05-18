@@ -400,11 +400,13 @@ public class LinuxAsusWmi : IAsusWmi
         if (IsFeatureSupported(AsusAttributes.DgpuDisable))
             return true;
 
-        // PCI backend: enabled iff the user opted in AND we can see a
-        // discrete NVIDIA GPU on the PCI bus. Skip the check entirely on
-        // hardware without an Nvidia dGPU so unsupported users don't see a
-        // panel they cannot use.
-        if (Helpers.AppConfig.IsPciGpuBackend() && HasDiscreteNvidiaGpu())
+        // PCI backend: keep the panel visible across the Eco hot-remove so
+        // the user can always reach the Standard button to bring the dGPU
+        // back. Shared probe with CanToggleGpuBackend so the two checks
+        // cannot drift apart (the previous narrow `HasDiscreteNvidiaGpu`
+        // check hid the panel after a successful PCI-Eco because the dGPU
+        // is no longer on the PCI bus).
+        if (IsPciBackendUsable())
             return true;
 
         if (!Helpers.AppConfig.Is("raw_wmi") || !AsusWmiDebugfs.IsAvailable())
@@ -421,9 +423,22 @@ public class LinuxAsusWmi : IAsusWmi
     }
 
     /// <summary>
+    /// Optional root prefix for every disk-state probe in this class. Set
+    /// to a sandbox path via <c>GHELPER_TEST_ROOT</c> so the test harness
+    /// can exercise PCI / module / eco-artifact detection without touching
+    /// the host. Empty in production so the real sysfs / /etc paths are
+    /// used. Matches the same env var consumed by <c>GpuModeController</c>
+    /// so a single export covers both layers.
+    /// </summary>
+    internal static string TestPathPrefix
+        => Environment.GetEnvironmentVariable("GHELPER_TEST_ROOT") ?? "";
+
+    /// <summary>
     /// Cheap PCI bus scan: returns true if at least one device has vendor
     /// 0x10de (NVIDIA) and a VGA/3D-controller class. Results are cached
-    /// because PCI topology cannot change without a reboot or hot-plug.
+    /// because PCI topology cannot change without a reboot or hot-plug
+    /// (live PCI re-scan during Eco→Standard recovery calls
+    /// <see cref="InvalidateGpuPresenceCache"/> to drop the cache).
     /// </summary>
     private static bool? _hasDiscreteNvidiaCache;
     internal static bool HasDiscreteNvidiaGpu()
@@ -432,7 +447,7 @@ public class LinuxAsusWmi : IAsusWmi
             return _hasDiscreteNvidiaCache.Value;
         try
         {
-            const string pciDir = "/sys/bus/pci/devices";
+            string pciDir = TestPathPrefix + "/sys/bus/pci/devices";
             if (!Directory.Exists(pciDir))
             {
                 _hasDiscreteNvidiaCache = false;
@@ -481,9 +496,9 @@ public class LinuxAsusWmi : IAsusWmi
     /// Conditions (any one is sufficient):
     ///   1. ASUS dgpu_disable WMI is exposed (ASUS hardware with dGPU)
     ///   2. A discrete NVIDIA GPU is currently on the PCI bus
-    ///   3. The user has already opted into the PCI backend (config flag)
-    ///   4. The persistent eco block artifacts exist (PCI mode active)
-    ///   5. The nvidia or nouveau kernel module is installed on disk
+    ///   3. The PCI backend is usable (opted-in AND has dGPU evidence -
+    ///      shared with IsGpuEcoAvailable, see IsPciBackendUsable)
+    ///   4. The nvidia or nouveau kernel module is installed on disk
     ///      (a dGPU once was - or will be - present even if hot-removed now)
     /// </summary>
     public bool CanToggleGpuBackend()
@@ -492,32 +507,77 @@ public class LinuxAsusWmi : IAsusWmi
             return true;
         if (HasDiscreteNvidiaGpu())
             return true;
-        if (Helpers.AppConfig.IsPciGpuBackend())
+        if (IsPciBackendUsable())
             return true;
-        try
-        {
-            if (File.Exists("/etc/modprobe.d/ghelper-gpu-block.conf") ||
-                File.Exists("/etc/udev/rules.d/50-ghelper-remove-dgpu.rules"))
-                return true;
-        }
-        catch
-        {
-            // Permissions: ignore and fall through
-        }
         if (HasNvidiaModuleAvailable())
             return true;
         return false;
     }
 
+    /// <summary>
+    /// Shared probe: PCI backend is opted-in by config AND there is
+    /// hardware evidence this system has (or had) an NVIDIA dGPU. Used by
+    /// both the main GPU panel (IsGpuEcoAvailable) and the Extra Settings
+    /// backend selector (CanToggleGpuBackend) so the two cannot drift.
+    ///
+    /// Evidence is any of:
+    ///   - dGPU currently on the PCI bus
+    ///   - Our own eco block artifacts on disk (we installed them, so we
+    ///     MUST stay able to remove them via the UI even after the udev
+    ///     hot-remove rule has made the dGPU invisible to /sys/bus/pci)
+    ///   - nvidia or nouveau kernel module on disk (dGPU expected after
+    ///     we unblock it; typical post-Eco state with hot-removed device)
+    ///
+    /// Returns false when the user has not enabled PCI mode, so machines
+    /// without a dGPU never see the panel just because the config file
+    /// got imported from a different system.
+    /// </summary>
+    internal static bool IsPciBackendUsable()
+    {
+        if (!Helpers.AppConfig.IsPciGpuBackend())
+            return false;
+        if (HasDiscreteNvidiaGpu())
+            return true;
+        try
+        {
+            string prefix = TestPathPrefix;
+            if (File.Exists(prefix + "/etc/modprobe.d/ghelper-gpu-block.conf") ||
+                File.Exists(prefix + "/etc/udev/rules.d/50-ghelper-remove-dgpu.rules"))
+                return true;
+        }
+        catch
+        {
+            // Permission denied / transient I/O - fall through
+        }
+        return HasNvidiaModuleAvailable();
+    }
+
+    /// <summary>
+    /// Reset the cached "is the dGPU present" probes. Call after an
+    /// in-process event that may alter PCI bus topology - specifically
+    /// the live PCI Eco-to-Standard transition, which removes the
+    /// modprobe block and triggers /sys/bus/pci/rescan to bring the dGPU
+    /// back online without a reboot. The next IsGpuEcoAvailable /
+    /// CanToggleGpuBackend call will then re-scan /sys/bus/pci/devices
+    /// instead of returning the stale pre-rescan (empty) cached result.
+    /// </summary>
+    internal static void InvalidateGpuPresenceCache()
+    {
+        _hasDiscreteNvidiaCache = null;
+        _hasNvidiaModuleCache = null;
+    }
+
     private static bool? _hasNvidiaModuleCache;
-    private static bool HasNvidiaModuleAvailable()
+    internal static bool HasNvidiaModuleAvailable()
     {
         if (_hasNvidiaModuleCache.HasValue)
             return _hasNvidiaModuleCache.Value;
         try
         {
+            string prefix = TestPathPrefix;
             // Loaded right now (driver bound)?
-            if (Directory.Exists("/sys/module/nvidia") || Directory.Exists("/sys/module/nouveau"))
+            if (Directory.Exists(prefix + "/sys/module/nvidia") ||
+                Directory.Exists(prefix + "/sys/module/nouveau"))
             {
                 _hasNvidiaModuleCache = true;
                 return true;
@@ -525,11 +585,11 @@ public class LinuxAsusWmi : IAsusWmi
             // Installed on disk for the running kernel?
             string release;
             try
-            { release = File.ReadAllText("/proc/sys/kernel/osrelease").Trim(); }
+            { release = File.ReadAllText(prefix + "/proc/sys/kernel/osrelease").Trim(); }
             catch { release = ""; }
             string[] roots = string.IsNullOrEmpty(release)
-                ? new[] { "/lib/modules" }
-                : new[] { $"/lib/modules/{release}/updates", $"/lib/modules/{release}/kernel/drivers/gpu/drm/nouveau", "/lib/modules" };
+                ? new[] { prefix + "/lib/modules" }
+                : new[] { $"{prefix}/lib/modules/{release}/updates", $"{prefix}/lib/modules/{release}/kernel/drivers/gpu/drm/nouveau", prefix + "/lib/modules" };
             foreach (var root in roots)
             {
                 if (!Directory.Exists(root))
