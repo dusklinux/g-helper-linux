@@ -5,6 +5,7 @@
 
 using GHelper.Linux.Gpu;
 using GHelper.Linux.Helpers;
+using GHelper.Linux.Platform.Linux;
 
 namespace GHelper.Linux.Tests;
 
@@ -43,6 +44,25 @@ public static class Harness
             foreach (var d in new[] { etcGhelper, etcModprobe, etcUdev })
                 foreach (var f in Directory.EnumerateFiles(d))
                     File.Delete(f);
+
+            // Wipe simulated sysfs / module / proc trees consumed by the
+            // LinuxAsusWmi GPU-panel-visibility probes so each scenario
+            // starts with no NVIDIA device, no nvidia/nouveau module, and
+            // no /proc/sys/kernel/osrelease hint. Tests opt in to each via
+            // WriteFakeNvidiaPciDevice() / WriteFakeNvidiaModule() /
+            // WriteFakeNvidiaModuleOnDisk(). Cache is invalidated below so
+            // the probes re-read the fresh state.
+            string sysBusPci = Path.Combine(TempRoot, "sys", "bus", "pci", "devices");
+            string sysModule = Path.Combine(TempRoot, "sys", "module");
+            string libModules = Path.Combine(TempRoot, "lib", "modules");
+            string procKernel = Path.Combine(TempRoot, "proc", "sys", "kernel");
+            foreach (var d in new[] { sysBusPci, sysModule, libModules, procKernel })
+            {
+                if (Directory.Exists(d))
+                    Directory.Delete(d, recursive: true);
+                Directory.CreateDirectory(d);
+            }
+            LinuxAsusWmi.InvalidateGpuPresenceCache();
 
             // Fresh per-scenario config directory.
             ConfigDir = Path.Combine(TempRoot, "config", scenarioName);
@@ -89,6 +109,70 @@ public static class Harness
         {
             Directory.CreateDirectory(Path.GetDirectoryName(BackendPath)!);
             File.WriteAllText(BackendPath, backend);
+        }
+
+        // ---- LinuxAsusWmi.IsPciBackendUsable fixtures ---------------------
+        //
+        // The GPU-panel-visibility probes scan three independent disk
+        // locations: PCI bus, /sys/module, and /lib/modules. Each scenario
+        // explicitly composes the state it wants by calling the helpers
+        // below. After every state change call InvalidateGpuPresenceCache
+        // so the next probe reads fresh data.
+
+        /// <summary>
+        /// Place a fake NVIDIA VGA-class device under the sandbox PCI bus.
+        /// Mirrors what /sys/bus/pci/devices/0000:01:00.0 looks like for a
+        /// real RTX dGPU. The scan keys off vendor 0x10de and class 0x0300xx.
+        /// </summary>
+        public void WriteFakeNvidiaPciDevice()
+        {
+            string dev = Path.Combine(TempRoot, "sys", "bus", "pci", "devices", "0000:01:00.0");
+            Directory.CreateDirectory(dev);
+            File.WriteAllText(Path.Combine(dev, "vendor"), "0x10de\n");
+            File.WriteAllText(Path.Combine(dev, "class"), "0x030000\n");
+            LinuxAsusWmi.InvalidateGpuPresenceCache();
+        }
+
+        /// <summary>
+        /// Simulate the post-Eco udev hot-remove state: no NVIDIA device
+        /// under /sys/bus/pci/devices. This is the default sandbox state
+        /// (the constructor wipes the tree) so call this only when you
+        /// want to be explicit about it.
+        /// </summary>
+        public void RemoveFakeNvidiaPciDevice()
+        {
+            string dev = Path.Combine(TempRoot, "sys", "bus", "pci", "devices", "0000:01:00.0");
+            if (Directory.Exists(dev))
+                Directory.Delete(dev, recursive: true);
+            LinuxAsusWmi.InvalidateGpuPresenceCache();
+        }
+
+        /// <summary>
+        /// Simulate the nvidia kernel module being loaded right now
+        /// (driver bound). The probe checks <c>/sys/module/nvidia</c> as
+        /// a presence test.
+        /// </summary>
+        public void WriteFakeNvidiaModule()
+        {
+            Directory.CreateDirectory(Path.Combine(TempRoot, "sys", "module", "nvidia"));
+            LinuxAsusWmi.InvalidateGpuPresenceCache();
+        }
+
+        /// <summary>
+        /// Simulate the nvidia .ko being installed on disk but not yet
+        /// loaded. The probe walks <c>/lib/modules/&lt;release&gt;</c>.
+        /// </summary>
+        public void WriteFakeNvidiaModuleOnDisk()
+        {
+            // Use a fixed release so we don't depend on the host kernel.
+            string release = "test-kernel-1.0";
+            string osreleaseDir = Path.Combine(TempRoot, "proc", "sys", "kernel");
+            Directory.CreateDirectory(osreleaseDir);
+            File.WriteAllText(Path.Combine(osreleaseDir, "osrelease"), release + "\n");
+            string updates = Path.Combine(TempRoot, "lib", "modules", release, "updates");
+            Directory.CreateDirectory(updates);
+            File.WriteAllText(Path.Combine(updates, "nvidia.ko"), "fake module\n");
+            LinuxAsusWmi.InvalidateGpuPresenceCache();
         }
     }
 

@@ -46,6 +46,13 @@
     <Compile Include="../../src/Platform/IPowerManager.cs" />
     <Compile Include="../../src/Platform/Linux/AsusAttributes.cs" />
     <Compile Include="../../src/Platform/Linux/SysfsHelper.cs" />
+    <!-- LinuxAsusWmi + AsusWmiDebugfs: needed by the direct unit tests for
+         the GPU-panel visibility logic (IsGpuEcoAvailable, CanToggleGpuBackend,
+         IsPciBackendUsable, InvalidateGpuPresenceCache). The class also has a
+         heavyweight constructor that probes hwmon, but tests exercise only
+         the static helpers so we never instantiate it. -->
+    <Compile Include="../../src/Platform/Linux/LinuxAsusWmi.cs" />
+    <Compile Include="../../src/Platform/Linux/AsusWmiDebugfs.cs" />
     <Compile Include="../../src/Helpers/AppConfig.cs" />
     <Compile Include="../../src/Helpers/Logger.cs" />
   </ItemGroup>
