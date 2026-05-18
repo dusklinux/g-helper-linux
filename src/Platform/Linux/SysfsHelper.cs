@@ -632,6 +632,24 @@ public static class SysfsHelper
         }
     }
 
+    public static readonly string SudoPath = ResolveSudoPath();
+
+    private static string ResolveSudoPath()
+    {
+        foreach (var p in new[]
+        {
+            "/usr/bin/sudo",
+            "/bin/sudo",
+            "/usr/local/bin/sudo",
+            "/run/wrappers/bin/sudo",
+        })
+        {
+            if (System.IO.File.Exists(p))
+                return p;
+        }
+        return "sudo";
+    }
+
     /// <summary>Run a shell command and return stdout. Returns null on failure.</summary>
     public static string? RunCommand(string command, string args = "")
     {
