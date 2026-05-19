@@ -488,6 +488,25 @@ public static class HidrawHelper
         }
     }
 
+    public static void DisableBacklightOobe()
+    {
+        foreach (var dev in EnumerateAsusDevices())
+        {
+            if (dev.Product != 0x19B6 || !dev.IsI2C)
+                continue;
+            int fd = open(dev.Path, O_RDWR);
+            if (fd < 0)
+                continue;
+            try
+            {
+                byte[] buf = { 0x46, 0x01 };
+                if (ioctl(fd, HIDIOCSFEATURE(buf.Length), buf) >= 0)
+                    Helpers.Logger.WriteLine($"HidrawHelper: backlight OOBE disabled on {dev.Path} PID=0x{dev.Product:X4}");
+            }
+            finally { close(fd); }
+        }
+    }
+
     // Internal
 
     /// <summary>
