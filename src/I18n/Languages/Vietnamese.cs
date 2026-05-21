@@ -321,6 +321,10 @@ public static class Vietnamese
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Tự động áp dụng giới hạn công suất khi đổi chế độ",
         ["firmware_control"] = "Điều khiển firmware",
+        ["changelog_title"] = "Có gì mới",
+        ["changelog_open_browser"] = "Mở trên GitHub",
+        ["changelog_loading"] = "Đang tải...",
+        ["changelog_load_failed"] = "Không thể tải nhật ký thay đổi.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (thử nghiệm)",

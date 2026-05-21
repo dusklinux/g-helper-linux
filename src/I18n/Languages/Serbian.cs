@@ -324,6 +324,10 @@ public static class Serbian
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Аутоматски примени ограничења снаге при промени режима",
         ["firmware_control"] = "Контрола фирмвера",
+        ["changelog_title"] = "Шта је ново",
+        ["changelog_open_browser"] = "Отвори на GitHub",
+        ["changelog_loading"] = "Учитавање...",
+        ["changelog_load_failed"] = "Није могуће учитати списак измена.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Андерволтинг (експериментално)",

@@ -370,6 +370,10 @@ public static class English
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Auto-apply power limits on mode change",
         ["firmware_control"] = "Firmware control",
+        ["changelog_title"] = "What's new",
+        ["changelog_open_browser"] = "Open on GitHub",
+        ["changelog_loading"] = "Loading...",
+        ["changelog_load_failed"] = "Could not load the changelog.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Experimental)",

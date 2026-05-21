@@ -321,6 +321,10 @@ public static class Russian
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Автоприменение лимитов мощности при смене режима",
         ["firmware_control"] = "Управление прошивкой",
+        ["changelog_title"] = "Что нового",
+        ["changelog_open_browser"] = "Открыть на GitHub",
+        ["changelog_loading"] = "Загрузка...",
+        ["changelog_load_failed"] = "Не удалось загрузить список изменений.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Андервольтинг (экспериментально)",

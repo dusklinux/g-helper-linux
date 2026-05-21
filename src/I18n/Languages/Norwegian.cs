@@ -324,6 +324,10 @@ public static class Norwegian
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Automatisk bruk av effektgrenser ved modusbytte",
         ["firmware_control"] = "Firmware-kontroll",
+        ["changelog_title"] = "Hva er nytt",
+        ["changelog_open_browser"] = "Åpne på GitHub",
+        ["changelog_loading"] = "Laster...",
+        ["changelog_load_failed"] = "Kunne ikke laste endringsloggen.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (eksperimentelt)",

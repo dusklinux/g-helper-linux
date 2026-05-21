@@ -321,6 +321,10 @@ public static class Czech
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Automaticky použít limity výkonu při změně režimu",
         ["firmware_control"] = "Ovládání firmwaru",
+        ["changelog_title"] = "Co je nového",
+        ["changelog_open_browser"] = "Otevřít v GitHub",
+        ["changelog_loading"] = "Načítání...",
+        ["changelog_load_failed"] = "Nepodařilo se načíst seznam změn.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Podpětí (experimentální)",

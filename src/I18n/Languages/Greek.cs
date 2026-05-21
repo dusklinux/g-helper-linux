@@ -324,6 +324,10 @@ public static class Greek
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Αυτόματη εφαρμογή ορίων ισχύος κατά την αλλαγή λειτουργίας",
         ["firmware_control"] = "Έλεγχος firmware",
+        ["changelog_title"] = "Τι νέο υπάρχει",
+        ["changelog_open_browser"] = "Άνοιγμα στο GitHub",
+        ["changelog_loading"] = "Φόρτωση...",
+        ["changelog_load_failed"] = "Αδυναμία φόρτωσης αρχείου αλλαγών.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Πειραματικό)",

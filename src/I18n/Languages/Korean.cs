@@ -324,6 +324,10 @@ public static class Korean
         ["cpu_boost"] = "CPU 부스트",
         ["auto_apply_power_limits"] = "모드 변경 시 전력 제한 자동 적용",
         ["firmware_control"] = "펌웨어 제어",
+        ["changelog_title"] = "새로운 기능",
+        ["changelog_open_browser"] = "GitHub에서 열기",
+        ["changelog_loading"] = "불러오는 중...",
+        ["changelog_load_failed"] = "변경 로그를 불러올 수 없습니다.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "언더볼팅 (실험적)",

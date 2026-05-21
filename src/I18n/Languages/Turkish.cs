@@ -321,6 +321,10 @@ public static class Turkish
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Mod değişikliğinde güç limitlerini otomatik uygula",
         ["firmware_control"] = "Firmware kontrolü",
+        ["changelog_title"] = "Yenilikler",
+        ["changelog_open_browser"] = "GitHub'da aç",
+        ["changelog_loading"] = "Yükleniyor...",
+        ["changelog_load_failed"] = "Değişiklik günlüğü yüklenemedi.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Deneysel)",

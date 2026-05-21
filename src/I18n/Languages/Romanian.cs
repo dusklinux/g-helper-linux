@@ -321,6 +321,10 @@ public static class Romanian
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Aplică automat limitele de putere la schimbarea modului",
         ["firmware_control"] = "Control firmware",
+        ["changelog_title"] = "Ce este nou",
+        ["changelog_open_browser"] = "Deschide pe GitHub",
+        ["changelog_loading"] = "Se încarcă...",
+        ["changelog_load_failed"] = "Nu s-a putut încărca jurnalul modificărilor.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (experimental)",

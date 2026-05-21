@@ -60,6 +60,7 @@
   <ItemGroup>
     <AvaloniaResource Include="UI\Assets\**" />
     <AvaloniaResource Include="UI\Styles\**" />
+    <EmbeddedResource Include="..\CHANGELOG.md" LogicalName="GHelper.Linux.CHANGELOG.md" Condition="Exists('..\CHANGELOG.md')" />
   </ItemGroup>
 
   <!-- AOT trimmer configuration -->

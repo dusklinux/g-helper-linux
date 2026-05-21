@@ -36,9 +36,15 @@
 
             <!-- G-Helper version -->
             <Border Background="#262626" CornerRadius="6" Padding="10,6">
-                <TextBlock x:Name="labelAppVersion"
-                           Text="G-Helper Linux v1.0.0"
-                           Foreground="#F0F0F0" FontSize="12" />
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock x:Name="labelAppVersion" Grid.Column="0"
+                               Text="G-Helper Linux v1.0.0"
+                               Foreground="#F0F0F0" FontSize="12"
+                               VerticalAlignment="Center" />
+                    <Button x:Name="buttonChangelog" Grid.Column="1"
+                            Content="What's new" Click="ButtonChangelog_Click"
+                            MinWidth="100" Padding="8,2" />
+                </Grid>
             </Border>
 
             <!-- Legend -->

@@ -324,6 +324,10 @@ public static class Macedonian
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Авто-примени ограничувања на моќност при промена на режим",
         ["firmware_control"] = "Контрола на фирмвер",
+        ["changelog_title"] = "Што е ново",
+        ["changelog_open_browser"] = "Отвори на GitHub",
+        ["changelog_loading"] = "Се вчитува...",
+        ["changelog_load_failed"] = "Не може да се вчита логот на промени.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Андерволтинг (Експериментално)",

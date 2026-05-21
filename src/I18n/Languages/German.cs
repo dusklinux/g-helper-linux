@@ -321,6 +321,10 @@ public static class German
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Leistungslimits automatisch bei Moduswechsel anwenden",
         ["firmware_control"] = "Firmware-Steuerung",
+        ["changelog_title"] = "Was ist neu",
+        ["changelog_open_browser"] = "Auf GitHub öffnen",
+        ["changelog_loading"] = "Wird geladen...",
+        ["changelog_load_failed"] = "Changelog konnte nicht geladen werden.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Experimentell)",

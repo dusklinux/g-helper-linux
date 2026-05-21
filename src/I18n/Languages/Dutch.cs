@@ -321,6 +321,10 @@ public static class Dutch
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Vermogenslimieten automatisch toepassen bij moduswissel",
         ["firmware_control"] = "Firmwarebesturing",
+        ["changelog_title"] = "Wat is nieuw",
+        ["changelog_open_browser"] = "Openen op GitHub",
+        ["changelog_loading"] = "Laden...",
+        ["changelog_load_failed"] = "Kan changelog niet laden.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Experimenteel)",
