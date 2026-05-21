@@ -67,6 +67,7 @@ public partial class UpdatesWindow : Window
         labelTitle.Text = Labels.Get("updates_header");
         buttonDiagnostics.Content = Labels.Get("copy_diagnostics");
         buttonRefresh.Content = Labels.Get("refresh");
+        buttonChangelog.Content = Labels.Get("changelog_title");
         labelLegendUpToDate.Text = Labels.Get("up_to_date");
         labelLegendUpdateAvailable.Text = Labels.Get("update_available");
         labelLegendCantCheck.Text = Labels.Get("cant_check");
@@ -78,6 +79,20 @@ public partial class UpdatesWindow : Window
     private void ButtonRefresh_Click(object? sender, RoutedEventArgs e)
     {
         LoadUpdates();
+    }
+
+    private ChangelogWindow? _changelogWindow;
+
+    private void ButtonChangelog_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_changelogWindow is { IsVisible: true })
+        {
+            _changelogWindow.Activate();
+            return;
+        }
+        _changelogWindow = new ChangelogWindow();
+        _changelogWindow.Closed += (_, _) => _changelogWindow = null;
+        _changelogWindow.Show(this);
     }
 
     private async void ButtonDiagnostics_Click(object? sender, RoutedEventArgs e)

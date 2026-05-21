@@ -324,6 +324,10 @@ public static class Japanese
         ["cpu_boost"] = "CPU ブースト",
         ["auto_apply_power_limits"] = "モード変更時に電力制限を自動適用",
         ["firmware_control"] = "ファームウェア制御",
+        ["changelog_title"] = "新着情報",
+        ["changelog_open_browser"] = "GitHub で開く",
+        ["changelog_loading"] = "読み込み中...",
+        ["changelog_load_failed"] = "更新履歴を読み込めませんでした。",
 
         // UNDERVOLTING
         ["undervolt_header"] = "アンダーボルト（実験的）",

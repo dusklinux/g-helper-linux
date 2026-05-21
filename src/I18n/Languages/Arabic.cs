@@ -324,6 +324,10 @@ public static class Arabic
         ["cpu_boost"] = "تعزيز CPU",
         ["auto_apply_power_limits"] = "تطبيق حدود الطاقة تلقائياً عند تغيير الوضع",
         ["firmware_control"] = "التحكم بالبرنامج الثابت",
+        ["changelog_title"] = "ما الجديد",
+        ["changelog_open_browser"] = "افتح في GitHub",
+        ["changelog_loading"] = "جارٍ التحميل...",
+        ["changelog_load_failed"] = "تعذر تحميل سجل التغييرات.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "خفض الجهد (تجريبي)",

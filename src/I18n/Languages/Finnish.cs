@@ -324,6 +324,10 @@ public static class Finnish
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Ota tehorajat automaattisesti käyttöön tilan vaihtuessa",
         ["firmware_control"] = "Firmware-ohjaus",
+        ["changelog_title"] = "Mitä uutta",
+        ["changelog_open_browser"] = "Avaa GitHubissa",
+        ["changelog_loading"] = "Ladataan...",
+        ["changelog_load_failed"] = "Muutoslokia ei voitu ladata.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Alijännite (kokeellinen)",

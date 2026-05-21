@@ -321,6 +321,10 @@ public static class Hungarian
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Teljesítmény korlátok automatikus alkalmazása mód váltáskor",
         ["firmware_control"] = "Firmware vezérlés",
+        ["changelog_title"] = "Újdonságok",
+        ["changelog_open_browser"] = "Megnyitás a GitHubon",
+        ["changelog_loading"] = "Betöltés...",
+        ["changelog_load_failed"] = "A változásnapló betöltése sikertelen.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Alulfeszültség (kísérleti)",

@@ -324,6 +324,10 @@ public static class ChineseTraditional
         ["cpu_boost"] = "CPU 加速",
         ["auto_apply_power_limits"] = "切換模式時自動套用功率限制",
         ["firmware_control"] = "韌體控制",
+        ["changelog_title"] = "更新內容",
+        ["changelog_open_browser"] = "在 GitHub 上開啟",
+        ["changelog_loading"] = "載入中...",
+        ["changelog_load_failed"] = "無法載入更新日誌。",
 
         // UNDERVOLTING
         ["undervolt_header"] = "降壓（實驗性）",

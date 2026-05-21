@@ -321,6 +321,10 @@ public static class Ukrainian
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Автоматично застосовувати ліміти потужності при зміні режиму",
         ["firmware_control"] = "Контроль прошивки",
+        ["changelog_title"] = "Що нового",
+        ["changelog_open_browser"] = "Відкрити на GitHub",
+        ["changelog_loading"] = "Завантаження...",
+        ["changelog_load_failed"] = "Не вдалося завантажити журнал змін.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Андервольтинг (експериментально)",

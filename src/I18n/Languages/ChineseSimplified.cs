@@ -324,6 +324,10 @@ public static class ChineseSimplified
         ["cpu_boost"] = "CPU 加速",
         ["auto_apply_power_limits"] = "切换模式时自动应用功率限制",
         ["firmware_control"] = "固件控制",
+        ["changelog_title"] = "更新内容",
+        ["changelog_open_browser"] = "在 GitHub 上打开",
+        ["changelog_loading"] = "加载中...",
+        ["changelog_load_failed"] = "无法加载更新日志。",
 
         // UNDERVOLTING
         ["undervolt_header"] = "降压（实验性）",

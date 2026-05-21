@@ -324,6 +324,10 @@ public static class Indonesian
         ["cpu_boost"] = "Boost CPU",
         ["auto_apply_power_limits"] = "Terapkan batas daya otomatis saat ganti mode",
         ["firmware_control"] = "Kontrol firmware",
+        ["changelog_title"] = "Yang baru",
+        ["changelog_open_browser"] = "Buka di GitHub",
+        ["changelog_loading"] = "Memuat...",
+        ["changelog_load_failed"] = "Tidak dapat memuat changelog.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Eksperimental)",

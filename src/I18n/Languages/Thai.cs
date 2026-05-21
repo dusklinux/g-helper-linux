@@ -324,6 +324,10 @@ public static class Thai
         ["cpu_boost"] = "บูสต์ CPU",
         ["auto_apply_power_limits"] = "นำขีดจำกัดพลังงานไปใช้อัตโนมัติเมื่อเปลี่ยนโหมด",
         ["firmware_control"] = "ควบคุมเฟิร์มแวร์",
+        ["changelog_title"] = "มีอะไรใหม่",
+        ["changelog_open_browser"] = "เปิดบน GitHub",
+        ["changelog_loading"] = "กำลังโหลด...",
+        ["changelog_load_failed"] = "ไม่สามารถโหลดบันทึกการเปลี่ยนแปลงได้",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (ทดลอง)",

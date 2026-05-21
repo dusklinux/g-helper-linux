@@ -324,6 +324,10 @@ public static class Danish
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Auto-anvend effektgrænser ved tilstandsskift",
         ["firmware_control"] = "Firmware-styring",
+        ["changelog_title"] = "Nyheder",
+        ["changelog_open_browser"] = "Åbn på GitHub",
+        ["changelog_loading"] = "Indlæser...",
+        ["changelog_load_failed"] = "Kunne ikke indlæse ændringsloggen.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (eksperimentel)",

@@ -324,6 +324,10 @@ public static class Swedish
         ["cpu_boost"] = "CPU Boost",
         ["auto_apply_power_limits"] = "Auto-tillämpa effektgränser vid lägsbyte",
         ["firmware_control"] = "Firmware-styrning",
+        ["changelog_title"] = "Vad är nytt",
+        ["changelog_open_browser"] = "Öppna på GitHub",
+        ["changelog_loading"] = "Läser in...",
+        ["changelog_load_failed"] = "Det gick inte att läsa in ändringsloggen.",
 
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (experimentellt)",
