@@ -927,18 +927,6 @@ public class LinuxAsusWmi : IAsusWmi
             SysfsHelper.WriteInt(path, enabled ? 1 : 0);
     }
 
-    public void ApplyScreenAutoBrightnessMode(int mode)
-    {
-        bool onAc = App.Power?.IsOnAcPower() ?? true;
-        bool enable = mode switch
-        {
-            1 => true,
-            2 => !onAc,
-            _ => false,
-        };
-        SetScreenAutoBrightness(enable);
-    }
-
     // PPT / Power limits
 
     public void SetPptLimit(string attribute, int watts)
