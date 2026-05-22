@@ -20,8 +20,17 @@ public static class Diagnostics
         // System Identity
         AppendSystemInfo(sb);
 
+        // Power source posture (AC, battery, profile, throttle, boost, ASPM)
+        AppendPowerSource(sb);
+
+        // CPU model, governor, microcode, freq range, online cores
+        AppendCpu(sb);
+
         // Model Detection Flags
         AppendModelFlags(sb);
+
+        // App Config snapshot (curated whitelist; no PII)
+        AppendAppConfig(sb);
 
         // Kernel Modules
         AppendKernelModules(sb);
@@ -43,6 +52,9 @@ public static class Diagnostics
         AppendNvidia(sb);
         AppendAmdGpu(sb);
 
+        // Displays: connectors, compositor, current refresh
+        AppendDisplays(sb);
+
         // USB HID (ASUS)
         AppendUsbDevices(sb);
 
@@ -61,8 +73,14 @@ public static class Diagnostics
 
         AppendLedSysfs(sb);
 
+        // ghelper systemd units (boot service + autostart .desktop)
+        AppendGhelperUnits(sb);
+
         // udev / tmpfiles
         AppendInstallState(sb);
+
+        // Suspend / resume history (this boot)
+        AppendSuspendResume(sb);
 
         // Boot service journal
         AppendBootServiceLog(sb);
@@ -1131,6 +1149,635 @@ public static class Diagnostics
 
         sb.AppendLine();
     }
+
+    private static void AppendPowerSource(StringBuilder sb)
+    {
+        sb.AppendLine("--- Power Source ---");
+
+        const string psBase = "/sys/class/power_supply";
+
+        bool foundAdapter = false;
+        bool foundBattery = false;
+
+        if (Directory.Exists(psBase))
+        {
+            try
+            {
+                foreach (var devPath in Directory.GetDirectories(psBase).OrderBy(p => p))
+                {
+                    var type = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(devPath, "type"));
+                    var name = Path.GetFileName(devPath);
+
+                    if (type == null)
+                        continue;
+
+                    if (type.Equals("Mains", StringComparison.OrdinalIgnoreCase))
+                    {
+                        foundAdapter = true;
+                        var onlineRaw = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(devPath, "online"));
+                        var online = onlineRaw == "1" ? "connected" : "disconnected";
+
+                        // power_now is in μW on most kernels; some platforms expose
+                        // it sporadically. Best-effort only.
+                        var powerNow = Platform.Linux.SysfsHelper.ReadInt(Path.Combine(devPath, "power_now"), -1);
+                        string watts = powerNow > 0 ? $" ({powerNow / 1_000_000} W)" : "";
+
+                        sb.AppendLine($"  AC adapter ({name}): {online}{watts}");
+                    }
+                    else if (type.Equals("Battery", StringComparison.OrdinalIgnoreCase))
+                    {
+                        foundBattery = true;
+                        var status = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(devPath, "status")) ?? "?";
+                        var capacityRaw = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(devPath, "capacity"));
+                        string capacity = capacityRaw != null ? $"{capacityRaw}%" : "?";
+
+                        // Some batteries report charge_*, others energy_*. Read whichever exists.
+                        long now = Platform.Linux.SysfsHelper.ReadInt(Path.Combine(devPath, "charge_now"), -1);
+                        long full = Platform.Linux.SysfsHelper.ReadInt(Path.Combine(devPath, "charge_full"), -1);
+                        long design = Platform.Linux.SysfsHelper.ReadInt(Path.Combine(devPath, "charge_full_design"), -1);
+                        string unit = "mAh";
+
+                        if (now < 0 && full < 0)
+                        {
+                            now = Platform.Linux.SysfsHelper.ReadInt(Path.Combine(devPath, "energy_now"), -1);
+                            full = Platform.Linux.SysfsHelper.ReadInt(Path.Combine(devPath, "energy_full"), -1);
+                            design = Platform.Linux.SysfsHelper.ReadInt(Path.Combine(devPath, "energy_full_design"), -1);
+                            unit = "mWh";
+                        }
+
+                        // Sysfs values are μA/μW; convert to mA/mW for readability.
+                        string body;
+                        if (now >= 0 && full > 0)
+                        {
+                            long nowM = now / 1000;
+                            long fullM = full / 1000;
+                            int health = design > 0 ? (int)(full * 100 / design) : -1;
+                            string healthPart = design > 0
+                                ? $", design {design / 1000} {unit}, health {health}%"
+                                : "";
+                            body = $" {capacity}, {nowM}/{fullM} {unit}{healthPart}";
+                        }
+                        else
+                        {
+                            body = $" {capacity}";
+                        }
+
+                        sb.AppendLine($"  Battery ({name}): {status},{body}");
+
+                        var chargeLimit = Platform.Linux.SysfsHelper.ReadAttribute(
+                            Path.Combine(devPath, "charge_control_end_threshold"));
+                        if (chargeLimit != null)
+                            sb.AppendLine($"    charge_control_end_threshold: {chargeLimit}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                sb.AppendLine($"  (power_supply scan failed: {ex.Message})");
+            }
+        }
+
+        if (!foundAdapter)
+            sb.AppendLine("  AC adapter: (no Mains supply found)");
+        if (!foundBattery)
+            sb.AppendLine("  Battery: (no Battery supply found)");
+
+        // Profile + throttle + boost + ASPM aggregate
+        var profile = Platform.Linux.SysfsHelper.ReadAttribute("/sys/firmware/acpi/platform_profile");
+        if (profile != null)
+            sb.AppendLine($"  Power profile: {profile}");
+
+        var throttlePath = Platform.Linux.SysfsHelper.ResolveAttrPath(
+            Platform.Linux.AsusAttributes.ThrottleThermalPolicy,
+            Platform.Linux.SysfsHelper.AsusWmiPlatform,
+            Platform.Linux.SysfsHelper.AsusBusPlatform);
+        if (throttlePath != null)
+        {
+            var throttleRaw = Platform.Linux.SysfsHelper.ReadAttribute(throttlePath);
+            string label = throttleRaw switch
+            {
+                "0" => "Balanced",
+                "1" => "Turbo",
+                "2" => "Silent",
+                _ => "?",
+            };
+            sb.AppendLine($"  Throttle policy: {throttleRaw ?? "?"} ({label})");
+        }
+
+        var noTurbo = Platform.Linux.SysfsHelper.ReadAttribute("/sys/devices/system/cpu/intel_pstate/no_turbo");
+        var cpufreqBoost = Platform.Linux.SysfsHelper.ReadAttribute("/sys/devices/system/cpu/cpufreq/boost");
+        if (noTurbo != null)
+            sb.AppendLine($"  CPU boost (intel_pstate.no_turbo): {(noTurbo == "0" ? "on" : "off")}");
+        if (cpufreqBoost != null)
+            sb.AppendLine($"  CPU boost (cpufreq.boost): {(cpufreqBoost == "1" ? "on" : "off")}");
+
+        var aspm = Platform.Linux.SysfsHelper.ReadAttribute("/sys/module/pcie_aspm/parameters/policy");
+        if (aspm != null)
+            sb.AppendLine($"  ASPM policy: {aspm}");
+
+        sb.AppendLine();
+    }
+
+    // CPU summary: model, microcode, online cores, governor, freq range,
+    // current temp. Sourced entirely from /proc and /sys to avoid shell-outs.
+    private static void AppendCpu(StringBuilder sb)
+    {
+        sb.AppendLine("--- CPU ---");
+
+        // Parse /proc/cpuinfo first record (defensive: some fields absent on
+        // ARM / Snapdragon X1 / virtualized systems).
+        string? model = null, family = null, modelNum = null, stepping = null, microcode = null;
+        try
+        {
+            if (File.Exists("/proc/cpuinfo"))
+            {
+                foreach (var line in File.ReadLines("/proc/cpuinfo"))
+                {
+                    if (string.IsNullOrWhiteSpace(line))
+                        break; // first record only
+
+                    int colon = line.IndexOf(':');
+                    if (colon < 0)
+                        continue;
+                    var key = line[..colon].Trim();
+                    var val = line[(colon + 1)..].Trim();
+
+                    switch (key)
+                    {
+                        case "model name":
+                            model ??= val;
+                            break;
+                        case "Model":
+                            model ??= val;
+                            break;     // ARM
+                        case "cpu family":
+                            family ??= val;
+                            break;
+                        case "model":
+                            modelNum ??= val;
+                            break;
+                        case "stepping":
+                            stepping ??= val;
+                            break;
+                        case "microcode":
+                            microcode ??= val;
+                            break;
+                        case "CPU implementer":
+                            family ??= val;
+                            break;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            sb.AppendLine($"  (/proc/cpuinfo read failed: {ex.Message})");
+        }
+
+        if (model != null)
+        {
+            var parts = new List<string>();
+            if (family != null)
+                parts.Add($"family {family}");
+            if (modelNum != null)
+            {
+                string modelHex = int.TryParse(modelNum, out int m) ? m.ToString("X") : modelNum;
+                parts.Add($"model 0x{modelHex}");
+            }
+            if (stepping != null)
+                parts.Add($"stepping {stepping}");
+            sb.AppendLine(parts.Count > 0
+                ? $"  Model: {model} ({string.Join(", ", parts)})"
+                : $"  Model: {model}");
+        }
+        else
+        {
+            sb.AppendLine("  Model: (not detected)");
+        }
+
+        // Microcode: /sys path is usually 0o400 (root-only); /proc/cpuinfo is
+        // world-readable. Prefer sysfs if accessible, fall back to cpuinfo.
+        var microcodeSysfs = Platform.Linux.SysfsHelper.ReadAttribute("/sys/devices/system/cpu/cpu0/microcode/version");
+        if (microcodeSysfs != null)
+            sb.AppendLine($"  Microcode: {microcodeSysfs}");
+        else if (microcode != null)
+            sb.AppendLine($"  Microcode: {microcode}");
+
+        // Online vs total cores
+        int online = 0, total = 0;
+        try
+        {
+            foreach (var dir in Directory.GetDirectories("/sys/devices/system/cpu", "cpu*"))
+            {
+                var name = Path.GetFileName(dir);
+                // Match only "cpuN" where N is digits
+                if (name.Length <= 3 || !name.StartsWith("cpu"))
+                    continue;
+                bool numeric = name[3..].All(char.IsDigit);
+                if (!numeric)
+                    continue;
+
+                total++;
+                var onlineFile = Path.Combine(dir, "online");
+                // cpu0 typically lacks the online file (always on); count it.
+                if (!File.Exists(onlineFile))
+                {
+                    online++;
+                    continue;
+                }
+                if (Platform.Linux.SysfsHelper.ReadAttribute(onlineFile) == "1")
+                    online++;
+            }
+        }
+        catch { /* fall through */ }
+
+        if (total > 0)
+        {
+            // P/E split via core_type (Intel hybrid only; ARM big.LITTLE doesn't
+            // populate this in mainline yet).
+            int p = 0, e = 0;
+            try
+            {
+                for (int i = 0; i < total; i++)
+                {
+                    var ct = Platform.Linux.SysfsHelper.ReadAttribute($"/sys/devices/system/cpu/cpu{i}/topology/core_type");
+                    if (ct == null)
+                        continue;
+                    if (ct.Contains("Core", StringComparison.OrdinalIgnoreCase))
+                        p++;
+                    else if (ct.Contains("Atom", StringComparison.OrdinalIgnoreCase))
+                        e++;
+                }
+            }
+            catch { /* fall through */ }
+
+            string topology = (p > 0 || e > 0) ? $" ({p}P + {e}E)" : "";
+            sb.AppendLine($"  Cores: {online} online / {total} total{topology}");
+        }
+
+        var governor = Platform.Linux.SysfsHelper.ReadAttribute("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor");
+        var pstateStatus = Platform.Linux.SysfsHelper.ReadAttribute("/sys/devices/system/cpu/intel_pstate/status");
+        if (governor != null || pstateStatus != null)
+        {
+            string drv = pstateStatus != null ? $" (intel_pstate {pstateStatus})" : "";
+            sb.AppendLine($"  Governor: {governor ?? "?"}{drv}");
+        }
+
+        long minF = Platform.Linux.SysfsHelper.ReadInt("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq", -1);
+        long maxF = Platform.Linux.SysfsHelper.ReadInt("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", -1);
+        long curF = Platform.Linux.SysfsHelper.ReadInt("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq", -1);
+        if (minF > 0 && maxF > 0)
+        {
+            string cur = curF > 0 ? $", current {curF / 1000} MHz (cpu0)" : "";
+            sb.AppendLine($"  Freq: {minF / 1000} - {maxF / 1000} MHz{cur}");
+        }
+
+        // CPU temp from coretemp (Intel) or k10temp (AMD). temp1_input is in
+        // millidegrees C. The same hwmon dir LinuxAsusWmi resolves at init.
+        var cpuTempHwmon = Platform.Linux.SysfsHelper.FindHwmonByName("coretemp")
+                        ?? Platform.Linux.SysfsHelper.FindHwmonByName("k10temp");
+        if (cpuTempHwmon != null)
+        {
+            int milliC = Platform.Linux.SysfsHelper.ReadInt(Path.Combine(cpuTempHwmon, "temp1_input"), -1);
+            if (milliC > 0)
+                sb.AppendLine($"  Temp: {milliC / 1000} °C ({Path.GetFileName(cpuTempHwmon)}/temp1)");
+        }
+
+        sb.AppendLine();
+    }
+
+    // App Config snapshot: curated whitelist of keys ghelper consults to make
+    // decisions. Excludes anything fingerprint-able (language, layout, paths).
+    private static void AppendAppConfig(StringBuilder sb)
+    {
+        sb.AppendLine("--- App Config ---");
+
+        // performance_mode → label
+        int perfMode = AppConfig.Get("performance_mode", -1);
+        string perfLabel = perfMode switch
+        {
+            0 => "Balanced",
+            1 => "Turbo",
+            2 => "Silent",
+            _ => "(not set)",
+        };
+        sb.AppendLine($"  performance_mode: {(perfMode < 0 ? "-1" : perfMode.ToString())} ({perfLabel})");
+
+        int chargeLimit = AppConfig.Get("charge_limit", -1);
+        sb.AppendLine($"  charge_limit: {(chargeLimit < 0 ? "(not set)" : chargeLimit + "%")}");
+
+        sb.AppendLine($"  gpu_mode: {AppConfig.GetString("gpu_mode", "(not set)")}");
+        sb.AppendLine($"  gpu_backend: {AppConfig.GetString("gpu_backend", "(not set)")}");
+        sb.AppendLine($"  gpu_auto: {YesNo(AppConfig.Is("gpu_auto"))}");
+        sb.AppendLine($"  gpu_optimized_enabled: {YesNo(AppConfig.Is("gpu_optimized_enabled"))}");
+        sb.AppendLine($"  raw_wmi: {YesNo(AppConfig.Is("raw_wmi"))}");
+        sb.AppendLine($"  screen_auto: {YesNo(AppConfig.Is("screen_auto"))}");
+        sb.AppendLine($"  auto_apply_power: {YesNo(AppConfig.IsMode("auto_apply_power"))}");
+
+        // optimal_brightness: -1 = unset, 0 = Off, 1 = On Always, 2 = On Battery
+        int oab = AppConfig.Get("optimal_brightness", -1);
+        string oabLabel = oab switch
+        {
+            0 => "Off",
+            1 => "On Always",
+            2 => "On Battery only",
+            _ => "not configured",
+        };
+        string oabValue = oab < 0 ? "-1" : oab.ToString();
+        sb.AppendLine($"  optimal_brightness: {oabValue} ({oabLabel})");
+
+        sb.AppendLine($"  topmost: {YesNo(AppConfig.Is("topmost"))}");
+        sb.AppendLine($"  silent_start: {YesNo(AppConfig.Is("silent_start"))}");
+        sb.AppendLine($"  bw_icon: {YesNo(AppConfig.IsBWIcon())}");
+        sb.AppendLine($"  toggle_clamshell_mode: {YesNo(AppConfig.Is("toggle_clamshell_mode"))}");
+        sb.AppendLine($"  autostart: {YesNo(AppConfig.IsNotFalse("autostart"))}");
+
+        sb.AppendLine();
+    }
+
+    // Display connectors via DRM sysfs (compositor-agnostic) plus a coarse
+    // identification of the active compositor + ghelper's chosen refresh
+    // backend. Current refresh rate is best-effort via the backend.
+    private static void AppendDisplays(StringBuilder sb)
+    {
+        sb.AppendLine("--- Displays ---");
+
+        var desktop = Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP") ?? "?";
+        var session = Environment.GetEnvironmentVariable("XDG_SESSION_TYPE") ?? "?";
+        sb.AppendLine($"  Session: {session} ({desktop})");
+
+        // Which backend ghelper uses for refresh control. We probe binary
+        // presence; the active app instance may have already picked one
+        // but Diagnostics is static and may run pre-init.
+        var backends = new List<string>();
+        if (!string.IsNullOrEmpty(Platform.Linux.SysfsHelper.RunCommand("which", "kscreen-doctor")))
+            backends.Add("kscreen-doctor");
+        if (!string.IsNullOrEmpty(Platform.Linux.SysfsHelper.RunCommand("which", "gdctl")))
+            backends.Add("gdctl");
+        if (!string.IsNullOrEmpty(Platform.Linux.SysfsHelper.RunCommand("which", "wlr-randr")))
+            backends.Add("wlr-randr");
+        if (!string.IsNullOrEmpty(Platform.Linux.SysfsHelper.RunCommand("which", "xrandr")))
+            backends.Add("xrandr");
+        sb.AppendLine($"  Refresh backends available: {(backends.Count == 0 ? "(none)" : string.Join(", ", backends))}");
+
+        // DRM connectors: /sys/class/drm/card*-* directories. Each one is a
+        // physical connector (eDP, HDMI-A, DP, etc.). status + enabled +
+        // first mode line gives a useful snapshot without any compositor.
+        const string drmBase = "/sys/class/drm";
+        bool anyConnector = false;
+        if (Directory.Exists(drmBase))
+        {
+            try
+            {
+                sb.AppendLine("  Connectors:");
+                foreach (var dir in Directory.GetDirectories(drmBase).OrderBy(p => p))
+                {
+                    var name = Path.GetFileName(dir);
+                    // Skip card%d (the device); we want card%d-CONNECTOR (the outputs).
+                    if (!name.Contains('-'))
+                        continue;
+
+                    var status = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(dir, "status"));
+                    if (status == null)
+                        continue;
+
+                    anyConnector = true;
+                    var enabled = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(dir, "enabled"));
+                    string mode = "";
+                    if (status == "connected")
+                    {
+                        try
+                        {
+                            var modesPath = Path.Combine(dir, "modes");
+                            if (File.Exists(modesPath))
+                            {
+                                var firstMode = File.ReadLines(modesPath).FirstOrDefault();
+                                if (!string.IsNullOrWhiteSpace(firstMode))
+                                    mode = $", preferred={firstMode.Trim()}";
+                            }
+                        }
+                        catch { }
+                    }
+                    sb.AppendLine($"    {name}: {status}, {enabled ?? "?"}{mode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                sb.AppendLine($"  (DRM connector scan failed: {ex.Message})");
+            }
+        }
+
+        if (!anyConnector)
+            sb.AppendLine("  Connectors: (none enumerated)");
+
+        // Ghelper's current refresh-rate state
+        bool screenAuto = AppConfig.Is("screen_auto");
+        sb.AppendLine($"  Auto refresh on AC/battery: {(screenAuto ? "enabled" : "disabled")}");
+
+        sb.AppendLine();
+    }
+
+    // ghelper-specific systemd integration: the boot service (PCI mode +
+    // pending mode application) plus the autostart .desktop file.
+    private static void AppendGhelperUnits(StringBuilder sb)
+    {
+        sb.AppendLine("--- ghelper systemd units ---");
+
+        bool hasSystemctl = !string.IsNullOrEmpty(
+            Platform.Linux.SysfsHelper.RunCommand("which", "systemctl"));
+
+        const string bootUnit = "ghelper-gpu-boot.service";
+
+        if (hasSystemctl)
+        {
+            // Probe presence first; systemctl returns empty stdout when the
+            // unit isn't installed at all.
+            var enabledRaw = Platform.Linux.SysfsHelper.RunCommand("systemctl", $"is-enabled {bootUnit}");
+            string enabled = string.IsNullOrWhiteSpace(enabledRaw) ? "not-installed" : enabledRaw.Trim();
+
+            if (enabled == "not-installed")
+            {
+                sb.AppendLine($"  {bootUnit}: not installed");
+            }
+            else
+            {
+                // ActiveState comes from `systemctl show` instead of `is-active` because
+                // `is-active` returns non-zero exit for "inactive" oneshot services that
+                // ran successfully, which our RunCommand swallows as a failure.
+                var show = Platform.Linux.SysfsHelper.RunCommand("systemctl",
+                    $"show {bootUnit} --property=ActiveState,SubState,ExecMainStartTimestamp,ExecMainExitTimestamp,ExecMainStatus,NRestarts");
+                string active = "?", subState = "?", lastStart = "(never)", lastExit = "(never)", exitCode = "?", restarts = "?";
+                if (show != null)
+                {
+                    foreach (var line in show.Split('\n'))
+                    {
+                        int eq = line.IndexOf('=');
+                        if (eq < 0)
+                            continue;
+                        var k = line[..eq];
+                        var v = line[(eq + 1)..].Trim();
+                        switch (k)
+                        {
+                            case "ActiveState":
+                                if (!string.IsNullOrEmpty(v))
+                                    active = v;
+                                break;
+                            case "SubState":
+                                if (!string.IsNullOrEmpty(v))
+                                    subState = v;
+                                break;
+                            case "ExecMainStartTimestamp":
+                                if (!string.IsNullOrEmpty(v))
+                                    lastStart = v;
+                                break;
+                            case "ExecMainExitTimestamp":
+                                if (!string.IsNullOrEmpty(v))
+                                    lastExit = v;
+                                break;
+                            case "ExecMainStatus":
+                                if (!string.IsNullOrEmpty(v))
+                                    exitCode = v;
+                                break;
+                            case "NRestarts":
+                                if (!string.IsNullOrEmpty(v))
+                                    restarts = v;
+                                break;
+                        }
+                    }
+                }
+
+                sb.AppendLine($"  {bootUnit}: enabled={enabled}, active={active} ({subState})");
+                sb.AppendLine($"    last start: {lastStart}");
+                sb.AppendLine($"    last exit:  {lastExit} (status {exitCode}, restarts {restarts})");
+            }
+        }
+        else
+        {
+            // Fallback: probe symlink presence in the standard wants/ dir.
+            bool symLinked =
+                File.Exists($"/etc/systemd/system/multi-user.target.wants/{bootUnit}")
+                || File.Exists($"/etc/systemd/system/default.target.wants/{bootUnit}");
+            sb.AppendLine($"  {bootUnit}: enabled={(symLinked ? "yes (via symlink)" : "no")} (systemctl not on PATH; status unavailable)");
+        }
+
+        // Autostart .desktop
+        var home = Environment.GetEnvironmentVariable("HOME") ?? "/home";
+        var autostart = Path.Combine(home, ".config/autostart/ghelper.desktop");
+        if (File.Exists(autostart))
+        {
+            string? exec = null;
+            try
+            {
+                foreach (var line in File.ReadLines(autostart))
+                {
+                    if (line.StartsWith("Exec=", StringComparison.Ordinal))
+                    {
+                        exec = line[5..].Trim();
+                        break;
+                    }
+                }
+            }
+            catch { }
+            sb.AppendLine($"  Desktop autostart: present (exec={exec ?? "?"})");
+        }
+        else
+        {
+            sb.AppendLine("  Desktop autostart: (file not present)");
+        }
+
+        sb.AppendLine();
+    }
+
+    // Suspend / resume context for this boot. Three bounded journalctl
+    // queries plus a couple of file reads. Each line degrades silently
+    // when the underlying source isn't available.
+    private static void AppendSuspendResume(StringBuilder sb)
+    {
+        sb.AppendLine("--- Suspend / Resume ---");
+
+        // Boot uptime
+        try
+        {
+            if (File.Exists("/proc/uptime"))
+            {
+                var raw = File.ReadAllText("/proc/uptime").Trim();
+                var first = raw.Split(' ').FirstOrDefault();
+                if (double.TryParse(first, System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out double secs))
+                {
+                    long total = (long)secs;
+                    long h = total / 3600;
+                    long m = (total % 3600) / 60;
+                    long s = total % 60;
+                    sb.AppendLine($"  Uptime: {h}h {m}m {s}s");
+                }
+            }
+        }
+        catch { }
+
+        // Last suspend entry / exit lines
+        var lastEntry = Platform.Linux.SysfsHelper.RunCommandWithTimeout("bash",
+            "-c \"journalctl -b 0 -k --no-pager 2>/dev/null | grep -E 'PM: suspend entry' | tail -1\"",
+            3000);
+        if (!string.IsNullOrWhiteSpace(lastEntry))
+            sb.AppendLine($"  Last suspend entry: {lastEntry.Trim()}");
+        else
+            sb.AppendLine("  Last suspend entry: (none this boot)");
+
+        var lastExit = Platform.Linux.SysfsHelper.RunCommandWithTimeout("bash",
+            "-c \"journalctl -b 0 -k --no-pager 2>/dev/null | grep -E 'PM: suspend exit' | tail -1\"",
+            3000);
+        if (!string.IsNullOrWhiteSpace(lastExit))
+            sb.AppendLine($"  Last suspend exit:  {lastExit.Trim()}");
+        else
+            sb.AppendLine("  Last suspend exit:  (none this boot)");
+
+        // Suspend / resume errors count. Use `wc -l` instead of `grep -c`:
+        // grep -c exits 1 when there are zero matches AND emits "0", so
+        // chaining `|| echo 0` gives a double-zero. wc -l always exits 0
+        // and emits a clean count.
+        var errors = Platform.Linux.SysfsHelper.RunCommandWithTimeout("bash",
+            "-c \"journalctl -b 0 -k -p err --no-pager 2>/dev/null | grep -E 'suspend|resume' | wc -l\"",
+            3000);
+        if (!string.IsNullOrWhiteSpace(errors))
+            sb.AppendLine($"  Suspend/resume errors this boot: {errors.Trim()}");
+
+        // systemd-logind state
+        var logind = Platform.Linux.SysfsHelper.RunCommand("systemctl", "is-active systemd-logind");
+        if (!string.IsNullOrWhiteSpace(logind))
+            sb.AppendLine($"  systemd-logind: {logind.Trim()}");
+
+        // Lid state (when /proc/acpi/button/lid/*/state exists). File content
+        // is in "state:      open" format with arbitrary whitespace; normalise.
+        const string lidBase = "/proc/acpi/button/lid";
+        if (Directory.Exists(lidBase))
+        {
+            try
+            {
+                foreach (var dir in Directory.GetDirectories(lidBase))
+                {
+                    var statePath = Path.Combine(dir, "state");
+                    if (!File.Exists(statePath))
+                        continue;
+                    var content = Platform.Linux.SysfsHelper.ReadAttribute(statePath);
+                    if (string.IsNullOrEmpty(content))
+                        continue;
+
+                    // "state:      open" -> "open"
+                    int colon = content.IndexOf(':');
+                    string lidState = colon >= 0 ? content[(colon + 1)..].Trim() : content.Trim();
+                    sb.AppendLine($"  Lid ({Path.GetFileName(dir)}): {lidState}");
+                }
+            }
+            catch { }
+        }
+
+        sb.AppendLine();
+    }
+
+    // Lowercase yes/no for boolean output in diagnostic lines. Avoids the
+    // C# default "True"/"False" capitalization mismatching surrounding text.
+    private static string YesNo(bool value) => value ? "yes" : "no";
 
     private static string GetFilePermissions(string path)
     {
