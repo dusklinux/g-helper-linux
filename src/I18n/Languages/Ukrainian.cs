@@ -326,6 +326,10 @@ public static class Ukrainian
         ["changelog_loading"] = "Завантаження...",
         ["changelog_load_failed"] = "Не вдалося завантажити журнал змін.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Андервольтинг (експериментально)",
         ["undervolt_desc"] = "Зсув Curve Optimizer. Більш від'ємне = нижча напруга. Надто низькі значення можуть спричинити нестабільність або пошкодження даних. Починайте з малого. Скидається при перезавантаженні.",

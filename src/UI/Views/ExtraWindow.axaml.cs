@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using GHelper.Linux.Display;
 using GHelper.Linux.I18n;
 using GHelper.Linux.Platform.Linux;
 using GHelper.Linux.USB;
@@ -171,6 +172,7 @@ public partial class ExtraWindow : Window
         labelControllerLabel.Text = Labels.Get("controller");
         labelDisplayBrightnessLabel.Text = Labels.Get("brightness");
         checkOverdrive.Content = Labels.Get("panel_overdrive_check");
+        labelOptimalBrightness.Text = Labels.Get("optimal_brightness_label");
         labelGammaLabel.Text = Labels.Get("gamma");
 
         // GPU Tuning
@@ -713,11 +715,47 @@ public partial class ExtraWindow : Window
         bool overdrive = App.Wmi?.GetPanelOverdrive() ?? false;
         checkOverdrive.IsChecked = overdrive;
 
+        RefreshOptimalBrightness();
+
         // Gamma only works on X11 (xrandr). Hide on Wayland backends.
         bool supportsGamma = display.Backend?.SupportsGamma ?? false;
         rowGamma.IsVisible = supportsGamma;
         if (supportsGamma)
             sliderGamma.Value = 100;
+    }
+
+    private void RefreshOptimalBrightness()
+    {
+        bool supported = OptimalBrightness.IsSupported();
+        rowOptimalBrightness.IsVisible = supported;
+        if (!supported)
+            return;
+
+        _suppressEvents = true;
+        comboOptimalBrightness.Items.Clear();
+        comboOptimalBrightness.Items.Add(Labels.Get("optimal_brightness_off"));
+        comboOptimalBrightness.Items.Add(Labels.Get("optimal_brightness_always"));
+        comboOptimalBrightness.Items.Add(Labels.Get("optimal_brightness_battery"));
+
+        // -1 stored = user never touched it; fall back to current firmware
+        // state so the visible selection matches reality (0=Off, 1=On Always).
+        int stored = OptimalBrightness.GetStoredMode();
+        int selected = stored >= 0
+            ? Math.Clamp(stored, 0, 2)
+            : Math.Clamp(OptimalBrightness.GetFirmwareState(), 0, 1);
+        comboOptimalBrightness.SelectedIndex = selected;
+        _suppressEvents = false;
+    }
+
+    private void ComboOptimalBrightness_Changed(object? sender,
+        Avalonia.Controls.SelectionChangedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        int mode = comboOptimalBrightness.SelectedIndex;
+        if (mode < 0)
+            return;
+        OptimalBrightness.SetMode(mode);
     }
 
     private void ButtonEnableBacklight_Click(object? sender, RoutedEventArgs e)

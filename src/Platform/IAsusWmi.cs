@@ -97,6 +97,12 @@ public interface IAsusWmi : IDisposable
     /// <summary>Set MiniLED mode.</summary>
     void SetMiniLedMode(int mode);
 
+    /// <summary>Get raw firmware state of Optimal Display Brightness (screen_auto_brightness): 0=off, 1=on, -1 if unsupported.</summary>
+    int GetScreenAutoBrightness();
+
+    /// <summary>Set raw firmware state of Optimal Display Brightness. Mode resolution (Off/Always/BatteryOnly) is owned by Display.OptimalBrightness.</summary>
+    void SetScreenAutoBrightness(bool enabled);
+
     // PPT / Power limits
 
     /// <summary>Set PPT limit by sysfs attribute name and value in watts.</summary>

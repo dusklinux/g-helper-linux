@@ -329,6 +329,10 @@ public static class Arabic
         ["changelog_loading"] = "جارٍ التحميل...",
         ["changelog_load_failed"] = "تعذر تحميل سجل التغييرات.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "خفض الجهد (تجريبي)",
         ["undervolt_desc"] = "إزاحة Curve Optimizer. القيم الأكثر سلبية = جهد أقل. القيم المنخفضة جداً قد تسبب عدم استقرار أو تلف البيانات. ابدأ بقيم صغيرة. يُعاد الضبط عند إعادة التشغيل.",

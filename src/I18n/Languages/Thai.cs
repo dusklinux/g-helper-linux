@@ -329,6 +329,10 @@ public static class Thai
         ["changelog_loading"] = "กำลังโหลด...",
         ["changelog_load_failed"] = "ไม่สามารถโหลดบันทึกการเปลี่ยนแปลงได้",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (ทดลอง)",
         ["undervolt_desc"] = "ออฟเซ็ต Curve Optimizer ค่ายิ่งลบ = แรงดันยิ่งต่ำ ค่าที่ต่ำเกินไปอาจทำให้ระบบไม่เสถียรหรือข้อมูลเสียหาย เริ่มจากค่าน้อยก่อน รีเซ็ตเมื่อรีบูต",

@@ -329,6 +329,10 @@ public static class Macedonian
         ["changelog_loading"] = "Се вчитува...",
         ["changelog_load_failed"] = "Не може да се вчита логот на промени.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Андерволтинг (Експериментално)",
         ["undervolt_desc"] = "Curve Optimizer офсет. Поголема негативна вредност = понизок напон. Премногу ниски вредности може да предизвикаат нестабилност или оштетување на податоци. Почнете со мали вредности. Се ресетира при рестарт.",

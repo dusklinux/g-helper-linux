@@ -326,6 +326,10 @@ public static class Czech
         ["changelog_loading"] = "Načítání...",
         ["changelog_load_failed"] = "Nepodařilo se načíst seznam změn.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Podpětí (experimentální)",
         ["undervolt_desc"] = "Offset Curve Optimizeru. Více záporné = nižší napětí. Příliš nízké hodnoty mohou způsobit nestabilitu nebo poškození dat. Začněte s malými hodnotami. Resetuje se při restartu.",

@@ -329,6 +329,10 @@ public static class ChineseTraditional
         ["changelog_loading"] = "載入中...",
         ["changelog_load_failed"] = "無法載入更新日誌。",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "降壓（實驗性）",
         ["undervolt_desc"] = "Curve Optimizer 偏移。值越負 = 電壓越低。值過低可能導致不穩定或資料損毀。從小值開始。重啟後重置。",

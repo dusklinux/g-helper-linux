@@ -326,6 +326,10 @@ public static class Dutch
         ["changelog_loading"] = "Laden...",
         ["changelog_load_failed"] = "Kan changelog niet laden.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Experimenteel)",
         ["undervolt_desc"] = "Curve Optimizer-offset. Negatiever = lagere spanning. Te lage waarden kunnen instabiliteit of datacorruptie veroorzaken. Begin klein. Wordt gereset bij herstart.",

@@ -329,6 +329,10 @@ public static class Serbian
         ["changelog_loading"] = "Учитавање...",
         ["changelog_load_failed"] = "Није могуће учитати списак измена.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Андерволтинг (експериментално)",
         ["undervolt_desc"] = "Curve Optimizer офсет. Негативније = нижи напон. Превише ниске вредности могу изазвати нестабилност или оштећење података. Почните са малим вредностима. Ресетује се при рестарту.",

@@ -326,6 +326,10 @@ public static class Spanish
         ["changelog_loading"] = "Cargando...",
         ["changelog_load_failed"] = "No se pudo cargar el registro de cambios.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Experimental)",
         ["undervolt_desc"] = "Offset de Curve Optimizer. Más negativo = menor voltaje. Valores demasiado bajos pueden causar inestabilidad o corrupción de datos. Empieza con poco. Se restablece al reiniciar.",

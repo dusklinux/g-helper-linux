@@ -326,6 +326,10 @@ public static class Romanian
         ["changelog_loading"] = "Se încarcă...",
         ["changelog_load_failed"] = "Nu s-a putut încărca jurnalul modificărilor.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (experimental)",
         ["undervolt_desc"] = "Offset Curve Optimizer. Mai negativ = tensiune mai mică. Valorile prea mici pot cauza instabilitate sau coruperea datelor. Începe cu valori mici. Se resetează la repornire.",

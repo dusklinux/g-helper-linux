@@ -375,6 +375,10 @@ public static class English
         ["changelog_loading"] = "Loading...",
         ["changelog_load_failed"] = "Could not load the changelog.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Experimental)",
         ["undervolt_desc"] = "Curve Optimizer offset. More negative = lower voltage. Too-low values can cause instability or data corruption. Start small. Resets on reboot.",

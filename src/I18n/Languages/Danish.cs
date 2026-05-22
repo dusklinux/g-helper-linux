@@ -329,6 +329,10 @@ public static class Danish
         ["changelog_loading"] = "Indlæser...",
         ["changelog_load_failed"] = "Kunne ikke indlæse ændringsloggen.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (eksperimentel)",
         ["undervolt_desc"] = "Curve Optimizer-offset. Mere negativ = lavere spænding. For lave værdier kan forårsage ustabilitet eller datakorruption. Start småt. Nulstilles ved genstart.",

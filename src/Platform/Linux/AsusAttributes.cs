@@ -108,6 +108,12 @@ public static class AsusAttributes
     public static readonly AttrDef MiniLedMode = new("mini_led_mode",
         description: "Mini LED mode");
 
+    // asus-armoury only (no legacy sysfs equivalent). ACPI WMI DEVID 0x0005002A,
+    // matches Windows g-helper "ScreenOptimalBrightness". Kernel docstring:
+    // "Set the panel brightness to Off<0> or On<1>".
+    public static readonly AttrDef ScreenAutoBrightness = new("screen_auto_brightness",
+        description: "Optimal Display Brightness (content-adaptive)");
+
     // System
 
     public static readonly AttrDef BootSound = new("boot_sound",
@@ -121,7 +127,7 @@ public static class AsusAttributes
         PptPl1Spl, PptPl2Sppt, PptFppt, PptApuSppt, PptPlatformSppt,
         NvDynamicBoost, NvTempTarget, NvBaseTgp, NvTgp,
         DgpuDisable, GpuMuxMode, EgpuEnable, EgpuConnected, ApuMem,
-        PanelOd, MiniLedMode,
+        PanelOd, MiniLedMode, ScreenAutoBrightness,
         BootSound,
     };
 

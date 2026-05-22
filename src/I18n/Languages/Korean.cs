@@ -329,6 +329,10 @@ public static class Korean
         ["changelog_loading"] = "불러오는 중...",
         ["changelog_load_failed"] = "변경 로그를 불러올 수 없습니다.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "언더볼팅 (실험적)",
         ["undervolt_desc"] = "Curve Optimizer 오프셋. 더 음수 = 더 낮은 전압. 너무 낮은 값은 불안정 또는 데이터 손상을 일으킬 수 있습니다. 작은 값부터 시작하세요. 재부팅 시 초기화됩니다.",
