@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
+using GHelper.Linux.Display;
 using GHelper.Linux.Gpu;
 using GHelper.Linux.Helpers;
 using GHelper.Linux.I18n;
@@ -360,6 +361,8 @@ public class App : Application
             if (AppConfig.Is("toggle_clamshell_mode"))
                 UI.Views.ExtraWindow.StartClamshellInhibit();
 
+            OptimalBrightness.Init();
+
             // Register Unix signal handlers for clean shutdown on SIGTERM/SIGINT
             // This prevents KDE/GNOME from hanging on logout/reboot
             RegisterSignalHandlers(desktop);
@@ -427,6 +430,7 @@ public class App : Application
             (AsusAttributes.PptPl2Sppt, "PL2 power limit"),
             (AsusAttributes.NvDynamicBoost, "NVIDIA dynamic boost"),
             (AsusAttributes.NvTempTarget, "NVIDIA temp target"),
+            (AsusAttributes.ScreenAutoBrightness, "Optimal Display Brightness"),
         };
 
         foreach (var (attr, name) in features)
@@ -1183,6 +1187,8 @@ public class App : Application
         try
         { USB.XGM.InitLight(); }
         catch (Exception ex) { Logger.WriteLine($"XGM.InitLight on power change failed: {ex.Message}"); }
+
+        OptimalBrightness.OnPowerStateChanged();
     }
 
     // Unix signal handlers for clean shutdown on SIGTERM/SIGINT (logout/reboot)

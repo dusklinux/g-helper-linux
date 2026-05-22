@@ -326,6 +326,10 @@ public static class French
         ["changelog_loading"] = "Chargement...",
         ["changelog_load_failed"] = "Impossible de charger le journal des modifications.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Expérimental)",
         ["undervolt_desc"] = "Décalage Curve Optimizer. Plus négatif = tension plus basse. Des valeurs trop basses peuvent provoquer instabilité ou corruption de données. Commencez petit. Réinitialisé au redémarrage.",

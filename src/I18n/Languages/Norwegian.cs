@@ -329,6 +329,10 @@ public static class Norwegian
         ["changelog_loading"] = "Laster...",
         ["changelog_load_failed"] = "Kunne ikke laste endringsloggen.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (eksperimentelt)",
         ["undervolt_desc"] = "Curve Optimizer-forskyvning. Mer negativt = lavere spenning. For lave verdier kan forårsake ustabilitet eller datakorrupsjon. Start lite. Tilbakestilles ved omstart.",

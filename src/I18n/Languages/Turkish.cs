@@ -326,6 +326,10 @@ public static class Turkish
         ["changelog_loading"] = "Yükleniyor...",
         ["changelog_load_failed"] = "Değişiklik günlüğü yüklenemedi.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Deneysel)",
         ["undervolt_desc"] = "Curve Optimizer ofseti. Daha negatif = daha düşük voltaj. Çok düşük değerler kararsızlığa veya veri bozulmasına yol açabilir. Küçük başlayın. Yeniden başlatmada sıfırlanır.",

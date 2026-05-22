@@ -326,6 +326,10 @@ public static class Vietnamese
         ["changelog_loading"] = "Đang tải...",
         ["changelog_load_failed"] = "Không thể tải nhật ký thay đổi.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (thử nghiệm)",
         ["undervolt_desc"] = "Offset Curve Optimizer. Càng âm = điện áp càng thấp. Giá trị quá thấp có thể gây mất ổn định hoặc hỏng dữ liệu. Bắt đầu từ nhỏ. Đặt lại khi khởi động lại.",

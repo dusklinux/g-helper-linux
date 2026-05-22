@@ -326,6 +326,10 @@ public static class Russian
         ["changelog_loading"] = "Загрузка...",
         ["changelog_load_failed"] = "Не удалось загрузить список изменений.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Андервольтинг (экспериментально)",
         ["undervolt_desc"] = "Смещение Curve Optimizer. Более отрицательное = меньшее напряжение. Слишком низкие значения могут вызвать нестабильность или повреждение данных. Начинайте с малого. Сбрасывается при перезагрузке.",

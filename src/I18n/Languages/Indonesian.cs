@@ -329,6 +329,10 @@ public static class Indonesian
         ["changelog_loading"] = "Memuat...",
         ["changelog_load_failed"] = "Tidak dapat memuat changelog.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Eksperimental)",
         ["undervolt_desc"] = "Offset Curve Optimizer. Lebih negatif = voltase lebih rendah. Nilai terlalu rendah bisa menyebabkan ketidakstabilan atau kerusakan data. Mulai dari kecil. Direset saat reboot.",

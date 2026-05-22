@@ -191,6 +191,14 @@
                               Margin="0,4"
                               IsCheckedChanged="CheckOverdrive_Changed" />
 
+                    <Grid x:Name="rowOptimalBrightness" ColumnDefinitions="120,*" Margin="0,4" IsVisible="False">
+                        <TextBlock Grid.Column="0" x:Name="labelOptimalBrightness" Text="Optimal Brightness"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboOptimalBrightness"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ComboOptimalBrightness_Changed" />
+                    </Grid>
+
                     <!-- Gamma (hidden on Wayland, no backend support) -->
                     <Grid x:Name="rowGamma" ColumnDefinitions="120,*,50" Margin="0,4">
                         <TextBlock Grid.Column="0" x:Name="labelGammaLabel" Text="Gamma"

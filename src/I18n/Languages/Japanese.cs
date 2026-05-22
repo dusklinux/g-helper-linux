@@ -329,6 +329,10 @@ public static class Japanese
         ["changelog_loading"] = "読み込み中...",
         ["changelog_load_failed"] = "更新履歴を読み込めませんでした。",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "アンダーボルト（実験的）",
         ["undervolt_desc"] = "Curve Optimizer オフセット。より負の値 = より低い電圧。値が低すぎると不安定やデータ破損の原因になります。小さな値から始めてください。再起動でリセットされます。",

@@ -326,6 +326,10 @@ public static class Hungarian
         ["changelog_loading"] = "Betöltés...",
         ["changelog_load_failed"] = "A változásnapló betöltése sikertelen.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Alulfeszültség (kísérleti)",
         ["undervolt_desc"] = "Curve Optimizer eltolás. Negatívabb = alacsonyabb feszültség. Túl alacsony értékek instabilitást vagy adatsérülést okozhatnak. Kis értékkel kezdje. Újraindításkor visszaáll.",

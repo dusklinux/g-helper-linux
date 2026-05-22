@@ -329,6 +329,10 @@ public static class Greek
         ["changelog_loading"] = "Φόρτωση...",
         ["changelog_load_failed"] = "Αδυναμία φόρτωσης αρχείου αλλαγών.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Πειραματικό)",
         ["undervolt_desc"] = "Αντιστάθμιση Curve Optimizer. Πιο αρνητικό = χαμηλότερη τάση. Πολύ χαμηλές τιμές μπορεί να προκαλέσουν αστάθεια ή καταστροφή δεδομένων. Ξεκινήστε με μικρές τιμές. Επαναφέρεται στην επανεκκίνηση.",

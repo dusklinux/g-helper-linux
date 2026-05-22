@@ -329,6 +329,10 @@ public static class Finnish
         ["changelog_loading"] = "Ladataan...",
         ["changelog_load_failed"] = "Muutoslokia ei voitu ladata.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Alijännite (kokeellinen)",
         ["undervolt_desc"] = "Curve Optimizer -siirtymä. Negatiivisempi = matalampi jännite. Liian matalat arvot voivat aiheuttaa epävakautta tai tietojen vioittumista. Aloita pienestä. Palautuu uudelleenkäynnistyksessä.",

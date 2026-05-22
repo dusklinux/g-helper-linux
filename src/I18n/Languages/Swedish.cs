@@ -329,6 +329,10 @@ public static class Swedish
         ["changelog_loading"] = "Läser in...",
         ["changelog_load_failed"] = "Det gick inte att läsa in ändringsloggen.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (experimentellt)",
         ["undervolt_desc"] = "Curve Optimizer-förskjutning. Mer negativ = lägre spänning. För låga värden kan orsaka instabilitet eller datakorruption. Börja smått. Återställs vid omstart.",

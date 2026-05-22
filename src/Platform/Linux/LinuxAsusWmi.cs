@@ -115,6 +115,7 @@ public class LinuxAsusWmi : IAsusWmi
             0x00090016 => GetGpuMuxMode(),                    // GPUMuxROG
             0x0005001E => GetMiniLedMode(),                   // ScreenMiniled1
             0x0005002E => GetMiniLedMode(),                   // ScreenMiniled2
+            0x0005002A => GetScreenAutoBrightness(),          // ScreenOptimalBrightness
             0x00110013 => GetFanRpm(0),                       // CPU_Fan
             0x00110014 => GetFanRpm(1),                       // GPU_Fan
             0x00110031 => GetFanRpm(2),                       // Mid_Fan
@@ -137,6 +138,7 @@ public class LinuxAsusWmi : IAsusWmi
             // 0x00090020 (GPUEco) and 0x00090016 (GPUMux) intentionally removed.
             0x0005001E => SetAndReturn(() => SetMiniLedMode(value)),
             0x0005002E => SetAndReturn(() => SetMiniLedMode(value)),
+            0x0005002A => SetAndReturn(() => SetScreenAutoBrightness(value != 0)),
             0x00050021 => SetAndReturn(() => SetKeyboardBrightness(value)),
             _ => -1
         };
@@ -904,6 +906,25 @@ public class LinuxAsusWmi : IAsusWmi
         var path = SysfsHelper.ResolveAttrPath(AsusAttributes.MiniLedMode, SysfsHelper.AsusBusPlatform);
         if (path != null)
             SysfsHelper.WriteInt(path, mode);
+    }
+
+    // Optimal Display Brightness (screen_auto_brightness, ACPI WMI DEVID 0x0005002A).
+    // Linux kernel asus-armoury exposes this as a boolean firmware-attribute only;
+    // no legacy asus-nb-wmi sysfs equivalent. Same firmware endpoint as Windows.
+
+    public int GetScreenAutoBrightness()
+    {
+        var path = SysfsHelper.ResolveAttrPath(AsusAttributes.ScreenAutoBrightness);
+        if (path == null)
+            return -1;
+        return SysfsHelper.ReadInt(path, -1);
+    }
+
+    public void SetScreenAutoBrightness(bool enabled)
+    {
+        var path = SysfsHelper.ResolveAttrPath(AsusAttributes.ScreenAutoBrightness);
+        if (path != null)
+            SysfsHelper.WriteInt(path, enabled ? 1 : 0);
     }
 
     // PPT / Power limits

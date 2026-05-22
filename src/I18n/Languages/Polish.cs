@@ -326,6 +326,10 @@ public static class Polish
         ["changelog_loading"] = "Ładowanie...",
         ["changelog_load_failed"] = "Nie udało się załadować dziennika zmian.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (eksperymentalny)",
         ["undervolt_desc"] = "Przesunięcie Curve Optimizer. Bardziej ujemne = niższe napięcie. Zbyt niskie wartości mogą powodować niestabilność lub uszkodzenie danych. Zacznij od małych wartości. Resetuje się po restarcie.",

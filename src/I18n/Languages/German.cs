@@ -326,6 +326,10 @@ public static class German
         ["changelog_loading"] = "Wird geladen...",
         ["changelog_load_failed"] = "Changelog konnte nicht geladen werden.",
 
+        ["optimal_brightness_label"] = "Optimal Display Brightness",
+        ["optimal_brightness_off"] = "Off",
+        ["optimal_brightness_always"] = "On Always",
+        ["optimal_brightness_battery"] = "On Battery",
         // UNDERVOLTING
         ["undervolt_header"] = "Undervolting (Experimentell)",
         ["undervolt_desc"] = "Curve-Optimizer-Offset. Negativer = niedrigere Spannung. Zu niedrige Werte können Instabilität oder Datenverlust verursachen. Klein anfangen. Setzt sich beim Neustart zurück.",
