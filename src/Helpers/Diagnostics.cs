@@ -38,6 +38,11 @@ public static class Diagnostics
         // hwmon Devices
         AppendHwmon(sb);
 
+        // GPU drivers (NVIDIA + AMD): version, modules, install method,
+        // PCI bind state, runtime power state, initramfs presence
+        AppendNvidia(sb);
+        AppendAmdGpu(sb);
+
         // USB HID (ASUS)
         AppendUsbDevices(sb);
 
@@ -385,6 +390,335 @@ public static class Diagnostics
         }
 
         sb.AppendLine();
+    }
+
+    private static void AppendNvidia(StringBuilder sb)
+    {
+        sb.AppendLine("--- NVIDIA ---");
+
+        bool nvidiaLoaded = Directory.Exists("/sys/module/nvidia");
+        if (!nvidiaLoaded)
+        {
+            sb.AppendLine("  Kernel driver: not loaded");
+            // Even when the driver isn't loaded the dGPU may be on the PCI
+            // bus (likely bound to nothing or to vfio-pci); show its state.
+            var bdfNoDriver = FindPciGpuBdf(vendorId: "0x10de");
+            if (bdfNoDriver != null)
+            {
+                AppendPciDeviceState(sb, bdfNoDriver, "  dGPU");
+            }
+            sb.AppendLine();
+            return;
+        }
+
+        // Kernel-side driver version (single sysfs read, doesn't wake the dGPU).
+        var version = Platform.Linux.SysfsHelper.ReadAttribute("/sys/module/nvidia/version");
+        sb.AppendLine($"  Driver version: {version ?? "?"}");
+
+        // Loaded module set tells us which subsystems initialised.
+        var modules = new List<string>();
+        foreach (var name in new[]
+        {
+            "nvidia", "nvidia_drm", "nvidia_modeset", "nvidia_uvm",
+            "nvidia_peermem", "nvidia_wmi_ec_backlight"
+        })
+        {
+            if (Directory.Exists($"/sys/module/{name}"))
+                modules.Add(name);
+        }
+        sb.AppendLine($"  Modules loaded: {string.Join(", ", modules)}");
+
+        // KMS state (1 = nvidia DRM KMS active, required for Wayland).
+        var modeset = Platform.Linux.SysfsHelper.ReadAttribute("/sys/module/nvidia_drm/parameters/modeset");
+        if (modeset != null)
+            sb.AppendLine($"  nvidia_drm.modeset: {modeset}");
+
+        // refcnt > 0 means something is actively using the GPU.
+        int refcnt = Platform.Linux.SysfsHelper.ReadInt("/sys/module/nvidia_drm/refcnt", -1);
+        sb.AppendLine($"  nvidia_drm refcnt: {(refcnt < 0 ? "?" : refcnt.ToString())}");
+
+        // /proc/driver/nvidia/version banner reveals open vs proprietary.
+        var procVersion = Platform.Linux.SysfsHelper.ReadAttribute("/proc/driver/nvidia/version");
+        if (procVersion != null)
+        {
+            bool isOpen = procVersion.Contains("open", StringComparison.OrdinalIgnoreCase);
+            sb.AppendLine($"  Variant: {(isOpen ? "open kernel modules" : "proprietary")}");
+        }
+
+        // Module path classifies the install method (DKMS, distro kmod,
+        // nvidia-installer, etc.). modinfo is reliable across distros.
+        var modulePath = Platform.Linux.SysfsHelper.RunCommand("modinfo", "-F filename nvidia");
+        if (!string.IsNullOrWhiteSpace(modulePath))
+        {
+            modulePath = modulePath.Trim();
+            sb.AppendLine($"  Module path: {modulePath}");
+
+            string installMethod;
+            if (modulePath.Contains("/dkms/"))
+                installMethod = "DKMS (compiled from source)";
+            else if (modulePath.Contains("/updates/"))
+                installMethod = "distro update/kmod";
+            else if (modulePath.Contains("/extra/"))
+                installMethod = "extra (nvidia-installer or distro package)";
+            else if (modulePath.Contains("/kernel/"))
+                installMethod = "in-tree kernel";
+            else
+                installMethod = "unknown";
+            sb.AppendLine($"  Install method: {installMethod}");
+        }
+
+        // PCI device state.
+        var bdf = FindPciGpuBdf(vendorId: "0x10de");
+        if (bdf != null)
+        {
+            AppendPciDeviceState(sb, bdf, "  dGPU");
+        }
+
+        // nvidia-smi: reports the userspace library version. Will fail
+        // silently with stderr if not installed or driver is in D3cold.
+        var smi = Platform.Linux.SysfsHelper.RunCommandWithTimeout(
+            "nvidia-smi",
+            "--query-gpu=driver_version,name --format=csv,noheader",
+            3000);
+        if (!string.IsNullOrWhiteSpace(smi))
+        {
+            var smiLine = smi.Split('\n').FirstOrDefault(l => !string.IsNullOrWhiteSpace(l));
+            if (!string.IsNullOrWhiteSpace(smiLine))
+                sb.AppendLine($"  nvidia-smi: {smiLine.Trim()}");
+        }
+
+        // Initramfs presence: critical for understanding whether nvidia is
+        // already bound to the PCI device by the time our boot service runs.
+        var initramfs = ProbeInitramfsForNvidia();
+        if (initramfs != null)
+            sb.AppendLine($"  In initramfs: {initramfs}");
+
+        sb.AppendLine();
+    }
+
+    // AMD GPU diagnostics. Useful on AMD APUs (iGPU only) as well as
+    // hybrid AMD + AMD dGPU laptops. The amdgpu kernel driver carries
+    // version through DRM IOCTL but we read what's cheaply available.
+    private static void AppendAmdGpu(StringBuilder sb)
+    {
+        sb.AppendLine("--- AMD GPU ---");
+
+        bool amdgpuLoaded = Directory.Exists("/sys/module/amdgpu");
+        if (!amdgpuLoaded)
+        {
+            sb.AppendLine("  Kernel driver: not loaded");
+            sb.AppendLine();
+            return;
+        }
+
+        // Module file path tells us where amdgpu came from.
+        var modulePath = Platform.Linux.SysfsHelper.RunCommand("modinfo", "-F filename amdgpu");
+        if (!string.IsNullOrWhiteSpace(modulePath))
+            sb.AppendLine($"  Module path: {modulePath.Trim()}");
+
+        // amdgpu version string (kernel module). Most kernels expose this
+        // as a srcversion or via /sys/module/amdgpu/version (not always
+        // present), so do a best-effort read.
+        var amdVersion = Platform.Linux.SysfsHelper.ReadAttribute("/sys/module/amdgpu/version")
+                       ?? Platform.Linux.SysfsHelper.ReadAttribute("/sys/module/amdgpu/srcversion");
+        if (!string.IsNullOrEmpty(amdVersion))
+            sb.AppendLine($"  Module version: {amdVersion}");
+
+        // Enumerate all AMD GPU PCI devices (iGPU + dGPU on hybrid AMD
+        // laptops). Mainly to surface power state on each card.
+        var amdBdfs = FindAllPciGpuBdfs(vendorId: "0x1002");
+        if (amdBdfs.Count == 0)
+        {
+            sb.AppendLine("  PCI devices: (none with vendor 0x1002 + display class)");
+        }
+        else
+        {
+            for (int i = 0; i < amdBdfs.Count; i++)
+            {
+                var label = amdBdfs.Count == 1 ? "  GPU" : $"  GPU[{i}]";
+                AppendPciDeviceState(sb, amdBdfs[i], label);
+            }
+        }
+
+        // rocm-smi is the AMD analogue of nvidia-smi but rarely installed.
+        // Try it anyway; silent failure if not present.
+        var rocm = Platform.Linux.SysfsHelper.RunCommandWithTimeout(
+            "rocm-smi", "--showproductname --csv", 3000);
+        if (!string.IsNullOrWhiteSpace(rocm))
+        {
+            var firstNonEmpty = rocm.Split('\n').FirstOrDefault(l =>
+                !string.IsNullOrWhiteSpace(l) && !l.StartsWith("===") && !l.StartsWith("device,"));
+            if (!string.IsNullOrWhiteSpace(firstNonEmpty))
+                sb.AppendLine($"  rocm-smi: {firstNonEmpty.Trim()}");
+        }
+
+        sb.AppendLine();
+    }
+
+    // Walks /sys/bus/pci/devices/* and returns the BDF of the first device
+    // matching the requested vendor ID with PCI class 0x0300 (VGA display
+    // controller) or 0x0302 (3D controller). Returns null if no match.
+    private static string? FindPciGpuBdf(string vendorId)
+    {
+        var all = FindAllPciGpuBdfs(vendorId);
+        return all.Count > 0 ? all[0] : null;
+    }
+
+    private static List<string> FindAllPciGpuBdfs(string vendorId)
+    {
+        var result = new List<string>();
+        const string pciDevices = "/sys/bus/pci/devices";
+        if (!Directory.Exists(pciDevices))
+            return result;
+
+        try
+        {
+            foreach (var dev in Directory.GetDirectories(pciDevices))
+            {
+                var vendor = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(dev, "vendor"));
+                if (vendor == null || !vendor.Equals(vendorId, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                // class is 24-bit (e.g. "0x030000" = VGA controller, "0x030200" = 3D).
+                // We accept anything starting with 0x0300 or 0x0302.
+                var pciClass = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(dev, "class"));
+                if (pciClass == null)
+                    continue;
+
+                if (pciClass.StartsWith("0x0300", StringComparison.OrdinalIgnoreCase)
+                    || pciClass.StartsWith("0x0302", StringComparison.OrdinalIgnoreCase))
+                {
+                    result.Add(Path.GetFileName(dev));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"FindAllPciGpuBdfs scan failed: {ex.Message}");
+        }
+
+        result.Sort(StringComparer.Ordinal);
+        return result;
+    }
+
+    // Appends a multi-line block describing a PCI device's bind state and
+    // runtime power state. Used by both AppendNvidia and AppendAmdGpu so
+    // the diagnostic format stays consistent.
+    private static void AppendPciDeviceState(StringBuilder sb, string bdf, string labelPrefix)
+    {
+        sb.AppendLine($"{labelPrefix} BDF: {bdf}");
+
+        var devDir = $"/sys/bus/pci/devices/{bdf}";
+
+        // device + subsystem identify the silicon and the OEM branding.
+        var deviceId = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(devDir, "device"));
+        var subsystemVendor = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(devDir, "subsystem_vendor"));
+        var subsystemDevice = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(devDir, "subsystem_device"));
+        if (deviceId != null)
+            sb.AppendLine($"{labelPrefix} device: {deviceId} (subsys {subsystemVendor ?? "?"}:{subsystemDevice ?? "?"})");
+
+        // PCI driver binding (nvidia / amdgpu / vfio-pci / nouveau / unbound).
+        var driverLink = Path.Combine(devDir, "driver");
+        string pciDriver = "(unbound)";
+        try
+        {
+            if (Directory.Exists(driverLink))
+            {
+                var target = Platform.Linux.SysfsHelper.RunCommand("readlink", $"-f {driverLink}");
+                if (!string.IsNullOrWhiteSpace(target))
+                    pciDriver = Path.GetFileName(target.Trim());
+            }
+        }
+        catch { /* leave as unbound */ }
+        sb.AppendLine($"{labelPrefix} PCI driver: {pciDriver}");
+
+        // Runtime power management state (D0 = active, D3hot/D3cold = suspended).
+        var rtStatus = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(devDir, "power/runtime_status"));
+        var rtControl = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(devDir, "power/control"));
+        if (rtStatus != null || rtControl != null)
+            sb.AppendLine($"{labelPrefix} PCI power: status={rtStatus ?? "?"} control={rtControl ?? "?"}");
+
+        // Current PCI link speed / width. Drops to lower link speeds when
+        // the GPU is in D3cold; useful for verifying eco transitions.
+        var linkSpeed = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(devDir, "current_link_speed"));
+        var linkWidth = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(devDir, "current_link_width"));
+        if (linkSpeed != null || linkWidth != null)
+            sb.AppendLine($"{labelPrefix} PCI link: {linkSpeed ?? "?"} x{linkWidth ?? "?"}");
+    }
+
+    // Cross-distro initramfs nvidia probe. Returns null if no probe tool
+    // is available; "yes (...)" / "no" otherwise. Times out aggressively
+    // since initramfs blobs can be 30-80 MB to walk.
+    private static string? ProbeInitramfsForNvidia()
+    {
+        var kernel = Platform.Linux.SysfsHelper.RunCommand("uname", "-r");
+        if (string.IsNullOrWhiteSpace(kernel))
+            return null;
+        kernel = kernel.Trim();
+
+        // (probe binary, image path candidates, list args)
+        var candidates = new (string Tool, string[] Images, string Args)[]
+        {
+            // Arch / CachyOS (mkinitcpio)
+            ("lsinitcpio",
+             new[]
+             {
+                 $"/boot/initramfs-linux.img",
+                 $"/boot/initramfs-{kernel}.img",
+                 $"/boot/initramfs-linux-cachyos.img",
+             },
+             "-l"),
+            // Debian / Ubuntu
+            ("lsinitramfs",
+             new[]
+             {
+                 $"/boot/initrd.img-{kernel}",
+                 $"/boot/initrd.img",
+             },
+             ""),
+            // Fedora / RHEL (dracut)
+            ("lsinitrd",
+             new[]
+             {
+                 $"/boot/initramfs-{kernel}.img",
+             },
+             ""),
+        };
+
+        foreach (var (tool, images, args) in candidates)
+        {
+            // Check the binary is on PATH; skip if not.
+            var which = Platform.Linux.SysfsHelper.RunCommand("which", tool);
+            if (string.IsNullOrWhiteSpace(which))
+                continue;
+
+            foreach (var img in images)
+            {
+                if (!File.Exists(img))
+                    continue;
+
+                var listing = Platform.Linux.SysfsHelper.RunCommandWithTimeout(
+                    "bash",
+                    $"-c \"{tool} {args} '{img}' 2>/dev/null | grep -oE 'nvidia[a-z_]*' | sort -u | head -n 8\"",
+                    8000);
+                if (listing == null)
+                    return $"unknown (probe of {img} via {tool} failed)";
+
+                var hits = listing
+                    .Split('\n')
+                    .Select(l => l.Trim())
+                    .Where(l => l.Length > 0)
+                    .Distinct()
+                    .ToList();
+
+                if (hits.Count == 0)
+                    return $"no ({Path.GetFileName(img)})";
+
+                return $"yes ({string.Join(", ", hits)})";
+            }
+        }
+
+        return null;
     }
 
     private static void AppendUsbDevices(StringBuilder sb)
