@@ -296,8 +296,6 @@ public static class Norwegian
         ["cpu_cores"] = "CPU-kjerner",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} av {1} tråder aktive",
-        ["open_log"] = "Åpne loggfil",
-        ["log_stdout"] = "Logger skrives til stdout - kjør fra terminal for å se utdata",
         ["kernel_warning"] = "\u26A0 Kernel 6.2+ anbefales for full funksjonsstøtte",
 
         // LANGUAGE

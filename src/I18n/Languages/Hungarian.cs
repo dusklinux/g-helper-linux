@@ -293,8 +293,6 @@ public static class Hungarian
         ["cpu_cores"] = "CPU magok",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} / {1} szál aktív",
-        ["open_log"] = "Naplófájl megnyitása",
-        ["log_stdout"] = "A naplók az stdout-ra íródnak - futtassa terminálból a kimenet megtekintéséhez",
         ["kernel_warning"] = "\u26A0 Kernel 6.2+ ajánlott a teljes funkció támogatáshoz",
 
         // LANGUAGE

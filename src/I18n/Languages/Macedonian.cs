@@ -296,8 +296,6 @@ public static class Macedonian
         ["cpu_cores"] = "CPU јадра",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} од {1} нишки активни",
-        ["open_log"] = "Отвори лог датотека",
-        ["log_stdout"] = "Логовите се пишуваат на stdout - стартувајте од терминал за да го видите излезот",
         ["kernel_warning"] = "\u26A0 Се препорачува кернел 6.2+ за целосна поддршка на функции",
 
         // LANGUAGE

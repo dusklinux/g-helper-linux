@@ -293,8 +293,6 @@ public static class Romanian
         ["cpu_cores"] = "Nuclee CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} din {1} fire active",
-        ["open_log"] = "Deschide fișierul jurnal",
-        ["log_stdout"] = "Jurnalele sunt scrise pe stdout - rulați din terminal pentru a vedea rezultatul",
         ["kernel_warning"] = "\u26A0 Kernel 6.2+ recomandat pentru suport complet al funcțiilor",
 
         // LANGUAGE

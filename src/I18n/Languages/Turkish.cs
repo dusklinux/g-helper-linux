@@ -293,8 +293,6 @@ public static class Turkish
         ["cpu_cores"] = "CPU Çekirdekleri",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{1} iş parçacığından {0} aktif",
-        ["open_log"] = "Günlük Dosyasını Aç",
-        ["log_stdout"] = "Günlükler stdout'a yazılıyor - çıktıyı görmek için terminalden çalıştırın",
         ["kernel_warning"] = "\u26A0 Tam özellik desteği için çekirdek 6.2+ önerilir",
 
         // LANGUAGE

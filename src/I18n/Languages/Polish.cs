@@ -293,8 +293,6 @@ public static class Polish
         ["cpu_cores"] = "Rdzenie CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} z {1} aktywnych wątków",
-        ["open_log"] = "Otwórz plik logów",
-        ["log_stdout"] = "Logi są zapisywane na stdout - uruchom z terminala, aby zobaczyć dane wyjściowe",
         ["kernel_warning"] = "\u26A0 Zalecane jądro 6.2+ dla pełnej obsługi funkcji",
 
         // LANGUAGE

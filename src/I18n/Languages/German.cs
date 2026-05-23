@@ -293,8 +293,6 @@ public static class German
         ["cpu_cores"] = "CPU-Kerne",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} von {1} Threads aktiv",
-        ["open_log"] = "Logdatei öffnen",
-        ["log_stdout"] = "Logs werden auf stdout ausgegeben - im Terminal starten, um die Ausgabe zu sehen",
         ["kernel_warning"] = "\u26A0 Kernel 6.2+ empfohlen für volle Funktionsunterstützung",
 
         // LANGUAGE

@@ -296,8 +296,6 @@ public static class Serbian
         ["cpu_cores"] = "CPU језгра",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} од {1} нити активно",
-        ["open_log"] = "Отвори лог датотеку",
-        ["log_stdout"] = "Логови се исписују на stdout - покрените из терминала да видите излаз",
         ["kernel_warning"] = "\u26A0 Препоручује се кернел 6.2+ за пуну подршку функција",
 
         // LANGUAGE

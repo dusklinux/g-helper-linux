@@ -293,8 +293,6 @@ public static class Ukrainian
         ["cpu_cores"] = "Ядра CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} з {1} активних потоків",
-        ["open_log"] = "Відкрити файл логів",
-        ["log_stdout"] = "Логи виводяться у stdout - запустіть з термінала для перегляду",
         ["kernel_warning"] = "\u26A0 Рекомендовано ядро 6.2+ для повної підтримки функцій",
 
         // LANGUAGE

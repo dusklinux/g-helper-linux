@@ -342,8 +342,6 @@ public static class English
         ["cpu_cores"] = "CPU Cores",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} of {1} threads active",
-        ["open_log"] = "Open Log File",
-        ["log_stdout"] = "Logs are written to stdout - run from terminal to see output",
         ["kernel_warning"] = "\u26A0 Kernel 6.2+ recommended for full feature support",
 
         // LANGUAGE

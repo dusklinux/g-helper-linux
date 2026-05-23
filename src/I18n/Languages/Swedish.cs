@@ -296,8 +296,6 @@ public static class Swedish
         ["cpu_cores"] = "CPU-kärnor",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} av {1} trådar aktiva",
-        ["open_log"] = "Öppna loggfil",
-        ["log_stdout"] = "Loggar skrivs till stdout - kör från terminal för att se utdata",
         ["kernel_warning"] = "\u26A0 Kernel 6.2+ rekommenderas för fullt funktionsstöd",
 
         // LANGUAGE

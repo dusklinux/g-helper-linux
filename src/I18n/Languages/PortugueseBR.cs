@@ -293,8 +293,6 @@ public static class PortugueseBR
         ["cpu_cores"] = "Núcleos de CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} de {1} threads ativos",
-        ["open_log"] = "Abrir arquivo de log",
-        ["log_stdout"] = "Os logs são escritos em stdout - execute pelo terminal para ver a saída",
         ["kernel_warning"] = "\u26A0 Kernel 6.2+ recomendado para suporte completo de recursos",
 
         // LANGUAGE
