@@ -293,8 +293,6 @@ public static class French
         ["cpu_cores"] = "Cœurs CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} sur {1} threads actifs",
-        ["open_log"] = "Ouvrir le fichier journal",
-        ["log_stdout"] = "Les logs sont envoyés sur stdout - lancez depuis un terminal pour voir la sortie",
         ["kernel_warning"] = "\u26A0 Noyau 6.2+ recommandé pour un support complet des fonctionnalités",
 
         // LANGUAGE

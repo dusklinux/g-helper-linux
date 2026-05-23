@@ -296,8 +296,6 @@ public static class Danish
         ["cpu_cores"] = "CPU-kerner",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} af {1} tråde aktive",
-        ["open_log"] = "Åbn logfil",
-        ["log_stdout"] = "Logfiler skrives til stdout - kør fra terminal for at se output",
         ["kernel_warning"] = "\u26A0 Kernel 6.2+ anbefales for fuld funktionssupport",
 
         // LANGUAGE

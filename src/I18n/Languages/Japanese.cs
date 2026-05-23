@@ -296,8 +296,6 @@ public static class Japanese
         ["cpu_cores"] = "CPU コア",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{1} スレッド中 {0} がアクティブ",
-        ["open_log"] = "ログファイルを開く",
-        ["log_stdout"] = "ログは stdout に出力されます - ターミナルから実行して出力を確認してください",
         ["kernel_warning"] = "\u26A0 完全な機能サポートにはカーネル 6.2 以上を推奨",
 
         // LANGUAGE

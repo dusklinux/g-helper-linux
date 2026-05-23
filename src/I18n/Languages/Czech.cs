@@ -293,8 +293,6 @@ public static class Czech
         ["cpu_cores"] = "Jádra CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} z {1} aktivních vláken",
-        ["open_log"] = "Otevřít soubor logů",
-        ["log_stdout"] = "Logy jsou vypisovány na stdout - spusťte z terminálu pro zobrazení výstupu",
         ["kernel_warning"] = "\u26A0 Doporučeno jádro 6.2+ pro plnou podporu funkcí",
 
         // LANGUAGE

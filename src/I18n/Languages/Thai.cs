@@ -296,8 +296,6 @@ public static class Thai
         ["cpu_cores"] = "คอร์ CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} จาก {1} เธรดที่ทำงานอยู่",
-        ["open_log"] = "เปิดไฟล์บันทึก",
-        ["log_stdout"] = "บันทึกถูกเขียนไปยัง stdout - เรียกใช้จากเทอร์มินัลเพื่อดูผลลัพธ์",
         ["kernel_warning"] = "\u26A0 แนะนำเคอร์เนล 6.2 ขึ้นไปเพื่อรองรับฟีเจอร์ทั้งหมด",
 
         // LANGUAGE

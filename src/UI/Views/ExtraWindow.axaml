@@ -609,10 +609,6 @@
                     </Grid>
                     <TextBlock x:Name="labelCpuCoresInfo" Classes="label-dim"
                                Text="" FontSize="10" Margin="0,0,0,4" />
-
-                    <Button x:Name="buttonOpenLog" Classes="ghelper"
-                            Content="Open Log File" Margin="0,8,0,0"
-                            Click="ButtonOpenLog_Click" />
                 </StackPanel>
             </Border>
 

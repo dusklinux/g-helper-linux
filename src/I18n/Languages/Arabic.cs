@@ -296,8 +296,6 @@ public static class Arabic
         ["cpu_cores"] = "أنوية CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} من {1} سلسلة نشطة",
-        ["open_log"] = "فتح ملف السجل",
-        ["log_stdout"] = "يتم كتابة السجلات إلى stdout - شغّل من الطرفية لرؤية المخرجات",
         ["kernel_warning"] = "\u26A0 يُنصح بالنواة 6.2 أو أحدث لدعم كامل الميزات",
 
         // LANGUAGE

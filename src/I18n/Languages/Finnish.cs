@@ -296,8 +296,6 @@ public static class Finnish
         ["cpu_cores"] = "CPU-ytimet",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0}/{1} säiettä aktiivisena",
-        ["open_log"] = "Avaa lokitiedosto",
-        ["log_stdout"] = "Lokit kirjoitetaan stdout-virtaan - suorita terminaalista nähdäksesi tuloste",
         ["kernel_warning"] = "\u26A0 Kernel 6.2+ suositellaan täyden ominaisuustuen saamiseksi",
 
         // LANGUAGE

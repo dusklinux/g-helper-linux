@@ -296,8 +296,6 @@ public static class ChineseTraditional
         ["cpu_cores"] = "CPU 核心",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{1} 執行緒中有 {0} 個作用中",
-        ["open_log"] = "開啟日誌檔案",
-        ["log_stdout"] = "日誌輸出至 stdout - 從終端機執行以查看輸出",
         ["kernel_warning"] = "\u26A0 建議使用核心 6.2 以上版本以獲得完整功能支援",
 
         // LANGUAGE

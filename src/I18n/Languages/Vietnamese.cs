@@ -293,8 +293,6 @@ public static class Vietnamese
         ["cpu_cores"] = "Lõi CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} trong {1} luồng đang hoạt động",
-        ["open_log"] = "Mở tệp nhật ký",
-        ["log_stdout"] = "Nhật ký được ghi ra stdout - chạy từ terminal để xem kết quả",
         ["kernel_warning"] = "\u26A0 Khuyến nghị kernel 6.2+ để hỗ trợ đầy đủ tính năng",
 
         // LANGUAGE

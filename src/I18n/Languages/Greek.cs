@@ -296,8 +296,6 @@ public static class Greek
         ["cpu_cores"] = "Πυρήνες CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} από {1} νήματα ενεργά",
-        ["open_log"] = "Άνοιγμα αρχείου καταγραφής",
-        ["log_stdout"] = "Τα αρχεία καταγραφής γράφονται στο stdout - εκτελέστε από τερματικό για προβολή",
         ["kernel_warning"] = "\u26A0 Συνιστάται Kernel 6.2+ για πλήρη υποστήριξη χαρακτηριστικών",
 
         // LANGUAGE

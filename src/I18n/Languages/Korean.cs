@@ -296,8 +296,6 @@ public static class Korean
         ["cpu_cores"] = "CPU 코어",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{1} 스레드 중 {0} 활성",
-        ["open_log"] = "로그 파일 열기",
-        ["log_stdout"] = "로그가 stdout에 기록됩니다 - 출력을 보려면 터미널에서 실행하세요",
         ["kernel_warning"] = "\u26A0 전체 기능 지원을 위해 커널 6.2 이상을 권장합니다",
 
         // LANGUAGE

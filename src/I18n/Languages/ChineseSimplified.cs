@@ -296,8 +296,6 @@ public static class ChineseSimplified
         ["cpu_cores"] = "CPU 核心",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{1} 线程中有 {0} 个活跃",
-        ["open_log"] = "打开日志文件",
-        ["log_stdout"] = "日志输出到 stdout - 从终端运行以查看输出",
         ["kernel_warning"] = "\u26A0 建议使用内核 6.2 以上版本以获得完整功能支持",
 
         // LANGUAGE

@@ -293,8 +293,6 @@ public static class Spanish
         ["cpu_cores"] = "Núcleos de CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} de {1} hilos activos",
-        ["open_log"] = "Abrir archivo de log",
-        ["log_stdout"] = "Los logs se escriben en stdout - ejecute desde terminal para ver la salida",
         ["kernel_warning"] = "\u26A0 Se recomienda kernel 6.2+ para soporte completo de funciones",
 
         // LANGUAGE

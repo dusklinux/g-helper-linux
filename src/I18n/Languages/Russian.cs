@@ -293,8 +293,6 @@ public static class Russian
         ["cpu_cores"] = "Ядра CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} из {1} потоков активно",
-        ["open_log"] = "Открыть лог",
-        ["log_stdout"] = "Логи выводятся в stdout - запустите из терминала для просмотра",
         ["kernel_warning"] = "\u26A0 Для полной поддержки функций рекомендуется ядро 6.2+",
 
         // LANGUAGE

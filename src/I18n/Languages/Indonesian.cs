@@ -296,8 +296,6 @@ public static class Indonesian
         ["cpu_cores"] = "Inti CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} dari {1} thread aktif",
-        ["open_log"] = "Buka File Log",
-        ["log_stdout"] = "Log ditulis ke stdout - jalankan dari terminal untuk melihat output",
         ["kernel_warning"] = "\u26A0 Kernel 6.2+ direkomendasikan untuk dukungan fitur penuh",
 
         // LANGUAGE

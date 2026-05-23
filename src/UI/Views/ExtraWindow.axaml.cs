@@ -247,7 +247,6 @@ public partial class ExtraWindow : Window
         checkAutoApplyPower.Content = Labels.Get("auto_apply_power");
         checkScreenAuto.Content = Labels.Get("auto_switch_refresh");
         labelCpuCoresLabel.Text = Labels.Get("cpu_cores");
-        buttonOpenLog.Content = Labels.Get("open_log");
 
         // GPU Backend - both opt-in flags live here so users can compare
         // the two approaches side by side instead of hunting through
@@ -1657,36 +1656,6 @@ public partial class ExtraWindow : Window
 
         // Apply in background to avoid UI stall
         Task.Run(() => LinuxSystemIntegration.SetOnlineCpuCount(target));
-    }
-
-    private void ButtonOpenLog_Click(object? sender, RoutedEventArgs e)
-    {
-        // Logger is stdout-only; open a terminal showing the app's output
-        try
-        {
-            // Try to find the config dir for any saved logs
-            var configDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".config", "ghelper");
-            if (Directory.Exists(configDir))
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "xdg-open",
-                    Arguments = configDir,
-                    UseShellExecute = false,
-                });
-            }
-            else
-            {
-                Helpers.Logger.WriteLine("Logs are written to stdout - run the app from a terminal to see output");
-                App.System?.ShowNotification(Labels.Get("ghelper"), Labels.Get("log_stdout"), "dialog-information");
-            }
-        }
-        catch (Exception ex)
-        {
-            Helpers.Logger.WriteLine("Failed to open config dir", ex);
-        }
     }
 
 

@@ -293,8 +293,6 @@ public static class Dutch
         ["cpu_cores"] = "CPU-kernen",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} van {1} threads actief",
-        ["open_log"] = "Logbestand openen",
-        ["log_stdout"] = "Logs worden naar stdout geschreven - start vanuit terminal om uitvoer te zien",
         ["kernel_warning"] = "\u26A0 Kernel 6.2+ aanbevolen voor volledige functieondersteuning",
 
         // LANGUAGE
