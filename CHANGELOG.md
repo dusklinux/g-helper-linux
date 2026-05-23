@@ -8,6 +8,21 @@
 
 ### Changed
 
+## v1.0.78 (2026-05-23)
+
+### Added
+- Optimal Display Brightness control (Off / On Always / On Battery only) in Extra Settings, hardware-gated on the `screen_auto_brightness` firmware attribute
+
+### Changed
+- Diagnostics dump expanded with NVIDIA, AMD GPU, Power Source, CPU, App Config, Displays, ghelper systemd units, and Suspend / Resume sections
+- Removed unused "Open Log File" button and related i18n keys
+
+### What's Changed
+* Add changelog by @utajum in https://github.com/utajum/g-helper-linux/pull/104
+* Add OptimalBrightness controls by @utajum in https://github.com/utajum/g-helper-linux/pull/106
+* Extend dgpu diagnostics info by @utajum in https://github.com/utajum/g-helper-linux/pull/107
+* Remove unused button by @utajum in https://github.com/utajum/g-helper-linux/pull/108
+
 ## v1.0.77 (2026-05-19)
 
 ### What's Changed
