@@ -11,7 +11,7 @@
 ## v1.0.78 (2026-05-23)
 
 ### Added
-- Optimal Display Brightness control (Off / On Always / On Battery only) in Extra Settings, hardware-gated on the `screen_auto_brightness` firmware attribute
+- A16 FA608UM - Optimal Display Brightness control (Off / On Always / On Battery only) in Extra Settings
 
 ### Changed
 - Diagnostics dump expanded with NVIDIA, AMD GPU, Power Source, CPU, App Config, Displays, ghelper systemd units, and Suspend / Resume sections
@@ -19,7 +19,7 @@
 
 ### What's Changed
 * Add changelog by @utajum in https://github.com/utajum/g-helper-linux/pull/104
-* Add OptimalBrightness controls by @utajum in https://github.com/utajum/g-helper-linux/pull/106
+* Add OptimalBrightness controls for A16 FA608UM by @utajum in https://github.com/utajum/g-helper-linux/pull/106
 * Extend dgpu diagnostics info by @utajum in https://github.com/utajum/g-helper-linux/pull/107
 * Remove unused button by @utajum in https://github.com/utajum/g-helper-linux/pull/108
 
