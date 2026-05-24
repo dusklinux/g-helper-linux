@@ -26,8 +26,9 @@ public class App : Application
     public static IInputHandler? Input { get; private set; }
     public static IAudioControl? Audio { get; private set; }
     public static IDisplayControl? Display { get; private set; }
-    public static IGpuControl? GpuControl { get; private set; }
     public static RyzenSmu? Smu { get; private set; }
+    public static IntelUndervolt? IntelUv { get; private set; }
+    public static IGpuControl? GpuControl { get; set; }
 
     // GPU mode switching controller (safety checks, driver detection, reboot scheduling)
     public static GpuModeController? GpuModeCtrl { get; private set; }
@@ -299,6 +300,22 @@ public class App : Application
             // Run on background thread - SetGpuEco can block for 30-60 seconds
             Task.Run(() =>
             {
+                // Keep the on-disk gpu-helper in sync with the copy embedded in
+                // this binary. If the installed helper is stale or missing,
+                // prompt (pkexec) to overwrite it - runs before any GPU op that
+                // uses the helper. Re-checked every startup until hashes match.
+                var helperState = Gpu.NvidiaProcessScanner.CheckHelper();
+                if (helperState != Gpu.HelperState.InSync)
+                {
+                    Logger.WriteLine($"Startup: gpu-helper {helperState} - launching pkexec self-update");
+                    bool updated = Gpu.NvidiaProcessScanner.RunPkexecInstall();
+                    Logger.WriteLine(updated
+                        ? "Startup: gpu-helper updated"
+                        : "Startup: gpu-helper update failed/cancelled");
+                }
+
+                GpuModeCtrl?.CacheDgpuSlotIfPresent();
+
                 // Check for boot recovery marker (impossible state was fixed during boot)
                 const string RecoveryMarkerPath = "/etc/ghelper/last-recovery";
                 try
@@ -385,6 +402,10 @@ public class App : Application
             ? "Ryzen Curve Optimizer: available via ryzen_smu driver"
             : $"Ryzen Curve Optimizer: unavailable ({Smu.UnavailableReason})");
 
+        IntelUv = new IntelUndervolt();
+        if (IntelUv.IsAvailable)
+            Logger.WriteLine("Intel CPU undervolt: available (MSR 0x150 mailbox)");
+
         // Create mode controller (uses App.Wmi, App.Power, etc.)
         Mode = new ModeControl();
         Mode.RefreshReapplyTimer(); // arm timer if reapply_time is set
@@ -395,6 +416,8 @@ public class App : Application
             GpuModeCtrl = new GpuModeController(Wmi, Power);
             GpuModeController.OnLivePciTransition =
                 Platform.Linux.LinuxAsusWmi.InvalidateGpuPresenceCache;
+            GpuModeController.OnReapplyGpuTuning =
+                () => Mode?.ReapplyGpuForCurrentMode();
         }
 
         // Create Ally controller helper. Constructor sets up the 300ms auto-
@@ -459,7 +482,6 @@ public class App : Application
     {
         try
         {
-            // Try NVIDIA first
             var nvidia = new LinuxNvidiaGpuControl();
             if (nvidia.IsAvailable())
             {
@@ -468,7 +490,6 @@ public class App : Application
                 return;
             }
 
-            // Try AMD
             var amd = new LinuxAmdGpuControl();
             if (amd.IsAvailable())
             {
@@ -482,6 +503,32 @@ public class App : Application
         catch (Exception ex)
         {
             Logger.WriteLine("GPU Control initialization failed", ex);
+        }
+    }
+
+    public static void RefreshGpuControlIfMissing()
+    {
+        if (GpuControl != null && GpuControl.IsAvailable())
+            return;
+        try
+        {
+            var nvidia = new LinuxNvidiaGpuControl();
+            if (nvidia.IsAvailable())
+            {
+                GpuControl = nvidia;
+                Logger.WriteLine($"GPU Control: re-detected NVIDIA - {nvidia.GetGpuName() ?? "Unknown"}");
+                return;
+            }
+            var amd = new LinuxAmdGpuControl();
+            if (amd.IsAvailable())
+            {
+                GpuControl = amd;
+                Logger.WriteLine($"GPU Control: re-detected AMD - {amd.GetGpuName() ?? "Unknown"}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine("GPU Control re-init failed", ex);
         }
     }
 
@@ -1068,6 +1115,8 @@ public class App : Application
             switch (result)
             {
                 case GpuSwitchResult.Applied:
+                    if (target != GpuMode.Eco)
+                        RefreshGpuControlIfMissing();
                     string text = target switch
                     {
                         GpuMode.Eco => Labels.Get("gpu_notify_eco"),

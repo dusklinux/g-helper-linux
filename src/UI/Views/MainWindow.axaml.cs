@@ -425,6 +425,8 @@ public partial class MainWindow : Window
         SetButtonActive(buttonUltimate, _currentGpuMode == 3);
     }
 
+    private NvidiaProcessesWindow? _nvidiaProcessesWindow;
+
     /// <summary>
     /// Lock GPU mode buttons during a switch operation (like upstream's LockGPUModes).
     /// Writing dgpu_disable can block in the kernel for 30-60 seconds while the GPU powers down.
@@ -496,6 +498,16 @@ public partial class MainWindow : Window
         switch (result)
         {
             case GpuSwitchResult.Applied:
+                if (target != GpuMode.Eco)
+                    Task.Run(() =>
+                    {
+                        App.RefreshGpuControlIfMissing();
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            if (_fansWindow != null && _fansWindow.IsVisible)
+                                _fansWindow.RefreshGpuPublic();
+                        });
+                    });
                 string appliedText = target switch
                 {
                     GpuMode.Eco => Labels.Get("gpu_notify_eco"),
@@ -547,7 +559,97 @@ public partial class MainWindow : Window
                 App.System?.ShowNotification(Labels.Get("gpu_mode"),
                     Labels.Get("gpu_switch_failed"), "dialog-error");
                 break;
+
+            case GpuSwitchResult.DgpuReenableFailed:
+                labelTipGPU.Text = Labels.Get("gpu_reenable_failed");
+                ShowDgpuReenableFailedDialog();
+                break;
         }
+    }
+
+    /// <summary>
+    /// Shown when dgpu_disable=0 was written but the dGPU never re-appeared on
+    /// the PCI bus after repeated rescans (slow/stuck ASUS firmware). The only
+    /// reliable recovery is a reboot.
+    /// </summary>
+    private void ShowDgpuReenableFailedDialog()
+    {
+        var dialog = new Window
+        {
+            Title = Labels.Get("gpu_reenable_failed_title"),
+            Width = 460,
+            MaxHeight = 360,
+            SizeToContent = SizeToContent.Height,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false,
+            WindowDecorations = WindowDecorations.Full,
+        };
+
+        var card = new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#262626")),
+            CornerRadius = new Avalonia.CornerRadius(8),
+            Padding = new Avalonia.Thickness(20, 16),
+            Margin = new Avalonia.Thickness(0, 0, 0, 18),
+        };
+
+        var titleIcon = new GHelper.Linux.UI.Controls.Icon
+        {
+            IconName = "warning",
+            Width = 22,
+            Height = 22,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            Margin = new Avalonia.Thickness(0, 0, 10, 0),
+        };
+        var titleText = new TextBlock
+        {
+            Text = Labels.Get("gpu_reenable_failed_title"),
+            FontSize = 15,
+            FontWeight = Avalonia.Media.FontWeight.Bold,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+        };
+        var titleRow = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Margin = new Avalonia.Thickness(0, 0, 0, 12) };
+        titleRow.Children.Add(titleIcon);
+        titleRow.Children.Add(titleText);
+
+        var body = new TextBlock
+        {
+            Text = Labels.Get("gpu_reenable_failed_body"),
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            FontSize = 13,
+            LineHeight = 20,
+            Foreground = new SolidColorBrush(Color.Parse("#CCCCCC")),
+        };
+
+        var cardContent = new StackPanel();
+        cardContent.Children.Add(titleRow);
+        cardContent.Children.Add(body);
+        card.Child = cardContent;
+
+        var btnClose = new Button
+        {
+            Content = Labels.Get("cancel"),
+            Background = new SolidColorBrush(Color.Parse("#4CC2FF")),
+            Foreground = new SolidColorBrush(Color.Parse("#000000")),
+            FontWeight = Avalonia.Media.FontWeight.Bold,
+            FontSize = 13,
+            MinWidth = 130,
+            MinHeight = 38,
+            Padding = new Avalonia.Thickness(14, 8),
+            CornerRadius = new Avalonia.CornerRadius(5),
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            BorderThickness = new Avalonia.Thickness(0),
+            Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+        };
+        btnClose.Click += (_, _) => dialog.Close();
+
+        var outerStack = new StackPanel { Margin = new Avalonia.Thickness(24, 20, 24, 16) };
+        outerStack.Children.Add(card);
+        outerStack.Children.Add(btnClose);
+
+        dialog.Content = outerStack;
+        dialog.ShowDialog(this);
     }
 
     /// <summary>
@@ -562,8 +664,9 @@ public partial class MainWindow : Window
         var dialog = new Window
         {
             Title = Labels.Get("gpu_driver_title"),
-            Width = 490,
-            Height = 310,
+            Width = 540,
+            MaxHeight = 600,
+            SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             CanResize = false,
             WindowDecorations = WindowDecorations.Full,
@@ -612,9 +715,78 @@ public partial class MainWindow : Window
             Foreground = new SolidColorBrush(Color.Parse("#CCCCCC")),
         };
 
+        string ComposeHolderSummary()
+        {
+            int fdN = Gpu.NvidiaProcessScanner.CountFdHolders();
+            int totalN = Gpu.NvidiaProcessScanner.CountHolders();
+            int libN = totalN - fdN;
+            string text = Labels.Format("gpu_dgpu_users_count", fdN);
+            if (libN > 0)
+                text += "\n" + Labels.Format("gpu_dgpu_libs_loaded_count", libN);
+            return text;
+        }
+
+        var dgpuProcessRow = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            Margin = new Avalonia.Thickness(0, 12, 0, 0),
+        };
+        var dgpuCountLabel = new TextBlock
+        {
+            Text = ComposeHolderSummary(),
+            FontSize = 12,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            Foreground = new SolidColorBrush(Color.Parse("#E0A040")),
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+        };
+        Grid.SetColumn(dgpuCountLabel, 0);
+
+        // Periodic holder-count refresh: when user kills processes via the
+        // NvidiaProcessesWindow, this dialog's count would otherwise stay
+        // stale. Tick every 1s, stop when dialog closes.
+        var holderRefreshTimer = new Avalonia.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(1),
+        };
+        holderRefreshTimer.Tick += (_, _) =>
+        {
+            dgpuCountLabel.Text = ComposeHolderSummary();
+        };
+        var dgpuViewButton = new Button
+        {
+            Content = Labels.Get("gpu_dgpu_users_view"),
+            Background = new SolidColorBrush(Color.Parse("#3A3A3A")),
+            Foreground = new SolidColorBrush(Color.Parse("#FFFFFF")),
+            Padding = new Avalonia.Thickness(12, 6),
+            CornerRadius = new Avalonia.CornerRadius(4),
+            BorderThickness = new Avalonia.Thickness(0),
+            FontSize = 11,
+            MinWidth = 70,
+            Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+        };
+        dgpuViewButton.Click += (_, _) =>
+        {
+            if (_nvidiaProcessesWindow == null || !_nvidiaProcessesWindow.IsVisible)
+            {
+                _nvidiaProcessesWindow = new NvidiaProcessesWindow();
+                if (Helpers.AppConfig.Is("topmost"))
+                    _nvidiaProcessesWindow.Topmost = true;
+                WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_nvidiaProcessesWindow);
+                _nvidiaProcessesWindow.Show();
+            }
+            else
+            {
+                _nvidiaProcessesWindow.Activate();
+            }
+        };
+        Grid.SetColumn(dgpuViewButton, 1);
+        dgpuProcessRow.Children.Add(dgpuCountLabel);
+        dgpuProcessRow.Children.Add(dgpuViewButton);
+
         var cardContent = new StackPanel();
         cardContent.Children.Add(titleRow);
         cardContent.Children.Add(body);
+        cardContent.Children.Add(dgpuProcessRow);
         card.Child = cardContent;
 
         // Buttons - all properties set directly, no CSS class
@@ -640,12 +812,35 @@ public partial class MainWindow : Window
             };
         }
 
+        var btnSwitchNow = MakeDialogButton(Labels.Get("gpu_driver_switch_now"), "#A82A2A", "#FFFFFF", bold: true);
         var btnAfterReboot = MakeDialogButton(Labels.Get("gpu_driver_after_reboot"), "#4CC2FF", "#000000", bold: true);
         var btnCancel = MakeDialogButton(Labels.Get("cancel"), "#2A2A2A", "#888888");
 
-        btnAfterReboot.Margin = new Avalonia.Thickness(0, 0, 8, 0);
+        // Stretch buttons across full row width (equal share)
+        btnSwitchNow.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
+        btnAfterReboot.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
+        btnCancel.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
+        btnSwitchNow.Margin = new Avalonia.Thickness(0, 0, 6, 0);
+        btnAfterReboot.Margin = new Avalonia.Thickness(6, 0, 6, 0);
+        btnCancel.Margin = new Avalonia.Thickness(6, 0, 0, 0);
+
+        var switchNowWarning = new TextBlock
+        {
+            Text = Labels.Get("gpu_driver_switch_now_warning"),
+            Foreground = new SolidColorBrush(Color.Parse("#E0A040")),
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            FontSize = 11,
+            LineHeight = 16,
+            Margin = new Avalonia.Thickness(2, 12, 2, 0),
+        };
 
         // Button click handlers
+        btnSwitchNow.Click += (_, _) =>
+        {
+            dialog.Close();
+            RunSwitchNowKillFlow(target);
+        };
+
         btnAfterReboot.Click += (_, _) =>
         {
             dialog.Close();
@@ -662,16 +857,21 @@ public partial class MainWindow : Window
             RefreshGpuMode();
         };
 
-        // Button row
-        var buttonPanel = new StackPanel
+        // Button row: 3 equal columns spanning full width, with equal vertical padding
+        var buttonPanel = new Grid
         {
-            Orientation = Avalonia.Layout.Orientation.Horizontal,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            ColumnDefinitions = new ColumnDefinitions("*,*,*"),
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+            Margin = new Avalonia.Thickness(0, 16, 0, 16),
         };
+        Grid.SetColumn(btnSwitchNow, 0);
+        Grid.SetColumn(btnAfterReboot, 1);
+        Grid.SetColumn(btnCancel, 2);
+        buttonPanel.Children.Add(btnSwitchNow);
         buttonPanel.Children.Add(btnAfterReboot);
         buttonPanel.Children.Add(btnCancel);
 
-        // Footer help text
+        // Footer help text (no top margin - buttonPanel provides equal vertical padding)
         var footer = new TextBlock
         {
             Text = Labels.Get("gpu_driver_footer"),
@@ -679,14 +879,204 @@ public partial class MainWindow : Window
             TextWrapping = Avalonia.Media.TextWrapping.Wrap,
             FontSize = 11,
             LineHeight = 16,
-            Margin = new Avalonia.Thickness(2, 14, 0, 0),
+            Margin = new Avalonia.Thickness(2, 0, 0, 0),
         };
 
         // Layout
         var outerStack = new StackPanel { Margin = new Avalonia.Thickness(24, 20, 24, 16) };
         outerStack.Children.Add(card);
+        outerStack.Children.Add(switchNowWarning);
         outerStack.Children.Add(buttonPanel);
         outerStack.Children.Add(footer);
+
+        dialog.Content = outerStack;
+        dialog.Opened += (_, _) => holderRefreshTimer.Start();
+        dialog.Closed += (_, _) => holderRefreshTimer.Stop();
+        dialog.ShowDialog(this);
+    }
+
+    /// <summary>
+    /// Switch Now flow: fresh-scan holders, send SIGTERM, escalate to SIGKILL,
+    /// then either proceed with <see cref="GpuModeController.TryReleaseAndSwitch"/>
+    /// or - if any holder refused to die - abort and show the failure dialog.
+    /// Called by the Switch Now button and by Retry in the failure dialog.
+    /// </summary>
+    private void RunSwitchNowKillFlow(GpuMode target)
+    {
+        LockGpuButtons(Labels.Get("gpu_switching_eco"));
+        Task.Run(() =>
+        {
+            // Fresh scan at click time - matches what the dgpu-processes window
+            // currently shows (system processes already filtered upstream).
+            var snapshot = Gpu.NvidiaProcessScanner.ScanHolders();
+            Logger.WriteLine($"RunSwitchNowKillFlow: snapshot={snapshot.Count}");
+            Gpu.NvidiaProcessScanner.KillHoldersGracefulThenForce(snapshot, out var survivors);
+            Logger.WriteLine($"RunSwitchNowKillFlow: snapshot-accounting survivors={survivors.Count}");
+
+            System.Threading.Thread.Sleep(300);
+            var stillAlive = Gpu.NvidiaProcessScanner.ScanHolders();
+            Logger.WriteLine($"RunSwitchNowKillFlow: verify-scan stillAlive={stillAlive.Count}");
+
+            if (stillAlive.Count > 0)
+            {
+                var stillAliveList = new List<NvidiaHolder>(stillAlive);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    UnlockGpuButtons();
+                    RefreshGpuMode();
+                    ShowKillFailureDialog(stillAliveList, target);
+                });
+                return;
+            }
+
+            var result = App.GpuModeCtrl?.TryReleaseAndSwitch() ?? GpuSwitchResult.Failed;
+            Dispatcher.UIThread.Post(() =>
+            {
+                UnlockGpuButtons();
+                HandleGpuSwitchResult(result, target);
+            });
+        });
+    }
+
+    /// <summary>
+    /// Modal shown when <see cref="RunSwitchNowKillFlow"/> could not stop one
+    /// or more processes from the snapshot. Lists each survivor as comm (pid)
+    /// and offers Retry (re-runs the whole flow) or Close.
+    /// </summary>
+    private void ShowKillFailureDialog(List<NvidiaHolder> survivors, GpuMode target)
+    {
+        var dialog = new Window
+        {
+            Title = Labels.Get("gpu_kill_failure_title"),
+            Width = 460,
+            MaxHeight = 520,
+            SizeToContent = SizeToContent.Height,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false,
+            WindowDecorations = WindowDecorations.Full,
+        };
+
+        var card = new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#262626")),
+            CornerRadius = new Avalonia.CornerRadius(8),
+            Padding = new Avalonia.Thickness(20, 16),
+            Margin = new Avalonia.Thickness(0, 0, 0, 18),
+        };
+
+        var titleIcon = new GHelper.Linux.UI.Controls.Icon
+        {
+            IconName = "warning",
+            Width = 22,
+            Height = 22,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            Margin = new Avalonia.Thickness(0, 0, 10, 0),
+        };
+
+        var titleText = new TextBlock
+        {
+            Text = Labels.Get("gpu_kill_failure_title"),
+            FontSize = 15,
+            FontWeight = Avalonia.Media.FontWeight.Bold,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+        };
+
+        var titleRow = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            Margin = new Avalonia.Thickness(0, 0, 0, 12),
+        };
+        titleRow.Children.Add(titleIcon);
+        titleRow.Children.Add(titleText);
+
+        var body = new TextBlock
+        {
+            Text = Labels.Get("gpu_kill_failure_body"),
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            FontSize = 13,
+            LineHeight = 20,
+            Foreground = new SolidColorBrush(Color.Parse("#CCCCCC")),
+            Margin = new Avalonia.Thickness(0, 0, 0, 10),
+        };
+
+        // Survivor list inside a max-height ScrollViewer (handles long lists).
+        var listStack = new StackPanel { Spacing = 4 };
+        foreach (var h in survivors)
+        {
+            listStack.Children.Add(new TextBlock
+            {
+                Text = $"  • {h.Comm} ({h.Pid})",
+                FontSize = 12,
+                FontFamily = new Avalonia.Media.FontFamily("monospace"),
+                Foreground = new SolidColorBrush(Color.Parse("#E0A040")),
+            });
+        }
+        var listScroll = new ScrollViewer
+        {
+            MaxHeight = 180,
+            Content = listStack,
+            HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
+        };
+
+        var cardContent = new StackPanel();
+        cardContent.Children.Add(titleRow);
+        cardContent.Children.Add(body);
+        cardContent.Children.Add(listScroll);
+        card.Child = cardContent;
+
+        Button MakeBtn(string text, string bg, string fg, bool bold = false)
+        {
+            return new Button
+            {
+                Content = text,
+                Background = new SolidColorBrush(Color.Parse(bg)),
+                Foreground = new SolidColorBrush(Color.Parse(fg)),
+                FontWeight = bold ? Avalonia.Media.FontWeight.Bold : Avalonia.Media.FontWeight.Normal,
+                FontSize = 13,
+                MinWidth = 130,
+                MinHeight = 38,
+                Padding = new Avalonia.Thickness(14, 8),
+                CornerRadius = new Avalonia.CornerRadius(5),
+                HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                BorderThickness = new Avalonia.Thickness(0),
+                Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+            };
+        }
+
+        var btnRetry = MakeBtn(Labels.Get("gpu_kill_failure_retry"), "#A82A2A", "#FFFFFF", bold: true);
+        var btnClose = MakeBtn(Labels.Get("cancel"), "#2A2A2A", "#888888");
+        btnRetry.Margin = new Avalonia.Thickness(0, 0, 6, 0);
+        btnClose.Margin = new Avalonia.Thickness(6, 0, 0, 0);
+
+        btnRetry.Click += (_, _) =>
+        {
+            dialog.Close();
+            RunSwitchNowKillFlow(target);
+        };
+
+        btnClose.Click += (_, _) =>
+        {
+            dialog.Close();
+            RefreshGpuMode();
+        };
+
+        var buttonPanel = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,*"),
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+            Margin = new Avalonia.Thickness(0, 6, 0, 0),
+        };
+        Grid.SetColumn(btnRetry, 0);
+        Grid.SetColumn(btnClose, 1);
+        buttonPanel.Children.Add(btnRetry);
+        buttonPanel.Children.Add(btnClose);
+
+        var outerStack = new StackPanel { Margin = new Avalonia.Thickness(24, 20, 24, 16) };
+        outerStack.Children.Add(card);
+        outerStack.Children.Add(buttonPanel);
 
         dialog.Content = outerStack;
         dialog.ShowDialog(this);
@@ -852,6 +1242,7 @@ public partial class MainWindow : Window
 
         // Apply saved power state + mode so the keyboard lights up on startup
         Aura.ApplyPower();
+        Aura.ApplyConfiguredBrightness("Startup");
         Aura.ApplyAura();
 
         return true;

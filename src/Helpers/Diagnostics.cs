@@ -1106,6 +1106,15 @@ public static class Diagnostics
             sb.AppendLine(output);
         sb.AppendLine();
 
+        sb.AppendLine("--- GPU Helper Log (gpu-helper) ---");
+        var helperLog = Platform.Linux.SysfsHelper.RunCommand("journalctl",
+            "-t gpu-helper --no-pager -n 100");
+        if (string.IsNullOrWhiteSpace(helperLog))
+            sb.AppendLine("  (no entries - journalctl unreadable without privilege, or helper not yet invoked)");
+        else
+            sb.AppendLine(helperLog);
+        sb.AppendLine();
+
         sb.AppendLine("--- Boot Service State (/etc/ghelper/*) ---");
         string[] stateFiles =
         {

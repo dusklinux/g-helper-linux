@@ -178,10 +178,30 @@ public class ModeControl
             else
                 await Task.Delay(100); // Let thermal policy settle
 
-            AutoPower(mode);
+            AutoCpuPower(mode);
+            AutoGpuPower(mode);
 
-            // Ryzen CO undervolt (independent of auto_apply_power - uses its own auto_uv flag)
-            AutoRyzen();
+            // CPU undervolt (independent of auto_apply_power - uses its own auto_uv flag)
+            AutoCpuUndervolt();
+
+            // G614F / G814F / G733P rescue: EC overwrites freshly-applied
+            // PPT/CO values ~3-4 s after a mode switch. Schedule a single
+            // delayed re-apply 5 s later to defeat the overwrite.
+            if (Helpers.AppConfig.IsReapplyRyzen())
+            {
+                _ = Task.Delay(5000).ContinueWith(_ =>
+                {
+                    try
+                    {
+                        Helpers.Logger.WriteLine("IsReapplyRyzen: 5 s rescue CPU undervolt pass");
+                        AutoCpuUndervolt();
+                    }
+                    catch (Exception ex)
+                    {
+                        Helpers.Logger.WriteLine("IsReapplyRyzen rescue failed", ex);
+                    }
+                });
+            }
 
             // CPU Boost override
             int autoBoost = Helpers.AppConfig.GetMode("auto_boost");
@@ -230,7 +250,9 @@ public class ModeControl
     /// </summary>
     public void RefreshReapplyTimer()
     {
-        int seconds = Helpers.AppConfig.Get("reapply_time", 0);
+        // Default 30 s for models whose EC silently resets the temp limit under load 
+        int defaultSeconds = Helpers.AppConfig.IsReapplyTempRequired() ? 30 : 0;
+        int seconds = Helpers.AppConfig.Get("reapply_time", defaultSeconds);
 
         if (seconds <= 0)
         {
@@ -262,10 +284,11 @@ public class ModeControl
     {
         try
         {
-            // Re-run the PPT writes for the current mode. AutoPower already short-circuits
-            // when auto_apply_power is off, which is the right behavior here.
+            // Re-run the per-mode writes. AutoCpuPower / AutoGpuPower each short-circuit
+            // when their respective opt-in flag is off, which is the right behavior here.
             int mode = Modes.GetCurrent();
-            AutoPower(mode);
+            AutoCpuPower(mode);
+            AutoGpuPower(mode);
         }
         catch (Exception ex)
         {
@@ -378,8 +401,8 @@ public class ModeControl
         }
     }
 
-    /// <summary>Apply saved power limits for the given mode.</summary>
-    private void AutoPower(int mode)
+    /// <summary>Apply saved CPU power limits for the given mode (gated by per-mode auto_apply_power).</summary>
+    private void AutoCpuPower(int mode)
     {
         if (!Helpers.AppConfig.IsMode("auto_apply_power"))
             return;
@@ -389,7 +412,6 @@ public class ModeControl
             return;
 
         int maxTotal = GetMaxTotal();
-        int maxGpuBoost = GetMaxGpuBoost();
 
         int pl1 = Helpers.AppConfig.GetMode("limit_slow");
         int pl2 = Helpers.AppConfig.GetMode("limit_fast");
@@ -456,32 +478,179 @@ public class ModeControl
             Helpers.Logger.WriteLine($"AutoPower: fPPT = {fppt}W (max={maxTotal}W)");
         }
 
-        // NVIDIA dynamic boost
-        int nvBoost = Helpers.AppConfig.GetMode("gpu_boost");
-        if (nvBoost > maxGpuBoost)
-            nvBoost = maxGpuBoost;
-        if (nvBoost > 0 && wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvDynamicBoost))
-        {
-            wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvDynamicBoost, nvBoost);
-            Helpers.Logger.WriteLine($"AutoPower: GPU boost = {nvBoost}W (max={maxGpuBoost}W)");
-        }
-
-        // NVIDIA temp target
-        int nvTemp = Helpers.AppConfig.GetMode("gpu_temp");
-        if (nvTemp > 0 && wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvTempTarget))
-        {
-            wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvTempTarget, nvTemp);
-        }
-
-        // Verify PPT writes took effect - read back and warn on mismatches
         VerifyPptLimits(wmi, pl1, pl2, fppt, apuPlatCeiling > 0 ? apuPlatCeiling : -1);
 
         if (Helpers.AppConfig.IsAlly())
         {
             int total = Helpers.AppConfig.GetMode("limit_total");
             if (total > 0)
-                Ally.AllyControl.SetTDP(total, $"AutoPower mode {mode}");
+                Ally.AllyControl.SetTDP(total, $"AutoCpuPower mode {mode}");
         }
+    }
+
+    /// <summary>
+    /// Per-mode GPU policy. When auto-apply is ON for the mode, re-apply the saved
+    /// tuning (boost/temp/TGP, power, clock lock, VRAM lock, clock offsets) so it
+    /// persists across mode switches, Eco->Standard and reboots. When OFF, return
+    /// the dGPU to stock so each non-persisted mode runs at defaults.
+    /// </summary>
+    private void AutoGpuPower(int mode)
+    {
+        var wmi = App.Wmi;
+        if (wmi == null)
+            return;
+
+        var nvCtl = App.GpuControl as Platform.Linux.LinuxNvidiaGpuControl;
+
+        if (!Helpers.AppConfig.IsMode("auto_apply_gpu"))
+        {
+            ResetGpuTuning(wmi, nvCtl);
+            return;
+        }
+
+        int maxGpuBoost = GetMaxGpuBoost();
+
+        int nvBoost = Helpers.AppConfig.GetMode("gpu_boost");
+        if (nvBoost > maxGpuBoost)
+            nvBoost = maxGpuBoost;
+        if (nvBoost > 0 && wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvDynamicBoost))
+        {
+            wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvDynamicBoost, nvBoost);
+            Helpers.Logger.WriteLine($"AutoGpuPower: GPU boost = {nvBoost}W (max={maxGpuBoost}W)");
+        }
+
+        int nvTemp = Helpers.AppConfig.GetMode("gpu_temp");
+        if (nvTemp > 0 && wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvTempTarget))
+        {
+            wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvTempTarget, nvTemp);
+        }
+
+        int nvBaseTgp = Helpers.AppConfig.GetMode("gpu_base_tgp");
+        if (nvBaseTgp > 0 && wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvBaseTgp))
+        {
+            wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvBaseTgp, nvBaseTgp);
+            Helpers.Logger.WriteLine($"AutoGpuPower: nv_base_tgp = {nvBaseTgp}W");
+        }
+
+        int nvTgp = Helpers.AppConfig.GetMode("gpu_tgp");
+        if (nvTgp > 0 && wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvTgp))
+        {
+            wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvTgp, nvTgp);
+            Helpers.Logger.WriteLine($"AutoGpuPower: nv_tgp = {nvTgp}W");
+        }
+
+        if (nvCtl != null && nvCtl.IsAvailable())
+        {
+            int gpuPowerLim = Helpers.AppConfig.GetMode("gpu_power_lim");
+            int gpuClockLock = Helpers.AppConfig.GetMode("gpu_clock_lock");
+            int gpuMemLock = Helpers.AppConfig.GetMode("gpu_mem_clock_lock");
+            int gpuClockCore = Helpers.AppConfig.GetMode("gpu_clock_core");
+            int gpuClockMem = Helpers.AppConfig.GetMode("gpu_clock_mem");
+            bool nvmlOk = nvCtl.IsClockOffsetSupported();
+            bool haveOffsets = nvmlOk && (gpuClockCore != 0 || gpuClockMem != 0);
+            if (gpuPowerLim > 0 || haveOffsets || gpuClockLock > 0)
+            {
+                nvCtl.ApplyAll(
+                    gpuPowerLim > 0 ? gpuPowerLim : null,
+                    gpuClockLock > 0 ? gpuClockLock : 0,
+                    haveOffsets ? gpuClockCore : (int?)null,
+                    haveOffsets ? gpuClockMem : (int?)null);
+            }
+            nvCtl.ApplyMemClockLock(gpuMemLock > 0 ? gpuMemLock : 0);
+        }
+    }
+
+    /// <summary>Return the dGPU to stock: default boost/temp/TGP, default power
+    /// limit, unlocked GPU + VRAM clocks, zero clock offsets.</summary>
+    private static void ResetGpuTuning(Platform.IAsusWmi wmi, Platform.Linux.LinuxNvidiaGpuControl? nv)
+    {
+        WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.NvDynamicBoost);
+        WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.NvTempTarget);
+        WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.NvBaseTgp);
+        WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.NvTgp);
+
+        if (nv != null && nv.IsAvailable())
+        {
+            int? defaultW = nv.GetPowerLimits()?.defaultW;
+            bool nvmlOk = nv.IsClockOffsetSupported();
+            nv.ApplyAll(defaultW, 0, nvmlOk ? 0 : (int?)null, nvmlOk ? 0 : (int?)null);
+            nv.ApplyMemClockLock(0);
+        }
+    }
+
+    private static void WriteFwAttrDefault(Platform.IAsusWmi wmi, Platform.Linux.AttrDef attr)
+    {
+        if (!wmi.IsFeatureSupported(attr))
+            return;
+        var range = wmi.GetAttributeRange(attr);
+        if (range == null || range.Default <= 0)
+            return;
+        wmi.SetPptLimit(attr, range.Default);
+    }
+
+    /// <summary>
+    /// Re-apply (or reset, per the auto-apply flag) the current mode's GPU tuning.
+    /// Called when the dGPU is re-enabled (Eco -> Standard) so persistence survives
+    /// a GPU-mode toggle without a full performance-mode re-apply.
+    /// </summary>
+    public void ReapplyGpuForCurrentMode()
+    {
+        try
+        {
+            App.RefreshGpuControlIfMissing();
+            AutoGpuPower(Modes.GetCurrent());
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine("ReapplyGpuForCurrentMode failed", ex);
+        }
+    }
+
+    // CPU undervolt - vendor dispatch. AMD uses the Ryzen Curve Optimizer
+    // (RyzenSmu, CO steps); Intel uses the OC voltage-offset mailbox
+    // (IntelUndervolt, millivolts). Exactly one backend is available per machine.
+
+    /// <summary>Apply or reset CPU undervolt for the current mode (the "auto_uv" flag).</summary>
+    public void AutoCpuUndervolt()
+    {
+        if (App.IntelUv?.IsAvailable == true)
+        {
+            if (Helpers.AppConfig.IsMode("auto_uv"))
+                SetIntelUv();
+            else
+                App.IntelUv.Reset();
+            return;
+        }
+        AutoRyzen();
+    }
+
+    /// <summary>Apply the current mode's saved CPU undervolt (UI "Apply" button).</summary>
+    public void ApplyCpuUndervolt()
+    {
+        if (App.IntelUv?.IsAvailable == true)
+            SetIntelUv();
+        else
+            SetRyzen();
+    }
+
+    /// <summary>Reset CPU undervolt to stock voltage (UI "Reset" button).</summary>
+    public void ResetCpuUndervolt()
+    {
+        if (App.IntelUv?.IsAvailable == true)
+            App.IntelUv.Reset();
+        else
+            ResetRyzen();
+    }
+
+    /// <summary>Apply the current mode's saved cpu_uv_mv offset via the Intel mailbox.</summary>
+    private void SetIntelUv()
+    {
+        int mv = Helpers.AppConfig.GetMode("cpu_uv_mv", 0);
+        mv = Math.Clamp(mv, Platform.Linux.IntelUndervolt.MinOffsetMv, Platform.Linux.IntelUndervolt.MaxOffsetMv);
+        if (App.IntelUv?.Apply(mv) == true)
+            Helpers.Logger.WriteLine($"Intel UV: cpu_uv_mv={mv} applied");
+        else
+            Helpers.Logger.WriteLine($"Intel UV: cpu_uv_mv={mv} apply FAILED (locked or unsupported)");
     }
 
     // Ryzen Curve Optimizer undervolt (mirrors Windows ModeControl.AutoRyzen/SetRyzen/ResetRyzen/SetUV)
@@ -502,10 +671,26 @@ public class ModeControl
     {
         int cpuUV = Helpers.AppConfig.GetMode("cpu_uv", 0);
         SetUV(cpuUV);
+        if (App.Smu?.IsIGpuSupported == true)
+        {
+            int igpuUV = Helpers.AppConfig.GetMode("igpu_uv", 0);
+            if (igpuUV != 0)
+            {
+                if (App.Smu.SetIGpuCoAll(igpuUV))
+                    Helpers.Logger.WriteLine($"Ryzen iGPU UV: igpu_uv={igpuUV} applied");
+                else
+                    Helpers.Logger.WriteLine($"Ryzen iGPU UV: igpu_uv={igpuUV} apply FAILED");
+            }
+        }
     }
 
     /// <summary>Reset CPU undervolt to 0 (stock voltage).</summary>
-    public void ResetRyzen() => SetUV(0);
+    public void ResetRyzen()
+    {
+        SetUV(0);
+        if (App.Smu?.IsIGpuSupported == true)
+            App.Smu.SetIGpuCoAll(0);
+    }
 
     private static void SetUV(int cpuUV)
     {

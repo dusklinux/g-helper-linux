@@ -5,8 +5,6 @@ After=local-fs.target systemd-modules-load.service systemd-udevd.service
 # Must run BEFORE display manager starts — critical ordering
 # Without this, dGPU driver loads before dgpu_disable=1 is written
 Before=display-manager.service
-# Must run before GPU services try to initialize
-Before=nvidia-powerd.service nvidia-persistenced.service
 # Run on ASUS hardware with either legacy (asus-nb-wmi) or modern (asus-armoury) module,
 # OR on any hardware where the PCI backend is in use (signalled by /etc/ghelper/backend).
 # ConditionPathExists uses pipe (|) prefix — ANY match triggers the unit.
@@ -26,6 +24,41 @@ RemainAfterExit=no
 TimeoutStartSec=30
 StandardOutput=journal
 StandardError=journal
+
+# Hardening (adapted from asusctl)
+NoNewPrivileges=true
+LockPersonality=true
+KeyringMode=private
+RemoveIPC=true
+
+PrivateNetwork=true
+PrivateTmp=true
+PrivateIPC=true
+
+ProtectClock=true
+ProtectControlGroups=strict
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectProc=invisible
+ProtectSystem=strict
+ProtectHome=true
+
+# /sys, /dev, /proc remain writable under ProtectSystem=strict by default.
+# Explicit RW paths for our config + block artifacts + udev socket.
+ReadWritePaths=/etc/ghelper
+ReadWritePaths=/etc/modprobe.d
+ReadWritePaths=/etc/udev/rules.d
+ReadWritePaths=/run
+
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+
+SystemCallArchitectures=native
+
+IPAddressDeny=any
+SocketBindDeny=any
 
 [Install]
 WantedBy=multi-user.target

@@ -20,6 +20,8 @@ public partial class FansWindow : Window
     private bool _updatingPLSliders;
     private bool _updatingUV;
     private bool _updatingAdvanced;
+    private bool _updatingGpu;
+    private int _activeTab;
 
     public FansWindow()
     {
@@ -38,7 +40,16 @@ public partial class FansWindow : Window
         {
             Interval = TimeSpan.FromSeconds(1)
         };
-        _sensorTimer.Tick += (_, _) => RefreshSensors();
+        _sensorTimer.Tick += (_, _) =>
+        {
+            RefreshSensors();
+            if (++_dgpuProcessTick >= 4)
+            {
+                _dgpuProcessTick = 0;
+                RefreshFansDgpuProcessCount();
+                StartGpuBackgroundRefresh();
+            }
+        };
 
         Loaded += (_, _) =>
         {
@@ -46,16 +57,19 @@ public partial class FansWindow : Window
             LoadPowerLimits();
             LoadUV();
             LoadAdvanced();
+            LoadGpuTuning();
             RefreshBoostButton();
             RefreshSensors();
+            RefreshGpuTabVisibility();
+            RefreshFansDgpuProcessCount();
+            ToggleNavigation(_activeTab);
             _sensorTimer.Start();
         };
 
-        // Refresh on performance-mode change (silent/balanced/turbo or auto AC/DC).
-        // ModeApplied fires from a background thread once the new mode is fully
-        // landed, so we marshal to the UI thread before touching widgets.
         if (App.Mode != null)
             App.Mode.ModeApplied += OnModeApplied;
+
+        Activated += (_, _) => RefreshGpuTabVisibility();
 
         Closing += (_, _) =>
         {
@@ -63,6 +77,75 @@ public partial class FansWindow : Window
             if (App.Mode != null)
                 App.Mode.ModeApplied -= OnModeApplied;
         };
+    }
+
+    private void RefreshGpuTabVisibility()
+    {
+        bool shouldShow = App.GpuModeCtrl?.GetCurrentMode() != Gpu.GpuMode.Eco;
+        bool wasNull = App.GpuControl == null;
+
+        if (shouldShow && wasNull)
+            App.RefreshGpuControlIfMissing();
+
+        bool gainedGpu = wasNull && App.GpuControl?.IsAvailable() == true;
+
+        buttonTabGpu.IsVisible = shouldShow;
+        if (!buttonTabGpu.IsVisible && _activeTab == 1)
+            ToggleNavigation(0);
+
+        if (gainedGpu)
+            LoadGpuTuning();
+
+        RefreshFansDgpuProcessCount();
+    }
+
+    private int _dgpuProcessTick;
+    private NvidiaProcessesWindow? _nvidiaProcessesWindow;
+
+    private void RefreshFansDgpuProcessCount()
+    {
+        if (_activeTab != 1)
+        {
+            rowFansDgpuProcesses.IsVisible = false;
+            return;
+        }
+        // Skip the privileged holder scan while a GPU switch is running
+        // (driver teardown/bringup); the count is transient and the scan
+        // would contend with the switch.
+        if (App.GpuModeCtrl?.IsSwitchInProgress == true)
+            return;
+        if (App.GpuModeCtrl?.GetCurrentMode() == Gpu.GpuMode.Eco)
+        {
+            rowFansDgpuProcesses.IsVisible = false;
+            return;
+        }
+        int count = Gpu.NvidiaProcessScanner.CountHolders();
+        labelFansDgpuProcessCount.Text = Labels.Format("gpu_dgpu_users_count", count);
+        labelFansViewDgpuProcesses.Text = Labels.Get("gpu_dgpu_users_view");
+        rowFansDgpuProcesses.IsVisible = true;
+    }
+
+    private void ButtonFansViewDgpuProcesses_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_nvidiaProcessesWindow == null || !_nvidiaProcessesWindow.IsVisible)
+        {
+            _nvidiaProcessesWindow = new NvidiaProcessesWindow();
+            if (Helpers.AppConfig.Is("topmost"))
+                _nvidiaProcessesWindow.Topmost = true;
+            Helpers.WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_nvidiaProcessesWindow);
+            _nvidiaProcessesWindow.Show();
+        }
+        else
+        {
+            _nvidiaProcessesWindow.Activate();
+        }
+    }
+
+    public void RefreshGpuPublic()
+    {
+        RefreshGpuTabVisibility();
+        if (buttonTabGpu.IsVisible)
+            LoadGpuTuning();
     }
 
     private void OnModeApplied(int mode)
@@ -75,6 +158,7 @@ public partial class FansWindow : Window
                 LoadPowerLimits();
                 LoadUV();
                 LoadAdvanced();
+                LoadGpuTuning();
                 RefreshBoostButton();
             }
             catch (Exception ex)
@@ -82,6 +166,265 @@ public partial class FansWindow : Window
                 Helpers.Logger.WriteLine("FansWindow OnModeApplied refresh failed", ex);
             }
         });
+    }
+
+    private void ToggleNavigation(int index)
+    {
+        _activeTab = Math.Clamp(index, 0, 2);
+        panelCpu.IsVisible = _activeTab == 0;
+        panelGpu.IsVisible = _activeTab == 1;
+        panelAdvanced.IsVisible = _activeTab == 2;
+
+        // Entering the GPU tab: refresh the holder count + live status now
+        if (_activeTab == 1)
+        {
+            RefreshFansDgpuProcessCount();
+            StartGpuBackgroundRefresh();
+        }
+    }
+
+    private void ButtonTabCpu_Click(object? sender, RoutedEventArgs e) => ToggleNavigation(0);
+    private void ButtonTabGpu_Click(object? sender, RoutedEventArgs e) => ToggleNavigation(1);
+    private void ButtonTabAdvanced_Click(object? sender, RoutedEventArgs e) => ToggleNavigation(2);
+
+    private void LoadGpuTuning()
+    {
+        _updatingGpu = true;
+        try
+        {
+            var nv = App.GpuControl as Platform.Linux.LinuxNvidiaGpuControl;
+            bool nvAvail = nv?.IsAvailable() == true;
+            var wmi = App.Wmi;
+
+            // Auto-apply ON for this mode  -> show the saved (persisted) tuning.
+            // OFF -> the mode runs stock, so show stock/off values.
+            bool autoApply = Helpers.AppConfig.IsMode("auto_apply_gpu");
+            checkApplyGpu.IsChecked = autoApply;
+
+            LoadNvBaseTgpRow(wmi);
+            LoadNvTgpRow(wmi);
+            LoadGpuBoostRow(wmi);
+            LoadGpuTempRow(wmi);
+
+            if (!nvAvail)
+            {
+                labelGpuTuningInfo.Text = Labels.Get("nvidia_gpu_not_detected");
+                rowGpuPowerLim.IsVisible = false;
+                rowGpuClockLock.IsVisible = false;
+                rowGpuMemClockLock.IsVisible = false;
+                rowGpuClockCore.IsVisible = false;
+                rowGpuClockMem.IsVisible = false;
+                labelGpuOcWarning.IsVisible = false;
+                headerGpuLive.IsVisible = false;
+                gridGpuLive.IsVisible = false;
+                return;
+            }
+            labelGpuTuningInfo.Text = nv!.GetGpuName() ?? Labels.Get("nvidia_gpu");
+
+            // Only show tuning rows the card actually supports.
+            var caps = nv.GetCapabilities();
+            // Dynamic Boost arbitrates GPU power on this platform, so nvidia-smi
+            // -pl is overridden - hide the (ineffective) power row when present.
+            bool dynamicBoost = wmi?.IsFeatureSupported(Platform.Linux.AsusAttributes.NvDynamicBoost) == true;
+
+            var maxClocks = nv.GetMaxClocks();
+            if (maxClocks != null)
+            {
+                sliderGpuClockLock.Maximum = maxClocks.Value.core;
+                sliderGpuMemClockLock.Maximum = maxClocks.Value.mem;
+            }
+
+            headerGpuLive.IsVisible = true;
+            gridGpuLive.IsVisible = true;
+
+            var limits = nv.GetPowerLimits();
+            if (caps.PowerLimit && !dynamicBoost && limits != null)
+            {
+                var (defW, minW, maxW, _) = limits.Value;
+                sliderGpuPowerLim.Minimum = minW;
+                sliderGpuPowerLim.Maximum = maxW;
+                // Persistence on -> saved cap; off -> the stable default_limit.
+                // (Never the live enforced limit - Dynamic Boost makes it fluctuate.)
+                int savedPower = autoApply ? Helpers.AppConfig.GetMode("gpu_power_lim", -1) : -1;
+                double powerVal = savedPower > 0 ? savedPower : defW;
+                sliderGpuPowerLim.Value = Math.Clamp(powerVal, minW, maxW);
+                labelGpuPowerLim.Text = $"{(int)sliderGpuPowerLim.Value}W";
+                rowGpuPowerLim.IsVisible = true;
+            }
+            else
+                rowGpuPowerLim.IsVisible = false;
+
+            // GPU clock lock - only if the card supports locked graphics clocks.
+            bool gpuLockOk = caps.GpuClockLock && (maxClocks?.core ?? 0) > 0;
+            rowGpuClockLock.IsVisible = gpuLockOk;
+            if (gpuLockOk)
+            {
+                int savedLock = autoApply ? Helpers.AppConfig.GetMode("gpu_clock_lock", 0) : 0;
+                checkGpuClockLock.IsChecked = savedLock > 0;
+                sliderGpuClockLock.IsEnabled = savedLock > 0;
+                if (savedLock > 0)
+                {
+                    sliderGpuClockLock.Value = Math.Clamp(savedLock, sliderGpuClockLock.Minimum, sliderGpuClockLock.Maximum);
+                    labelGpuClockLock.Text = $"{(int)sliderGpuClockLock.Value} MHz";
+                }
+                else
+                    labelGpuClockLock.Text = Labels.Get("off");
+            }
+
+            // VRAM clock lock - only if the card supports locked memory clocks.
+            bool memLockOk = caps.MemClockLock && (maxClocks?.mem ?? 0) > 0;
+            rowGpuMemClockLock.IsVisible = memLockOk;
+            if (memLockOk)
+            {
+                int savedMemLock = autoApply ? Helpers.AppConfig.GetMode("gpu_mem_clock_lock", 0) : 0;
+                checkGpuMemClockLock.IsChecked = savedMemLock > 0;
+                sliderGpuMemClockLock.IsEnabled = savedMemLock > 0;
+                if (savedMemLock > 0)
+                {
+                    sliderGpuMemClockLock.Value = Math.Clamp(savedMemLock, sliderGpuMemClockLock.Minimum, sliderGpuMemClockLock.Maximum);
+                    labelGpuMemClockLock.Text = $"{(int)sliderGpuMemClockLock.Value} MHz";
+                }
+                else
+                    labelGpuMemClockLock.Text = Labels.Get("off");
+            }
+
+            LoadClockOffsetRows(nv, autoApply);
+            StartGpuBackgroundRefresh();
+        }
+        finally { _updatingGpu = false; }
+    }
+
+    private void LoadNvBaseTgpRow(Platform.IAsusWmi? wmi)
+    {
+        if (wmi == null
+            || !wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvBaseTgp))
+        {
+            rowNvBaseTgp.IsVisible = false;
+            return;
+        }
+        var range = wmi.GetAttributeRange(Platform.Linux.AsusAttributes.NvBaseTgp);
+        if (range == null)
+        { rowNvBaseTgp.IsVisible = false; return; }
+        int cur = wmi.GetPptLimit(Platform.Linux.AsusAttributes.NvBaseTgp);
+        if (cur < 0)
+            cur = range.Default;
+        sliderNvBaseTgp.Minimum = range.Min;
+        sliderNvBaseTgp.Maximum = range.Max;
+        sliderNvBaseTgp.TickFrequency = Math.Max(1, range.Step);
+        sliderNvBaseTgp.Value = Math.Clamp(cur, range.Min, range.Max);
+        labelNvBaseTgp.Text = $"{(int)sliderNvBaseTgp.Value}W";
+        rowNvBaseTgp.IsVisible = true;
+    }
+
+    private void LoadNvTgpRow(Platform.IAsusWmi? wmi)
+    {
+        if (wmi == null
+            || !wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvTgp))
+        {
+            rowNvTgp.IsVisible = false;
+            return;
+        }
+        var range = wmi.GetAttributeRange(Platform.Linux.AsusAttributes.NvTgp);
+        if (range == null)
+        { rowNvTgp.IsVisible = false; return; }
+        int cur = wmi.GetPptLimit(Platform.Linux.AsusAttributes.NvTgp);
+        if (cur < 0)
+            cur = range.Default;
+        sliderNvTgp.Minimum = range.Min;
+        sliderNvTgp.Maximum = range.Max;
+        sliderNvTgp.TickFrequency = Math.Max(1, range.Step);
+        sliderNvTgp.Value = Math.Clamp(cur, range.Min, range.Max);
+        labelNvTgp.Text = $"{(int)sliderNvTgp.Value}W";
+        rowNvTgp.IsVisible = true;
+    }
+
+    private void LoadGpuBoostRow(Platform.IAsusWmi? wmi)
+    {
+        if (wmi == null
+            || !wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvDynamicBoost))
+        {
+            rowGpuBoost.IsVisible = false;
+            return;
+        }
+        var range = wmi.GetAttributeRange(Platform.Linux.AsusAttributes.NvDynamicBoost);
+        int min = range?.Min >= 0 ? range.Min : 5;
+        int max = range?.Max >= 0 ? range.Max : 25;
+        int cur = wmi.GetPptLimit(Platform.Linux.AsusAttributes.NvDynamicBoost);
+        if (cur < 0)
+            cur = Helpers.AppConfig.GetMode("gpu_boost", min);
+        sliderGpuBoost.Minimum = min;
+        sliderGpuBoost.Maximum = max;
+        sliderGpuBoost.TickFrequency = Math.Max(1, range?.Step ?? 5);
+        sliderGpuBoost.Value = Math.Clamp(cur, min, max);
+        labelGpuBoost.Text = $"{(int)sliderGpuBoost.Value}W";
+        rowGpuBoost.IsVisible = true;
+    }
+
+    private void LoadGpuTempRow(Platform.IAsusWmi? wmi)
+    {
+        if (wmi == null
+            || !wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvTempTarget))
+        {
+            rowGpuTemp.IsVisible = false;
+            return;
+        }
+        var range = wmi.GetAttributeRange(Platform.Linux.AsusAttributes.NvTempTarget);
+        int min = range?.Min >= 0 ? range.Min : 75;
+        int max = range?.Max >= 0 ? range.Max : 87;
+        int cur = wmi.GetPptLimit(Platform.Linux.AsusAttributes.NvTempTarget);
+        if (cur < 0)
+            cur = Helpers.AppConfig.GetMode("gpu_temp", max);
+        sliderGpuTemp.Minimum = min;
+        sliderGpuTemp.Maximum = max;
+        sliderGpuTemp.Value = Math.Clamp(cur, min, max);
+        labelGpuTemp.Text = $"{(int)sliderGpuTemp.Value}\u00B0C";
+        rowGpuTemp.IsVisible = true;
+    }
+
+    private void LoadClockOffsetRows(Platform.Linux.LinuxNvidiaGpuControl nv, bool fromConfig)
+    {
+        if (!nv.IsClockOffsetSupported())
+        {
+            rowGpuClockCore.IsVisible = false;
+            rowGpuClockMem.IsVisible = false;
+            labelGpuOcWarning.IsVisible = false;
+            return;
+        }
+        var coreR = nv.GetCoreOffsetRange();
+        var memR = nv.GetMemOffsetRange();
+        if (coreR != null)
+        {
+            sliderGpuClockCore.Minimum = coreR.Value.min;
+            sliderGpuClockCore.Maximum = coreR.Value.max;
+        }
+        if (memR != null)
+        {
+            sliderGpuClockMem.Minimum = memR.Value.min;
+            sliderGpuClockMem.Maximum = memR.Value.max;
+        }
+        // Persistence on -> saved offsets; off -> stock (0).
+        int core, mem;
+        if (fromConfig)
+        {
+            core = Helpers.AppConfig.GetMode("gpu_clock_core", 0);
+            mem = Helpers.AppConfig.GetMode("gpu_clock_mem", 0);
+        }
+        else
+        {
+            var cur = nv.GetClockOffsets();
+            core = cur?.core ?? 0;
+            mem = cur?.mem ?? 0;
+        }
+        core = (int)Math.Clamp(core, sliderGpuClockCore.Minimum, sliderGpuClockCore.Maximum);
+        mem = (int)Math.Clamp(mem, sliderGpuClockMem.Minimum, sliderGpuClockMem.Maximum);
+        sliderGpuClockCore.Value = core;
+        sliderGpuClockMem.Value = mem;
+        labelGpuClockCore.Text = $"{core} MHz";
+        labelGpuClockMem.Text = $"{mem} MHz";
+        rowGpuClockCore.IsVisible = true;
+        rowGpuClockMem.IsVisible = true;
+        labelGpuOcWarning.Text = Labels.Get("gpu_oc_warning");
+        labelGpuOcWarning.IsVisible = true;
     }
 
     // Monitor
@@ -121,6 +464,9 @@ public partial class FansWindow : Window
         buttonBoostOff.Content = Labels.Get("off");
         buttonBoostOn.Content = Labels.Get("on");
         checkApplyPower.Content = Labels.Get("auto_apply_power_limits");
+        Avalonia.Controls.ToolTip.SetTip(checkApplyPower, Labels.Get("auto_apply_power_tooltip"));
+        checkApplyGpu.Content = Labels.Get("auto_apply_gpu_settings");
+        Avalonia.Controls.ToolTip.SetTip(checkApplyGpu, Labels.Get("auto_apply_gpu_tooltip"));
         chartCPU.FanLabel = Labels.Get("cpu_fan");
         chartGPU.FanLabel = Labels.Get("gpu_fan");
         chartMid.FanLabel = Labels.Get("mid_fan");
@@ -137,6 +483,36 @@ public partial class FansWindow : Window
         labelReapply.Text = Labels.Get("reapply_power_label");
         labelReapplyUnit.Text = Labels.Get("reapply_power_unit");
         labelReapplyHint.Text = Labels.Get("reapply_power_hint");
+        buttonTabCpu.Content = Labels.Get("tab_cpu");
+        buttonTabGpu.Content = Labels.Get("tab_gpu");
+        buttonTabAdvanced.Content = Labels.Get("tab_advanced");
+        headerGpuTuning.Text = Labels.Get("gpu_tuning_header");
+        labelNvBaseTgpLabel.Text = Labels.Get("gpu_base_tgp");
+        labelNvTgpLabel.Text = Labels.Get("gpu_max_tgp");
+        labelGpuBoostLabel.Text = Labels.Get("gpu_dynamic_boost");
+        labelGpuTempLabel.Text = Labels.Get("gpu_temp_target");
+        labelGpuPowerLimLabel.Text = Labels.Get("gpu_power_lim");
+        labelGpuClockCoreLabel.Text = Labels.Get("gpu_clock_core_offset");
+        labelGpuClockMemLabel.Text = Labels.Get("gpu_clock_mem_offset");
+        checkGpuClockLock.Content = Labels.Get("gpu_clock_lock");
+        checkGpuMemClockLock.Content = Labels.Get("gpu_mem_clock_lock");
+        labelGpuHint.Text = Labels.Get("gpu_tuning_hint");
+        buttonGpuApply.Content = Labels.Get("apply");
+        buttonGpuReset.Content = Labels.Get("reset");
+        headerGpuLive.Text = Labels.Get("gpu_status_header");
+        labelLiveCoreKey.Text = Labels.Get("gpu_live_core");
+        labelLiveMemKey.Text = Labels.Get("gpu_live_mem");
+        labelLiveSmKey.Text = Labels.Get("gpu_live_sm");
+        labelLiveTempKey.Text = Labels.Get("gpu_live_temp");
+        labelLiveUtilKey.Text = Labels.Get("gpu_live_usage");
+        labelLivePowerKey.Text = Labels.Get("gpu_live_power");
+        labelLiveVramKey.Text = Labels.Get("gpu_live_vram");
+        labelLivePstateKey.Text = Labels.Get("gpu_live_pstate");
+        labelLiveOffsetsKey.Text = Labels.Get("gpu_live_offset");
+        labelLiveThrottleKey.Text = Labels.Get("gpu_live_throttle");
+        labelLivePcieKey.Text = Labels.Get("gpu_live_pcie");
+        labelUndervoltIgpu.Text = Labels.Get("undervolt_igpu");
+        labelCpuTempLabel.Text = Labels.Get("cpu_temp_target");
     }
 
     // Fan Curves
@@ -187,7 +563,9 @@ public partial class FansWindow : Window
             chartMid.IsVisible = true;
             // Change third row from Auto to Star so all 3 charts share space equally
             chartGrid.RowDefinitions[2].Height = new Avalonia.Controls.GridLength(1, Avalonia.Controls.GridUnitType.Star);
-            this.Height = 820;
+            // Keep in sync with the XAML Height so the GPU tab isn't truncated
+            // when a third fan is present.
+            this.Height = 800;
 
             Helpers.AppConfig.Set("mid_fan", 1);
         }
@@ -416,6 +794,14 @@ public partial class FansWindow : Window
         Helpers.AppConfig.SetMode("auto_apply_power", enabled ? 1 : 0);
     }
 
+    private void CheckApplyGpu_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_updatingGpu)
+            return;
+        bool enabled = checkApplyGpu.IsChecked ?? false;
+        Helpers.AppConfig.SetMode("auto_apply_gpu", enabled ? 1 : 0);
+    }
+
     // Power Limits
 
     private void LoadPowerLimits()
@@ -603,23 +989,9 @@ public partial class FansWindow : Window
             int gpuFan = wmi.GetFanRpm(1);
             int midFan = wmi.GetFanRpm(2);
 
-            // GPU load: only show when dGPU is active (not in Eco mode)
-            string gpuLoadStr = "";
-            bool isEcoMode = wmi.GetGpuEco();
-            if (!isEcoMode && App.GpuControl?.IsAvailable() == true)
-            {
-                try
-                {
-                    int? gpuLoad = App.GpuControl.GetGpuUse();
-                    if (gpuLoad.HasValue && gpuLoad.Value >= 0)
-                        gpuLoadStr = $" Load: {gpuLoad.Value}%";
-                }
-                catch (Exception)
-                {
-                    // Silently ignore GPU query errors during transitions
-                    Helpers.Logger.WriteLine("FansWindow: GPU load query failed");
-                }
-            }
+            // GPU load comes from the background GPU poll (nvidia-smi), never read
+            // it on the UI thread - it can block when the dGPU is wedged.
+            string gpuLoadStr = _gpuLoadStr;
 
             string info = $"CPU: {(cpuTemp > 0 ? $"{cpuTemp}°C" : "--")} / {(cpuFan > 0 ? $"{cpuFan} RPM" : "--")}   " +
                           $"GPU: {(gpuTemp > 0 ? $"{gpuTemp}°C" : "--")}{gpuLoadStr} / {(gpuFan > 0 ? $"{gpuFan} RPM" : "--")}";
@@ -633,6 +1005,110 @@ public partial class FansWindow : Window
         {
             Helpers.Logger.WriteLine("FansWindow sensor refresh error", ex);
         }
+    }
+
+    private volatile bool _gpuRefreshBusy;
+    private volatile string _gpuLoadStr = "";
+
+    /// <summary>
+    /// Fetch GPU load + live status + applied offsets on a background thread and
+    /// post the results to the UI. nvidia-smi / gpu-helper can block (up to a
+    /// timeout) when the dGPU is wedged, so this must never run on the UI thread.
+    /// </summary>
+    private void StartGpuBackgroundRefresh()
+    {
+        if (_gpuRefreshBusy)
+            return;
+
+        // Don't poke the dGPU (nvidia-smi / NVML) while a GPU mode switch is in
+        // flight - entering Eco tears the driver down, and querying mid-teardown
+        // can block for seconds and stall the UI.
+        if (App.GpuModeCtrl?.IsSwitchInProgress == true)
+        {
+            _gpuLoadStr = "";
+            return;
+        }
+
+        var nv = App.GpuControl as Platform.Linux.LinuxNvidiaGpuControl;
+        bool eco = App.Wmi?.GetGpuEco() ?? false; // WMI read, fast
+        if (nv == null || !nv.IsAvailable() || eco)
+        {
+            _gpuLoadStr = "";
+            return;
+        }
+        bool liveVisible = _activeTab == 1 && gridGpuLive.IsVisible;
+
+        _gpuRefreshBusy = true;
+        Task.Run(() =>
+        {
+            string loadStr = "";
+            Platform.Linux.LinuxNvidiaGpuControl.GpuLiveStatus? live = null;
+            (int core, int mem)? offsets = null;
+            bool haveOffsets = false;
+            try
+            {
+                int? load = nv.GetGpuUse();
+                if (load.HasValue && load.Value >= 0)
+                    loadStr = $" Load: {load.Value}%";
+                if (liveVisible)
+                {
+                    live = nv.GetLiveStatus();
+                    offsets = nv.GetClockOffsets();
+                    haveOffsets = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Helpers.Logger.WriteLine("FansWindow: GPU background refresh failed", ex);
+            }
+
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                try
+                {
+                    _gpuLoadStr = loadStr;
+                    if (liveVisible && live != null)
+                        ApplyLiveStatus(live.Value);
+                    if (liveVisible && haveOffsets)
+                        ApplyAppliedOffsets(offsets);
+                }
+                finally
+                {
+                    _gpuRefreshBusy = false;
+                }
+            });
+        });
+    }
+
+    /// <summary>Render a GPU live-status sample into the GPU Status block (UI thread).</summary>
+    private void ApplyLiveStatus(Platform.Linux.LinuxNvidiaGpuControl.GpuLiveStatus v)
+    {
+        string na = Labels.Get("not_available_short");
+        string C(int? x, string suffix) => x.HasValue ? $"{x.Value}{suffix}" : na;
+
+        labelLiveCoreClock.Text = C(v.CoreClock, " MHz");
+        labelLiveMemClock.Text = C(v.MemClock, " MHz");
+        labelLiveSmClock.Text = C(v.SmClock, " MHz");
+        labelLiveTemp.Text = C(v.Temp, "\u00B0C");
+        labelLiveUtil.Text = C(v.Usage, "%");
+        labelLivePower.Text = (v.PowerDraw.HasValue ? $"{v.PowerDraw.Value:0.#}" : na)
+            + (v.PowerLimit.HasValue ? $" / {v.PowerLimit.Value:0.#} W" : " W");
+        labelLiveVram.Text = (v.VramUsedMb.HasValue && v.VramTotalMb.HasValue)
+            ? $"{v.VramUsedMb} / {v.VramTotalMb} MB"
+            : na;
+        labelLivePstate.Text = v.Pstate ?? na;
+        labelLiveThrottle.Text = string.IsNullOrEmpty(v.ThrottleReason) ? Labels.Get("none") : v.ThrottleReason!;
+        labelLivePcie.Text = (v.PcieGen.HasValue && v.PcieWidth.HasValue)
+            ? $"Gen{v.PcieGen} x{v.PcieWidth}"
+            : na;
+    }
+
+    /// <summary>Render the applied core/mem offset readback (UI thread).</summary>
+    private void ApplyAppliedOffsets((int core, int mem)? off)
+    {
+        labelLiveOffsets.Text = off != null
+            ? $"{off.Value.core:+#;-#;0} MHz core  {off.Value.mem:+#;-#;0} MHz mem"
+            : Labels.Get("not_available_short");
     }
 
     /// <summary>
@@ -660,8 +1136,9 @@ public partial class FansWindow : Window
 
     private void LoadUV()
     {
-        var smu = App.Smu;
-        if (smu == null || !smu.IsAvailable)
+        bool amd = App.Smu?.IsAvailable == true;
+        bool intel = App.IntelUv?.IsAvailable == true;
+        if (!amd && !intel)
         {
             panelUV.IsVisible = false;
             return;
@@ -669,17 +1146,37 @@ public partial class FansWindow : Window
 
         panelUV.IsVisible = true;
 
-        // Suppress ValueChanged/Checked handlers while programmatically populating controls -
-        // otherwise setting checkApplyUV.IsChecked would call AutoRyzen and apply UV to
-        // hardware just because the user opened the window.
         _updatingUV = true;
         try
         {
-            // Config stores negative cpu_uv (matches Windows); slider is 0..40 positive intensity.
-            int cpuUV = Helpers.AppConfig.GetMode("cpu_uv", 0);
-            cpuUV = Math.Clamp(cpuUV, Platform.Linux.RyzenSmu.MinCPUUV, Platform.Linux.RyzenSmu.MaxCPUUV);
-            sliderCpuUV.Value = -cpuUV;
-            labelCpuUV.Text = cpuUV.ToString();
+            if (intel)
+            {
+                // Intel: core+cache voltage offset in millivolts (negative = undervolt).
+                sliderCpuUV.Maximum = -Platform.Linux.IntelUndervolt.MinOffsetMv;
+                int mv = Helpers.AppConfig.GetMode("cpu_uv_mv", 0);
+                mv = Math.Clamp(mv, Platform.Linux.IntelUndervolt.MinOffsetMv, Platform.Linux.IntelUndervolt.MaxOffsetMv);
+                sliderCpuUV.Value = -mv;
+                labelCpuUV.Text = $"{mv} mV";
+                rowIgpuUV.IsVisible = false;
+            }
+            else
+            {
+                // AMD: Curve Optimizer steps.
+                sliderCpuUV.Maximum = -Platform.Linux.RyzenSmu.MinCPUUV;
+                int cpuUV = Helpers.AppConfig.GetMode("cpu_uv", 0);
+                cpuUV = Math.Clamp(cpuUV, Platform.Linux.RyzenSmu.MinCPUUV, Platform.Linux.RyzenSmu.MaxCPUUV);
+                sliderCpuUV.Value = -cpuUV;
+                labelCpuUV.Text = cpuUV.ToString();
+
+                rowIgpuUV.IsVisible = App.Smu?.IsIGpuSupported == true;
+                if (App.Smu?.IsIGpuSupported == true)
+                {
+                    int igpuUV = Helpers.AppConfig.GetMode("igpu_uv", 0);
+                    igpuUV = Math.Clamp(igpuUV, Platform.Linux.RyzenSmu.MinCPUUV, Platform.Linux.RyzenSmu.MaxCPUUV);
+                    sliderIgpuUV.Value = -igpuUV;
+                    labelIgpuUV.Text = igpuUV.ToString();
+                }
+            }
             checkApplyUV.IsChecked = Helpers.AppConfig.IsMode("auto_uv");
         }
         finally
@@ -693,29 +1190,38 @@ public partial class FansWindow : Window
     {
         if (_updatingUV)
             return;
-        // Slider value is positive intensity (0..40); config stores negated (−40..0).
-        int intensity = Math.Clamp((int)e.NewValue, 0, -Platform.Linux.RyzenSmu.MinCPUUV);
-        int cpuUV = -intensity;
+        // Slider value is positive intensity; config stores the negated offset.
+        if (App.IntelUv?.IsAvailable == true)
+        {
+            int intensity = Math.Clamp((int)e.NewValue, 0, -Platform.Linux.IntelUndervolt.MinOffsetMv);
+            int mv = -intensity;
+            labelCpuUV.Text = $"{mv} mV";
+            Helpers.AppConfig.SetMode("cpu_uv_mv", mv);
+            return;
+        }
+        int coIntensity = Math.Clamp((int)e.NewValue, 0, -Platform.Linux.RyzenSmu.MinCPUUV);
+        int cpuUV = -coIntensity;
         labelCpuUV.Text = cpuUV.ToString();
         Helpers.AppConfig.SetMode("cpu_uv", cpuUV);
     }
 
-    private void ButtonApplyUV_Click(object? sender, RoutedEventArgs e) => App.Mode?.SetRyzen();
+    private void ButtonApplyUV_Click(object? sender, RoutedEventArgs e) => App.Mode?.ApplyCpuUndervolt();
 
     private void ButtonResetUV_Click(object? sender, RoutedEventArgs e)
     {
+        bool intel = App.IntelUv?.IsAvailable == true;
         _updatingUV = true;
         try
         {
             sliderCpuUV.Value = 0;
-            labelCpuUV.Text = "0";
+            labelCpuUV.Text = intel ? "0 mV" : "0";
         }
         finally
         {
             _updatingUV = false;
         }
-        Helpers.AppConfig.SetMode("cpu_uv", 0);
-        App.Mode?.ResetRyzen();
+        Helpers.AppConfig.SetMode(intel ? "cpu_uv_mv" : "cpu_uv", 0);
+        App.Mode?.ResetCpuUndervolt();
     }
 
     private void CheckApplyUV_Changed(object? sender, RoutedEventArgs e)
@@ -723,7 +1229,7 @@ public partial class FansWindow : Window
         if (_updatingUV)
             return;
         Helpers.AppConfig.SetMode("auto_uv", checkApplyUV.IsChecked == true ? 1 : 0);
-        App.Mode?.AutoRyzen();
+        App.Mode?.AutoCpuUndervolt();
     }
 
     // Advanced: per-mode shell hook + reapply timer
@@ -764,5 +1270,300 @@ public partial class FansWindow : Window
             v = 0;
         Helpers.AppConfig.Set("reapply_time", v);
         App.Mode?.RefreshReapplyTimer();
+    }
+
+    // GPU Tuning handlers (Phase C wires the actual apply paths)
+
+    private void SliderNvBaseTgp_ValueChanged(object? sender,
+        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingGpu)
+            return;
+        labelNvBaseTgp.Text = $"{(int)e.NewValue}W";
+    }
+
+    private void SliderNvTgp_ValueChanged(object? sender,
+        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingGpu)
+            return;
+        labelNvTgp.Text = $"{(int)e.NewValue}W";
+    }
+
+    private void SliderGpuBoost_ValueChanged(object? sender,
+        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingGpu)
+            return;
+        labelGpuBoost.Text = $"{(int)e.NewValue}W";
+    }
+
+    private void SliderGpuTemp_ValueChanged(object? sender,
+        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingGpu)
+            return;
+        labelGpuTemp.Text = $"{(int)e.NewValue}\u00B0C";
+    }
+
+    private void SliderGpuPowerLim_ValueChanged(object? sender,
+        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingGpu)
+            return;
+        labelGpuPowerLim.Text = $"{(int)e.NewValue}W";
+    }
+
+    private void SliderGpuClockCore_ValueChanged(object? sender,
+        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingGpu)
+            return;
+        labelGpuClockCore.Text = $"{(int)e.NewValue} MHz";
+    }
+
+    private void SliderGpuClockMem_ValueChanged(object? sender,
+        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingGpu)
+            return;
+        labelGpuClockMem.Text = $"{(int)e.NewValue} MHz";
+    }
+
+    private void CheckGpuClockLock_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_updatingGpu)
+            return;
+        bool enabled = checkGpuClockLock.IsChecked == true;
+        sliderGpuClockLock.IsEnabled = enabled;
+        labelGpuClockLock.Text = enabled
+            ? $"{(int)sliderGpuClockLock.Value} MHz"
+            : Labels.Get("off");
+    }
+
+    private void SliderGpuClockLock_ValueChanged(object? sender,
+        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingGpu)
+            return;
+        if (checkGpuClockLock.IsChecked == true)
+            labelGpuClockLock.Text = $"{(int)e.NewValue} MHz";
+    }
+
+    private void CheckGpuMemClockLock_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_updatingGpu)
+            return;
+        bool enabled = checkGpuMemClockLock.IsChecked == true;
+        sliderGpuMemClockLock.IsEnabled = enabled;
+        labelGpuMemClockLock.Text = enabled
+            ? $"{(int)sliderGpuMemClockLock.Value} MHz"
+            : Labels.Get("off");
+    }
+
+    private void SliderGpuMemClockLock_ValueChanged(object? sender,
+        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingGpu)
+            return;
+        if (checkGpuMemClockLock.IsChecked == true)
+            labelGpuMemClockLock.Text = $"{(int)e.NewValue} MHz";
+    }
+
+    private void ButtonGpuApply_Click(object? sender, RoutedEventArgs e)
+    {
+        var wmi = App.Wmi;
+        var nv = App.GpuControl as Platform.Linux.LinuxNvidiaGpuControl;
+
+        int? baseTgp = rowNvBaseTgp.IsVisible ? (int)sliderNvBaseTgp.Value : null;
+        int? maxTgp = rowNvTgp.IsVisible ? (int)sliderNvTgp.Value : null;
+        int? boost = rowGpuBoost.IsVisible ? (int)sliderGpuBoost.Value : null;
+        int? temp = rowGpuTemp.IsVisible ? (int)sliderGpuTemp.Value : null;
+        int? smiPower = rowGpuPowerLim.IsVisible ? (int)sliderGpuPowerLim.Value : null;
+        bool clockLock = rowGpuClockLock.IsVisible && checkGpuClockLock.IsChecked == true;
+        int clockMhz = (int)sliderGpuClockLock.Value;
+        bool memClockLock = checkGpuMemClockLock.IsChecked == true;
+        int memClockMhz = (int)sliderGpuMemClockLock.Value;
+        bool memLockRowVisible = rowGpuMemClockLock.IsVisible;
+        int? coreOff = rowGpuClockCore.IsVisible ? (int)sliderGpuClockCore.Value : null;
+        int? memOff = rowGpuClockMem.IsVisible ? (int)sliderGpuClockMem.Value : null;
+
+        Helpers.AppConfig.SetMode("gpu_base_tgp", baseTgp ?? -1);
+        Helpers.AppConfig.SetMode("gpu_tgp", maxTgp ?? -1);
+        Helpers.AppConfig.SetMode("gpu_boost", boost ?? -1);
+        Helpers.AppConfig.SetMode("gpu_temp", temp ?? -1);
+        Helpers.AppConfig.SetMode("gpu_power_lim", smiPower ?? -1);
+        Helpers.AppConfig.SetMode("gpu_clock_lock", clockLock ? clockMhz : 0);
+        Helpers.AppConfig.SetMode("gpu_mem_clock_lock", memClockLock ? memClockMhz : 0);
+        Helpers.AppConfig.SetMode("gpu_clock_core", coreOff ?? 0);
+        Helpers.AppConfig.SetMode("gpu_clock_mem", memOff ?? 0);
+
+        buttonGpuApply.IsEnabled = false;
+        Task.Run(() =>
+        {
+            try
+            {
+                if (wmi != null)
+                {
+                    if (baseTgp != null)
+                        wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvBaseTgp, baseTgp.Value);
+                    if (maxTgp != null)
+                        wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvTgp, maxTgp.Value);
+                    if (boost != null)
+                        wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvDynamicBoost, boost.Value);
+                    if (temp != null)
+                        wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvTempTarget, temp.Value);
+                }
+                if (nv != null && nv.IsAvailable())
+                {
+                    bool nvmlOk = nv.IsClockOffsetSupported();
+                    nv.ApplyAll(
+                        smiPower,
+                        clockLock ? clockMhz : 0,
+                        nvmlOk ? coreOff : null,
+                        nvmlOk ? memOff : null);
+                    if (memLockRowVisible)
+                        nv.ApplyMemClockLock(memClockLock ? memClockMhz : 0);
+                }
+            }
+            catch (Exception ex)
+            {
+                Helpers.Logger.WriteLine("FansWindow.ButtonGpuApply_Click failed", ex);
+            }
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                buttonGpuApply.IsEnabled = true;
+                StartGpuBackgroundRefresh();
+                App.System?.ShowNotification(Labels.Get("gpu_tuning_notify"),
+                    Labels.Get("gpu_tuning_applied"),
+                    "dialog-information");
+            });
+        });
+    }
+
+    private void ButtonGpuReset_Click(object? sender, RoutedEventArgs e)
+    {
+        var wmi = App.Wmi;
+        var nv = App.GpuControl as Platform.Linux.LinuxNvidiaGpuControl;
+
+        Helpers.AppConfig.RemoveMode("gpu_base_tgp");
+        Helpers.AppConfig.RemoveMode("gpu_tgp");
+        Helpers.AppConfig.RemoveMode("gpu_boost");
+        Helpers.AppConfig.RemoveMode("gpu_temp");
+        Helpers.AppConfig.RemoveMode("gpu_power_lim");
+        Helpers.AppConfig.RemoveMode("gpu_clock_lock");
+        Helpers.AppConfig.RemoveMode("gpu_mem_clock_lock");
+        Helpers.AppConfig.RemoveMode("gpu_clock_core");
+        Helpers.AppConfig.RemoveMode("gpu_clock_mem");
+        Helpers.AppConfig.RemoveMode("auto_apply_gpu");
+
+        int? smiDefault = null;
+        if (nv != null && nv.IsAvailable())
+        {
+            var limits = nv.GetPowerLimits();
+            if (limits != null)
+                smiDefault = limits.Value.defaultW;
+        }
+
+        buttonGpuReset.IsEnabled = false;
+        Task.Run(() =>
+        {
+            try
+            {
+                if (wmi != null)
+                {
+                    WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.NvBaseTgp);
+                    WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.NvTgp);
+                    WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.NvDynamicBoost);
+                    WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.NvTempTarget);
+                }
+                if (nv != null && nv.IsAvailable())
+                {
+                    bool nvmlOk = nv.IsClockOffsetSupported();
+                    nv.ApplyAll(
+                        smiDefault,
+                        0,
+                        nvmlOk ? 0 : null,
+                        nvmlOk ? 0 : null);
+                    nv.ApplyMemClockLock(0);
+                    Platform.Linux.LinuxNvidiaGpuControl.ResetLastApplyState();
+                }
+            }
+            catch (Exception ex)
+            {
+                Helpers.Logger.WriteLine("FansWindow.ButtonGpuReset_Click failed", ex);
+            }
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                LoadGpuTuning();
+                buttonGpuReset.IsEnabled = true;
+            });
+        });
+    }
+
+    private static void WriteFwAttrDefault(Platform.IAsusWmi wmi, Platform.Linux.AttrDef attr)
+    {
+        if (!wmi.IsFeatureSupported(attr))
+            return;
+        var range = wmi.GetAttributeRange(attr);
+        if (range == null || range.Default <= 0)
+            return;
+        wmi.SetPptLimit(attr, range.Default);
+    }
+
+    private void ButtonCpuReset_Click(object? sender, RoutedEventArgs e)
+    {
+        var wmi = App.Wmi;
+
+        Helpers.AppConfig.RemoveMode("limit_slow");
+        Helpers.AppConfig.RemoveMode("limit_fast");
+        Helpers.AppConfig.RemoveMode("limit_fppt");
+        Helpers.AppConfig.RemoveMode("auto_apply_power");
+
+        buttonCpuReset.IsEnabled = false;
+        Task.Run(() =>
+        {
+            try
+            {
+                if (wmi != null)
+                {
+                    WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.PptPl1Spl);
+                    WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.PptPl2Sppt);
+                    WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.PptFppt);
+                    WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.PptApuSppt);
+                    WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.PptPlatformSppt);
+                }
+                App.Power?.SetCpuBoost(true);
+            }
+            catch (Exception ex)
+            {
+                Helpers.Logger.WriteLine("FansWindow.ButtonCpuReset_Click failed", ex);
+            }
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                LoadPowerLimits();
+                RefreshBoostButton();
+                buttonCpuReset.IsEnabled = true;
+            });
+        });
+    }
+
+    private void SliderIgpuUV_ValueChanged(object? sender,
+        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingUV)
+            return;
+        int intensity = Math.Clamp((int)e.NewValue, 0, -Platform.Linux.RyzenSmu.MinCPUUV);
+        int igpuUV = -intensity;
+        labelIgpuUV.Text = igpuUV.ToString();
+        Helpers.AppConfig.SetMode("igpu_uv", igpuUV);
+    }
+
+    private void SliderCpuTemp_ValueChanged(object? sender,
+        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingUV)
+            return;
+        labelCpuTemp.Text = $"{(int)e.NewValue}\u00B0C";
     }
 }

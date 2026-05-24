@@ -29,6 +29,7 @@ curl -sL https://raw.githubusercontent.com/utajum/g-helper-linux/master/install/
 - systemd-service indicator in the dGPU processes window: holders backed by a
   unit show a small badge with the unit name (e.g. `rustdesk.service`)
 - GPU tuning: nvidia-smi power limit / clock lock and NVML core+mem clock offsets
+- Experimental Intel CPU undervolting, alongside the existing AMD Ryzen Curve Optimizer
 - Recovery dialog when the dGPU is enabled in firmware but does not re-appear on
   the PCI bus after repeated rescans (slow ASUS firmware) that advises a reboot
   instead of leaving a silent broken state

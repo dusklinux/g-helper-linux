@@ -111,6 +111,9 @@ public interface IAsusWmi : IDisposable
     /// <summary>Read PPT limit by sysfs attribute name. Returns watts or -1.</summary>
     int GetPptLimit(string attribute);
 
+    /// <summary>Read min/max/step/default for a firmware-attribute. Returns null if unavailable.</summary>
+    Linux.AttrRange? GetAttributeRange(Linux.AttrDef attr);
+
     // Keyboard
 
     /// <summary>Get keyboard backlight brightness (0-3).</summary>

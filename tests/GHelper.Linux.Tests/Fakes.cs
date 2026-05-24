@@ -94,6 +94,7 @@ public sealed class FakeAsusWmi : IAsusWmi
     public void SetScreenAutoBrightness(bool enabled) { }
     public void SetPptLimit(string attribute, int watts) { }
     public int GetPptLimit(string attribute) => -1;
+    public Platform.Linux.AttrRange? GetAttributeRange(Platform.Linux.AttrDef attr) => null;
     public int GetKeyboardBrightness() => 0;
     public void SetKeyboardBrightness(int level) { }
     public void SetKeyboardRgb(byte r, byte g, byte b) { }

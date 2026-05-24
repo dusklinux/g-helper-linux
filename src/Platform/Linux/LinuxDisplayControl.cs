@@ -152,8 +152,8 @@ public class LinuxDisplayControl : IDisplayControl
     /// </summary>
     public bool TryLoadBacklightModule(string moduleName)
     {
-        Helpers.Logger.WriteLine($"Backlight: loading module {moduleName} via pkexec...");
-        SysfsHelper.RunPkexecBash($"modprobe {moduleName}");
+        Helpers.Logger.WriteLine($"Backlight: loading module {moduleName} (sudo, pkexec fallback)...");
+        SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "modprobe", moduleName });
 
         Thread.Sleep(1000);
 
