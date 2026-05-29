@@ -8,6 +8,59 @@
 
 ### Changed
 
+## v1.0.79 (2026-05-30)
+
+### Action required: re-run the install script
+
+All root GPU operations now go through a single helper binary (`/opt/ghelper/gpu-helper`) behind one sudoers entry.
+The boot service unit was hardened. Updating the binary alone is not enough -
+re-run the install script so the new helper and sudoers file are deployed:
+
+```bash
+curl -sL https://raw.githubusercontent.com/utajum/g-helper-linux/master/install/install.sh | sudo bash
+```
+
+### Added
+
+- Live Eco / Standard switching without a reboot, with automatic rollback if the
+  driver cannot be released
+- "Processes using dGPU" window listing every process holding the dGPU
+- Service-aware process termination on Eco "Switch Now": holders are stopped
+- systemd-service indicator in the dGPU processes window: holders backed by a
+  unit show a small badge with the unit name (e.g. `rustdesk.service`)
+- GPU tuning: nvidia-smi power limit / clock lock and NVML core+mem clock offsets
+- Recovery dialog when the dGPU is enabled in firmware but does not re-appear on
+  the PCI bus after repeated rescans (slow ASUS firmware) that advises a reboot
+  instead of leaving a silent broken state
+- Diagnostics dump now includes the `gpu-helper` journal so a copied report shows
+  exactly what ran
+- Add keep keyboard backlight always on option to Extra window
+
+### Fixed
+
+- `ghelper` itself holding `/dev/nvidia*` FDs under PRIME render offload.
+  `Program.cs:Main` sets `__NV_PRIME_RENDER_OFFLOAD=0`,
+  `__GLX_VENDOR_LIBRARY_NAME=mesa`, and `DRI_PRIME=0` when unset so ghelper does
+  not appear as a dGPU holder
+- Eco to Standard sometimes leaving the dGPU off: the re-enable path now polls
+  for the device and re-issues `/sys/bus/pci/rescan` (up to 10s) and only starts
+  the NVIDIA daemons once the device is actually present, instead of waiting on
+  the kernel module (which can linger from a respawn loop with no GPU)
+- Opening the Extra window triggered unwanted side effects
+- Keyboard backlight turning off when monitor turns off (option to keep on in Extra window)
+
+### Changed
+
+- All privileged GPU operations were consolidated into one helper
+  binary, `gpu-helper` (embedded in the AOT binary, extracted to
+  `/opt/ghelper/gpu-helper`, mode 755). It exposes validated subcommands - list
+  / kill dGPU holders, NVIDIA daemon stop/start/reset-failed, module rmmod, PCI
+  bind/unbind, nvidia-smi power/clock, whitelisted modprobe, and NVML clock
+  offsets - each guarded by an internal whitelist.
+- Dependency updates: Avalonia to 12.0.4 (bundled SkiaSharp 3.119.3-preview to 3.119.4 stable, Svg.Controls.Skia.Avalonia to 12.0.0.11 (Svg.Skia 4 to 5), and LiveCharts to dev-570
+
+<img width="1916" height="1035" alt="image" src="https://github.com/user-attachments/assets/40f0d340-1394-4927-b811-d227a66fc447" />
+
 ## v1.0.78 (2026-05-23)
 
 ### Added
