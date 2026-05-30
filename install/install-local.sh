@@ -258,11 +258,13 @@ if [[ "$MODE" == "uninstall" ]]; then
     fi
 
     # Icons
-    _safe_remove "/usr/share/icons/hicolor/64x64/apps/ghelper.png" "icon (system, png)"
-    _safe_remove "/usr/share/icons/hicolor/64x64/apps/ghelper.ico" "icon (system, ico)"
+    _safe_remove "/usr/share/icons/hicolor/256x256/apps/ghelper.png" "icon (system, png)"
+    _safe_remove "/usr/share/icons/hicolor/64x64/apps/ghelper.png" "icon (system, png legacy)"
+    _safe_remove "/usr/share/icons/hicolor/64x64/apps/ghelper.ico" "icon (system, ico legacy)"
     if [[ -n "$REAL_USER" ]]; then
-        _safe_remove "/home/$REAL_USER/.local/share/icons/hicolor/64x64/apps/ghelper.png" "icon (user, png)"
-        _safe_remove "/home/$REAL_USER/.local/share/icons/hicolor/64x64/apps/ghelper.ico" "icon (user, ico)"
+        _safe_remove "/home/$REAL_USER/.local/share/icons/hicolor/256x256/apps/ghelper.png" "icon (user, png)"
+        _safe_remove "/home/$REAL_USER/.local/share/icons/hicolor/64x64/apps/ghelper.png" "icon (user, png legacy)"
+        _safe_remove "/home/$REAL_USER/.local/share/icons/hicolor/64x64/apps/ghelper.ico" "icon (user, ico legacy)"
     fi
 
     # ── Reload daemons ──
@@ -549,45 +551,22 @@ if [[ "$MODE" == "install" ]]; then
     fi
 
     # Icon
-    ICON_SRC="$PROJECT_DIR/src/UI/Assets/favicon.ico"
-    if [[ -w "/usr/share/icons/hicolor/64x64/apps" ]] 2>/dev/null; then
-        ICON_DEST="/usr/share/icons/hicolor/64x64/apps"
+    ICON_SRC="$SCRIPT_DIR/ghelper.png"
+    if [[ -w "/usr/share/icons/hicolor" ]] 2>/dev/null; then
+        ICON_BASE="/usr/share/icons/hicolor"
     else
-        ICON_DEST="$HOME/.local/share/icons/hicolor/64x64/apps"
-        mkdir -p "$ICON_DEST" 2>/dev/null || true
+        ICON_BASE="$HOME/.local/share/icons/hicolor"
     fi
+    ICON_DEST="$ICON_BASE/256x256/apps"
     if [[ -f "$ICON_SRC" ]]; then
-        mkdir -p "$ICON_DEST"
-        if command -v convert &>/dev/null; then
-            # ImageMagick available — convert ICO → PNG
-            if [[ -f "$ICON_DEST/ghelper.png" ]]; then
-                # Generate temp conversion and compare
-                ICON_TMP=$(mktemp /tmp/ghelper-icon-XXXXXX.png)
-                convert "$ICON_SRC[0]" "$ICON_TMP" 2>/dev/null
-                if cmp -s "$ICON_TMP" "$ICON_DEST/ghelper.png"; then
-                    _skip "icon → already deployed at $ICON_DEST/ghelper.png"
-                else
-                    mv "$ICON_TMP" "$ICON_DEST/ghelper.png"
-                    _update "icon → $ICON_DEST/ghelper.png"
-                fi
-                rm -f "$ICON_TMP" 2>/dev/null || true
-            else
-                convert "$ICON_SRC[0]" "$ICON_DEST/ghelper.png" 2>/dev/null
-                _inject "icon → $ICON_DEST/ghelper.png"
-            fi
+        mkdir -p "$ICON_DEST" 2>/dev/null || true
+        if install -m 644 "$ICON_SRC" "$ICON_DEST/ghelper.png" 2>/dev/null; then
+            _inject "icon → $ICON_DEST/ghelper.png"
+            gtk-update-icon-cache -f -t "$ICON_BASE" 2>/dev/null || true
+            update-desktop-database "$(dirname "$DESKTOP_DEST")" 2>/dev/null || true
         else
-            # No ImageMagick — copy ICO directly
-            if [[ -f "$ICON_DEST/ghelper.ico" ]] && cmp -s "$ICON_SRC" "$ICON_DEST/ghelper.ico"; then
-                _skip "icon → already deployed at $ICON_DEST/ghelper.ico"
-            else
-                cp "$ICON_SRC" "$ICON_DEST/ghelper.ico"
-                # Patch desktop entry to use absolute path
-                sed -i "s|Icon=ghelper|Icon=$ICON_DEST/ghelper.ico|" \
-                    "$DESKTOP_DEST" 2>/dev/null || true
-                _inject "icon → $ICON_DEST/ghelper.ico ${DIM}(no ImageMagick — raw ICO)${RESET}"
-            fi
+            _warn "icon → $ICON_DEST/ghelper.png (install failed)"
         fi
-        gtk-update-icon-cache "$ICON_DEST" 2>/dev/null || true
     else
         _warn "No icon source found at $ICON_SRC"
     fi

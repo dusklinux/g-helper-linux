@@ -27,6 +27,8 @@ public class GdctlBackend : IDisplayBackend
     private static readonly Regex MonitorRegex = new(@"^Monitor\s+(\S+)");
     private static readonly Regex RefreshRegex = new(@"@([\d.]+)$");
 
+    private static readonly Regex LeadingTreeRegex = new(@"^[\s\-]+");
+
     public int GetRefreshRate()
     {
         try
@@ -150,9 +152,12 @@ public class GdctlBackend : IDisplayBackend
         return SysfsHelper.RunCommand("gdctl", "show -v");
     }
 
-    /// <summary>Strip tree-drawing characters from a line.</summary>
+    /// <summary>Strip the leading tree-drawing prefix, preserving interior hyphens.</summary>
     private static string CleanLine(string line)
-        => line.Replace("│", "").Replace("├", "").Replace("└", "").Replace("-", "").Trim();
+    {
+        string s = line.Replace('│', ' ').Replace('├', ' ').Replace('└', ' ').Replace('─', ' ');
+        return LeadingTreeRegex.Replace(s, "").Trim();
+    }
 
     /// <summary>
     /// Find the laptop panel connector name. Priority: eDP > LVDS > first.

@@ -26,6 +26,7 @@ class Program
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UseX11()
+            .With(new X11PlatformOptions { WmClass = "ghelper" })
             .UseSkia()
             .UseHarfBuzz()
             .LogToTrace();

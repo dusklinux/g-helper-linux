@@ -1274,11 +1274,30 @@ public class App : Application
         }
     }
 
+    private static void DisposeTrayIcons()
+    {
+        try
+        { TraySystemMonitor.Stop(); }
+        catch { }
+        try
+        {
+            if (TrayIconInstance != null)
+            {
+                TrayIconInstance.IsVisible = false;
+                TrayIconInstance.Dispose();
+                TrayIconInstance = null;
+            }
+        }
+        catch { }
+    }
+
     private void ShutdownFromSignal(IClassicDesktopStyleApplicationLifetime desktop)
     {
         // Signal handler runs on a threadpool thread.
         // Don't rely on UI thread - it may already be blocked during session shutdown.
         Logger.WriteLine("Signal shutdown: cleaning up...");
+
+        DisposeTrayIcons();
 
         // Best-effort: apply pending Eco mode before shutdown
         // (system is going down - display stack is closing, driver may be releasing)
@@ -1315,7 +1334,7 @@ public class App : Application
         IsShuttingDown = true;
         Logger.WriteLine("Shutting down...");
 
-        TraySystemMonitor.Stop();
+        DisposeTrayIcons();
 
         // Cleanup
         Power?.StopPowerMonitoring();

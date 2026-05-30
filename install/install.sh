@@ -278,11 +278,13 @@ if [[ "$MODE" == "uninstall" ]]; then
     fi
 
     # Icons
-    _safe_remove "/usr/share/icons/hicolor/64x64/apps/ghelper.png" "icon (system, png)"
-    _safe_remove "/usr/share/icons/hicolor/64x64/apps/ghelper.ico" "icon (system, ico)"
+    _safe_remove "/usr/share/icons/hicolor/256x256/apps/ghelper.png" "icon (system, png)"
+    _safe_remove "/usr/share/icons/hicolor/64x64/apps/ghelper.png" "icon (system, png legacy)"
+    _safe_remove "/usr/share/icons/hicolor/64x64/apps/ghelper.ico" "icon (system, ico legacy)"
     if [[ -n "$REAL_USER" ]]; then
-        _safe_remove "/home/$REAL_USER/.local/share/icons/hicolor/64x64/apps/ghelper.png" "icon (user, png)"
-        _safe_remove "/home/$REAL_USER/.local/share/icons/hicolor/64x64/apps/ghelper.ico" "icon (user, ico)"
+        _safe_remove "/home/$REAL_USER/.local/share/icons/hicolor/256x256/apps/ghelper.png" "icon (user, png)"
+        _safe_remove "/home/$REAL_USER/.local/share/icons/hicolor/64x64/apps/ghelper.png" "icon (user, png legacy)"
+        _safe_remove "/home/$REAL_USER/.local/share/icons/hicolor/64x64/apps/ghelper.ico" "icon (user, ico legacy)"
     fi
 
     # ── Reload daemons ──
@@ -335,7 +337,7 @@ else
 fi
 ASSETS=(90-ghelper.rules gpu-block-helper.sh ghelper-gpu-boot.sh ghelper-gpu-boot.service)
 if [[ "$MODE" == "install" ]]; then
-    ASSETS+=(ghelper.desktop)
+    ASSETS+=(ghelper.desktop ghelper.png)
 fi
 
 dl_count=0
@@ -577,6 +579,26 @@ if [[ "$MODE" == "install" ]]; then
         _inject "desktop entry → $DESKTOP_DEST"
     else
         _warn "desktop entry → $DESKTOP_DEST (read-only, using autostart instead)"
+    fi
+
+    # Application icon (256x256 PNG) into the hicolor theme so "Icon=ghelper"
+    # resolves in the app grid / software centre and the launcher.
+    if [[ -w "/usr/share/icons/hicolor/256x256/apps" ]] 2>/dev/null \
+        || { [[ ! -e "/usr/share/icons/hicolor/256x256/apps" ]] && [[ -w "/usr/share/icons/hicolor" ]] 2>/dev/null; }; then
+        ICON_BASE="/usr/share/icons/hicolor"
+    else
+        ICON_BASE="$HOME/.local/share/icons/hicolor"
+    fi
+    ICON_DEST="$ICON_BASE/256x256/apps"
+    if [[ -f "$WORK_DIR/ghelper.png" ]]; then
+        mkdir -p "$ICON_DEST" 2>/dev/null || true
+        if install -m 644 "$WORK_DIR/ghelper.png" "$ICON_DEST/ghelper.png" 2>/dev/null; then
+            _inject "icon → $ICON_DEST/ghelper.png"
+            gtk-update-icon-cache -f -t "$ICON_BASE" 2>/dev/null || true
+            update-desktop-database "$(dirname "$DESKTOP_DEST")" 2>/dev/null || true
+        else
+            _warn "icon → $ICON_DEST/ghelper.png (install failed)"
+        fi
     fi
 fi
 
