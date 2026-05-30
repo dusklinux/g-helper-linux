@@ -30,9 +30,10 @@ public partial class ExtraWindow : Window
         InitializeComponent();
         Labels.LanguageChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
+            bool prev = _suppressEvents;
             _suppressEvents = true;
             ApplyLabels();
-            _suppressEvents = false;
+            _suppressEvents = prev;
         });
         Loaded += (_, _) =>
         {
@@ -42,7 +43,6 @@ public partial class ExtraWindow : Window
             InitKeyboardBacklight();
             InitKeyBindings();
             RefreshDisplay();
-            RefreshGpuTuning();
             RefreshGpuBackend();
             RefreshOther();
             RefreshTrayIcons();
@@ -50,11 +50,16 @@ public partial class ExtraWindow : Window
             RefreshSystemInfo();
             RefreshAdvanced();
             ApplyLabels();
-            _suppressEvents = false;
+            Avalonia.Threading.Dispatcher.UIThread.Post(
+                () => _suppressEvents = false,
+                Avalonia.Threading.DispatcherPriority.Background);
 
             StartBrightnessPolling();
         };
-        Closed += (_, _) => _brightnessTimer?.Stop();
+        Closed += (_, _) =>
+        {
+            _brightnessTimer?.Stop();
+        };
     }
 
     // LANGUAGE
@@ -175,12 +180,6 @@ public partial class ExtraWindow : Window
         labelOptimalBrightness.Text = Labels.Get("optimal_brightness_label");
         labelGammaLabel.Text = Labels.Get("gamma");
 
-        // GPU Tuning
-        headerGpuTuning.Text = Labels.Get("gpu_tuning_header");
-        labelPowerLimitLabel.Text = Labels.Get("power_limit");
-        labelClockLockLabel.Text = Labels.Get("clock_lock");
-        buttonGpuApply.Content = Labels.Get("apply_gpu_settings");
-
         // Other
         headerOther.Text = Labels.Get("other_header");
         checkBootSound.Content = Labels.Get("boot_sound");
@@ -205,6 +204,7 @@ public partial class ExtraWindow : Window
         InitXgmPanel();
         checkSilentStart.Content = Labels.Get("start_minimized");
         checkDisableOsd.Content = Labels.Get("disable_osd_label");
+        checkKeepBacklight.Content = Labels.Get("keep_backlight_on");
         checkCamera.Content = Labels.Get("camera");
         checkTouchpad.Content = Labels.Get("touchpad");
         checkTouchscreen.Content = Labels.Get("touchscreen");
@@ -266,7 +266,6 @@ public partial class ExtraWindow : Window
         // Refresh dynamic content with new labels
         RefreshSystemInfo();
         RefreshPower();
-        RefreshGpuTuning();
         RefreshGpuBackend();
     }
 
@@ -458,10 +457,11 @@ public partial class ExtraWindow : Window
         if (brightness < 0)
             return;
 
+        bool prev = _suppressEvents;
         _suppressEvents = true;
         sliderKbdBrightness.Value = brightness;
         labelKbdBrightness.Text = brightness.ToString();
-        _suppressEvents = false;
+        _suppressEvents = prev;
     }
 
     /// <summary>Poll display + keyboard brightness every 2s to catch external changes.</summary>
@@ -477,10 +477,11 @@ public partial class ExtraWindow : Window
                 int brightness = display.GetBrightness();
                 if (brightness >= 0 && brightness != (int)sliderBrightness.Value)
                 {
+                    bool prev = _suppressEvents;
                     _suppressEvents = true;
                     sliderBrightness.Value = Math.Max(brightness, LinuxDisplayControl.MinBrightnessPercent);
                     labelBrightness.Text = $"{brightness}%";
-                    _suppressEvents = false;
+                    _suppressEvents = prev;
                 }
             }
 
@@ -488,10 +489,11 @@ public partial class ExtraWindow : Window
             int kbdBrightness = App.Wmi?.GetKeyboardBrightness() ?? -1;
             if (kbdBrightness >= 0 && kbdBrightness != (int)sliderKbdBrightness.Value)
             {
+                bool prev = _suppressEvents;
                 _suppressEvents = true;
                 sliderKbdBrightness.Value = kbdBrightness;
                 labelKbdBrightness.Text = kbdBrightness.ToString();
-                _suppressEvents = false;
+                _suppressEvents = prev;
             }
         };
         _brightnessTimer.Start();
@@ -651,12 +653,13 @@ public partial class ExtraWindow : Window
         var backlights = LinuxDisplayControl.GetAvailableBacklights();
         if (backlights.Count > 1)
         {
+            bool prev = _suppressEvents;
             _suppressEvents = true;
             comboBacklight.ItemsSource = backlights;
             var active = display.ActiveBacklightName;
             if (active != null && backlights.Contains(active))
                 comboBacklight.SelectedItem = active;
-            _suppressEvents = false;
+            _suppressEvents = prev;
             rowBacklightSelector.IsVisible = true;
         }
         else
@@ -730,6 +733,7 @@ public partial class ExtraWindow : Window
         if (!supported)
             return;
 
+        bool prev = _suppressEvents;
         _suppressEvents = true;
         comboOptimalBrightness.Items.Clear();
         comboOptimalBrightness.Items.Add(Labels.Get("optimal_brightness_off"));
@@ -743,7 +747,7 @@ public partial class ExtraWindow : Window
             ? Math.Clamp(stored, 0, 2)
             : Math.Clamp(OptimalBrightness.GetFirmwareState(), 0, 1);
         comboOptimalBrightness.SelectedIndex = selected;
-        _suppressEvents = false;
+        _suppressEvents = prev;
     }
 
     private void ComboOptimalBrightness_Changed(object? sender,
@@ -774,9 +778,10 @@ public partial class ExtraWindow : Window
 
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
+                bool prev = _suppressEvents;
                 _suppressEvents = true;
                 RefreshDisplay();
-                _suppressEvents = false;
+                _suppressEvents = prev;
 
                 if (!success)
                 {
@@ -804,6 +809,7 @@ public partial class ExtraWindow : Window
         display.SetActiveBacklight(selected);
 
         // Refresh slider to show brightness from the new controller
+        bool prev = _suppressEvents;
         _suppressEvents = true;
         int brightness = display.GetBrightness();
         if (brightness >= 0)
@@ -811,7 +817,7 @@ public partial class ExtraWindow : Window
             sliderBrightness.Value = Math.Max(brightness, LinuxDisplayControl.MinBrightnessPercent);
             labelBrightness.Text = $"{brightness}%";
         }
-        _suppressEvents = false;
+        _suppressEvents = prev;
     }
 
     private void SliderBrightness_ValueChanged(object? sender,
@@ -866,6 +872,9 @@ public partial class ExtraWindow : Window
 
         // Disable OSD/notifications
         checkDisableOsd.IsChecked = Helpers.AppConfig.Is("disable_osd");
+
+        // Keep keyboard/lightbar lit (override system/idle dimming)
+        checkKeepBacklight.IsChecked = Helpers.AppConfig.Is("kb_keep_on");
 
         // Camera
         checkCamera.IsChecked = LinuxSystemIntegration.IsCameraEnabled();
@@ -967,9 +976,7 @@ public partial class ExtraWindow : Window
         UpdateSwatch(btnGpuTrayBg, Helpers.AppConfig.GetString("gpu_tray_bg") ?? DefaultGpuBg);
         UpdateSwatch(btnGpuTrayText, Helpers.AppConfig.GetString("gpu_tray_text") ?? DefaultTextColor);
 
-        // Hide the entire GPU row on iGPU-only systems. Same gate used by
-        // MainWindow / MonitorWindow / FansWindow for "GPU available" UI.
-        rowGpuTray.IsVisible = App.GpuControl?.IsAvailable() == true;
+        rowGpuTray.IsVisible = App.GpuModeCtrl?.GetCurrentMode() != Gpu.GpuMode.Eco;
     }
 
     /// <summary>
@@ -1114,6 +1121,17 @@ public partial class ExtraWindow : Window
         Helpers.AppConfig.Set("disable_osd", (checkDisableOsd.IsChecked ?? false) ? 1 : 0);
     }
 
+    private void CheckKeepBacklight_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool on = checkKeepBacklight.IsChecked ?? false;
+        Helpers.AppConfig.Set("kb_keep_on", on ? 1 : 0);
+        // Apply immediately: re-light to the configured level when enabling.
+        if (on)
+            USB.Aura.ApplyConfiguredBrightness("KeepOn");
+    }
+
     /// <summary>Start a systemd-inhibit process that prevents lid-close suspend.</summary>
     public static void StartClamshellInhibit()
     {
@@ -1198,88 +1216,6 @@ public partial class ExtraWindow : Window
             "preferences-desktop-touchscreen");
     }
 
-
-    private LinuxNvidiaGpuControl? _nvidiaGpu;
-
-    private void RefreshGpuTuning()
-    {
-        _nvidiaGpu = App.GpuControl as LinuxNvidiaGpuControl;
-        if (_nvidiaGpu == null || !_nvidiaGpu.IsAvailable())
-        {
-            panelGpuTuning.IsVisible = false;
-            return;
-        }
-
-        panelGpuTuning.IsVisible = true;
-        labelGpuTuningInfo.Text = _nvidiaGpu.GetGpuName() ?? Labels.Get("nvidia_gpu");
-
-        var limits = _nvidiaGpu.GetPowerLimits();
-        if (limits != null)
-        {
-            var (defW, minW, maxW, enfW) = limits.Value;
-            sliderGpuPowerLimit.Minimum = minW;
-            sliderGpuPowerLimit.Maximum = maxW;
-            sliderGpuPowerLimit.Value = enfW > 0 ? enfW : defW;
-            labelGpuPowerLimit.Text = $"{(int)sliderGpuPowerLimit.Value}W";
-            labelGpuTuningInfo.Text += Labels.Format("gpu_info_format", defW, minW, maxW);
-        }
-
-        checkGpuClockLock.IsChecked = false;
-        sliderGpuClockLock.IsEnabled = false;
-        labelGpuClockLock.Text = Labels.Get("off");
-    }
-
-    private void SliderGpuPowerLimit_ValueChanged(object? sender,
-        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
-    {
-        if (_suppressEvents)
-            return;
-        labelGpuPowerLimit.Text = $"{(int)e.NewValue}W";
-    }
-
-    private void CheckGpuClockLock_Changed(object? sender, RoutedEventArgs e)
-    {
-        if (_suppressEvents)
-            return;
-        bool enabled = checkGpuClockLock.IsChecked ?? false;
-        sliderGpuClockLock.IsEnabled = enabled;
-        labelGpuClockLock.Text = enabled ? $"{(int)sliderGpuClockLock.Value} MHz" : Labels.Get("off");
-    }
-
-    private void SliderGpuClockLock_ValueChanged(object? sender,
-        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
-    {
-        if (_suppressEvents)
-            return;
-        labelGpuClockLock.Text = $"{(int)e.NewValue} MHz";
-    }
-
-    private void ButtonGpuApply_Click(object? sender, RoutedEventArgs e)
-    {
-        if (_nvidiaGpu == null)
-            return;
-
-        buttonGpuApply.IsEnabled = false;
-        buttonGpuApply.Content = Labels.Get("applying");
-
-        int powerW = (int)sliderGpuPowerLimit.Value;
-        bool clockLock = checkGpuClockLock.IsChecked ?? false;
-        int clockMhz = (int)sliderGpuClockLock.Value;
-
-        Task.Run(() =>
-        {
-            _nvidiaGpu.ApplyGpuSettings(powerW, clockLock ? clockMhz : 0);
-
-            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            {
-                buttonGpuApply.Content = Labels.Get("apply_gpu_settings");
-                buttonGpuApply.IsEnabled = true;
-                App.System?.ShowNotification(Labels.Get("gpu_tuning_notify"),
-                    Labels.Format("gpu_power_format", powerW) + (clockLock ? Labels.Format("gpu_clock_format", clockMhz) : ""),
-                    "dialog-information");
-            });
-        });
-    }
 
     // POWER MANAGEMENT
     //

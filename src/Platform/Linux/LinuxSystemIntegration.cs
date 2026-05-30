@@ -213,19 +213,21 @@ public class LinuxSystemIntegration : ISystemIntegration
     /// Requires root - tries modprobe directly, then pkexec (graphical prompt).</summary>
     public static void SetCameraEnabled(bool enabled)
     {
-        string args = enabled ? "uvcvideo" : "-r uvcvideo";
-
         // Try modprobe directly (works if running as root or via polkit rule)
-        var result = SysfsHelper.RunCommand("modprobe", args);
+        string[] args = enabled ? new[] { "uvcvideo" } : new[] { "-r", "uvcvideo" };
+        var result = SysfsHelper.RunCommand("modprobe", string.Join(' ', args));
         if (result != null || IsCameraEnabled() == enabled)
         {
             Helpers.Logger.WriteLine($"Camera {(enabled ? "enabled" : "disabled")} via modprobe");
             return;
         }
 
-        // Fallback: pkexec gives a graphical password prompt
-        result = SysfsHelper.RunPkexec($"modprobe {args}");
-        Helpers.Logger.WriteLine($"Camera {(enabled ? "enabled" : "disabled")}: {(result != null ? "OK (pkexec)" : "failed (needs root)")}");
+        // Root helper (whitelisted modprobe of uvcvideo). pkexec GUI fallback.
+        var helperArgs = new string[args.Length + 1];
+        helperArgs[0] = "modprobe";
+        Array.Copy(args, 0, helperArgs, 1, args.Length);
+        result = SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, helperArgs);
+        Helpers.Logger.WriteLine($"Camera {(enabled ? "enabled" : "disabled")}: {(result != null ? "OK (sudo or pkexec)" : "failed (needs root)")}");
     }
 
     // Touchpad Toggle

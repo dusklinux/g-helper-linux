@@ -42,9 +42,11 @@
     <Compile Include="*.cs" />
 
     <Compile Include="../../src/Gpu/GpuModeController.cs" />
+    <Compile Include="../../src/Gpu/NvidiaProcessScanner.cs" />
     <Compile Include="../../src/Platform/IAsusWmi.cs" />
     <Compile Include="../../src/Platform/IPowerManager.cs" />
     <Compile Include="../../src/Platform/Linux/AsusAttributes.cs" />
+    <Compile Include="../../src/Platform/Linux/AsusAttributeRange.cs" />
     <Compile Include="../../src/Platform/Linux/SysfsHelper.cs" />
     <!-- LinuxAsusWmi + AsusWmiDebugfs: needed by the direct unit tests for
          the GPU-panel visibility logic (IsGpuEcoAvailable, CanToggleGpuBackend,

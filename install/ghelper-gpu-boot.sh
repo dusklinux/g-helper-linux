@@ -81,7 +81,7 @@ rmmod_modules() {
         done
         return 0
     fi
-    rmmod "$@" 2>/dev/null
+    timeout 8 rmmod "$@" 2>/dev/null
 }
 
 udevadm_settle() {

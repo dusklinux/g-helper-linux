@@ -70,6 +70,29 @@ else
     echo "  Install with: sudo apt install libwayland-dev"
 fi
 
+# Build gpu-helper (root-only privileged GPU operations multiplexer, vendored)
+GPU_HELPER_DIR="$SCRIPT_DIR/vendor/gpu-helper"
+GPU_HELPER_BIN=""
+
+if command -v cc &>/dev/null; then
+    echo ""
+    echo "Building gpu-helper..."
+    (
+        cd "$GPU_HELPER_DIR"
+        cc -O2 -Wall -o gpu-helper gpu-helper.c -ldl
+        strip gpu-helper
+    )
+    if [[ -f "$GPU_HELPER_DIR/gpu-helper" ]]; then
+        GPU_HELPER_BIN="$GPU_HELPER_DIR/gpu-helper"
+        echo "  gpu-helper built: $(du -sh "$GPU_HELPER_BIN" | cut -f1)"
+    else
+        echo "WARNING: gpu-helper build failed (privileged GPU operations unavailable)"
+    fi
+else
+    echo ""
+    echo "NOTE: cc not found, skipping gpu-helper build."
+fi
+
 # Clean previous build artifacts
 echo ""
 echo "[1/4] Cleaning previous build..."
@@ -136,6 +159,11 @@ if [[ -n "$WLR_RANDR_BIN" ]]; then
     rm -f "$WLR_RANDR_DIR/wlr-randr" \
           "$WLR_RANDR_DIR/wlr-output-management-unstable-v1-client-protocol.h" \
           "$WLR_RANDR_DIR/wlr-output-management-unstable-v1-protocol.c"
+fi
+
+# Clean gpu-helper build artifact from vendor dir (binary is embedded in ghelper)
+if [[ -n "$GPU_HELPER_BIN" ]]; then
+    rm -f "$GPU_HELPER_DIR/gpu-helper"
 fi
 
 # Summary

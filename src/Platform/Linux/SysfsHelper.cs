@@ -84,16 +84,19 @@ public static class SysfsHelper
                 fwResult = fwPathLegacy;
         }
 
-        // Choose: for aliased attributes, prefer firmware-attributes when available
+        // Choose: prefer firmware-attributes for aliased OR explicitly-flagged attrs
         // (legacy path may be a phantom ENODEV on dual-backend machines)
         string? result;
-        if (attr.HasAlias && fwResult != null)
+        if ((attr.HasAlias || attr.PreferFwAttr) && fwResult != null)
             result = fwResult;
         else
             result = legacyResult ?? fwResult;
 
-        if (attr.HasAlias && fwResult != null && legacyResult != null)
-            Helpers.Logger.WriteLine($"ResolveAttrPath({attr.LegacyName}): preferring firmware-attributes ({attr.FwAttrName}) over legacy ({legacyResult}) - legacy may be phantom ENODEV");
+        if ((attr.HasAlias || attr.PreferFwAttr) && fwResult != null && legacyResult != null)
+        {
+            string reason = attr.HasAlias ? "alias" : "explicit preference";
+            Helpers.Logger.WriteLine($"ResolveAttrPath({attr.LegacyName}): preferring firmware-attributes ({attr.FwAttrName}) over legacy ({legacyResult}) - {reason}");
+        }
 
         _resolvedPaths[attr.LegacyName] = result;
         return result;
@@ -634,6 +637,8 @@ public static class SysfsHelper
 
     public static readonly string SudoPath = ResolveSudoPath();
 
+    public const string GpuHelperPath = "/opt/ghelper/gpu-helper";
+
     private static string ResolveSudoPath()
     {
         foreach (var p in new[]
@@ -656,17 +661,126 @@ public static class SysfsHelper
         return RunCommandWithTimeout(command, args, 5000);
     }
 
-    /// <summary>Run a command via pkexec with 2-minute timeout (for password dialog).</summary>
-    public static string? RunPkexec(string args)
-    {
-        return RunCommandWithTimeout("pkexec", args, 120000);
-    }
-
     /// <summary>Run a bash script via pkexec. The script is passed as a single arg to bash -c,
     /// avoiding the whitespace splitting issue with ProcessStartInfo.Arguments</summary>
     public static string? RunPkexecBash(string script)
     {
         return RunCommandWithTimeout("pkexec", new[] { "bash", "-c", script }, 120000);
+    }
+
+    /// <summary>
+    /// Run a privileged command using sudo NOPASSWD if available, otherwise
+    /// fall back to pkexec (GUI auth dialog). Silent fast path when sudoers
+    /// permits; GUI prompt only when sudo itself refuses (auth failure), NOT
+    /// when the command ran via sudo but returned a non-zero exit code (e.g.
+    /// systemd rate-limit, rmmod busy, etc.). Returns stdout on success or
+    /// null on failure.
+    /// </summary>
+    public static string? RunSudoOrPkexec(string command, string[] args, int sudoTimeoutMs = 5000, int pkexecTimeoutMs = 60000)
+    {
+        var sudoArgs = new string[args.Length + 2];
+        sudoArgs[0] = "-n";
+        sudoArgs[1] = command;
+        Array.Copy(args, 0, sudoArgs, 2, args.Length);
+
+        var (exitCode, stdout, stderr) = RunProcessWithStderr(SudoPath, sudoArgs, sudoTimeoutMs);
+        if (exitCode == 0)
+            return stdout;
+
+        // Distinguish sudo auth/permission failure from command-side failure.
+        // sudo (classic and sudo-rs) prefixes its own error messages with "sudo:".
+        // If stderr starts with "sudo:" the issue is permission / auth — pkexec
+        // can help. Any other stderr came from the command itself; re-running via
+        // pkexec would produce the same failure and just add an unnecessary prompt.
+        bool sudoRefused = stderr.StartsWith("sudo:", StringComparison.Ordinal)
+                        || stderr.Contains("not allowed to execute", StringComparison.Ordinal)
+                        || stderr.Contains("may not run sudo", StringComparison.Ordinal);
+
+        if (!sudoRefused)
+        {
+            if (!string.IsNullOrEmpty(stderr))
+                Helpers.Logger.WriteLine($"RunCommand({SudoPath} -n {command}) failed (command error, not auth): {stderr.Trim()}");
+            return null;
+        }
+
+        Helpers.Logger.WriteLine($"sudo -n {command} not permitted - falling back to pkexec");
+
+        var pkArgs = new string[args.Length + 1];
+        pkArgs[0] = command;
+        Array.Copy(args, 0, pkArgs, 1, args.Length);
+        return RunCommandWithTimeout("pkexec", pkArgs, pkexecTimeoutMs);
+    }
+
+    /// <summary>
+    /// Like <see cref="RunSudoOrPkexec"/> but also returns stderr and the exit
+    /// code so callers can inspect command-side failures (e.g. an NVML error
+    /// code reported by gpu-helper). stdout is null when the command failed.
+    /// </summary>
+    public static (string? stdout, string stderr, int exitCode) RunSudoOrPkexecEx(
+        string command, string[] args, int sudoTimeoutMs = 5000, int pkexecTimeoutMs = 60000)
+    {
+        var sudoArgs = new string[args.Length + 2];
+        sudoArgs[0] = "-n";
+        sudoArgs[1] = command;
+        Array.Copy(args, 0, sudoArgs, 2, args.Length);
+
+        var (exitCode, stdout, stderr) = RunProcessWithStderr(SudoPath, sudoArgs, sudoTimeoutMs);
+        if (exitCode == 0)
+            return (stdout, stderr, 0);
+
+        bool sudoRefused = stderr.StartsWith("sudo:", StringComparison.Ordinal)
+                        || stderr.Contains("not allowed to execute", StringComparison.Ordinal)
+                        || stderr.Contains("may not run sudo", StringComparison.Ordinal);
+        if (!sudoRefused)
+            return (null, stderr, exitCode);
+
+        var pkArgs = new string[args.Length + 1];
+        pkArgs[0] = command;
+        Array.Copy(args, 0, pkArgs, 1, args.Length);
+        var (pkExit, pkOut, pkErr) = RunProcessWithStderr("pkexec", pkArgs, pkexecTimeoutMs);
+        return (pkExit == 0 ? pkOut : null, pkErr, pkExit);
+    }
+
+    /// <summary>Run a command and return (exitCode, stdout, stderr). Never returns null.</summary>
+    private static (int exitCode, string stdout, string stderr) RunProcessWithStderr(
+        string command, string[] args, int timeoutMs)
+    {
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = command,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            foreach (var arg in args)
+                psi.ArgumentList.Add(arg);
+
+            using var proc = System.Diagnostics.Process.Start(psi);
+            if (proc == null)
+                return (-1, "", "process start returned null");
+
+            var outTask = proc.StandardOutput.ReadToEndAsync();
+            var errTask = proc.StandardError.ReadToEndAsync();
+
+            if (!outTask.Wait(timeoutMs))
+            {
+                try
+                { proc.Kill(); }
+                catch { }
+                Helpers.Logger.WriteLine($"RunCommand timeout: {command} {string.Join(" ", args)}");
+                return (-1, "", "timeout");
+            }
+
+            proc.WaitForExit(100);
+            return (proc.ExitCode, outTask.Result.Trim(), errTask.IsCompleted ? errTask.Result.Trim() : "");
+        }
+        catch (Exception ex)
+        {
+            return (-1, "", ex.Message);
+        }
     }
 
     /// <summary>Run a command with explicit args (no whitespace splitting).</summary>

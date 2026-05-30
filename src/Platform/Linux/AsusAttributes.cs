@@ -24,14 +24,18 @@ public sealed class AttrDef
     /// <summary>True if the legacy and firmware-attribute names differ.</summary>
     public bool HasAlias => LegacyName != FwAttrName;
 
+    /// <summary>Prefer firmware-attributes (asus-armoury) over legacy sysfs when both exist.</summary>
+    public bool PreferFwAttr { get; }
+
     /// <summary>Human-readable description for diagnostics.</summary>
     public string Description { get; }
 
-    public AttrDef(string legacyName, string? fwAttrName = null, string description = "")
+    public AttrDef(string legacyName, string? fwAttrName = null, string description = "", bool preferFwAttr = false)
     {
         LegacyName = legacyName;
         FwAttrName = fwAttrName ?? legacyName;
         Description = description;
+        PreferFwAttr = preferFwAttr;
     }
 
     /// <summary>Implicit conversion to string returns the legacy name for backward compatibility.</summary>
@@ -78,15 +82,16 @@ public static class AsusAttributes
 
     // Armoury-only (no legacy equivalent)
     public static readonly AttrDef NvBaseTgp = new("nv_base_tgp",
-        description: "NVIDIA base TGP (read-only)");
+        description: "NVIDIA base TGP (sustained cap)");
 
     public static readonly AttrDef NvTgp = new("nv_tgp",
-        description: "NVIDIA settable TGP");
+        description: "NVIDIA max TGP (settable ceiling)");
 
     // GPU Mode
 
     public static readonly AttrDef DgpuDisable = new("dgpu_disable",
-        description: "dGPU power (Eco mode)");
+        description: "dGPU power (Eco mode)",
+        preferFwAttr: true);
 
     public static readonly AttrDef GpuMuxMode = new("gpu_mux_mode",
         description: "GPU MUX switch");

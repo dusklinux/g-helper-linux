@@ -36,6 +36,9 @@ public class LinuxAsusWmi : IAsusWmi
     private volatile bool _eventListening;
     private readonly List<FileStream> _eventStreams = new();  // Track open evdev streams for Dispose()
 
+    private readonly Dictionary<string, int> _lastWrittenInt = new();
+    private int _lastThrottlePolicy = int.MinValue;
+
     public int FanCount { get; private set; } = 2;
 
     public event Action<int>? WmiEvent;
@@ -183,11 +186,14 @@ public class LinuxAsusWmi : IAsusWmi
     public void SetThrottleThermalPolicy(int mode)
     {
         var path = SysfsHelper.ResolveAttrPath(AsusAttributes.ThrottleThermalPolicy, SysfsHelper.AsusWmiPlatform);
-        if (path != null)
-        {
-            SysfsHelper.WriteInt(path, mode);
-        }
-        // If throttle_thermal_policy doesn't exist, ModeControl still sets platform_profile directly
+        if (path == null)
+            return; // ModeControl still sets platform_profile directly when this attr is absent
+
+        if (_lastThrottlePolicy == mode)
+            return;
+
+        SysfsHelper.WriteInt(path, mode);
+        _lastThrottlePolicy = mode;
     }
 
     // Fan control
@@ -824,6 +830,7 @@ public class LinuxAsusWmi : IAsusWmi
                     "This creates an impossible state: dGPU is sole display output but powered off.");
         }
 
+        // Thread.Sleep(500);
         SysfsHelper.WriteInt(path, desired);
 
         if (!enabled)
@@ -933,6 +940,9 @@ public class LinuxAsusWmi : IAsusWmi
     {
         // PPT attributes: ppt_pl1_spl, ppt_pl2_sppt, ppt_fppt, ppt_apu_sppt, etc.
         //
+        if (_lastWrittenInt.TryGetValue(attribute, out int prev) && prev == watts)
+            return;
+
         // On dual-backend kernels (asus-nb-wmi + asus-armoury), we cannot predict which
         // backend is functional for any given attribute. Write to ALL available paths
         // legacy sysfs and firmware-attributes - so at least one succeeds.
@@ -949,7 +959,11 @@ public class LinuxAsusWmi : IAsusWmi
             if (path != null)
                 SysfsHelper.WriteInt(path, watts);
         }
+
+        _lastWrittenInt[attribute] = watts;
     }
+
+    public AttrRange? GetAttributeRange(AttrDef attr) => AsusAttributeRange.Read(attr);
 
     public int GetPptLimit(string attribute)
     {

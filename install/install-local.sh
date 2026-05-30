@@ -245,6 +245,12 @@ if [[ "$MODE" == "uninstall" ]]; then
     _safe_remove "/etc/ghelper"                           "ghelper config dir"
     _safe_remove "$DESKTOP_DEST"                          "desktop entry (system)"
 
+    # Restore the NVIDIA Vulkan ICD if ghelper left it hidden (Eco mode)
+    if [[ -f /usr/share/vulkan/icd.d/nvidia_icd.json_inactive && ! -f /usr/share/vulkan/icd.d/nvidia_icd.json ]]; then
+        mv -f /usr/share/vulkan/icd.d/nvidia_icd.json_inactive /usr/share/vulkan/icd.d/nvidia_icd.json \
+            && _info "restored NVIDIA Vulkan ICD" || true
+    fi
+
     # User-local desktop entry
     if [[ -n "$REAL_USER" ]]; then
         _safe_remove "/home/$REAL_USER/.local/share/applications/ghelper.desktop" "desktop entry (user)"
@@ -361,10 +367,23 @@ SUDOERS_DEST="/etc/sudoers.d/ghelper-gpu"
 mkdir -p "$HELPER_DIR"
 _install_file "$SCRIPT_DIR/gpu-block-helper.sh" "$HELPER_DEST" 755 "GPU block helper" || true
 
-# sudoers rule — allow ALL users to run the helper without password.
-# The helper only does 2 things: write specific config files, or remove them.
-SUDOERS_CONTENT="# G-Helper: allow passwordless GPU block file management
-ALL ALL=(root) NOPASSWD: $HELPER_DEST"
+if [[ "$MODE" == "install" ]]; then
+    GPU_HELPER_DEST="$INSTALL_DIR/gpu-helper"
+    if "$INSTALL_DIR/ghelper" --extract-helper gpu-helper "$GPU_HELPER_DEST" >/dev/null 2>&1; then
+        chown root:root "$GPU_HELPER_DEST"
+        chmod 755 "$GPU_HELPER_DEST"
+        _inject "GPU privileged helper → $GPU_HELPER_DEST"
+    else
+        _warn "GPU helper extraction failed (GPU switching / holder detection unavailable)"
+    fi
+fi
+
+# sudoers rule — every privileged GPU operation goes through the two root-owned
+# helper binaries (gpu-helper validates each subcommand against an internal
+# whitelist, so this is no broader than per-command rules).
+SUDOERS_CONTENT="# G-Helper: passwordless access to the root-owned helper binaries
+ALL ALL=(root) NOPASSWD: $HELPER_DEST
+ALL ALL=(root) NOPASSWD: /opt/ghelper/gpu-helper"
 
 if [[ -f "$SUDOERS_DEST" ]] && echo "$SUDOERS_CONTENT" | cmp -s - "$SUDOERS_DEST"; then
     _skip "sudoers rule → already deployed at $SUDOERS_DEST"

@@ -24,8 +24,6 @@ namespace GHelper.Linux.Platform.Linux;
 /// </summary>
 public static class AsusWmiDebugfs
 {
-    private const string DebugfsDir = "/sys/kernel/debug/asus-nb-wmi";
-
     // GPU-related ACPI device IDs
     public const uint DEVID_DGPU = 0x00090020;
     public const uint DEVID_DGPU_VIVO = 0x00090120;
@@ -73,22 +71,25 @@ public static class AsusWmiDebugfs
     {
         _probeCache = new Dictionary<uint, uint?>();
 
-        // Build a single shell command that probes all device IDs
-        var parts = new List<string>();
-        foreach (uint id in ProbeIds)
-            parts.Add($"echo 0x{id:X8} > {DebugfsDir}/dev_id && cat {DebugfsDir}/dsts 2>&1");
-
-        string script = string.Join("; ", parts);
-        string? output = SysfsHelper.RunPkexecBash(script);
+        // One privileged gpu-helper call probes all whitelisted IDs (order
+        // matches ProbeIds), one DSTS line each.
+        if (!Gpu.NvidiaProcessScanner.EnsureHelper())
+        {
+            Logger.WriteLine("Raw WMI: ProbeAll skipped (gpu-helper unavailable)");
+            return;
+        }
+        string? output = SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "wmi-probe" });
 
         if (output == null)
         {
-            Logger.WriteLine("Raw WMI: ProbeAll failed (pkexec returned null)");
+            Logger.WriteLine("Raw WMI: ProbeAll failed (gpu-helper returned null)");
             return;
         }
 
-        // Parse output - one DSTS result per line
-        var lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        // Parse output - exactly one line per ID in ProbeIds order (wmi-probe
+        // emits an empty line for absent IDs, so keep empty entries to preserve
+        // positional alignment).
+        var lines = output.Split('\n');
         for (int i = 0; i < ProbeIds.Length; i++)
             _probeCache[ProbeIds[i]] = i < lines.Length ? ParseResult(lines[i]) : null;
     }
@@ -144,8 +145,10 @@ public static class AsusWmiDebugfs
     /// </summary>
     public static uint? Dsts(uint deviceId)
     {
-        string script = $"echo 0x{deviceId:X8} > {DebugfsDir}/dev_id && cat {DebugfsDir}/dsts";
-        string? output = SysfsHelper.RunPkexecBash(script);
+        if (!Gpu.NvidiaProcessScanner.EnsureHelper())
+            return null;
+        string? output = SysfsHelper.RunSudoOrPkexec(
+            SysfsHelper.GpuHelperPath, new[] { "wmi-dsts", $"0x{deviceId:X8}" });
         return ParseResult(output);
     }
 
@@ -155,10 +158,11 @@ public static class AsusWmiDebugfs
     /// </summary>
     public static uint? Devs(uint deviceId, uint ctrlParam)
     {
-        string script = $"echo 0x{deviceId:X8} > {DebugfsDir}/dev_id " +
-                        $"&& echo {ctrlParam} > {DebugfsDir}/ctrl_param " +
-                        $"&& cat {DebugfsDir}/devs";
-        string? output = SysfsHelper.RunPkexecBash(script);
+        if (!Gpu.NvidiaProcessScanner.EnsureHelper())
+            return null;
+        string? output = SysfsHelper.RunSudoOrPkexec(
+            SysfsHelper.GpuHelperPath,
+            new[] { "wmi-devs", $"0x{deviceId:X8}", ctrlParam.ToString() });
         return ParseResult(output);
     }
 

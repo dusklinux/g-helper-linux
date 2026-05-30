@@ -265,6 +265,12 @@ if [[ "$MODE" == "uninstall" ]]; then
     _safe_remove "/etc/ghelper"                           "ghelper config dir"
     _safe_remove "$DESKTOP_DEST"                          "desktop entry (system)"
 
+    # Restore the NVIDIA Vulkan ICD if ghelper left it hidden (Eco mode)
+    if [[ -f /usr/share/vulkan/icd.d/nvidia_icd.json_inactive && ! -f /usr/share/vulkan/icd.d/nvidia_icd.json ]]; then
+        mv -f /usr/share/vulkan/icd.d/nvidia_icd.json_inactive /usr/share/vulkan/icd.d/nvidia_icd.json \
+            && _info "restored NVIDIA Vulkan ICD" || true
+    fi
+
     # User-local desktop entry
     if [[ -n "$REAL_USER" ]]; then
         _safe_remove "/home/$REAL_USER/.local/share/applications/ghelper.desktop" "desktop entry (user)"
@@ -434,10 +440,22 @@ if [[ "$MODE" == "install" ]]; then
     _install_file "$WORK_DIR/ghelper-gpu-boot.sh" "$HELPER_DIR/ghelper-gpu-boot.sh" 755 "GPU boot script" || true
     _install_file "$WORK_DIR/ghelper-gpu-boot.service" "/etc/systemd/system/ghelper-gpu-boot.service" 644 "GPU boot systemd unit" || true
 
-    # Sudoers rule — allow passwordless sudo for the helper script
+    GPU_HELPER_DEST="$INSTALL_DIR/gpu-helper"
+    if "$INSTALL_DIR/ghelper" --extract-helper gpu-helper "$GPU_HELPER_DEST" >/dev/null 2>&1; then
+        chown root:root "$GPU_HELPER_DEST"
+        chmod 755 "$GPU_HELPER_DEST"
+        _inject "GPU privileged helper → $GPU_HELPER_DEST"
+    else
+        _warn "GPU helper extraction failed (GPU switching / holder detection unavailable)"
+    fi
+
+    # Sudoers rule — every privileged GPU operation now goes through the two
+    # root-owned helper binaries (gpu-helper validates each subcommand against
+    # an internal whitelist, so this is no broader than per-command rules).
     SUDOERS_DEST="/etc/sudoers.d/ghelper-gpu"
-    SUDOERS_CONTENT="# G-Helper: allow passwordless GPU block file management
-ALL ALL=(root) NOPASSWD: $HELPER_DEST"
+    SUDOERS_CONTENT="# G-Helper: passwordless access to the root-owned helper binaries
+ALL ALL=(root) NOPASSWD: $HELPER_DEST
+ALL ALL=(root) NOPASSWD: /opt/ghelper/gpu-helper"
 
     if [[ -f "$SUDOERS_DEST" ]] && echo "$SUDOERS_CONTENT" | cmp -s - "$SUDOERS_DEST"; then
         _skip "sudoers rule → already deployed at $SUDOERS_DEST"

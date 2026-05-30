@@ -415,7 +415,15 @@ public static class AppConfig
     public static bool IsManualModeRequired() => IsMode("auto_apply_power") && (Is("manual_mode") || ContainsModel("G733"));
     public static bool IsModeReapplyRequired() => Is("mode_reapply") || ContainsModel("FA401");
     public static bool IsResetRequired() => ContainsModel("GA403UI") || ContainsModel("GA403UU") || ContainsModel("GA403UV") || ContainsModel("FA507XV");
-    public static bool IsPowerRequired() => ContainsModel("FX507") || ContainsModel("FX517") || ContainsModel("FX707");
+    public static bool IsPowerRequired() => ContainsModel("GU605M") || ContainsModel("FX507") || ContainsModel("FX517") || ContainsModel("FX707");
+
+    public static bool IsReapplyTempRequired() => ContainsModel("GA402") || ContainsModel("GV601");
+
+    public static bool IsReapplyRyzen() => ContainsModel("G614F") || ContainsModel("G814F") || ContainsModel("G733P");
+
+    // FX506HCB (TUF F15 2021): if dgpu_disable=1 is the live state at shutdown,
+    // this BIOS fails to re-enumerate the dGPU on next cold boot → black screen
+    public static bool IsStandardModeFix() => ContainsModel("FX506HCB");
 
     // Fan control
     public static bool IsFanRequired() => ContainsModel("GA402X") || ContainsModel("GU604") || ContainsModel("G513") || ContainsModel("G713R") || ContainsModel("G713P") || ContainsModel("GU605") || ContainsModel("GA605") || ContainsModel("G634J") || ContainsModel("G834J") || ContainsModel("G614J") || ContainsModel("G814J") || ContainsModel("FX507V") || ContainsModel("FX507ZV") || ContainsModel("FX608") || ContainsModel("FA608P") || ContainsModel("G614F") || ContainsModel("G614R") || ContainsModel("G733") || ContainsModel("H7606");
@@ -573,7 +581,7 @@ public static class AppConfig
     // Predicate added for upstream parity; not consumed on Linux because the
     // uinput remapper is independent of firmware FN-Lock state.
     public static bool IsInvertedFNLock() =>
-        ContainsModel("M140") || ContainsModel("S550") || ContainsModel("P540") || IsTUF();
+        ContainsModel("M140") || ContainsModel("S550") || ContainsModel("K650") || ContainsModel("P540") || IsTUF();
 
     public static bool IsSleepReset() =>
         ContainsModel("GU605MI") || ContainsModel("GU605MV");

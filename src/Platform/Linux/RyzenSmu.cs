@@ -334,6 +334,15 @@ public sealed class RyzenSmu
         return SetCoAll(0);
     }
 
+    public bool IsIGpuSupported => false;
+
+    public bool SetIGpuCoAll(int offset)
+    {
+        if (!IsIGpuSupported)
+            return false;
+        return false;
+    }
+
     /// <summary>
     /// Encode a CO margin for the SMU.
     /// Verified from ZenStates-Core Utils.cs MakePsmMarginArg:

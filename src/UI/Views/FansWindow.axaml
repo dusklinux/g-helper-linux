@@ -3,218 +3,451 @@
         xmlns:controls="using:GHelper.Linux.UI.Controls"
         x:Class="GHelper.Linux.UI.Views.FansWindow"
         Title="Fans &amp; Power"
-        Width="700"
-        Height="840"
-        MinWidth="500"
-        MinHeight="500"
+        Width="850"
+        Height="820"
+        MinWidth="600"
+        MinHeight="720"
         WindowStartupLocation="CenterScreen"
         Background="#1C1C1C"
         Icon="avares://ghelper/UI/Assets/standard.ico">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled">
-    <Grid RowDefinitions="Auto,*,Auto,Auto,Auto">
+    <Grid ColumnDefinitions="350,*">
 
-        <!-- HEADER -->
-        <Border Grid.Row="0" Classes="panel-header" Margin="10,10,10,5">
-            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto">
-                <StackPanel Grid.Column="0">
-                    <TextBlock x:Name="headerFanCurves" Classes="header" Text="Fan Curves" FontSize="14" />
-                    <TextBlock x:Name="labelMode" Classes="label-dim"
-                               Text="Mode: Balanced" />
-                </StackPanel>
-                <Button Grid.Column="1" x:Name="buttonMonitor" Classes="ghelper"
-                        Margin="4,0" Height="30"
-                        Click="ButtonMonitor_Click">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <controls:Icon IconName="bolt" Width="14" Height="14" VerticalAlignment="Center" />
-                        <TextBlock x:Name="labelMonitorButton" Text="Monitor" FontSize="11" VerticalAlignment="Center" />
+        <!-- ============ LEFT COLUMN: panelSliders ============ -->
+        <Border Grid.Column="0" BorderThickness="0,0,1,0" BorderBrush="#2A2A2A">
+            <Grid RowDefinitions="Auto,*">
+
+                <!-- TAB NAV -->
+                <Border Grid.Row="0" Classes="panel-header" Margin="10,10,10,5" Padding="6">
+                    <Grid ColumnDefinitions="*,*,*" >
+                        <Button Grid.Column="0" x:Name="buttonTabCpu" Classes="ghelper"
+                                Content="CPU" Margin="2,0"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                Click="ButtonTabCpu_Click" />
+                        <Button Grid.Column="1" x:Name="buttonTabGpu" Classes="ghelper"
+                                Content="GPU" Margin="2,0"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                Click="ButtonTabGpu_Click" />
+                        <Button Grid.Column="2" x:Name="buttonTabAdvanced" Classes="ghelper"
+                                Content="Advanced" Margin="2,0"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                Click="ButtonTabAdvanced_Click" />
+                    </Grid>
+                </Border>
+
+                <!-- TAB CONTENT (one of CPU/GPU/Advanced visible) -->
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+
+                        <!-- CPU PANEL -->
+                        <Border x:Name="panelCpu" Classes="panel" Margin="10,5,10,10">
+                            <StackPanel>
+                                <TextBlock x:Name="headerPowerLimits" Classes="header" Text="Power Limits" Margin="0,0,0,8" />
+
+                                <Grid ColumnDefinitions="100,*,35" Margin="0,4">
+                                    <TextBlock Grid.Column="0" x:Name="labelPL1Label" Text="CPU PL1 (SPL)"
+                                               Classes="label-dim" VerticalAlignment="Center" />
+                                    <Slider Grid.Column="1" x:Name="sliderPL1"
+                                            Minimum="5" Maximum="120" Value="45"
+                                            TickFrequency="5"
+                                            ValueChanged="SliderPL1_ValueChanged" />
+                                    <TextBlock Grid.Column="2" x:Name="labelPL1" Classes="value"
+                                               Text="45W" HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Grid ColumnDefinitions="100,*,45" Margin="0,4">
+                                    <TextBlock Grid.Column="0" x:Name="labelPL2Label" Text="CPU PL2 (SPPT)"
+                                               Classes="label-dim" VerticalAlignment="Center" />
+                                    <Slider Grid.Column="1" x:Name="sliderPL2"
+                                            Minimum="5" Maximum="150" Value="65"
+                                            TickFrequency="5"
+                                            ValueChanged="SliderPL2_ValueChanged" />
+                                    <TextBlock Grid.Column="2" x:Name="labelPL2" Classes="value"
+                                               Text="65W" HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Grid x:Name="gridFppt" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                    <TextBlock Grid.Column="0" x:Name="labelFpptLabel" Text="CPU fPPT (Fast)"
+                                               Classes="label-dim" VerticalAlignment="Center" />
+                                    <Slider Grid.Column="1" x:Name="sliderFppt"
+                                            Minimum="5" Maximum="150" Value="65"
+                                            TickFrequency="5"
+                                            ValueChanged="SliderFppt_ValueChanged" />
+                                    <TextBlock Grid.Column="2" x:Name="labelFppt" Classes="value"
+                                               Text="65W" HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Grid ColumnDefinitions="100,*" Margin="0,8,0,0">
+                                    <TextBlock Grid.Column="0" x:Name="labelCpuBoostLabel" Text="CPU Boost"
+                                               Classes="label-dim" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                        <Button x:Name="buttonBoostOff" Classes="ghelper"
+                                                Content="Off" Click="ButtonBoostOff_Click" />
+                                        <Button x:Name="buttonBoostOn" Classes="ghelper"
+                                                Content="On" Click="ButtonBoostOn_Click" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <CheckBox x:Name="checkApplyPower"
+                                          Content="Auto-apply power limits on mode change"
+                                          ToolTip.Tip=""
+                                          Margin="0,8,0,0"
+                                          IsCheckedChanged="CheckApplyPower_Changed" />
+
+                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                                    <Button x:Name="buttonCpuReset" Classes="ghelper"
+                                            Content="Reset" Click="ButtonCpuReset_Click" />
+                                </StackPanel>
+
+                                <StackPanel x:Name="panelUV" Margin="0,16,0,0">
+                                    <TextBlock x:Name="headerUndervolt" Classes="header" Text="Undervolting (Experimental)" Margin="0,0,0,4" />
+                                    <TextBlock x:Name="labelUndervoltDesc" Classes="label-dim" TextWrapping="Wrap" Margin="0,0,0,8"
+                                               Text="Curve Optimizer offset. More negative = lower voltage. Too-low values can cause instability or data corruption. Start small. Resets on reboot." />
+
+                                    <Grid ColumnDefinitions="100,*,45" Margin="0,4">
+                                        <TextBlock Grid.Column="0" x:Name="labelUndervoltCpu" Text="CPU"
+                                                   Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderCpuUV"
+                                                Minimum="0" Maximum="40" Value="0"
+                                                TickFrequency="1" IsSnapToTickEnabled="True"
+                                                ValueChanged="SliderCpuUV_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelCpuUV" Classes="value"
+                                                   Text="0" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+
+                                    <Grid x:Name="rowIgpuUV" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" x:Name="labelUndervoltIgpu" Text="iGPU"
+                                                   Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderIgpuUV"
+                                                Minimum="0" Maximum="40" Value="0"
+                                                TickFrequency="1" IsSnapToTickEnabled="True"
+                                                ValueChanged="SliderIgpuUV_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelIgpuUV" Classes="value"
+                                                   Text="0" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+
+                                    <Grid x:Name="rowCpuTemp" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" x:Name="labelCpuTempLabel" Text="CPU Temp Target"
+                                                   Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderCpuTemp"
+                                                Minimum="75" Maximum="100" Value="100"
+                                                TickFrequency="1"
+                                                ValueChanged="SliderCpuTemp_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelCpuTemp" Classes="value"
+                                                   Text="100°C" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+
+                                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                                        <Button x:Name="buttonApplyUV" Classes="ghelper"
+                                                Content="Apply" Click="ButtonApplyUV_Click" />
+                                        <Button x:Name="buttonResetUV" Classes="ghelper"
+                                                Content="Reset" Click="ButtonResetUV_Click" />
+                                        <CheckBox x:Name="checkApplyUV"
+                                                  Content="Auto-apply on mode change"
+                                                  VerticalAlignment="Center"
+                                                  IsCheckedChanged="CheckApplyUV_Changed" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <TextBlock x:Name="labelSensors" Classes="label-dim"
+                                           Text="" Margin="0,8,0,0"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- GPU PANEL -->
+                        <Border x:Name="panelGpu" Classes="panel" Margin="10,5,10,10" IsVisible="False">
+                            <StackPanel>
+                                <TextBlock x:Name="headerGpuTuning" Classes="header" Text="GPU Tuning" Margin="0,0,0,4" />
+                                <TextBlock x:Name="labelGpuTuningInfo" Classes="label-dim" Margin="0,0,0,8" Text="" />
+
+                                <Grid x:Name="rowFansDgpuProcesses" ColumnDefinitions="*,Auto"
+                                      Margin="0,0,0,8" IsVisible="False">
+                                    <TextBlock Grid.Column="0" x:Name="labelFansDgpuProcessCount"
+                                               Classes="label-dim" Text=""
+                                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <Button Grid.Column="1" x:Name="buttonFansViewDgpuProcesses"
+                                            Classes="ghelper" Click="ButtonFansViewDgpuProcesses_Click"
+                                            Padding="10,4" FontSize="11" Height="28">
+                                        <TextBlock x:Name="labelFansViewDgpuProcesses" Text="View" />
+                                    </Button>
+                                </Grid>
+
+                                <Grid x:Name="rowNvBaseTgp" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                    <TextBlock Grid.Column="0" x:Name="labelNvBaseTgpLabel" Text="Sustained TGP"
+                                               Classes="label-dim" VerticalAlignment="Center" />
+                                    <Slider Grid.Column="1" x:Name="sliderNvBaseTgp"
+                                            Minimum="35" Maximum="100" Value="55"
+                                            TickFrequency="5"
+                                            ValueChanged="SliderNvBaseTgp_ValueChanged" />
+                                    <TextBlock Grid.Column="2" x:Name="labelNvBaseTgp" Classes="value"
+                                               Text="55W" HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Grid x:Name="rowNvTgp" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                    <TextBlock Grid.Column="0" x:Name="labelNvTgpLabel" Text="Max TGP"
+                                               Classes="label-dim" VerticalAlignment="Center" />
+                                    <Slider Grid.Column="1" x:Name="sliderNvTgp"
+                                            Minimum="35" Maximum="115" Value="100"
+                                            TickFrequency="5"
+                                            ValueChanged="SliderNvTgp_ValueChanged" />
+                                    <TextBlock Grid.Column="2" x:Name="labelNvTgp" Classes="value"
+                                               Text="100W" HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Grid x:Name="rowGpuBoost" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                    <TextBlock Grid.Column="0" x:Name="labelGpuBoostLabel" Text="Dynamic Boost"
+                                               Classes="label-dim" VerticalAlignment="Center" />
+                                    <Slider Grid.Column="1" x:Name="sliderGpuBoost"
+                                            Minimum="5" Maximum="25" Value="15"
+                                            TickFrequency="5"
+                                            ValueChanged="SliderGpuBoost_ValueChanged" />
+                                    <TextBlock Grid.Column="2" x:Name="labelGpuBoost" Classes="value"
+                                               Text="15W" HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Grid x:Name="rowGpuTemp" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                    <TextBlock Grid.Column="0" x:Name="labelGpuTempLabel" Text="Temp Target"
+                                               Classes="label-dim" VerticalAlignment="Center" />
+                                    <Slider Grid.Column="1" x:Name="sliderGpuTemp"
+                                            Minimum="75" Maximum="87" Value="87"
+                                            TickFrequency="1"
+                                            ValueChanged="SliderGpuTemp_ValueChanged" />
+                                    <TextBlock Grid.Column="2" x:Name="labelGpuTemp" Classes="value"
+                                               Text="87°C" HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Grid x:Name="rowGpuPowerLim" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                    <TextBlock Grid.Column="0" x:Name="labelGpuPowerLimLabel" Text="nvidia-smi Power"
+                                               Classes="label-dim" VerticalAlignment="Center" />
+                                    <Slider Grid.Column="1" x:Name="sliderGpuPowerLim"
+                                            Minimum="25" Maximum="200" Value="100"
+                                            TickFrequency="5"
+                                            ValueChanged="SliderGpuPowerLim_ValueChanged" />
+                                    <TextBlock Grid.Column="2" x:Name="labelGpuPowerLim" Classes="value"
+                                               Text="100W" HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Grid x:Name="rowGpuClockCore" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                    <TextBlock Grid.Column="0" x:Name="labelGpuClockCoreLabel" Text="Core Offset"
+                                               Classes="label-dim" VerticalAlignment="Center" />
+                                    <Slider Grid.Column="1" x:Name="sliderGpuClockCore"
+                                            Minimum="-200" Maximum="400" Value="0"
+                                            TickFrequency="25"
+                                            ValueChanged="SliderGpuClockCore_ValueChanged" />
+                                    <TextBlock Grid.Column="2" x:Name="labelGpuClockCore" Classes="value"
+                                               Text="0 MHz" HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Grid x:Name="rowGpuClockMem" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                    <TextBlock Grid.Column="0" x:Name="labelGpuClockMemLabel" Text="Memory Offset"
+                                               Classes="label-dim" VerticalAlignment="Center" />
+                                    <Slider Grid.Column="1" x:Name="sliderGpuClockMem"
+                                            Minimum="-500" Maximum="4000" Value="0"
+                                            TickFrequency="100"
+                                            ValueChanged="SliderGpuClockMem_ValueChanged" />
+                                    <TextBlock Grid.Column="2" x:Name="labelGpuClockMem" Classes="value"
+                                               Text="0 MHz" HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+
+                                <TextBlock x:Name="labelGpuOcWarning" FontSize="10"
+                                           TextWrapping="Wrap" Margin="0,0,0,4"
+                                           Foreground="#E0884B" IsVisible="False" Text="" />
+
+                                <Grid x:Name="rowGpuClockLock" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                    <CheckBox Grid.Column="0" x:Name="checkGpuClockLock" Content="Clock Lock"
+                                              VerticalAlignment="Center"
+                                              IsCheckedChanged="CheckGpuClockLock_Changed" />
+                                    <Slider Grid.Column="1" x:Name="sliderGpuClockLock"
+                                            Minimum="200" Maximum="3000" Value="1600"
+                                            TickFrequency="50"
+                                            IsEnabled="False"
+                                            ValueChanged="SliderGpuClockLock_ValueChanged" />
+                                    <TextBlock Grid.Column="2" x:Name="labelGpuClockLock" Classes="value"
+                                               Text="Off" HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Grid x:Name="rowGpuMemClockLock" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                    <CheckBox Grid.Column="0" x:Name="checkGpuMemClockLock" Content="VRAM Lock"
+                                              VerticalAlignment="Center"
+                                              IsCheckedChanged="CheckGpuMemClockLock_Changed" />
+                                    <Slider Grid.Column="1" x:Name="sliderGpuMemClockLock"
+                                            Minimum="405" Maximum="12000" Value="8000"
+                                            TickFrequency="250"
+                                            IsEnabled="False"
+                                            ValueChanged="SliderGpuMemClockLock_ValueChanged" />
+                                    <TextBlock Grid.Column="2" x:Name="labelGpuMemClockLock" Classes="value"
+                                               Text="Off" HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+
+                                <CheckBox x:Name="checkApplyGpu"
+                                          Content="Auto-apply GPU settings on mode switch"
+                                          ToolTip.Tip=""
+                                          Margin="0,8,0,0"
+                                          IsCheckedChanged="CheckApplyGpu_Changed" />
+
+                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                                    <Button x:Name="buttonGpuApply" Classes="ghelper"
+                                            Content="Apply" Click="ButtonGpuApply_Click" />
+                                    <Button x:Name="buttonGpuReset" Classes="ghelper"
+                                            Content="Reset" Click="ButtonGpuReset_Click" />
+                                </StackPanel>
+
+                                <TextBlock x:Name="labelGpuHint" Classes="label-dim" FontSize="10"
+                                           TextWrapping="Wrap" Margin="0,8,0,0"
+                                           Text="" />
+
+                                <TextBlock x:Name="headerGpuLive" Classes="header" Text="GPU Status"
+                                           Margin="0,12,0,4" IsVisible="False" />
+                                <Grid x:Name="gridGpuLive" ColumnDefinitions="Auto,*,Auto,*"
+                                      RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" IsVisible="False">
+                                    <!-- Row 0: Core | Mem -->
+                                    <TextBlock Grid.Row="0" Grid.Column="0" x:Name="labelLiveCoreKey" Classes="label-dim" Text="Core" Margin="0,1,6,1" />
+                                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="labelLiveCoreClock" Classes="value" Text="-" HorizontalAlignment="Left" TextWrapping="Wrap" Margin="0,1,10,1" />
+                                    <TextBlock Grid.Row="0" Grid.Column="2" x:Name="labelLiveMemKey" Classes="label-dim" Text="Mem" Margin="0,1,6,1" />
+                                    <TextBlock Grid.Row="0" Grid.Column="3" x:Name="labelLiveMemClock" Classes="value" Text="-" HorizontalAlignment="Left" TextWrapping="Wrap" Margin="0,1" />
+                                    <!-- Row 1: SM | Temp -->
+                                    <TextBlock Grid.Row="1" Grid.Column="0" x:Name="labelLiveSmKey" Classes="label-dim" Text="SM" Margin="0,1,6,1" />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="labelLiveSmClock" Classes="value" Text="-" HorizontalAlignment="Left" TextWrapping="Wrap" Margin="0,1,10,1" />
+                                    <TextBlock Grid.Row="1" Grid.Column="2" x:Name="labelLiveTempKey" Classes="label-dim" Text="Temp" Margin="0,1,6,1" />
+                                    <TextBlock Grid.Row="1" Grid.Column="3" x:Name="labelLiveTemp" Classes="value" Text="-" HorizontalAlignment="Left" TextWrapping="Wrap" Margin="0,1" />
+                                    <!-- Row 2: Usage | Power -->
+                                    <TextBlock Grid.Row="2" Grid.Column="0" x:Name="labelLiveUtilKey" Classes="label-dim" Text="Usage" Margin="0,1,6,1" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="labelLiveUtil" Classes="value" Text="-" HorizontalAlignment="Left" TextWrapping="Wrap" Margin="0,1,10,1" />
+                                    <TextBlock Grid.Row="2" Grid.Column="2" x:Name="labelLivePowerKey" Classes="label-dim" Text="Power" Margin="0,1,6,1" />
+                                    <TextBlock Grid.Row="2" Grid.Column="3" x:Name="labelLivePower" Classes="value" Text="-" HorizontalAlignment="Left" TextWrapping="Wrap" Margin="0,1" />
+                                    <!-- Row 3: VRAM | P-State -->
+                                    <TextBlock Grid.Row="3" Grid.Column="0" x:Name="labelLiveVramKey" Classes="label-dim" Text="VRAM" Margin="0,1,6,1" />
+                                    <TextBlock Grid.Row="3" Grid.Column="1" x:Name="labelLiveVram" Classes="value" Text="-" HorizontalAlignment="Left" TextWrapping="Wrap" Margin="0,1,10,1" />
+                                    <TextBlock Grid.Row="3" Grid.Column="2" x:Name="labelLivePstateKey" Classes="label-dim" Text="P-State" Margin="0,1,6,1" />
+                                    <TextBlock Grid.Row="3" Grid.Column="3" x:Name="labelLivePstate" Classes="value" Text="-" HorizontalAlignment="Left" TextWrapping="Wrap" Margin="0,1" />
+                                    <!-- Row 4: Offset | Throttle -->
+                                    <TextBlock Grid.Row="4" Grid.Column="0" x:Name="labelLiveOffsetsKey" Classes="label-dim" Text="Offset" Margin="0,1,6,1" />
+                                    <TextBlock Grid.Row="4" Grid.Column="1" x:Name="labelLiveOffsets" Classes="value" Text="-" HorizontalAlignment="Left" TextWrapping="Wrap" Margin="0,1,10,1" />
+                                    <TextBlock Grid.Row="4" Grid.Column="2" x:Name="labelLiveThrottleKey" Classes="label-dim" Text="Throttle" Margin="0,1,6,1" />
+                                    <TextBlock Grid.Row="4" Grid.Column="3" x:Name="labelLiveThrottle" Classes="value" Text="-" HorizontalAlignment="Left" TextWrapping="Wrap" Margin="0,1" />
+                                    <!-- Row 5: PCIe -->
+                                    <TextBlock Grid.Row="5" Grid.Column="0" x:Name="labelLivePcieKey" Classes="label-dim" Text="PCIe" Margin="0,1,6,1" />
+                                    <TextBlock Grid.Row="5" Grid.Column="1" x:Name="labelLivePcie" Classes="value" Text="-" HorizontalAlignment="Left" TextWrapping="Wrap" Margin="0,1,10,1" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ADVANCED PANEL -->
+                        <Border x:Name="panelAdvanced" Classes="panel" Margin="10,5,10,10" IsVisible="False">
+                            <StackPanel>
+                                <TextBlock x:Name="headerAdvanced" Classes="header" Text="Advanced" Margin="0,0,0,4" />
+
+                                <TextBlock x:Name="labelModeCmd" Text="Run on switch:"
+                                           Classes="label-dim" Margin="0,4,0,2" />
+                                <TextBox x:Name="textModeCommand"
+                                         FontFamily="monospace"
+                                         TextChanged="TextModeCommand_TextChanged" />
+                                <TextBlock x:Name="labelModeCmdHint" Classes="label-dim" FontSize="10"
+                                           TextWrapping="Wrap" Margin="0,2,0,4"
+                                           Text="Runs via /bin/sh -c after every mode switch (manual + auto AC/DC). Per-mode; switch modes to edit each." />
+
+                                <TextBlock x:Name="labelReapply" Text="Reapply power:"
+                                           Classes="label-dim" Margin="0,8,0,2" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <NumericUpDown x:Name="numReapplyTime"
+                                                   Minimum="0" Maximum="600" Increment="5" Value="0"
+                                                   Width="120"
+                                                   ValueChanged="NumReapplyTime_ValueChanged" />
+                                    <TextBlock x:Name="labelReapplyUnit" Text="seconds (0 = off)"
+                                               Classes="label-dim" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock x:Name="labelReapplyHint" Classes="label-dim" FontSize="10"
+                                           TextWrapping="Wrap" Margin="0,2,0,0"
+                                           Text="Re-write CPU/GPU power limits at this interval. Useful when BIOS clobbers PPT." />
+                            </StackPanel>
+                        </Border>
+
                     </StackPanel>
-                </Button>
-                <Button Grid.Column="2" x:Name="buttonApplyFans" Classes="ghelper"
-                        Content="Apply" Margin="4,0"
-                        Click="ButtonApplyFans_Click" />
-                <Button Grid.Column="3" x:Name="buttonReset" Classes="ghelper"
-                        Content="Reset" Margin="4,0"
-                        Click="ButtonReset_Click" />
-                <Button Grid.Column="4" x:Name="buttonDisable" Classes="ghelper"
-                        Content="Disable" Margin="4,0"
-                        Click="ButtonDisable_Click" />
-                <CheckBox Grid.Column="5" x:Name="checkApplyFans"
-                          Content="Auto-apply" Margin="8,0,0,0"
-                          VerticalAlignment="Center"
-                          IsCheckedChanged="CheckApplyFans_Changed" />
+                </ScrollViewer>
+
             </Grid>
         </Border>
 
-        <!-- CHARTS -->
-        <Grid x:Name="chartGrid" Grid.Row="1" Margin="10,5" RowDefinitions="*,*,Auto,Auto" MinHeight="580">
-            <!-- CPU Fan Chart -->
-            <controls:FanCurveChart x:Name="chartCPU"
-                                     Grid.Row="0"
-                                     Margin="0,0,0,5"
-                                     FanLabel="CPU Fan"
-                                     LineColor="#3AAEEF" />
+        <!-- ============ RIGHT COLUMN: panelFans ============ -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,*">
 
-            <!-- GPU Fan Chart -->
-            <controls:FanCurveChart x:Name="chartGPU"
-                                     Grid.Row="1"
-                                     Margin="0,5,0,0"
-                                     FanLabel="GPU Fan"
-                                     LineColor="#FF2020" />
+            <!-- HEADER -->
+            <Border Grid.Row="0" Classes="panel-header" Margin="10,10,10,5">
+                <StackPanel Spacing="6">
+                    <TextBlock x:Name="headerFanCurves" Classes="header" Text="Fan Curves" FontSize="14" />
+                    <TextBlock x:Name="labelMode" Classes="label-dim"
+                               Text="Mode: Balanced" />
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2,0,0">
+                        <Button x:Name="buttonMonitor" Classes="ghelper" Height="30"
+                                Click="ButtonMonitor_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <controls:Icon IconName="bolt" Width="14" Height="14" VerticalAlignment="Center" />
+                                <TextBlock x:Name="labelMonitorButton" Text="Monitor" FontSize="11" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="buttonApplyFans" Classes="ghelper"
+                                Content="Apply" Click="ButtonApplyFans_Click" />
+                        <Button x:Name="buttonReset" Classes="ghelper"
+                                Content="Reset" Click="ButtonReset_Click" />
+                        <Button x:Name="buttonDisable" Classes="ghelper"
+                                Content="Disable" Click="ButtonDisable_Click" />
+                        <CheckBox x:Name="checkApplyFans"
+                                  Content="Auto-apply" Margin="8,0,0,0"
+                                  VerticalAlignment="Center"
+                                  IsCheckedChanged="CheckApplyFans_Changed" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
 
-            <!-- Mid Fan Chart (hidden by default, shown when mid fan detected) -->
-            <controls:FanCurveChart x:Name="chartMid"
-                                     Grid.Row="2"
-                                     Margin="0,5,0,0"
-                                     FanLabel="Mid Fan"
-                                     LineColor="#44DD44"
-                                     IsVisible="False" />
+            <!-- CHARTS -->
+            <Grid x:Name="chartGrid" Grid.Row="1" Margin="10,5,10,10" RowDefinitions="*,*,Auto,Auto" MinHeight="500">
+                <controls:FanCurveChart x:Name="chartCPU"
+                                         Grid.Row="0"
+                                         Margin="0,0,0,5"
+                                         FanLabel="CPU Fan"
+                                         LineColor="#3AAEEF" />
 
-            <controls:FanCurveChart x:Name="chartXGM"
-                                     Grid.Row="3"
-                                     Margin="0,5,0,0"
-                                     FanLabel="XG Mobile Fan"
-                                     LineColor="#FFA500"
-                                     IsVisible="False" />
+                <controls:FanCurveChart x:Name="chartGPU"
+                                         Grid.Row="1"
+                                         Margin="0,5,0,0"
+                                         FanLabel="GPU Fan"
+                                         LineColor="#FF2020" />
+
+                <controls:FanCurveChart x:Name="chartMid"
+                                         Grid.Row="2"
+                                         Margin="0,5,0,0"
+                                         FanLabel="Mid Fan"
+                                         LineColor="#44DD44"
+                                         IsVisible="False" />
+
+                <controls:FanCurveChart x:Name="chartXGM"
+                                         Grid.Row="3"
+                                         Margin="0,5,0,0"
+                                         FanLabel="XG Mobile Fan"
+                                         LineColor="#FFA500"
+                                         IsVisible="False" />
+            </Grid>
+
         </Grid>
 
-        <!-- POWER LIMITS -->
-        <Border Grid.Row="2" Classes="panel" Margin="10,5,10,10">
-            <StackPanel>
-                <TextBlock x:Name="headerPowerLimits" Classes="header" Text="Power Limits" Margin="0,0,0,8" />
-
-                <!-- PPT SPL (PL1) -->
-                <Grid ColumnDefinitions="120,*,50" Margin="0,4">
-                    <TextBlock Grid.Column="0" x:Name="labelPL1Label" Text="CPU PL1 (SPL)"
-                               Classes="label-dim" VerticalAlignment="Center" />
-                    <Slider Grid.Column="1" x:Name="sliderPL1"
-                            Minimum="5" Maximum="120" Value="45"
-                            TickFrequency="5"
-                            ValueChanged="SliderPL1_ValueChanged" />
-                    <TextBlock Grid.Column="2" x:Name="labelPL1" Classes="value"
-                               Text="45W" HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
-                </Grid>
-
-                <!-- PPT SPPT (PL2) -->
-                <Grid ColumnDefinitions="120,*,50" Margin="0,4">
-                    <TextBlock Grid.Column="0" x:Name="labelPL2Label" Text="CPU PL2 (SPPT)"
-                               Classes="label-dim" VerticalAlignment="Center" />
-                    <Slider Grid.Column="1" x:Name="sliderPL2"
-                            Minimum="5" Maximum="150" Value="65"
-                            TickFrequency="5"
-                            ValueChanged="SliderPL2_ValueChanged" />
-                    <TextBlock Grid.Column="2" x:Name="labelPL2" Classes="value"
-                               Text="65W" HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
-                </Grid>
-
-                <!-- PPT fPPT (fast boost) -->
-                <Grid x:Name="gridFppt" ColumnDefinitions="120,*,50" Margin="0,4" IsVisible="False">
-                    <TextBlock Grid.Column="0" x:Name="labelFpptLabel" Text="CPU fPPT (Fast)"
-                               Classes="label-dim" VerticalAlignment="Center" />
-                    <Slider Grid.Column="1" x:Name="sliderFppt"
-                            Minimum="5" Maximum="150" Value="65"
-                            TickFrequency="5"
-                            ValueChanged="SliderFppt_ValueChanged" />
-                    <TextBlock Grid.Column="2" x:Name="labelFppt" Classes="value"
-                               Text="65W" HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
-                </Grid>
-
-                <!-- CPU Boost -->
-                <Grid ColumnDefinitions="120,*" Margin="0,8,0,0">
-                    <TextBlock Grid.Column="0" x:Name="labelCpuBoostLabel" Text="CPU Boost"
-                               Classes="label-dim" VerticalAlignment="Center" />
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
-                        <Button x:Name="buttonBoostOff" Classes="ghelper"
-                                Content="Off" Click="ButtonBoostOff_Click" />
-                        <Button x:Name="buttonBoostOn" Classes="ghelper"
-                                Content="On" Click="ButtonBoostOn_Click" />
-                    </StackPanel>
-                </Grid>
-
-                <!-- Auto-apply power -->
-                <CheckBox x:Name="checkApplyPower"
-                          Content="Auto-apply power limits on mode change" Margin="0,8,0,0"
-                          IsCheckedChanged="CheckApplyPower_Changed" />
-
-                <!-- Sensor readings -->
-                <TextBlock x:Name="labelSensors" Classes="label-dim"
-                           Text="" Margin="0,8,0,0" />
-            </StackPanel>
-        </Border>
-
-        <!-- Undervolting (Ryzen CO) -->
-        <Border Grid.Row="3" x:Name="panelUV" Classes="panel" Margin="10,0,10,10" IsVisible="False">
-            <StackPanel>
-                <TextBlock x:Name="headerUndervolt" Classes="header" Text="Undervolting (Experimental)" Margin="0,0,0,4" />
-                <TextBlock x:Name="labelUndervoltDesc" Classes="label-dim" TextWrapping="Wrap" Margin="0,0,0,8"
-                           Text="Curve Optimizer offset. More negative = lower voltage. Too-low values can cause instability or data corruption. Start small. Resets on reboot." />
-
-                <Grid ColumnDefinitions="120,*,50" Margin="0,4">
-                    <TextBlock Grid.Column="0" x:Name="labelUndervoltCpu" Text="CPU"
-                               Classes="label-dim" VerticalAlignment="Center" />
-                    <!-- Slider is positive 0..40 (intensity) so the fill bar grows
-                         left-to-right with UV strength; value is negated when stored. -->
-                    <Slider Grid.Column="1" x:Name="sliderCpuUV"
-                            Minimum="0" Maximum="40" Value="0"
-                            TickFrequency="1" IsSnapToTickEnabled="True"
-                            ValueChanged="SliderCpuUV_ValueChanged" />
-                    <TextBlock Grid.Column="2" x:Name="labelCpuUV" Classes="value"
-                               Text="0" HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
-                </Grid>
-
-                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-                    <Button x:Name="buttonApplyUV" Classes="ghelper"
-                            Content="Apply" Click="ButtonApplyUV_Click" />
-                    <Button x:Name="buttonResetUV" Classes="ghelper"
-                            Content="Reset" Click="ButtonResetUV_Click" />
-                    <CheckBox x:Name="checkApplyUV"
-                              Content="Auto-apply on mode change"
-                              VerticalAlignment="Center"
-                              IsCheckedChanged="CheckApplyUV_Changed" />
-                </StackPanel>
-            </StackPanel>
-        </Border>
-
-        <!-- Advanced: per-mode shell hook + power-limit reapply timer. -->
-        <Border Grid.Row="4" Classes="panel" Margin="10,0,10,10">
-            <StackPanel>
-                <TextBlock x:Name="headerAdvanced" Classes="header" Text="Advanced" Margin="0,0,0,4" />
-
-                <!-- Mode shell command -->
-                <Grid ColumnDefinitions="120,*" Margin="0,4">
-                    <TextBlock Grid.Column="0" x:Name="labelModeCmd" Text="Run on switch:"
-                               Classes="label-dim" VerticalAlignment="Center" />
-                    <TextBox Grid.Column="1" x:Name="textModeCommand"
-                             FontFamily="monospace"
-                             TextChanged="TextModeCommand_TextChanged" />
-                </Grid>
-                <TextBlock x:Name="labelModeCmdHint" Classes="label-dim" FontSize="10"
-                           TextWrapping="Wrap" Margin="120,0,0,4"
-                           Text="Runs via /bin/sh -c after every mode switch (manual + auto AC/DC). Per-mode; switch modes to edit each." />
-
-                <!-- Reapply timer -->
-                <Grid ColumnDefinitions="120,Auto,Auto,*" Margin="0,8,0,4">
-                    <TextBlock Grid.Column="0" x:Name="labelReapply" Text="Reapply power:"
-                               Classes="label-dim" VerticalAlignment="Center" />
-                    <NumericUpDown Grid.Column="1" x:Name="numReapplyTime"
-                                   Minimum="0" Maximum="600" Increment="5" Value="0"
-                                   Width="120"
-                                   ValueChanged="NumReapplyTime_ValueChanged" />
-                    <TextBlock Grid.Column="2" x:Name="labelReapplyUnit" Text="seconds (0 = off)"
-                               Classes="label-dim" VerticalAlignment="Center" Margin="8,0,0,0" />
-                </Grid>
-                <TextBlock x:Name="labelReapplyHint" Classes="label-dim" FontSize="10"
-                           TextWrapping="Wrap" Margin="120,0,0,0"
-                           Text="Re-write CPU/GPU power limits at this interval. Useful when BIOS clobbers PPT." />
-            </StackPanel>
-        </Border>
-
     </Grid>
-    </ScrollViewer>
 
 </Window>
