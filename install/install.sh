@@ -54,6 +54,19 @@ else
     mkdir -p "$HOME/.local/share/applications" 2>/dev/null || true
 fi
 
+_install_desktop() {
+    local src="$1" dest="$2" exec_val
+    if [[ -n "${APPIMAGE:-}" && -f "${APPIMAGE:-}" ]]; then
+        exec_val="$APPIMAGE"
+    else
+        exec_val="$INSTALL_DIR/ghelper"
+    fi
+    if [[ "$exec_val" == *" "* ]]; then
+        exec_val="\"$exec_val\""
+    fi
+    sed "s|^Exec=.*|Exec=$exec_val|" "$src" > "$dest"
+}
+
 # ── Counters ───────────────────────────────────────────────────────────────────
 INJECTED=0
 SKIPPED=0
@@ -427,6 +440,26 @@ else
     _info "${DIM}no stale tmpfiles config found (good)${RESET}"
 fi
 
+# ── Discrete-GPU detection (vendor-neutral, not ASUS-specific) ──
+# Scan PCI for a discrete VGA/3D function: NVIDIA (0x10de), or AMD (0x1002) that
+# is NOT boot_vga (so the APU/iGPU is excluded). The GPU boot service is only
+# useful on machines that actually have a dGPU
+has_discrete_gpu() {
+    local d vendor cls bootvga
+    for d in /sys/bus/pci/devices/*/; do
+        [[ -r "$d/class" && -r "$d/vendor" ]] || continue
+        cls=$(cat "$d/class" 2>/dev/null)
+        [[ "$cls" == 0x0300* || "$cls" == 0x0302* ]] || continue
+        vendor=$(cat "$d/vendor" 2>/dev/null)
+        [[ "$vendor" == "0x10de" ]] && return 0
+        if [[ "$vendor" == "0x1002" ]]; then
+            bootvga=$(cat "$d/boot_vga" 2>/dev/null || echo 0)
+            [[ "$bootvga" == "1" ]] || return 0
+        fi
+    done
+    return 1
+}
+
 # ══════════════════════════════════════════════════════════════════════════════
 #  [0x03b] GPU BLOCK HELPER + BOOT SERVICE + SUDOERS RULE
 # ══════════════════════════════════════════════════════════════════════════════
@@ -439,8 +472,21 @@ if [[ "$MODE" == "install" ]]; then
     mkdir -p "$HELPER_DIR"
 
     _install_file "$WORK_DIR/gpu-block-helper.sh" "$HELPER_DEST" 755 "GPU block helper" || true
-    _install_file "$WORK_DIR/ghelper-gpu-boot.sh" "$HELPER_DIR/ghelper-gpu-boot.sh" 755 "GPU boot script" || true
-    _install_file "$WORK_DIR/ghelper-gpu-boot.service" "/etc/systemd/system/ghelper-gpu-boot.service" 644 "GPU boot systemd unit" || true
+
+    # GPU boot service: only relevant on machines with a discrete GPU. On
+    # iGPU/APU-only hardware it is a pure no-op, so don't install or enable it.
+    if has_discrete_gpu; then
+        GPU_BOOT_APPLIES=1
+        _install_file "$WORK_DIR/ghelper-gpu-boot.sh" "$HELPER_DIR/ghelper-gpu-boot.sh" 755 "GPU boot script" || true
+        _install_file "$WORK_DIR/ghelper-gpu-boot.service" "/etc/systemd/system/ghelper-gpu-boot.service" 644 "GPU boot systemd unit" || true
+    else
+        GPU_BOOT_APPLIES=0
+        _skip "GPU boot service → no discrete GPU detected, skipping"
+    fi
+
+    # GPU-mode state dir — created for everyone so the boot service's
+    # ReadWritePaths=/etc/ghelper can never fail on a missing dir.
+    mkdir -p /etc/ghelper && chmod 0755 /etc/ghelper
 
     GPU_HELPER_DEST="$INSTALL_DIR/gpu-helper"
     if "$INSTALL_DIR/ghelper" --extract-helper gpu-helper "$GPU_HELPER_DEST" >/dev/null 2>&1; then
@@ -476,10 +522,12 @@ ALL ALL=(root) NOPASSWD: /opt/ghelper/gpu-helper"
     systemctl daemon-reload 2>/dev/null || true
     _info "systemd daemon-reload"
 
-    if systemctl enable ghelper-gpu-boot.service 2>/dev/null; then
-        _info "ghelper-gpu-boot.service enabled"
-    else
-        _warn "failed to enable ghelper-gpu-boot.service (systemd may not be running)"
+    if [[ "${GPU_BOOT_APPLIES:-0}" == "1" ]]; then
+        if systemctl enable ghelper-gpu-boot.service 2>/dev/null; then
+            _info "ghelper-gpu-boot.service enabled"
+        else
+            _warn "failed to enable ghelper-gpu-boot.service (systemd may not be running)"
+        fi
     fi
 fi
 
@@ -575,7 +623,8 @@ _info "sysfs summary: ${GREEN}${CHMOD_APPLIED} armed${RESET} / ${DIM}${CHMOD_SKI
 if [[ "$MODE" == "install" ]]; then
     _step 6 "DESKTOP INTEGRATION LAYER"
 
-    if install -m 644 "$WORK_DIR/ghelper.desktop" "$DESKTOP_DEST" 2>/dev/null; then
+    if _install_desktop "$WORK_DIR/ghelper.desktop" "$DESKTOP_DEST" 2>/dev/null; then
+        chmod 644 "$DESKTOP_DEST" 2>/dev/null || true
         _inject "desktop entry → $DESKTOP_DEST"
     else
         _warn "desktop entry → $DESKTOP_DEST (read-only, using autostart instead)"
@@ -614,7 +663,8 @@ if [[ "$MODE" == "install" ]]; then
         AUTOSTART_DEST="$AUTOSTART_DIR/ghelper.desktop"
         # Create dir as the real user so ownership is correct from the start
         su -c "mkdir -p '$AUTOSTART_DIR'" "$REAL_USER"
-        install -m 644 "$WORK_DIR/ghelper.desktop" "$AUTOSTART_DEST"
+        _install_desktop "$WORK_DIR/ghelper.desktop" "$AUTOSTART_DEST"
+        chmod 644 "$AUTOSTART_DEST"
         chown "$REAL_USER:$REAL_USER" "$AUTOSTART_DEST"
         _inject "autostart for user ${BOLD}$REAL_USER${RESET} → $AUTOSTART_DEST"
     else

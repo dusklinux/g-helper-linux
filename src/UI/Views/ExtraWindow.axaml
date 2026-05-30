@@ -144,6 +144,67 @@
                                     Cursor="Hand" PointerPressed="SwatchRearColor_PointerPressed" />
                         </Grid>
                     </StackPanel>
+
+                    <!-- Slash LED Bar (A-cover lighting on Zephyrus/Strix models) -->
+                    <StackPanel x:Name="panelSlash" IsVisible="False" Margin="0,12,0,0">
+                        <TextBlock x:Name="labelSlashHeader" Text="Slash Lighting"
+                                   Classes="label-dim" FontWeight="SemiBold" Margin="0,0,0,4" />
+
+                        <!-- Enable / Disable -->
+                        <CheckBox x:Name="checkSlashEnabled" Content="Enable"
+                                  Margin="0,4"
+                                  IsCheckedChanged="CheckSlashEnabled_Changed" />
+
+                        <!-- Brightness (0-255) -->
+                        <Grid ColumnDefinitions="120,*,40" Margin="0,4">
+                            <TextBlock Grid.Column="0" x:Name="labelSlashBrightness" Text="Brightness"
+                                       Classes="label-dim" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" x:Name="sliderSlashBrightness"
+                                    Minimum="0" Maximum="255" Value="255"
+                                    ValueChanged="SliderSlashBrightness_Changed" />
+                            <TextBlock Grid.Column="2" x:Name="labelSlashBrightnessVal"
+                                       Classes="value" Text="255"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Animation Mode -->
+                        <Grid ColumnDefinitions="120,*" Margin="0,4">
+                            <TextBlock Grid.Column="0" x:Name="labelSlashMode" Text="Animation"
+                                       Classes="label-dim" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1" x:Name="comboSlashMode"
+                                      HorizontalAlignment="Stretch"
+                                      SelectionChanged="ComboSlashMode_Changed" />
+                        </Grid>
+
+                        <!-- Animation Speed (0-5) -->
+                        <Grid ColumnDefinitions="120,*,40" Margin="0,4">
+                            <TextBlock Grid.Column="0" x:Name="labelSlashSpeed" Text="Speed"
+                                       Classes="label-dim" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" x:Name="sliderSlashSpeed"
+                                    Minimum="0" Maximum="5" Value="0"
+                                    TickFrequency="1" IsSnapToTickEnabled="True"
+                                    ValueChanged="SliderSlashSpeed_Changed" />
+                            <TextBlock Grid.Column="2" x:Name="labelSlashSpeedVal"
+                                       Classes="value" Text="0"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Power state checkboxes -->
+                        <TextBlock x:Name="labelSlashPower" Text="Power States"
+                                   Classes="label-dim" Margin="0,8,0,4" FontWeight="SemiBold" />
+                        <CheckBox x:Name="checkSlashBoot" Content="Show on boot"
+                                  Margin="0,2" IsCheckedChanged="CheckSlashPower_Changed" />
+                        <CheckBox x:Name="checkSlashSleep" Content="Show on sleep"
+                                  Margin="0,2" IsCheckedChanged="CheckSlashPower_Changed" />
+                        <CheckBox x:Name="checkSlashShutdown" Content="Show on shutdown"
+                                  Margin="0,2" IsCheckedChanged="CheckSlashPower_Changed" />
+                        <CheckBox x:Name="checkSlashBattery" Content="Show on battery"
+                                  Margin="0,2" IsCheckedChanged="CheckSlashPower_Changed" />
+                        <CheckBox x:Name="checkSlashLowBattery" Content="Low battery warning"
+                                  Margin="0,2" IsCheckedChanged="CheckSlashPower_Changed" />
+                        <CheckBox x:Name="checkSlashLidClosed" Content="Show with lid closed"
+                                  Margin="0,2" IsCheckedChanged="CheckSlashPower_Changed" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -276,6 +337,18 @@
                     <CheckBox x:Name="checkSilentStart" Content="Start minimized to tray"
                               Margin="0,4"
                               IsCheckedChanged="CheckSilentStart_Changed" />
+
+                    <CheckBox x:Name="checkSkipSysfilesPopup" Content="Don't check system files on startup"
+                              Margin="0,4"
+                              IsCheckedChanged="CheckSkipSysfilesPopup_Changed" />
+
+                    <CheckBox x:Name="checkSkipUpdatePrompt" Content="Don't check for updates on startup"
+                              Margin="0,4"
+                              IsCheckedChanged="CheckSkipUpdatePrompt_Changed" />
+
+                    <CheckBox x:Name="checkDisableAudio" Content="Disable virtual microphone"
+                              Margin="0,4"
+                              IsCheckedChanged="CheckDisableAudio_Changed" />
 
                     <CheckBox x:Name="checkDisableOsd" Content="Disable notifications"
                               Margin="0,4"
@@ -553,6 +626,11 @@
                     <CheckBox x:Name="checkScreenAuto" Content="Auto-switch refresh rate (AC/Battery)"
                               Margin="0,4"
                               IsCheckedChanged="CheckScreenAuto_Changed" />
+
+                    <CheckBox x:Name="checkEcoPersistent"
+                              Content="Re-apply Eco on every boot"
+                              Margin="0,4"
+                              IsCheckedChanged="CheckEcoPersistent_Changed" />
 
                     <!-- CPU Cores -->
                     <Grid ColumnDefinitions="120,*,50" Margin="0,8,0,4" x:Name="panelCpuCores">

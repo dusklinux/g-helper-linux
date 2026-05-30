@@ -17,7 +17,7 @@
         <StackPanel Margin="12,8,12,8" Spacing="8">
 
             <!-- Header -->
-            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
                 <TextBlock x:Name="labelTitle" Grid.Column="0"
                            Text="BIOS &amp; Driver Updates"
                            Foreground="#F0F0F0" FontSize="16" FontWeight="Bold"
@@ -29,7 +29,10 @@
                 <Button x:Name="buttonDiagnostics" Grid.Column="2"
                         Content="Copy Diagnostics" Click="ButtonDiagnostics_Click"
                         MinWidth="120" Margin="0,0,6,0" />
-                <Button x:Name="buttonRefresh" Grid.Column="3"
+                <Button x:Name="buttonExportDiag" Grid.Column="3"
+                        Content="Export Diagnostics" Click="ButtonExportDiag_Click"
+                        MinWidth="120" Margin="0,0,6,0" />
+                <Button x:Name="buttonRefresh" Grid.Column="4"
                         Content="Refresh" Click="ButtonRefresh_Click"
                         MinWidth="80" />
             </Grid>
@@ -62,6 +65,41 @@
                     <TextBlock x:Name="labelLegendCantCheck" Text="Can't check" Foreground="#999999" FontSize="11" VerticalAlignment="Center" />
                 </StackPanel>
             </StackPanel>
+
+            <!-- System integration files (self-installer) -->
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,8,0,0">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6"
+                            Cursor="Hand" Background="Transparent"
+                            VerticalAlignment="Center"
+                            PointerPressed="SysFilesHeader_PointerPressed">
+                    <TextBlock x:Name="labelSystemFilesSection"
+                               Text="System integration files"
+                               Foreground="#F0F0F0" FontSize="14" FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                    <Path x:Name="iconSysFilesToggle"
+                          Data="M 0,0 L 0,12 L 12,6 Z"
+                          Fill="#F0F0F0"
+                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </StackPanel>
+                <Button x:Name="buttonSysFilesRecheck" Grid.Column="1"
+                        Content="Re-check" Click="ButtonSysFilesRecheck_Click"
+                        MinWidth="90" Margin="0,0,6,0" Padding="8,2" />
+                <Button x:Name="buttonSysFilesFix" Grid.Column="2"
+                        Content="Install / Repair" Click="ButtonSysFilesFix_Click"
+                        MinWidth="120" Padding="8,2" />
+                <Button x:Name="buttonSysFilesUninstall" Grid.Column="3"
+                        Content="Uninstall" Click="ButtonSysFilesUninstall_Click"
+                        MinWidth="90" Margin="6,0,0,0" Padding="8,2" />
+            </Grid>
+            <Border x:Name="panelSysFilesBody" Background="#262626" CornerRadius="6" Padding="10,8"
+                    IsVisible="False">
+                <StackPanel Spacing="2">
+                    <StackPanel x:Name="panelSystemFiles" Spacing="2" />
+                    <TextBlock x:Name="labelSysFilesResult" Text=""
+                               Foreground="#999999" FontSize="11" Margin="0,6,0,0"
+                               IsVisible="False" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
 
             <!-- G-Helper Linux self-update -->
             <TextBlock x:Name="labelGHelperSection" Text="G-Helper Linux" Foreground="#F0F0F0" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,4" />

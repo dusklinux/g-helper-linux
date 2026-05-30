@@ -52,6 +52,15 @@ public static class Labels
         { "vi",    () => Languages.Vietnamese.Translations },
         { "zh-cn", () => Languages.ChineseSimplified.Translations },
         { "zh-tw", () => Languages.ChineseTraditional.Translations },
+        { "bn",    () => Languages.Bengali.Translations },
+        { "fil",   () => Languages.Filipino.Translations },
+        { "hi",    () => Languages.Hindi.Translations },
+        { "lt",    () => Languages.Lithuanian.Translations },
+        { "lv",    () => Languages.Latvian.Translations },
+        { "ms",    () => Languages.Malay.Translations },
+        { "ne",    () => Languages.Nepali.Translations },
+        { "sk",    () => Languages.Slovak.Translations },
+        { "sl",    () => Languages.Slovenian.Translations },
     };
 
     /// <summary>
@@ -89,6 +98,15 @@ public static class Labels
         ("vi",    "Ti\u1ebfng Vi\u1ec7t"),            // Tiếng Việt
         ("zh-cn", "\u7b80\u4f53\u4e2d\u6587"),        // 简体中文
         ("zh-tw", "\u7e41\u9ad4\u4e2d\u6587"),        // 繁體中文
+        ("bn",    "\u09ac\u09be\u0982\u09b2\u09be"),  // বাংলা
+        ("fil",   "Filipino"),
+        ("hi",    "\u0939\u093f\u0928\u094d\u0926\u0940"), // हिन्दी
+        ("lt",    "Lietuvi\u0173"),                   // Lietuvių
+        ("lv",    "Latvie\u0161u"),                   // Latviešu
+        ("ms",    "Bahasa Melayu"),
+        ("ne",    "\u0928\u0947\u092a\u093e\u0932\u0940"), // नेपाली
+        ("sk",    "Sloven\u010dina"),                 // Slovenčina
+        ("sl",    "Sloven\u0161\u010dina"),           // Slovenščina
     };
 
     /// <summary>
@@ -200,6 +218,11 @@ public static class Labels
         // Special cases: "no" → "nb" (Norwegian Bokmål)
         if (langOnly == "no" && LanguageLoaders.ContainsKey("nb"))
             return "nb";
+
+        // "tl" (Tagalog, ISO 639-1) - "fil" (Filipino): many distros ship the
+        // Philippine locale as tl_PH rather than fil_PH, so map it explicitly.
+        if (langOnly == "tl" && LanguageLoaders.ContainsKey("fil"))
+            return "fil";
 
         return "en";
     }

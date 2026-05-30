@@ -278,7 +278,7 @@ public partial class HandheldWindow : Window
             }
             idx++;
         }
-        combo.SelectedIndex = 0;  // ─ disabled / no binding row
+        combo.SelectedIndex = 0;
     }
 
     private static void SetComboToTurbo(ComboBox combo, int ms)

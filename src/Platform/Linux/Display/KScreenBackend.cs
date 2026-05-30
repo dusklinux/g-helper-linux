@@ -35,31 +35,22 @@ public class KScreenBackend : IDisplayBackend
                 return -1;
             }
 
-            bool inOutput = false;
-            foreach (var line in info.Split('\n'))
+            var modesText = CollectModesText(info, output);
+            if (modesText == null)
             {
-                if (line.Contains("Output:") && line.Contains(output))
-                {
-                    inOutput = true;
-                    continue;
-                }
+                Helpers.Logger.WriteLine($"KScreen.GetRefreshRate: no Modes line found for {output}");
+                return -1;
+            }
 
-                if (inOutput && line.Contains("Output:"))
-                    break;
-
-                if (inOutput && line.TrimStart().StartsWith("Modes:"))
+            // Parse: "Modes:  1:1920x1200@165.00!  2:1920x1200@60.00*"
+            // * = current mode, ! = preferred
+            var matches = Regex.Matches(modesText, @"(\d+):(\d+x\d+)@(\d+)(?:\.\d+)?(\*?)");
+            foreach (Match m in matches)
+            {
+                if (m.Groups[4].Value == "*")
                 {
-                    // Parse: "Modes:  1:1920x1200@165.00!  2:1920x1200@60.00*"
-                    // * = current mode, ! = preferred
-                    var matches = Regex.Matches(line, @"(\d+):(\d+x\d+)@(\d+)(?:\.\d+)?(\*?)");
-                    foreach (Match m in matches)
-                    {
-                        if (m.Groups[4].Value == "*")
-                        {
-                            if (int.TryParse(m.Groups[3].Value, out int hz))
-                                return hz;
-                        }
-                    }
+                    if (int.TryParse(m.Groups[3].Value, out int hz))
+                        return hz;
                 }
             }
 
@@ -86,50 +77,38 @@ public class KScreenBackend : IDisplayBackend
             if (output == null)
                 return rates;
 
-            // Find current resolution first
+            var modesText = CollectModesText(info, output);
+            if (modesText == null)
+                return rates;
+
+            // Find current mode's resolution (marked with *)
             string? currentRes = null;
-            bool inOutput = false;
-            foreach (var line in info.Split('\n'))
+            var matches = Regex.Matches(modesText, @"\d+:(\d+x\d+)@(\d+)(?:\.\d+)?(\*?)");
+            foreach (Match m in matches)
             {
-                if (line.Contains("Output:") && line.Contains(output))
+                if (m.Groups[3].Value == "*")
                 {
-                    inOutput = true;
-                    continue;
-                }
-                if (inOutput && line.Contains("Output:"))
+                    currentRes = m.Groups[1].Value;
                     break;
-
-                if (inOutput && line.TrimStart().StartsWith("Modes:"))
-                {
-                    // Find current mode's resolution (marked with *)
-                    var matches = Regex.Matches(line, @"\d+:(\d+x\d+)@(\d+)(?:\.\d+)?(\*?)");
-                    foreach (Match m in matches)
-                    {
-                        if (m.Groups[3].Value == "*")
-                        {
-                            currentRes = m.Groups[1].Value;
-                            break;
-                        }
-                    }
-                    // If no * found, use the first mode's resolution
-                    if (currentRes == null)
-                    {
-                        var first = Regex.Match(line, @"\d+:(\d+x\d+)@(\d+)");
-                        if (first.Success)
-                            currentRes = first.Groups[1].Value;
-                    }
-
-                    // Collect all rates at that resolution
-                    foreach (Match m in matches)
-                    {
-                        string res = m.Groups[1].Value;
-                        if (currentRes != null && res != currentRes)
-                            continue;
-
-                        if (int.TryParse(m.Groups[2].Value, out int hz) && hz > 0 && !rates.Contains(hz))
-                            rates.Add(hz);
-                    }
                 }
+            }
+            // If no * found, use the first mode's resolution
+            if (currentRes == null)
+            {
+                var first = Regex.Match(modesText, @"\d+:(\d+x\d+)@(\d+)");
+                if (first.Success)
+                    currentRes = first.Groups[1].Value;
+            }
+
+            // Collect all rates at that resolution
+            foreach (Match m in matches)
+            {
+                string res = m.Groups[1].Value;
+                if (currentRes != null && res != currentRes)
+                    continue;
+
+                if (int.TryParse(m.Groups[2].Value, out int hz) && hz > 0 && !rates.Contains(hz))
+                    rates.Add(hz);
             }
 
             rates.Sort();
@@ -162,47 +141,16 @@ public class KScreenBackend : IDisplayBackend
                 return;
             }
 
-            // Find the mode index for the requested rate at current resolution
-            string? modeIndex = null;
-            string? currentRes = null;
+            // Extract output index from the Output: line
             string? outputIndex = null;
-            bool inOutput = false;
-
             foreach (var line in info.Split('\n'))
             {
-                if (line.Contains("Output:") && line.Contains(output))
+                if (line.TrimStart().StartsWith("Output:") && line.Contains(output))
                 {
-                    inOutput = true;
-                    // Extract output index: "Output: 1 eDP-1 ..."
                     var idxMatch = Regex.Match(line, @"Output:\s+(\d+)");
                     if (idxMatch.Success)
                         outputIndex = idxMatch.Groups[1].Value;
-                    continue;
-                }
-                if (inOutput && line.Contains("Output:"))
                     break;
-
-                if (inOutput && line.TrimStart().StartsWith("Modes:"))
-                {
-                    // Find current resolution (marked with *)
-                    var currentMatch = Regex.Match(line, @"\d+:(\d+x\d+)@\d+(?:\.\d+)?\*");
-                    if (currentMatch.Success)
-                        currentRes = currentMatch.Groups[1].Value;
-
-                    // Find mode index matching requested rate at current resolution
-                    var matches = Regex.Matches(line, @"(\d+):(\d+x\d+)@(\d+)(?:\.\d+)?");
-                    foreach (Match m in matches)
-                    {
-                        string res = m.Groups[2].Value;
-                        if (currentRes != null && res != currentRes)
-                            continue;
-
-                        if (int.TryParse(m.Groups[3].Value, out int rate) && rate == hz)
-                        {
-                            modeIndex = m.Groups[1].Value;
-                            break;
-                        }
-                    }
                 }
             }
 
@@ -210,6 +158,35 @@ public class KScreenBackend : IDisplayBackend
             {
                 Helpers.Logger.WriteLine($"KScreen.SetRefreshRate: could not find output index for {output}");
                 return;
+            }
+
+            var modesText = CollectModesText(info, output);
+            if (modesText == null)
+            {
+                Helpers.Logger.WriteLine($"KScreen.SetRefreshRate: no Modes line found for {output}");
+                return;
+            }
+
+            // Find current resolution (marked with *)
+            string? currentRes = null;
+            var currentMatch = Regex.Match(modesText, @"\d+:(\d+x\d+)@\d+(?:\.\d+)?\*");
+            if (currentMatch.Success)
+                currentRes = currentMatch.Groups[1].Value;
+
+            // Find mode index matching requested rate at current resolution
+            string? modeIndex = null;
+            var matches = Regex.Matches(modesText, @"(\d+):(\d+x\d+)@(\d+)(?:\.\d+)?");
+            foreach (Match m in matches)
+            {
+                string res = m.Groups[2].Value;
+                if (currentRes != null && res != currentRes)
+                    continue;
+
+                if (int.TryParse(m.Groups[3].Value, out int rate) && rate == hz)
+                {
+                    modeIndex = m.Groups[1].Value;
+                    break;
+                }
             }
 
             if (modeIndex == null)
@@ -260,6 +237,62 @@ public class KScreenBackend : IDisplayBackend
     {
         var raw = SysfsHelper.RunCommand("kscreen-doctor", "-o");
         return raw != null ? Regex.Replace(raw, @"\x1B\[[0-9;]*m", "") : null;
+    }
+
+    /// <summary>
+    /// Collect the full modes text for a specific output, handling multi-line
+    /// mode lists. Some KDE versions (Plasma 6, many modes) wrap the mode list
+    /// across multiple lines. The first line starts with "Modes:", continuation
+    /// lines are indented and contain mode patterns but not section keywords.
+    /// Returns a single string with all modes or null if not found.
+    /// </summary>
+    private static string? CollectModesText(string info, string output)
+    {
+        bool inOutput = false;
+        bool inModes = false;
+        string? modesText = null;
+
+        foreach (var line in info.Split('\n'))
+        {
+            var trimmed = line.TrimStart();
+
+            if (trimmed.StartsWith("Output:") && line.Contains(output))
+            {
+                inOutput = true;
+                inModes = false;
+                modesText = null;
+                continue;
+            }
+
+            if (inOutput && trimmed.StartsWith("Output:"))
+                break; // hit next output
+
+            if (!inOutput)
+                continue;
+
+            if (trimmed.StartsWith("Modes:"))
+            {
+                inModes = true;
+                modesText = line;
+                continue;
+            }
+
+            if (inModes)
+            {
+                // Continuation line: still part of modes if it contains mode
+                // patterns (N:WxH@R) and does NOT start with a known section.
+                if (Regex.IsMatch(trimmed, @"\d+:\d+x\d+@\d+"))
+                {
+                    modesText += " " + trimmed;
+                }
+                else
+                {
+                    inModes = false; // hit next section
+                }
+            }
+        }
+
+        return modesText;
     }
 
     /// <summary>

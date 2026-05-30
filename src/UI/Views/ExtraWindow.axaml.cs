@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using GHelper.Linux.Display;
+using GHelper.Linux.Gpu;
 using GHelper.Linux.I18n;
 using GHelper.Linux.Platform.Linux;
 using GHelper.Linux.USB;
@@ -172,6 +173,20 @@ public partial class ExtraWindow : Window
         labelRowLightbar.Text = Labels.Get("kbd_lightbar");
         labelRowLid.Text = Labels.Get("kbd_lid");
 
+        // Slash LED bar
+        labelSlashHeader.Text = Labels.Get("slash_header");
+        checkSlashEnabled.Content = Labels.Get("slash_enable");
+        labelSlashBrightness.Text = Labels.Get("brightness");
+        labelSlashMode.Text = Labels.Get("slash_animation");
+        labelSlashSpeed.Text = Labels.Get("slash_speed");
+        labelSlashPower.Text = Labels.Get("slash_power_states");
+        checkSlashBoot.Content = Labels.Get("slash_show_boot");
+        checkSlashSleep.Content = Labels.Get("slash_show_sleep");
+        checkSlashShutdown.Content = Labels.Get("slash_show_shutdown");
+        checkSlashBattery.Content = Labels.Get("slash_show_battery");
+        checkSlashLowBattery.Content = Labels.Get("slash_low_battery_warning");
+        checkSlashLidClosed.Content = Labels.Get("slash_show_lid_closed");
+
         // Display
         headerDisplay.Text = Labels.Get("display_header");
         labelControllerLabel.Text = Labels.Get("controller");
@@ -203,6 +218,9 @@ public partial class ExtraWindow : Window
         labelXgmBrightnessLabel.Text = Labels.Get("xgm_extra_brightness_label");
         InitXgmPanel();
         checkSilentStart.Content = Labels.Get("start_minimized");
+        checkSkipSysfilesPopup.Content = Labels.Get("sysfiles_skip_startup_label");
+        checkSkipUpdatePrompt.Content = Labels.Get("skip_update_prompt_label");
+        checkDisableAudio.Content = Labels.Get("disable_audio_label");
         checkDisableOsd.Content = Labels.Get("disable_osd_label");
         checkKeepBacklight.Content = Labels.Get("keep_backlight_on");
         checkCamera.Content = Labels.Get("camera");
@@ -246,6 +264,7 @@ public partial class ExtraWindow : Window
         headerAdvanced.Text = Labels.Get("advanced_header");
         checkAutoApplyPower.Content = Labels.Get("auto_apply_power");
         checkScreenAuto.Content = Labels.Get("auto_switch_refresh");
+        RefreshEcoPersistent();
         labelCpuCoresLabel.Text = Labels.Get("cpu_cores");
 
         // GPU Backend - both opt-in flags live here so users can compare
@@ -382,6 +401,9 @@ public partial class ExtraWindow : Window
 
         // Z13 rear-glow zone (independent device, PID 0x18C6) - own mode + color.
         InitRearLight();
+
+        // Slash LED bar (A-cover) - brightness, mode, power states.
+        InitSlash();
     }
 
     /// <summary>
@@ -448,6 +470,104 @@ public partial class ExtraWindow : Window
             UpdateRearSwatch();
             Task.Run(() => Aura.ApplyAura());
         });
+    }
+
+    // SLASH LED BAR
+    private void InitSlash()
+    {
+        if (!Slash.IsSupported)
+        {
+            panelSlash.IsVisible = false;
+            return;
+        }
+
+        // Populate mode combo
+        comboSlashMode.Items.Clear();
+        int savedMode = Helpers.AppConfig.Get("slash_mode", (int)Slash.SlashMode.Flow);
+        int selectedIdx = 0;
+        for (int i = 0; i < Slash.AllModes.Length; i++)
+        {
+            var m = Slash.AllModes[i];
+            comboSlashMode.Items.Add(new ComboBoxItem { Content = Slash.ModeName(m), Tag = (int)m });
+            if ((int)m == savedMode)
+                selectedIdx = i;
+        }
+        comboSlashMode.SelectedIndex = selectedIdx;
+
+        // Load persisted state
+        checkSlashEnabled.IsChecked = Helpers.AppConfig.IsNotFalse("slash_enabled");
+        sliderSlashBrightness.Value = Helpers.AppConfig.Get("slash_brightness", 255);
+        labelSlashBrightnessVal.Text = ((int)sliderSlashBrightness.Value).ToString();
+        sliderSlashSpeed.Value = Helpers.AppConfig.Get("slash_interval", 0);
+        labelSlashSpeedVal.Text = ((int)sliderSlashSpeed.Value).ToString();
+
+        // Power states (default all on)
+        checkSlashBoot.IsChecked = Helpers.AppConfig.IsNotFalse("slash_show_boot");
+        checkSlashSleep.IsChecked = Helpers.AppConfig.IsNotFalse("slash_show_sleep");
+        checkSlashShutdown.IsChecked = Helpers.AppConfig.IsNotFalse("slash_show_shutdown");
+        checkSlashBattery.IsChecked = Helpers.AppConfig.IsNotFalse("slash_show_battery");
+        checkSlashLowBattery.IsChecked = Helpers.AppConfig.IsNotFalse("slash_show_low_battery");
+        checkSlashLidClosed.IsChecked = Helpers.AppConfig.IsNotFalse("slash_show_lid_closed");
+
+        panelSlash.IsVisible = true;
+    }
+
+    private void CheckSlashEnabled_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool enabled = checkSlashEnabled.IsChecked == true;
+        Task.Run(() => Slash.SetEnabled(enabled));
+    }
+
+    private void SliderSlashBrightness_Changed(object? sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        int val = (int)sliderSlashBrightness.Value;
+        labelSlashBrightnessVal.Text = val.ToString();
+        Task.Run(() => Slash.SetBrightness(val));
+    }
+
+    private void ComboSlashMode_Changed(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        if (comboSlashMode.SelectedItem is ComboBoxItem item && item.Tag is int modeVal)
+            Task.Run(() => Slash.SetMode((Slash.SlashMode)modeVal));
+    }
+
+    private void SliderSlashSpeed_Changed(object? sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        int val = (int)sliderSlashSpeed.Value;
+        labelSlashSpeedVal.Text = val.ToString();
+        Task.Run(() => Slash.SetInterval(val));
+    }
+
+    private void CheckSlashPower_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        if (sender is not CheckBox cb)
+            return;
+
+        string? key = cb.Name switch
+        {
+            "checkSlashBoot" => "slash_show_boot",
+            "checkSlashSleep" => "slash_show_sleep",
+            "checkSlashShutdown" => "slash_show_shutdown",
+            "checkSlashBattery" => "slash_show_battery",
+            "checkSlashLowBattery" => "slash_show_low_battery",
+            "checkSlashLidClosed" => "slash_show_lid_closed",
+            _ => null,
+        };
+        if (key != null)
+        {
+            bool enabled = cb.IsChecked == true;
+            Task.Run(() => Slash.SetPowerState(key, enabled));
+        }
     }
 
     /// <summary>Update keyboard brightness slider from external change (physical Fn key press).</summary>
@@ -870,6 +990,13 @@ public partial class ExtraWindow : Window
         // Silent start (minimized to tray)
         checkSilentStart.IsChecked = Helpers.AppConfig.Is("silent_start");
 
+        // Skip the system-files integrity popup at startup
+        checkSkipSysfilesPopup.IsChecked = Helpers.AppConfig.Is("sysfiles_skip_startup");
+
+        checkSkipUpdatePrompt.IsChecked = Helpers.AppConfig.Is("skip_update_prompt");
+
+        checkDisableAudio.IsChecked = Helpers.AppConfig.Is("disable_audio");
+
         // Disable OSD/notifications
         checkDisableOsd.IsChecked = Helpers.AppConfig.Is("disable_osd");
 
@@ -1112,6 +1239,35 @@ public partial class ExtraWindow : Window
         if (_suppressEvents)
             return;
         Helpers.AppConfig.Set("silent_start", (checkSilentStart.IsChecked ?? false) ? 1 : 0);
+    }
+
+    private void CheckSkipSysfilesPopup_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        Helpers.AppConfig.Set("sysfiles_skip_startup", (checkSkipSysfilesPopup.IsChecked ?? false) ? 1 : 0);
+    }
+
+    private void CheckSkipUpdatePrompt_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        Helpers.AppConfig.Set("skip_update_prompt", (checkSkipUpdatePrompt.IsChecked ?? false) ? 1 : 0);
+    }
+
+    private void CheckDisableAudio_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool disable = checkDisableAudio.IsChecked ?? false;
+        Helpers.AppConfig.Set("disable_audio", disable ? 1 : 0);
+        if (disable)
+        {
+            Helpers.AppConfig.Set("audio_enabled", 0);
+            if (Helpers.AudioHelper.Instance.IsRunning)
+                Helpers.AudioHelper.Instance.Stop();
+        }
+        App.MainWindowInstance?.RefreshAudioToggle();
     }
 
     private void CheckDisableOsd_Changed(object? sender, RoutedEventArgs e)
@@ -1456,6 +1612,7 @@ public partial class ExtraWindow : Window
         // owns its IsChecked state now).
         checkAutoApplyPower.IsChecked = Helpers.AppConfig.IsMode("auto_apply_power");
         checkScreenAuto.IsChecked = Helpers.AppConfig.Is("screen_auto");
+        RefreshEcoPersistent();
 
         // CPU cores
         int total = LinuxSystemIntegration.GetCpuCount();
@@ -1493,6 +1650,49 @@ public partial class ExtraWindow : Window
         if (enabled)
             (App.Current as App)?.AutoScreen();
         App.MainWindowInstance?.RefreshScreenPublic();
+    }
+
+    // PERSISTENT ECO
+
+    private bool _updatingEcoPersistent;
+
+    /// <summary>
+    /// Refresh the persistent-Eco checkbox state. For models in the
+    /// IsEcoBootFixModel list the checkbox is always checked and disabled
+    /// (grayed out) - firmware is known to forget dgpu_disable so the boot
+    /// service must always re-apply.
+    /// </summary>
+    private void RefreshEcoPersistent()
+    {
+        _updatingEcoPersistent = true;
+        try
+        {
+            bool isFixModel = Helpers.AppConfig.IsEcoBootFixModel();
+            checkEcoPersistent.Content = Labels.Get("gpu_eco_persistent");
+            checkEcoPersistent.IsChecked = isFixModel || GpuModeController.IsEcoPersistentConfig();
+            checkEcoPersistent.IsEnabled = !isFixModel;
+            ToolTip.SetTip(checkEcoPersistent,
+                isFixModel
+                    ? Labels.Get("gpu_eco_persistent_model_tooltip")
+                    : Labels.Get("gpu_eco_persistent_tooltip"));
+        }
+        finally
+        {
+            _updatingEcoPersistent = false;
+        }
+    }
+
+    private void CheckEcoPersistent_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents || _updatingEcoPersistent)
+            return;
+
+        bool enabled = checkEcoPersistent.IsChecked ?? false;
+        var gpu = App.GpuModeCtrl;
+        if (gpu == null)
+            return;
+
+        Task.Run(() => gpu.SetEcoPersistent(enabled));
     }
 
     private void CheckRawWmi_Changed(object? sender, RoutedEventArgs e)

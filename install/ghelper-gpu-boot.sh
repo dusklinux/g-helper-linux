@@ -1,47 +1,41 @@
 #!/usr/bin/env bash
-# ╔══════════════════════════════════════════════════════════════════════╗
-# ║  G-HELPER GPU MODE BOOT APPLICATION                                  ║
-# ║  Applied BEFORE display-manager.service by ghelper-gpu-boot.service. ║
-# ║  Reads pending GPU mode from trigger file, applies sysfs writes,     ║
-# ║  cleans up block artifacts.                                          ║
-# ║                                                                      ║
-# ║  Runs as root via systemd - no sudo/pkexec needed.                   ║
-# ║  CRITICAL: This script MUST NOT block boot. Always exit 0.           ║
-# ║                                                                      ║
-# ║  Testability:                                                        ║
-# ║    Set GHELPER_TEST_ROOT=/tmp/scenario-N to redirect all /sys, /etc  ║
-# ║    and side-effecting commands (rmmod, udevadm) into a sandbox.      ║
-# ║    See install/tests/test-ghelper-gpu-boot.sh for the harness.       ║
-# ╚══════════════════════════════════════════════════════════════════════╝
+# G-Helper GPU mode boot script.
+# Runs as root via ghelper-gpu-boot.service before the display manager.
+# Reads the pending GPU mode from a trigger file, applies sysfs writes,
+# and cleans up block artifacts.
+#
+# Set GHELPER_TEST_ROOT to redirect all paths into a sandbox for testing.
+# See install/tests/test-ghelper-gpu-boot.sh for the test harness.
+#
+# Must never block boot. Always exits 0.
 
-# NO set -e - we must never abort on error. Individual errors are handled.
+# No set -e: individual errors are handled.
 set -uo pipefail
 
 LOG_TAG="ghelper-gpu-boot"
 
-# ── Sandbox root for testing ───────────────────────────────────────────────────
-# Empty in production (paths resolve under real /sys, /etc). In tests this is
-# set to a temporary directory containing fake sysfs and etc trees.
+# Sandbox root (empty in production, set to a temp dir in tests).
 ROOT="${GHELPER_TEST_ROOT:-}"
 
-# ── Paths (all prefixed with $ROOT for testability) ────────────────────────────
-# Legacy asus-nb-wmi sysfs bases (tried in order, matching SysfsHelper.ResolveAttrPath)
+# Paths (all prefixed with $ROOT for testability).
+# Legacy asus-nb-wmi sysfs bases, tried in order.
 LEGACY_BASES=(
     "${ROOT}/sys/bus/platform/devices/asus-nb-wmi"
     "${ROOT}/sys/devices/platform/asus-nb-wmi"
 )
-# Firmware-attributes (asus-armoury, kernel 6.8+)
+# Firmware-attributes (asus-armoury, kernel 6.8+).
 FW_ATTR_BASE="${ROOT}/sys/class/firmware-attributes/asus-armoury/attributes"
 
 TRIGGER="${ROOT}/etc/ghelper/pending-gpu-mode"
+# Persistent Eco marker. Survives cleanup (unlike the one-shot trigger).
+# When present and no one-shot trigger exists, its content is used as the
+# pending mode, so Eco survives reboots on firmware that forgets dgpu_disable.
+PERSISTENT_TRIGGER="${ROOT}/etc/ghelper/persistent-gpu-mode"
 RETRY_COUNTER="${ROOT}/etc/ghelper/eco-retry-count"
 FAILURE_MARKER="${ROOT}/etc/ghelper/last-eco-failed"
-# Backend selector. "asus-wmi" (default) writes dgpu_disable=1 via firmware.
-# "pci" relies purely on the modprobe block + udev hot-remove rule; the boot
-# script never touches dgpu_disable, the block artifacts themselves ARE the
-# persistent Eco state.
+# Backend selector. "asus-wmi" (default) writes dgpu_disable via firmware.
+# "pci" uses the modprobe block + udev rule as the persistent Eco state.
 BACKEND_FILE="${ROOT}/etc/ghelper/backend"
-# Vendor-aware block file (blocks both nvidia + amdgpu)
 MODPROBE_BLOCK="${ROOT}/etc/modprobe.d/ghelper-gpu-block.conf"
 UDEV_BLOCK="${ROOT}/etc/udev/rules.d/50-ghelper-remove-dgpu.rules"
 
@@ -49,40 +43,13 @@ PCI_DEVICES="${ROOT}/sys/bus/pci/devices"
 PCI_RESCAN="${ROOT}/sys/bus/pci/rescan"
 DEBUGFS_BASE="${ROOT}/sys/kernel/debug/asus-nb-wmi"
 
-# Cap on consecutive failed Eco apply attempts before giving up (Bug 4 fix)
+# Max consecutive failed Eco attempts before giving up.
 MAX_ECO_RETRIES=3
 
-# In test mode we still emit logs via logger (no-op without journal) AND stdout
-# so the harness can capture them.
+# Log to journal and stdout (tests capture stdout).
 log() { logger -t "$LOG_TAG" "$*" 2>/dev/null || true; echo "$LOG_TAG: $*"; }
 
-# ── Side-effect wrappers (overridable in test mode) ───────────────────────────
-# In production these call the real tools. In test mode they manipulate the
-# sandbox fake-sysfs and emit log lines the harness can assert on.
-rmmod_modules() {
-    if [[ -n "$ROOT" ]]; then
-        # Test sandbox: read instructed behavior from a flag file the harness
-        # set up beforehand. Default: succeed by deleting the fake module dirs.
-        local flag="${ROOT}/test-rmmod-fail"
-        if [[ -f "$flag" ]]; then
-            local n
-            n=$(cat "$flag" 2>/dev/null || echo "1")
-            log "test: simulated rmmod failure ($n more times remaining)"
-            n=$((n - 1))
-            if (( n <= 0 )); then
-                rm -f "$flag"
-            else
-                echo "$n" > "$flag"
-            fi
-            return 1
-        fi
-        for mod in "$@"; do
-            rm -rf "${ROOT}/sys/module/$mod" 2>/dev/null
-        done
-        return 0
-    fi
-    timeout 8 rmmod "$@" 2>/dev/null
-}
+# Side-effect wrappers (no-op in test mode).
 
 udevadm_settle() {
     if [[ -n "$ROOT" ]]; then
@@ -111,11 +78,179 @@ pci_rescan() {
     echo 1 > "$PCI_RESCAN" 2>/dev/null || true
 }
 
-# Read dgpu_disable. In production this is just `cat`. In test mode, a counter
-# file lets the harness simulate "write succeeded but readback shows wrong
-# value" firmware behavior so the Bug 2 double-write+rescan retry can be
-# exercised. The counter decrements on each call; while > 0 we lie and return
-# "0" regardless of the actual file content.
+# Path to the privileged gpu-helper binary (whitelists rmmod/unbind/smi).
+GPU_HELPER="${ROOT:+$ROOT}/opt/ghelper/gpu-helper"
+
+# Run gpu-helper with a timeout. Args: <timeout_sec> <subcommand> [args...]
+# Returns the gpu-helper exit code, or 124 on timeout.
+run_gpu_helper() {
+    local secs="$1"; shift
+    if [[ -n "$ROOT" ]]; then
+        log "test: would gpu-helper $*"
+        return 0
+    fi
+    if [[ ! -x "$GPU_HELPER" ]]; then
+        log "gpu-helper not found at $GPU_HELPER"
+        return 1
+    fi
+    timeout "$secs" "$GPU_HELPER" "$@" 2>/dev/null
+}
+
+# Try to release nvidia so dgpu_disable can be written safely.
+# Mirrors the app's "Switch Now" flow (GpuModeController.TryReleaseNvidiaDriver):
+#   1. Reset GPU clocks (prevents D3cold stall on ACPI power-off)
+#   2. Stop nvidia daemons (release /dev/nvidia* handles)
+#   3. PCI unbind dGPU functions in reverse order (drops kernel refcounts)
+#   4. rmmod nvidia modules
+# Returns 0 if the driver was fully released, 1 if it is still bound.
+try_release_nvidia() {
+    # Test sandbox: simulate the release by removing driver symlinks and
+    # module dirs (mirrors what the real gpu-helper unbind+rmmod would do).
+    # Set test-release-fails to simulate a stuck driver that can't be released.
+    if [[ -n "$ROOT" ]]; then
+        if [[ -f "${ROOT}/test-release-fails" ]]; then
+            log "test: try_release_nvidia - simulated failure (driver stays bound)"
+            return 1
+        fi
+        log "test: try_release_nvidia - simulated success"
+        # Remove driver symlinks from dGPU PCI devices.
+        local d
+        for d in "$PCI_DEVICES"/0000:01:00.*; do
+            [[ -e "$d" ]] || continue
+            rm -f "$d/driver" 2>/dev/null
+        done
+        # Remove nvidia module dirs.
+        for d in nvidia_drm nvidia_modeset nvidia_uvm nvidia nvidia_wmi_ec_backlight; do
+            rm -rf "${ROOT}/sys/module/$d" 2>/dev/null
+        done
+        return 0
+    fi
+
+    # Step 1: Reset GPU clocks. Locked clocks pin power management on and
+    # cause the ACPI _PS3 path to stall ~25s during unbind/dgpu_disable.
+    log "eco: resetting GPU clocks before driver release"
+    run_gpu_helper 5 smi -rgc || true
+    run_gpu_helper 5 smi -rmc || true
+
+    # Step 2: Stop nvidia daemons. They hold /dev/nvidia* FDs which pin
+    # module refcounts. At boot they may not be running yet (our service
+    # runs Before=multi-user.target), but stop them defensively.
+    systemctl stop nvidia-powerd.service 2>/dev/null || true
+    systemctl stop nvidia-persistenced.service 2>/dev/null || true
+    sleep 0.5
+
+    # Step 3: PCI unbind dGPU functions in reverse order (audio before
+    # graphics). This drops the kernel-internal refcounts that prevent
+    # rmmod from succeeding.
+    local dev bdf drv fns=()
+    for dev in "$PCI_DEVICES"/0000:01:00.*; do
+        [[ -e "$dev" ]] || continue
+        fns+=("$dev")
+    done
+
+    local i
+    for (( i=${#fns[@]}-1; i>=0; i-- )); do
+        dev="${fns[$i]}"
+        bdf=$(basename "$dev")
+        if [[ -L "$dev/driver" ]]; then
+            drv=$(basename "$(readlink -f "$dev/driver")" 2>/dev/null)
+            log "eco: unbinding $drv from $bdf"
+            run_gpu_helper 10 pci-unbind "$drv" "$bdf" || log "eco: unbind $bdf failed"
+        fi
+    done
+    sleep 0.1
+
+    # Step 4: rmmod nvidia modules. Each attempt bounded by timeout, up
+    # to 3 retries per module with 200ms gap.
+    local mod attempt
+    for mod in nvidia_drm nvidia_modeset nvidia_uvm nvidia nvidia_wmi_ec_backlight; do
+        for attempt in 1 2 3; do
+            [[ -d "/sys/module/$mod" ]] || break
+            run_gpu_helper 5 rmmod "$mod" || true
+            sleep 0.2
+        done
+    done
+
+    # Verify: is the driver still bound?
+    if dgpu_driver_bound; then
+        log "eco: driver still bound after release attempt"
+        return 1
+    fi
+    log "eco: driver released successfully"
+    return 0
+}
+
+# Check if the dGPU has nvidia or nouveau bound.
+# Returns 0 if bound. Writing dgpu_disable or removing the device while
+# a driver is bound deadlocks the kernel in an uninterruptible D-state,
+# so we must never initiate teardown when this returns true.
+dgpu_driver_bound() {
+    [[ -d "$PCI_DEVICES" ]] || return 1
+    local dev vendor boot_vga class drv
+    for dev in "$PCI_DEVICES"/*; do
+        [[ -e "$dev" ]] || continue
+        vendor=$(cat "$dev/vendor" 2>/dev/null || echo "")
+        case "$vendor" in
+            0x10de) ;;
+            0x1002)
+                boot_vga=$(cat "$dev/boot_vga" 2>/dev/null || echo "0")
+                [[ "$boot_vga" != "1" ]] || continue
+                ;;
+            *) continue ;;
+        esac
+        class=$(cat "$dev/class" 2>/dev/null || echo "")
+        case "$class" in
+            0x0300*|0x0302*) ;;
+            *) continue ;;
+        esac
+        [[ -L "$dev/driver" ]] || continue
+        # Only nvidia/nouveau cause the deadlock. Foreign drivers like
+        # vfio-pci are handled separately by dgpu_foreign_driver.
+        drv=$(basename "$(readlink -f "$dev/driver")" 2>/dev/null)
+        case "$drv" in
+            nvidia|nouveau) return 0 ;;
+        esac
+    done
+    return 1
+}
+
+# Install modprobe block + udev hot-remove rule so nvidia can never load
+# on the next boot. The udev rule removes the dGPU PCI device on add
+# before any driver binds (a driverless remove is instant and safe).
+install_block_artifacts() {
+    if [[ -n "$ROOT" ]]; then
+        printf 'blocked\n' > "$MODPROBE_BLOCK" 2>/dev/null || true
+        printf 'rules\n'   > "$UDEV_BLOCK" 2>/dev/null || true
+        log "test: installed block artifacts (modprobe + udev)"
+        return 0
+    fi
+    mkdir -p "$(dirname "$MODPROBE_BLOCK")" "$(dirname "$UDEV_BLOCK")" 2>/dev/null || true
+    cat > "$MODPROBE_BLOCK" 2>/dev/null << 'GHELPER_EOF' || true
+# ghelper: block dGPU driver modules for Eco mode
+install nvidia /bin/false
+install nvidia_drm /bin/false
+install nvidia_modeset /bin/false
+install nvidia_uvm /bin/false
+install nvidia_wmi_ec_backlight /bin/false
+install nouveau /bin/false
+install amdgpu /bin/false
+GHELPER_EOF
+    chmod 644 "$MODPROBE_BLOCK" 2>/dev/null || true
+    cat > "$UDEV_BLOCK" 2>/dev/null << 'GHELPER_EOF' || true
+# ghelper: remove dGPU PCI devices so no driver can bind
+# boot_vga guard: skip removal when dGPU is the sole display (MUX=0/Ultimate)
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", ATTR{boot_vga}!="1", ATTR{power/control}="auto", ATTR{remove}="1"
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", ATTR{boot_vga}!="1", ATTR{power/control}="auto", ATTR{remove}="1"
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x1002", ATTR{class}=="0x030000", ATTR{boot_vga}!="1", ATTR{power/control}="auto", ATTR{remove}="1"
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x1002", ATTR{class}=="0x030200", ATTR{boot_vga}!="1", ATTR{power/control}="auto", ATTR{remove}="1"
+GHELPER_EOF
+    chmod 644 "$UDEV_BLOCK" 2>/dev/null || true
+    udevadm_reload
+    log "eco: installed persistent block artifacts (modprobe + udev)"
+}
+
+# Read dgpu_disable. In test mode a counter file can simulate readback
+# failures so the double-write retry logic can be exercised.
 read_dgpu_disable() {
     local path="$1"
     if [[ -n "$ROOT" ]]; then
@@ -133,10 +268,7 @@ read_dgpu_disable() {
     cat "$path" 2>/dev/null || echo "0"
 }
 
-# ── Resolve sysfs path (mirrors SysfsHelper.ResolveAttrPath) ─────────────────
-# Usage: resolve_sysfs_path <attr_name>
-# Tries legacy asus-nb-wmi paths first, then firmware-attributes (asus-armoury).
-# Prints the first path that exists, or empty string if not found.
+# Resolve sysfs path. Tries legacy asus-nb-wmi then firmware-attributes.
 resolve_sysfs_path() {
     local attr="$1"
     for base in "${LEGACY_BASES[@]}"; do
@@ -154,14 +286,8 @@ resolve_sysfs_path() {
     echo ""
 }
 
-# ── amdgpu binding probe (Bug 1 fix) ──────────────────────────────────────────
-# Returns 0 (success) if amdgpu is bound to ANY dGPU (vendor 0x1002, boot_vga!=1).
-# Returns 1 if amdgpu is bound only to the iGPU (boot_vga=1) or not bound at all.
-#
-# This differentiates AMD-iGPU + NVIDIA-dGPU hybrids (where amdgpu drives only the
-# iGPU and is safe to leave loaded during Eco apply) from pure-AMD-dGPU systems
-# (where amdgpu would need to be unloaded but can't be because the iGPU also uses
-# it). Critical for FA608*, GA402*, GA403*, G14, G16 etc.
+# Check if amdgpu is bound to a dGPU (vendor 0x1002, boot_vga!=1).
+# Returns 1 if amdgpu only drives the iGPU (boot_vga=1) or is absent.
 amdgpu_drives_dgpu() {
     [[ -d "$PCI_DEVICES" ]] || return 1
     local dev vendor boot_vga drv_link drv_name
@@ -181,14 +307,8 @@ amdgpu_drives_dgpu() {
     return 1
 }
 
-# ── Foreign-driver probe (#29 - vfio-pci passthrough et al.) ──────────────────
-# Returns 0 and echoes the driver name if a dGPU (vendor 0x10de or 0x1002 with
-# boot_vga != 1; PCI class 0x0300xx VGA or 0x0302xx 3D-controller) is bound to
-# any driver OTHER than the ones the earlier branches already handled
-# (nvidia / nouveau via rmmod, amdgpu via amdgpu_drives_dgpu).
-#
-# Typical culprit: vfio-pci for GPU passthrough into a VM. Disabling the dGPU
-# while passthrough is active would yank the device from under the guest. Defer.
+# Check for foreign drivers (vfio-pci, etc.) on the dGPU.
+# Returns 0 and echoes the driver name if found.
 dgpu_foreign_driver() {
     [[ -d "$PCI_DEVICES" ]] || return 1
     local dev vendor boot_vga class drv_link drv_name
@@ -220,13 +340,11 @@ dgpu_foreign_driver() {
     return 1
 }
 
-# ── Resolve hardware paths ────────────────────────────────────────────────────
+# Resolve hardware paths.
 dgpu_path=$(resolve_sysfs_path "dgpu_disable")
 mux_path=$(resolve_sysfs_path "gpu_mux_mode")
 
-# ── Resolve backend selector ──────────────────────────────────────────────────
-# Read /etc/ghelper/backend and normalize. Unknown/garbage/missing falls back to
-# "asus-wmi" so existing ASUS users keep the WMI flow without writing any file.
+# Resolve backend selector. Unknown/missing defaults to asus-wmi.
 BACKEND="asus-wmi"
 if [[ -f "$BACKEND_FILE" ]]; then
     raw_backend=$(cat "$BACKEND_FILE" 2>/dev/null | tr -d '[:space:]')
@@ -249,31 +367,18 @@ else
     log "gpu_mux_mode: not found (no asus-nb-wmi or asus-armoury)"
 fi
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  STEP 1: Boot safety check (ALWAYS runs, even without trigger)
+# STEP 1: MUX=0 boot safety check (runs every boot, even without trigger).
 #
-#  TWO impossible states when MUX=0 (dGPU is sole display):
-#
-#  1) MUX=0 + dgpu_disable=1 → dGPU powered off but is sole display → black screen
-#     Fix: force dgpu_disable=0
-#
-#  2) MUX=0 + modprobe GPU block present → dGPU driver can't load, dGPU has no driver
-#     → black screen even though dGPU is powered on
-#     Fix: remove block artifacts so dGPU driver loads normally
-#
-#  Runs in BOTH backends. The MUX=0 + driver-unavailable pair is a black
-#  screen regardless of how the dGPU got blocked (firmware dgpu_disable or
-#  modprobe blacklist + udev hot-remove). Non-ASUS systems naturally skip
-#  because the mux_path lookup is empty there. The dgpu_disable=0 write is
-#  conditional on $dgpu_path existing so it is a no-op on pure non-ASUS
-#  PCI configurations.
-# ══════════════════════════════════════════════════════════════════════════════
+# Two impossible states when MUX=0 (dGPU is sole display):
+#   1) MUX=0 + dgpu_disable=1 - dGPU off but is sole display = black screen
+#   2) MUX=0 + modprobe block - dGPU driver can't load = black screen
+# Fix: force dgpu_disable=0, remove blocks, force MUX=1 (Standard).
 if [[ -n "$mux_path" ]]; then
     mux_val=$(cat "$mux_path" 2>/dev/null || echo "-1")
     if [[ "$mux_val" == "0" ]]; then
         recovery_needed=0
 
-        # Fix impossible state 1: MUX=0 + dgpu_disable=1
+        # Fix state 1: MUX=0 + dgpu_disable=1
         if [[ -n "$dgpu_path" ]]; then
             dgpu_val=$(cat "$dgpu_path" 2>/dev/null || echo "-1")
             if [[ "$dgpu_val" == "1" ]]; then
@@ -283,7 +388,7 @@ if [[ -n "$mux_path" ]]; then
             fi
         fi
 
-        # Fix impossible state 2: MUX=0 + GPU block artifacts present
+        # Fix state 2: MUX=0 + block artifacts
         if [[ -f "$MODPROBE_BLOCK" || -f "$UDEV_BLOCK" ]]; then
             log "SAFETY: MUX=0 + GPU block artifacts present - removing (dGPU driver must load for display)"
             rm -f "$MODPROBE_BLOCK" "$UDEV_BLOCK" 2>/dev/null
@@ -291,12 +396,21 @@ if [[ -n "$mux_path" ]]; then
             recovery_needed=1
         fi
 
-        # If trigger says "eco", that's impossible with MUX=0 - discard it
+        # Discard eco triggers (impossible with MUX=0)
         if [[ -f "$TRIGGER" ]]; then
             trig_mode=$(cat "$TRIGGER" 2>/dev/null | tr -d '[:space:]')
             if [[ "$trig_mode" == "eco" || "$trig_mode" == "1" ]]; then
                 log "SAFETY: MUX=0 + trigger='$trig_mode' - discarding impossible Eco trigger"
                 rm -f "$TRIGGER" 2>/dev/null
+                recovery_needed=1
+            fi
+        fi
+
+        if [[ -f "$PERSISTENT_TRIGGER" ]]; then
+            ptrig_mode=$(cat "$PERSISTENT_TRIGGER" 2>/dev/null | tr -d '[:space:]')
+            if [[ "$ptrig_mode" == "eco" || "$ptrig_mode" == "1" ]]; then
+                log "SAFETY: MUX=0 + persistent='$ptrig_mode' - discarding impossible persistent Eco"
+                rm -f "$PERSISTENT_TRIGGER" 2>/dev/null
                 recovery_needed=1
             fi
         fi
@@ -312,40 +426,43 @@ if [[ -n "$mux_path" ]]; then
         fi
 
         log "SAFETY: MUX=0 safety check complete"
-        if [[ ! -f "$TRIGGER" ]]; then
+        if [[ ! -f "$TRIGGER" ]] && [[ ! -f "$PERSISTENT_TRIGGER" ]]; then
             exit 0
         fi
     fi
 fi
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  STEP 2: Check for pending mode
-# ══════════════════════════════════════════════════════════════════════════════
-if [[ ! -f "$TRIGGER" ]]; then
+# STEP 2: Read pending mode (one-shot trigger, then persistent fallback).
+# IS_PERSISTENT tracks which trigger we are using so STEP 5 knows whether
+# to preserve the persistent marker.
+IS_PERSISTENT=false
+
+if [[ -f "$TRIGGER" ]]; then
+    MODE=$(cat "$TRIGGER" 2>/dev/null || echo "")
+    MODE=$(echo "$MODE" | tr -d '[:space:]')
+    log "Pending GPU mode: '$MODE'"
+elif [[ -f "$PERSISTENT_TRIGGER" ]]; then
+    MODE=$(cat "$PERSISTENT_TRIGGER" 2>/dev/null || echo "")
+    MODE=$(echo "$MODE" | tr -d '[:space:]')
+    IS_PERSISTENT=true
+    log "Persistent GPU mode: '$MODE'"
+else
     log "No pending mode - nothing to do"
     exit 0
 fi
-
-MODE=$(cat "$TRIGGER" 2>/dev/null || echo "")
-MODE=$(echo "$MODE" | tr -d '[:space:]')
-log "Pending GPU mode: '$MODE'"
 
 if [[ "$MODE" == "1" ]]; then
     MODE="eco"
 fi
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  STEP 3: Validate mode makes sense
-# ══════════════════════════════════════════════════════════════════════════════
+# STEP 3: Validate mode.
 if [[ -z "$MODE" ]]; then
     log "Empty trigger file - cleaning up"
     rm -f "$TRIGGER" 2>/dev/null
     exit 0
 fi
 
-# ── Bug 4 fix: bounded retry on rmmod failure ─────────────────────────────────
-# Track consecutive failed Eco apply attempts so we don't loop forever on
-# kernels that ship nvidia in the initramfs and refuse rmmod every boot.
+# Track consecutive failed Eco attempts so we don't loop forever.
 record_eco_failure() {
     local reason="$1"
     mkdir -p "${ROOT}/etc/ghelper"
@@ -353,8 +470,7 @@ record_eco_failure() {
     if [[ -f "$RETRY_COUNTER" ]]; then
         count=$(cat "$RETRY_COUNTER" 2>/dev/null || echo "0")
     fi
-    # #38 - sanitize non-numeric / negative content (corrupted counter file).
-    # bash arithmetic on a non-integer aborts the script under `set -u`/`pipefail`.
+    # Sanitize non-numeric content (corrupted counter file).
     if [[ ! "$count" =~ ^[0-9]+$ ]]; then
         count=0
     fi
@@ -374,62 +490,52 @@ reset_eco_retry_counter() {
     rm -f "$RETRY_COUNTER" "$FAILURE_MARKER" 2>/dev/null
 }
 
-# ── Bug 3 fix: drain pending udev events before touching hardware ─────────────
-# The udev rule (50-ghelper-remove-dgpu.rules) hot-removes dGPU PCI devices
-# asynchronously on ACTION=="add". Without a settle here, the dgpu_disable
-# write can race with the PCI removal and the kernel ACPI _PS3 method may
-# block waiting for an in-flight PCI event.
+# Drain pending udev events before touching hardware.
 udevadm_settle
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  STEP 4: Apply mode
-# ══════════════════════════════════════════════════════════════════════════════
+# STEP 4: Apply mode.
 case "$MODE" in
     eco)
-        # ── Bug 1 fix: vendor-aware driver gating ──────────────────────────────
-        # Three possible driver states at this point:
-        #   a) nvidia_drm / nouveau loaded → must rmmod (display-manager not up yet)
-        #   b) amdgpu driving the dGPU (vendor=0x1002 boot_vga!=1) → can't proceed
-        #      safely (would need to unload amdgpu but iGPU may share it on pure-AMD
-        #      hybrids)
-        #   c) amdgpu only on iGPU OR nothing → safe to proceed
-        if [[ -d "${ROOT}/sys/module/nvidia_drm" ]] || [[ -d "${ROOT}/sys/module/nouveau" ]]; then
-            log "eco: nvidia/nouveau loaded, attempting rmmod"
-            rmmod_modules nvidia_drm nvidia_modeset nvidia_uvm nvidia
-            rmmod_modules nouveau
-            sleep 0.2
-            if [[ -d "${ROOT}/sys/module/nvidia_drm" ]] || [[ -d "${ROOT}/sys/module/nouveau" ]]; then
-                record_eco_failure "rmmod nvidia/nouveau failed"
-                exit 0
-            fi
-            log "eco: rmmod succeeded"
-        elif [[ -d "${ROOT}/sys/module/amdgpu" ]] && amdgpu_drives_dgpu; then
-            # Pure-AMD hybrid where amdgpu drives the dGPU. Unloading would
-            # likely take down the iGPU display too. Defer.
+        # Driver state check. nvidia may already be loaded by udev coldplug.
+        # We never attempt rmmod/unbind/remove of a bound driver because
+        # writing to the driver's sysfs or ACPI power path while bound
+        # deadlocks the kernel in an uninterruptible D-state.
+        #
+        # If the driver is bound, install a modprobe+udev block and defer.
+        # The block prevents the driver from loading on the next boot, so
+        # the next boot comes up driverless and dgpu_disable succeeds.
+
+        # Pure-AMD hybrid: can't unload amdgpu since iGPU may share it.
+        if [[ -d "${ROOT}/sys/module/amdgpu" ]] && amdgpu_drives_dgpu; then
             record_eco_failure "amdgpu drives dGPU (pure-AMD hybrid), cannot unload safely"
             exit 0
-        else
-            # Either no dGPU driver bound, or amdgpu drives only the iGPU
-            # (boot_vga=1, common on AMD-iGPU + NVIDIA-dGPU laptops). Safe.
-            log "eco: no blocking dGPU driver bound, proceeding"
         fi
 
-        # #29 - foreign driver (vfio-pci, etc.) bound to dGPU. Common in GPU
-        # passthrough setups. Disabling the dGPU now would yank the device from
-        # under a running VM. Defer and let the retry counter eventually
-        # surrender so we don't loop forever.
+        # Bound nvidia/nouveau: try to release the driver (mirrors the app's
+        # "Switch Now" flow). If release succeeds, proceed to dgpu_disable.
+        # If it fails, install a block so the next boot comes up driverless.
+        if dgpu_driver_bound; then
+            log "eco: dGPU driver is bound (nvidia/nouveau loaded by udev coldplug)"
+            log "eco: attempting driver release (reset clocks, unbind, rmmod)"
+            if try_release_nvidia; then
+                log "eco: driver released - proceeding to dgpu_disable"
+            else
+                log "eco: release failed, installing block for next boot, deferring"
+                record_eco_failure "dGPU driver still bound after release attempt"
+                install_block_artifacts
+                exit 0
+            fi
+        fi
+        log "eco: dGPU is driverless - safe to apply"
+
+        # Foreign driver (vfio-pci, etc.) bound to dGPU: can't disable
+        # without yanking the device from a running VM.
         if foreign_drv=$(dgpu_foreign_driver); then
             record_eco_failure "dGPU bound to foreign driver '$foreign_drv' (passthrough?), refusing to disable"
             exit 0
         fi
 
-        # ── PCI backend ────────────────────────────────────────────────────────
-        # Driver is already unloaded by the rmmod step above. The modprobe
-        # block prevents re-load and the udev rule hot-removes the dGPU PCI
-        # device on every boot. Those two files ARE the persistent Eco state
-        # in PCI mode - we must NOT delete them in STEP 5. Clear the trigger
-        # and the retry counter, then exit early so the WMI sysfs/debugfs
-        # paths below and the STEP 5 cleanup do not run.
+        # PCI backend: block files are the persistent state, no firmware write.
         if [[ "$BACKEND" == "pci" ]]; then
             log "eco: PCI backend - blocks remain as persistent state, skipping dgpu_disable write"
             rm -f "$TRIGGER" 2>/dev/null
@@ -439,7 +545,7 @@ case "$MODE" in
         fi
 
         if [[ -z "$dgpu_path" ]]; then
-            # No sysfs - try debugfs raw WMI if available
+            # No sysfs, try debugfs raw WMI.
             if [[ -d "$DEBUGFS_BASE" ]]; then
                 DEVID="0x00090020"
                 echo "$DEVID" > "$DEBUGFS_BASE/dev_id" 2>/dev/null
@@ -449,10 +555,7 @@ case "$MODE" in
                     log "eco: ROG endpoint not supported, trying Vivobook ($DEVID)"
                 fi
                 log "eco: no sysfs, using debugfs raw WMI (DEVS $DEVID, 1)"
-                # Double-write pattern (kernel comment in dgpu_disable_store):
-                # "store the value twice, typical store first, then rescan PCI
-                #  bus to activate power, then store a second time to save
-                #  correctly."
+                # Double-write pattern per kernel dgpu_disable_store comment.
                 echo "$DEVID" > "$DEBUGFS_BASE/dev_id" 2>/dev/null
                 echo 1 > "$DEBUGFS_BASE/ctrl_param" 2>/dev/null
                 result=$(cat "$DEBUGFS_BASE/devs" 2>&1)
@@ -469,7 +572,7 @@ case "$MODE" in
                 record_eco_failure "no sysfs or debugfs node available"
             fi
         else
-            # Check MUX - cannot set Eco when MUX=0
+            # Cannot set Eco when MUX=0.
             if [[ -n "$mux_path" ]]; then
                 mux_val=$(cat "$mux_path" 2>/dev/null || echo "1")
                 if [[ "$mux_val" == "0" ]]; then
@@ -485,20 +588,32 @@ case "$MODE" in
                 log "eco: dgpu_disable already 1 - already in Eco"
                 reset_eco_retry_counter
             else
-                # ── Bug 2 fix: double-write+rescan retry on EIO ────────────────
-                # Some firmware (e.g. GA402XV.318) returns -EIO on the first
-                # store because the dGPU bus isn't powered. The kernel comment
-                # at dgpu_disable_store documents the workaround: rescan PCI,
-                # then store again. Mirrors the existing debugfs path above.
+                # Double-write+rescan retry. Some firmware returns EIO on the
+                # first write. Each write is bounded by a 10s timeout so a
+                # hung write gets a clean log message instead of a SIGTERM.
                 log "eco: writing dgpu_disable=1 (attempt 1)"
-                echo 1 > "$dgpu_path" 2>/dev/null
+                if [[ -n "$ROOT" ]]; then
+                    echo 1 > "$dgpu_path" 2>/dev/null
+                else
+                    timeout 10 bash -c "echo 1 > '$dgpu_path'" 2>/dev/null
+                    if [[ $? -eq 124 ]]; then
+                        log "eco: dgpu_disable=1 write TIMED OUT after 10s (driver may have re-bound)"
+                    fi
+                fi
                 actual=$(read_dgpu_disable "$dgpu_path")
                 if [[ "$actual" != "1" ]]; then
                     log "eco: first write readback=$actual (expected 1), retrying after PCI rescan"
                     pci_rescan
                     sleep 0.1
                     log "eco: writing dgpu_disable=1 (attempt 2)"
-                    echo 1 > "$dgpu_path" 2>/dev/null
+                    if [[ -n "$ROOT" ]]; then
+                        echo 1 > "$dgpu_path" 2>/dev/null
+                    else
+                        timeout 10 bash -c "echo 1 > '$dgpu_path'" 2>/dev/null
+                        if [[ $? -eq 124 ]]; then
+                            log "eco: dgpu_disable=1 retry TIMED OUT after 10s"
+                        fi
+                    fi
                     sleep 0.1
                     actual=$(read_dgpu_disable "$dgpu_path")
                 fi
@@ -512,14 +627,18 @@ case "$MODE" in
                 fi
             fi
         fi
+
+        # Persistent Eco: install the block so future boots (especially
+        # after a Windows visit) come up driverless. Check the persistent
+        # marker FILE (not just IS_PERSISTENT flag) because a one-shot
+        # trigger may have fired while the persistent marker also exists.
+        if [[ -f "$PERSISTENT_TRIGGER" ]] && [[ "$BACKEND" != "pci" ]]; then
+            install_block_artifacts
+        fi
         ;;
 
     standard|optimized)
-        # ── PCI backend ────────────────────────────────────────────────────────
-        # No firmware write; just remove the block artifacts, reload udev so
-        # the hot-remove rule disappears, then rescan PCI to re-enumerate the
-        # dGPU. The nvidia driver will bind on its own once udev sees the new
-        # PCI ADD without the remove rule active.
+        # PCI backend: remove blocks, rescan PCI so the dGPU reappears.
         if [[ "$BACKEND" == "pci" ]]; then
             log "$MODE: PCI backend - removing block artifacts, reloading udev, rescanning PCI"
             rm -f "$MODPROBE_BLOCK" "$UDEV_BLOCK" 2>/dev/null
@@ -532,7 +651,7 @@ case "$MODE" in
             exit 0
         fi
 
-        # Ensure dGPU is enabled
+        # Enable dGPU.
         wrote_enable=0
         if [[ -n "$dgpu_path" ]]; then
             current=$(cat "$dgpu_path" 2>/dev/null || echo "0")
@@ -558,10 +677,8 @@ case "$MODE" in
             log "$MODE: raw WMI result: $result"
             wrote_enable=1
         fi
-        # ── Bug 5 fix: always rescan PCI when transitioning to a non-Eco mode.
-        # If a previous Eco attempt removed the dGPU via the udev rule but
-        # failed to actually disable it, the dgpu_disable readback can show 0
-        # while the PCI device is gone. Rescanning makes the dGPU reappear.
+        # Always rescan PCI to recover from a prior failed Eco that removed
+        # the dGPU from the bus.
         sleep 0.05
         pci_rescan
         if (( wrote_enable == 1 )); then
@@ -573,10 +690,7 @@ case "$MODE" in
         ;;
 
     ultimate)
-        # Ultimate (MUX=0) is meaningless on PCI backend - there's no MUX
-        # hardware to latch. Treat as a no-op so we don't crash the cleanup
-        # and so the user sees a clear log line if they accidentally trigger
-        # it (e.g. by manual /etc/ghelper write).
+        # PCI backend: no MUX hardware, treat as no-op.
         if [[ "$BACKEND" == "pci" ]]; then
             log "ultimate: not applicable in PCI backend (no MUX hardware), clearing trigger"
             rm -f "$TRIGGER" 2>/dev/null
@@ -584,7 +698,7 @@ case "$MODE" in
             exit 0
         fi
 
-        # dGPU must be enabled in Ultimate (MUX=0)
+        # dGPU must be enabled for Ultimate (MUX=0).
         if [[ -n "$dgpu_path" ]]; then
             current=$(cat "$dgpu_path" 2>/dev/null || echo "0")
             if [[ "$current" == "1" ]]; then
@@ -594,7 +708,6 @@ case "$MODE" in
                 log "ultimate: dgpu already enabled"
             fi
         fi
-        # Bug 5 fix: always rescan (see standard/optimized branch).
         sleep 0.05
         pci_rescan
         log "ultimate: PCI bus rescan triggered"
@@ -610,11 +723,20 @@ case "$MODE" in
         ;;
 esac
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  STEP 5: Clean up block artifacts
-# ══════════════════════════════════════════════════════════════════════════════
-rm -f "$MODPROBE_BLOCK" "$UDEV_BLOCK" "$TRIGGER" 2>/dev/null
-udevadm_reload
+# STEP 5: Clean up.
+# Always remove the one-shot trigger.
+rm -f "$TRIGGER" 2>/dev/null
 
-log "Boot GPU mode application complete - block artifacts cleaned"
+# For persistent Eco, keep the modprobe+udev blocks so the dGPU driver
+# stays blocked across reboots. Check the persistent marker FILE on disk
+# (not just IS_PERSISTENT) because a one-shot trigger may have fired
+# while the persistent marker also exists.
+if [[ "$MODE" == "eco" ]] && [[ -f "$PERSISTENT_TRIGGER" ]]; then
+    log "Persistent Eco: preserving block artifacts (driver stays blocked across reboots)"
+else
+    rm -f "$MODPROBE_BLOCK" "$UDEV_BLOCK" 2>/dev/null
+    udevadm_reload
+fi
+
+log "Boot GPU mode application complete"
 exit 0

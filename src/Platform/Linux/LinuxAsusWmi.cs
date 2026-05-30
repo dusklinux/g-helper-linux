@@ -361,6 +361,31 @@ public class LinuxAsusWmi : IAsusWmi
             Path.Combine(_asusFanCurveHwmonDir, $"pwm{pwmIndex}_enable"), 0) == 1;
     }
 
+    public void EnsureManualFanMode()
+    {
+        if (_asusFanCurveHwmonDir == null)
+            return;
+
+        // Write pwm_enable=1 for each fan to set FANM=4 in the EC.
+        // If the fan is already in manual mode (pwm_enable==1) the kernel
+        // driver short-circuits and the write is effectively a no-op.
+        // If the fan is in firmware mode (pwm_enable==2 or 3), this
+        // activates the kernel's last-known curve data (BIOS defaults if
+        // no custom curve was ever written) - identical to what SetFanCurve
+        // does as its final step.
+        for (int fan = 0; fan < FanCount; fan++)
+        {
+            int pwmIndex = fan + 1;
+            string path = Path.Combine(_asusFanCurveHwmonDir, $"pwm{pwmIndex}_enable");
+            int current = SysfsHelper.ReadInt(path, -1);
+            if (current != 1)
+            {
+                SysfsHelper.WriteInt(path, 1);
+                Helpers.Logger.WriteLine($"EnsureManualFanMode: fan {fan} pwm_enable {current} → 1");
+            }
+        }
+    }
+
     // Battery
 
     public int GetBatteryChargeLimit()

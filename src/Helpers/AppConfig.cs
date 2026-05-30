@@ -396,6 +396,17 @@ public static class AppConfig
     public static bool IsAdvantageEdition() => ContainsModel("13QY");
 
     // GPU / power management
+    /// <summary>
+    /// Models where firmware forgets dgpu_disable across reboots, requiring the
+    /// boot service to force-set the Eco flag on every startup. Mirrors the
+    /// upstream Windows IsEcoBootFix() model list. On these models the
+    /// "Re-apply Eco on every boot" option is always on and grayed out.
+    /// </summary>
+    public static bool IsEcoBootFixModel() =>
+        ContainsModel("G635L") || ContainsModel("G615L") ||
+        ContainsModel("G835L") || ContainsModel("G815L") ||
+        ContainsModel("FA506") || ContainsModel("FX517");
+
     public static bool NoGpu() => Is("no_gpu") || ContainsModel("UX540") || ContainsModel("M560") || ContainsModel("GZ302") || IsOnlyAIMAX();
     public static bool IsAMDiGPU() => ContainsModel("GV301RA") || ContainsModel("GV302XA") || ContainsModel("GZ302") || IsOnlyAIMAX() || IsAlly();
 
@@ -412,7 +423,6 @@ public static class AppConfig
 
     // Performance mode
     public static bool IsAlwaysUltimate() => ContainsModel("FA507NUR") || ContainsModel("FA506NCR") || ContainsModel("FA507NVR");
-    public static bool IsManualModeRequired() => IsMode("auto_apply_power") && (Is("manual_mode") || ContainsModel("G733"));
     public static bool IsModeReapplyRequired() => Is("mode_reapply") || ContainsModel("FA401");
     public static bool IsResetRequired() => ContainsModel("GA403UI") || ContainsModel("GA403UU") || ContainsModel("GA403UV") || ContainsModel("FA507XV");
     public static bool IsPowerRequired() => ContainsModel("GU605M") || ContainsModel("FX507") || ContainsModel("FX517") || ContainsModel("FX707");
@@ -426,7 +436,7 @@ public static class AppConfig
     public static bool IsStandardModeFix() => ContainsModel("FX506HCB");
 
     // Fan control
-    public static bool IsFanRequired() => ContainsModel("GA402X") || ContainsModel("GU604") || ContainsModel("G513") || ContainsModel("G713R") || ContainsModel("G713P") || ContainsModel("GU605") || ContainsModel("GA605") || ContainsModel("G634J") || ContainsModel("G834J") || ContainsModel("G614J") || ContainsModel("G814J") || ContainsModel("FX507V") || ContainsModel("FX507ZV") || ContainsModel("FX608") || ContainsModel("FA608P") || ContainsModel("G614F") || ContainsModel("G614R") || ContainsModel("G733") || ContainsModel("H7606");
+    public static bool IsFanRequired() => ContainsModel("GA402X") || ContainsModel("GU604") || ContainsModel("G513") || ContainsModel("G713R") || ContainsModel("G713P") || ContainsModel("GU605") || ContainsModel("GA605") || ContainsModel("G634J") || ContainsModel("G834J") || ContainsModel("G614J") || ContainsModel("G814J") || ContainsModel("FX507V") || ContainsModel("FX507ZV") || ContainsModel("FX608") || ContainsModel("FA608P") || ContainsModel("G614F") || ContainsModel("G614P") || ContainsModel("G614R") || ContainsModel("G733") || ContainsModel("H7606");
     public static bool IsClampFanDots() => IsNotFalse("fan_clamp");
 
     // RGB / AURA

@@ -57,12 +57,7 @@ public class LinuxSystemIntegration : ISystemIntegration
         if (enabled)
         {
             Directory.CreateDirectory(_autostartDir);
-            var exePath = GetAutostartExecutablePath();
-            // Quote the Exec field if the path contains whitespace (per .desktop spec).
-            // Typical install paths (/usr/local/bin/ghelper, ~/ghelper/ghelper) hit the
-            // unquoted fast path; quoting only triggers for paths with spaces in $HOME
-            // or weird install locations.
-            var execField = exePath.Contains(' ') ? $"\"{exePath}\"" : exePath;
+            var execField = ResolveLauncherExecField();
             var desktop = $"""
                 [Desktop Entry]
                 Type=Application
@@ -89,27 +84,110 @@ public class LinuxSystemIntegration : ISystemIntegration
     }
 
     /// <summary>
-    /// Resolves the path to write into the autostart <c>Exec=</c> field.
+    /// Resolves the path to write into a <c>.desktop</c> <c>Exec=</c> field
+    /// (autostart entry and the application-menu entry both use this).
     ///
     /// When running from an AppImage, <see cref="GetExecutablePath"/> returns
     /// something like <c>/tmp/.mount_GHelpeemfglL/usr/bin/ghelper</c> - a
     /// FUSE mount that disappears the moment the AppImage process exits.
-    /// Writing that into autostart breaks autostart on the next boot.
+    /// Writing that into a launcher entry breaks it on the next boot.
     ///
     /// AppImage's runtime sets the <c>APPIMAGE</c> env var to the original
     /// <c>.AppImage</c> file path, which is what we actually want to launch.
     /// We prefer that when present, falling back to the regular binary path
     /// for direct-binary deployments (~/ghelper/ghelper, /usr/local/bin/ghelper).
+    ///
+    /// Must be called from the unprivileged process: pkexec strips the
+    /// environment, so <c>APPIMAGE</c> is not visible to the privileged writer.
     /// </summary>
-    private static string GetAutostartExecutablePath()
+    internal static string ResolveLauncherExec()
     {
         var appImagePath = Environment.GetEnvironmentVariable("APPIMAGE");
         if (!string.IsNullOrEmpty(appImagePath) && File.Exists(appImagePath))
         {
-            Helpers.Logger.WriteLine($"Autostart: using APPIMAGE path {appImagePath}");
+            Helpers.Logger.WriteLine($"Launcher exec: using APPIMAGE path {appImagePath}");
             return appImagePath;
         }
         return GetExecutablePath();
+    }
+
+    /// <summary>
+    /// The resolved launcher path as a ready-to-write <c>Exec=</c> field value,
+    /// quoted per the .desktop spec when it contains whitespace. Typical install
+    /// paths (/usr/local/bin/ghelper, ~/ghelper/ghelper) hit the unquoted fast
+    /// path; quoting only triggers for paths with spaces in $HOME or unusual
+    /// install locations.
+    /// </summary>
+    internal static string ResolveLauncherExecField()
+    {
+        var path = ResolveLauncherExec();
+        return path.Contains(' ') ? $"\"{path}\"" : path;
+    }
+
+    /// <summary>
+    /// A path to the running executable that ROOT (via pkexec) can actually
+    /// execute, paired with cleanup. For a bare binary this is just the running
+    /// path. For an AppImage, <see cref="Environment.ProcessPath"/> points inside
+    /// the per-user FUSE mount (/tmp/.mount_*), which root cannot read
+    /// ("Permission denied", pkexec exit 127) - so the inner binary is copied to a
+    /// root-readable temp file and that path is returned instead. Disposing
+    /// deletes the copy. The inner binary is a self-contained AOT build and the
+    /// privileged CLI verbs (--apply-system-files / --install-gpu-helper) dispatch
+    /// before any native-lib or Avalonia load, so it runs fine outside the
+    /// AppImage mount.
+    /// </summary>
+    public sealed class PrivilegedSelf : IDisposable
+    {
+        public string Path { get; }
+        private readonly string? _tempCopy;
+        internal PrivilegedSelf(string path, string? tempCopy)
+        {
+            Path = path;
+            _tempCopy = tempCopy;
+        }
+        public void Dispose()
+        {
+            if (_tempCopy == null)
+                return;
+            try
+            { File.Delete(_tempCopy); }
+            catch { }
+        }
+    }
+
+    /// <summary>Resolve a pkexec-executable copy of ourselves (see
+    /// <see cref="PrivilegedSelf"/>). Call on the unprivileged process - $APPIMAGE
+    /// is needed to detect AppImage mode and is stripped under pkexec.</summary>
+    public static PrivilegedSelf ResolvePrivilegedSelf()
+    {
+        string self = Environment.ProcessPath ?? "/proc/self/exe";
+
+        // Bare binary: the path is already root-accessible.
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPIMAGE")))
+            return new PrivilegedSelf(self, null);
+
+        // AppImage: copy the inner binary out of the user-private FUSE mount to a
+        // root-readable temp file so pkexec can execute it as root.
+        try
+        {
+            string tmp = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(), $"ghelper-priv-{Guid.NewGuid():N}");
+            File.Copy(self, tmp, overwrite: true);
+#pragma warning disable CA1416
+            File.SetUnixFileMode(tmp,
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
+                UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+#pragma warning restore CA1416
+            Helpers.Logger.WriteLine(
+                $"PrivilegedSelf: AppImage - copied inner binary to {tmp} for pkexec (root cannot read the FUSE mount)");
+            return new PrivilegedSelf(tmp, tmp);
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"PrivilegedSelf: copy failed ({ex.Message}); using {self}");
+            return new PrivilegedSelf(self, null);
+        }
     }
 
     /// <summary>

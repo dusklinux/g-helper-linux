@@ -22,6 +22,7 @@ namespace GHelper.Linux.UI.Views;
 public partial class MainWindow : Window
 {
     private readonly DispatcherTimer _refreshTimer;
+    private bool _layoutReady;
     private int _batteryRefreshCounter;
     private int _lastKbdBrightness = -1;
     private int _currentPerfMode = -1;
@@ -52,6 +53,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        panelAudio.IsVisible = !Helpers.AppConfig.Is("disable_audio");
         Labels.LanguageChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(() => ApplyLabels());
         InitDonate();
 
@@ -97,10 +99,9 @@ public partial class MainWindow : Window
         // flow above keeps sensor data fresh exactly when the user is looking.
         Opened += (_, _) =>
         {
+            _layoutReady = true;
             _refreshTimer.Start();
             RefreshAll();
-            // Subscribe to fn-lock state changes so the button label/styling
-            // updates when the user flips state via hotkey, tray, or window.
             HookFnLockChanged();
         };
     }
@@ -131,6 +132,7 @@ public partial class MainWindow : Window
         RefreshBattery();
         RefreshKeyboard();
         RefreshFnLockButton();
+        RefreshAudioToggle();
         RefreshSensorData();
         RefreshFooter();
         RefreshAllyPanel();
@@ -158,6 +160,12 @@ public partial class MainWindow : Window
 
         labelKeyboard.Text = Labels.Get("keyboard_header");
         checkStartup.Content = Labels.Get("run_on_startup");
+
+        // Audio panel localisation.
+        labelAudio.Text = Labels.Get("audio_header_microphone");
+        labelAudioConfigure.Text = Labels.Get("audio_configure_chain");
+        Avalonia.Controls.ToolTip.SetTip(buttonAudioToggle,
+            Labels.Get("audio_toggle_tooltip"));
 
         // ROG Ally panel - static labels. Dynamic ones (mode, backlight %)
         // are refreshed by RefreshAllyPanel.
@@ -661,6 +669,8 @@ public partial class MainWindow : Window
     /// </summary>
     private void ShowDriverBlockingDialog(GpuMode target)
     {
+        bool dgpuSoleDisplay = (App.Wmi?.GetGpuMuxMode() ?? -1) == 0;
+
         var dialog = new Window
         {
             Title = Labels.Get("gpu_driver_title"),
@@ -812,34 +822,35 @@ public partial class MainWindow : Window
             };
         }
 
-        var btnSwitchNow = MakeDialogButton(Labels.Get("gpu_driver_switch_now"), "#A82A2A", "#FFFFFF", bold: true);
         var btnAfterReboot = MakeDialogButton(Labels.Get("gpu_driver_after_reboot"), "#4CC2FF", "#000000", bold: true);
         var btnCancel = MakeDialogButton(Labels.Get("cancel"), "#2A2A2A", "#888888");
-
-        // Stretch buttons across full row width (equal share)
-        btnSwitchNow.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
         btnAfterReboot.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
         btnCancel.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
-        btnSwitchNow.Margin = new Avalonia.Thickness(0, 0, 6, 0);
-        btnAfterReboot.Margin = new Avalonia.Thickness(6, 0, 6, 0);
-        btnCancel.Margin = new Avalonia.Thickness(6, 0, 0, 0);
 
-        var switchNowWarning = new TextBlock
+        Button? btnSwitchNow = null;
+        TextBlock? switchNowWarning = null;
+        if (!dgpuSoleDisplay)
         {
-            Text = Labels.Get("gpu_driver_switch_now_warning"),
-            Foreground = new SolidColorBrush(Color.Parse("#E0A040")),
-            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-            FontSize = 11,
-            LineHeight = 16,
-            Margin = new Avalonia.Thickness(2, 12, 2, 0),
-        };
+            btnSwitchNow = MakeDialogButton(Labels.Get("gpu_driver_switch_now"), "#A82A2A", "#FFFFFF", bold: true);
+            btnSwitchNow.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
+            switchNowWarning = new TextBlock
+            {
+                Text = Labels.Get("gpu_driver_switch_now_warning"),
+                Foreground = new SolidColorBrush(Color.Parse("#E0A040")),
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                FontSize = 11,
+                LineHeight = 16,
+                Margin = new Avalonia.Thickness(2, 12, 2, 0),
+            };
+        }
 
         // Button click handlers
-        btnSwitchNow.Click += (_, _) =>
-        {
-            dialog.Close();
-            RunSwitchNowKillFlow(target);
-        };
+        if (btnSwitchNow != null)
+            btnSwitchNow.Click += (_, _) =>
+            {
+                dialog.Close();
+                RunSwitchNowKillFlow(target);
+            };
 
         btnAfterReboot.Click += (_, _) =>
         {
@@ -857,19 +868,36 @@ public partial class MainWindow : Window
             RefreshGpuMode();
         };
 
-        // Button row: 3 equal columns spanning full width, with equal vertical padding
+        // Button row: equal columns spanning full width, with equal vertical padding.
+        // 3 columns (Switch Now + After Reboot + Cancel) normally; 2 columns
+        // (After Reboot + Cancel) in Ultimate where Switch Now is omitted.
         var buttonPanel = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,*,*"),
+            ColumnDefinitions = new ColumnDefinitions(btnSwitchNow != null ? "*,*,*" : "*,*"),
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
             Margin = new Avalonia.Thickness(0, 16, 0, 16),
         };
-        Grid.SetColumn(btnSwitchNow, 0);
-        Grid.SetColumn(btnAfterReboot, 1);
-        Grid.SetColumn(btnCancel, 2);
-        buttonPanel.Children.Add(btnSwitchNow);
-        buttonPanel.Children.Add(btnAfterReboot);
-        buttonPanel.Children.Add(btnCancel);
+        if (btnSwitchNow != null)
+        {
+            btnSwitchNow.Margin = new Avalonia.Thickness(0, 0, 6, 0);
+            btnAfterReboot.Margin = new Avalonia.Thickness(6, 0, 6, 0);
+            btnCancel.Margin = new Avalonia.Thickness(6, 0, 0, 0);
+            Grid.SetColumn(btnSwitchNow, 0);
+            Grid.SetColumn(btnAfterReboot, 1);
+            Grid.SetColumn(btnCancel, 2);
+            buttonPanel.Children.Add(btnSwitchNow);
+            buttonPanel.Children.Add(btnAfterReboot);
+            buttonPanel.Children.Add(btnCancel);
+        }
+        else
+        {
+            btnAfterReboot.Margin = new Avalonia.Thickness(0, 0, 6, 0);
+            btnCancel.Margin = new Avalonia.Thickness(6, 0, 0, 0);
+            Grid.SetColumn(btnAfterReboot, 0);
+            Grid.SetColumn(btnCancel, 1);
+            buttonPanel.Children.Add(btnAfterReboot);
+            buttonPanel.Children.Add(btnCancel);
+        }
 
         // Footer help text (no top margin - buttonPanel provides equal vertical padding)
         var footer = new TextBlock
@@ -885,7 +913,8 @@ public partial class MainWindow : Window
         // Layout
         var outerStack = new StackPanel { Margin = new Avalonia.Thickness(24, 20, 24, 16) };
         outerStack.Children.Add(card);
-        outerStack.Children.Add(switchNowWarning);
+        if (switchNowWarning != null)
+            outerStack.Children.Add(switchNowWarning);
         outerStack.Children.Add(buttonPanel);
         outerStack.Children.Add(footer);
 
@@ -903,6 +932,21 @@ public partial class MainWindow : Window
     /// </summary>
     private void RunSwitchNowKillFlow(GpuMode target)
     {
+        // MUX=0 (Ultimate): dGPU is the sole display - killing holders + releasing
+        // the driver live would black-screen. Refuse the live switch and defer to
+        // reboot (mirrors the "After Reboot" button). Also covers the kill-failure
+        // dialog's Retry path, which re-enters here.
+        if ((App.Wmi?.GetGpuMuxMode() ?? -1) == 0)
+        {
+            Logger.WriteLine("RunSwitchNowKillFlow: MUX=0 (Ultimate) - refusing live switch, reboot required");
+            App.GpuModeCtrl?.ScheduleModeForReboot(target);
+            labelTipGPU.Text = Labels.Get("gpu_eco_pending");
+            RefreshGpuMode();
+            App.System?.ShowNotification(Labels.Get("gpu_mode"),
+                Labels.Get("gpu_eco_after_reboot"), "system-reboot");
+            return;
+        }
+
         LockGpuButtons(Labels.Get("gpu_switching_eco"));
         Task.Run(() =>
         {
@@ -1233,6 +1277,11 @@ public partial class MainWindow : Window
         // the handshake before they respond to any RGB commands.
         // Upstream G-Helper's Aura.Init() does this in InputDispatcher.AutoKeyboard().
         Aura.Init();
+
+        // Initialize the slash LED bar (A-cover) if this is a slash model.
+        // Slash uses the same HID bus but a different command protocol (0xD2-D8
+        // family vs AURA's 0xB3-B5). Safe to call on non-slash models (no-op).
+        Slash.Init();
 
         // Load saved values into static fields BEFORE applying to hardware
         Aura.Mode = (AuraMode)Helpers.AppConfig.Get("aura_mode");
@@ -1668,6 +1717,69 @@ public partial class MainWindow : Window
         else
         {
             _extraWindow.Activate();
+        }
+    }
+
+    private AudioWindow? _audioWindow;
+
+    /// <summary>
+    /// Click on the FN-Lock-style toggle at the right of the Microphone
+    /// header: starts or stops the audio helper. Persists the user's
+    /// intent so the state survives across launches.
+    /// </summary>
+    private void ButtonAudioToggle_Click(object? sender, RoutedEventArgs e)
+    {
+        Helpers.AudioHelper.Instance.ToggleMaster();
+        RefreshAudioToggle();
+        _audioWindow?.RefreshFromMain();
+    }
+
+    /// <summary>
+    /// Click on the chain-configuration button below the toggle: opens the
+    /// dedicated audio window. Never changes the helper's running state.
+    /// </summary>
+    private void ButtonAudio_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_audioWindow == null || !_audioWindow.IsVisible)
+        {
+            _audioWindow = new AudioWindow();
+            if (Helpers.AppConfig.Is("topmost"))
+                _audioWindow.Topmost = true;
+            WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_audioWindow);
+            _audioWindow.Show();
+        }
+        else
+        {
+            _audioWindow.Activate();
+        }
+    }
+
+    /// <summary>
+    /// Sync the FN-Lock-style toggle's label + style class to the helper's
+    /// actual running state. Called after toggles and from external paths
+    /// (hotkey, helper crash) to keep the visual honest.
+    /// </summary>
+    public void RefreshAudioToggle()
+    {
+        bool audioVisible = !Helpers.AppConfig.Is("disable_audio");
+        bool changed = panelAudio.IsVisible != audioVisible;
+        panelAudio.IsVisible = audioVisible;
+
+        bool on = Helpers.AudioHelper.Instance.IsRunning;
+        labelAudioToggle.Text = on ? Labels.Get("audio_toggle_on") : Labels.Get("audio_toggle_off");
+        if (on && !buttonAudioToggle.Classes.Contains("audio-on"))
+            buttonAudioToggle.Classes.Add("audio-on");
+        else if (!on && buttonAudioToggle.Classes.Contains("audio-on"))
+            buttonAudioToggle.Classes.Remove("audio-on");
+
+        if (changed && _layoutReady)
+        {
+            Height = double.NaN;
+            SizeToContent = SizeToContent.Manual;
+            SizeToContent = SizeToContent.Height;
+            Dispatcher.UIThread.Post(
+                () => WindowPositioner.BottomRight(this),
+                DispatcherPriority.Loaded);
         }
     }
 

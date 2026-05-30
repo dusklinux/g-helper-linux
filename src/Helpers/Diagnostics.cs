@@ -1092,6 +1092,17 @@ public static class Diagnostics
         var optExists = File.Exists("/opt/ghelper/ghelper");
         sb.AppendLine($"  /opt/ghelper/ghelper: {(optExists ? "installed" : "NOT FOUND")}");
 
+        sb.AppendLine("  managed files:");
+        try
+        {
+            foreach (var r in Install.Installer.ComputeStatus())
+                sb.AppendLine($"    {r.File.Id,-17} {Install.Installer.StateLabel(r.State),-13} {r.File.Dest}");
+        }
+        catch (Exception ex)
+        {
+            sb.AppendLine($"    (status unavailable: {ex.Message})");
+        }
+
         sb.AppendLine();
     }
 
@@ -1119,6 +1130,7 @@ public static class Diagnostics
         string[] stateFiles =
         {
             "/etc/ghelper/pending-gpu-mode",
+            "/etc/ghelper/persistent-gpu-mode",
             "/etc/ghelper/eco-retry-count",
             "/etc/ghelper/last-eco-failed",
             "/etc/ghelper/last-recovery",
@@ -1482,6 +1494,37 @@ public static class Diagnostics
         sb.AppendLine($"  raw_wmi: {YesNo(AppConfig.Is("raw_wmi"))}");
         sb.AppendLine($"  screen_auto: {YesNo(AppConfig.Is("screen_auto"))}");
         sb.AppendLine($"  auto_apply_power: {YesNo(AppConfig.IsMode("auto_apply_power"))}");
+
+        // Per-mode fan/GPU auto-apply flags and saved fan curves.
+        for (int m = 0; m < 3; m++)
+        {
+            string mName = m switch { 0 => "Balanced", 1 => "Turbo", 2 => "Silent", _ => "?" };
+            bool fans = AppConfig.Get($"auto_apply_fans_{m}", 0) == 1;
+            bool gpu = AppConfig.Get($"auto_apply_gpu_{m}", 0) == 1;
+            string cpuCurve = AppConfig.GetString($"fan_profile_cpu_{m}") ?? "-";
+            string gpuCurve = AppConfig.GetString($"fan_profile_gpu_{m}") ?? "-";
+            string midCurve = AppConfig.GetString($"fan_profile_mid_{m}") ?? "-";
+            sb.AppendLine($"  mode {m} ({mName}): auto_fans={YesNo(fans)} auto_gpu={YesNo(gpu)}");
+            sb.AppendLine($"    fan_cpu: {cpuCurve}");
+            sb.AppendLine($"    fan_gpu: {gpuCurve}");
+            if (midCurve != "-")
+                sb.AppendLine($"    fan_mid: {midCurve}");
+        }
+
+        // Current pwm_enable state from asus_custom_fan_curve hwmon.
+        var fanHwmon = Platform.Linux.SysfsHelper.FindHwmonByName("asus_custom_fan_curve");
+        if (fanHwmon != null)
+        {
+            for (int p = 1; p <= 3; p++)
+            {
+                string epath = Path.Combine(fanHwmon, $"pwm{p}_enable");
+                if (!File.Exists(epath))
+                    break;
+                int val = Platform.Linux.SysfsHelper.ReadInt(epath, -1);
+                string label = val switch { 1 => "custom", 2 => "firmware", 3 => "factory-reset", _ => "?" };
+                sb.AppendLine($"  pwm{p}_enable: {val} ({label})");
+            }
+        }
 
         // optimal_brightness: -1 = unset, 0 = Off, 1 = On Always, 2 = On Battery
         int oab = AppConfig.Get("optimal_brightness", -1);

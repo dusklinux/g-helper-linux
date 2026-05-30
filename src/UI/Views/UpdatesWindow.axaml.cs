@@ -6,8 +6,10 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using GHelper.Linux.I18n;
+using GHelper.Linux.Install;
 
 namespace GHelper.Linux.UI.Views;
 
@@ -31,6 +33,8 @@ public partial class UpdatesWindow : Window
     private static readonly IBrush ColorDim = new SolidColorBrush(Color.Parse("#999999"));
     private static readonly IBrush RowBg1 = new SolidColorBrush(Color.Parse("#2A2A2A"));
     private static readonly IBrush RowBg2 = new SolidColorBrush(Color.Parse("#232323"));
+    private static readonly Geometry ChevronCollapsed = Geometry.Parse("M 0,0 L 0,12 L 12,6 Z");
+    private static readonly Geometry ChevronExpanded = Geometry.Parse("M 0,0 L 12,0 L 6,12 Z");
 
     private static readonly List<string> SkipList = new()
     {
@@ -50,6 +54,7 @@ public partial class UpdatesWindow : Window
     private string? _model;
     private string? _biosVersion;
     private int _updatesCount = 0;
+    private bool _sysFilesExpanded;
 
     public UpdatesWindow()
     {
@@ -58,7 +63,12 @@ public partial class UpdatesWindow : Window
         Labels.LanguageChanged += ApplyLabels;
         ApplyLabels();
 
-        Loaded += (_, _) => LoadUpdates();
+        Loaded += (_, _) =>
+        {
+            LoadUpdates();
+            RefreshSystemFiles();
+            ApplySysFilesExpanded();
+        };
     }
 
     private void ApplyLabels()
@@ -66,6 +76,7 @@ public partial class UpdatesWindow : Window
         Title = Labels.Get("updates_title");
         labelTitle.Text = Labels.Get("updates_header");
         buttonDiagnostics.Content = Labels.Get("copy_diagnostics");
+        buttonExportDiag.Content = Labels.Get("export_diagnostics");
         buttonRefresh.Content = Labels.Get("refresh");
         buttonChangelog.Content = Labels.Get("changelog_title");
         labelLegendUpToDate.Text = Labels.Get("up_to_date");
@@ -74,11 +85,166 @@ public partial class UpdatesWindow : Window
         labelGHelperSection.Text = Labels.Get("ghelper_linux");
         labelBiosSection.Text = Labels.Get("bios");
         labelDriversSection.Text = Labels.Get("drivers_software");
+        labelSystemFilesSection.Text = Labels.Get("sysfiles_section");
+        buttonSysFilesRecheck.Content = Labels.Get("sysfiles_recheck");
+        buttonSysFilesFix.Content = Labels.Get("sysfiles_fix");
+        buttonSysFilesUninstall.Content = Labels.Get("sysfiles_uninstall");
     }
 
     private void ButtonRefresh_Click(object? sender, RoutedEventArgs e)
     {
         LoadUpdates();
+    }
+
+    private void RefreshSystemFiles()
+    {
+        try
+        {
+            Installer.PopulateIntegrityPanel(panelSystemFiles, OnRepairOneAsync, OnRemoveOneAsync, OnShowDiffAsync);
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"UpdatesWindow.RefreshSystemFiles failed: {ex.Message}");
+        }
+    }
+
+    private async Task OnRepairOneAsync(Installer.ManagedFile file)
+    {
+        buttonSysFilesFix.IsEnabled = false;
+        buttonSysFilesRecheck.IsEnabled = false;
+        try
+        {
+            string msg = await Installer.RepairOneFromUiAsync(file);
+            labelSysFilesResult.Text = msg;
+            labelSysFilesResult.IsVisible = true;
+            RefreshSystemFiles();
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"UpdatesWindow.OnRepairOneAsync failed: {ex.Message}");
+            labelSysFilesResult.Text = Labels.Get("sysfiles_apply_failed");
+            labelSysFilesResult.IsVisible = true;
+        }
+        finally
+        {
+            buttonSysFilesFix.IsEnabled = true;
+            buttonSysFilesRecheck.IsEnabled = true;
+        }
+    }
+
+    private async Task OnRemoveOneAsync(Installer.ManagedFile file)
+    {
+        buttonSysFilesFix.IsEnabled = false;
+        buttonSysFilesRecheck.IsEnabled = false;
+        buttonSysFilesUninstall.IsEnabled = false;
+        try
+        {
+            string msg = await Installer.RemoveOneFromUiAsync(file);
+            labelSysFilesResult.Text = msg;
+            labelSysFilesResult.IsVisible = true;
+            RefreshSystemFiles();
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"UpdatesWindow.OnRemoveOneAsync failed: {ex.Message}");
+            labelSysFilesResult.Text = Labels.Get("sysfiles_remove_failed");
+            labelSysFilesResult.IsVisible = true;
+        }
+        finally
+        {
+            buttonSysFilesFix.IsEnabled = true;
+            buttonSysFilesRecheck.IsEnabled = true;
+            buttonSysFilesUninstall.IsEnabled = true;
+        }
+    }
+
+    private async Task OnShowDiffAsync(Installer.ManagedFile file)
+    {
+        try
+        {
+            await Installer.ShowDiffAsync(this, file);
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"UpdatesWindow.OnShowDiffAsync failed: {ex.Message}");
+        }
+    }
+
+    private void ButtonSysFilesRecheck_Click(object? sender, RoutedEventArgs e)
+    {
+        labelSysFilesResult.IsVisible = false;
+        RefreshSystemFiles();
+    }
+
+    private void SysFilesHeader_PointerPressed(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+    {
+        _sysFilesExpanded = !_sysFilesExpanded;
+        ApplySysFilesExpanded();
+    }
+
+    private void ApplySysFilesExpanded()
+    {
+        panelSysFilesBody.IsVisible = _sysFilesExpanded;
+        iconSysFilesToggle.Data = _sysFilesExpanded ? ChevronExpanded : ChevronCollapsed;
+    }
+
+    private async void ButtonSysFilesFix_Click(object? sender, RoutedEventArgs e)
+    {
+        buttonSysFilesFix.IsEnabled = false;
+        try
+        {
+            string msg = await Installer.RunFixFromUiAsync();
+            labelSysFilesResult.Text = msg;
+            labelSysFilesResult.IsVisible = true;
+            RefreshSystemFiles();
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"UpdatesWindow.ButtonSysFilesFix failed: {ex.Message}");
+            labelSysFilesResult.Text = Labels.Get("sysfiles_apply_failed");
+            labelSysFilesResult.IsVisible = true;
+        }
+        finally
+        {
+            buttonSysFilesFix.IsEnabled = true;
+        }
+    }
+
+    private async void ButtonSysFilesUninstall_Click(object? sender, RoutedEventArgs e)
+    {
+        bool confirmed = await Dialogs.ConfirmDialog.ShowAsync(
+            this,
+            Labels.Get("sysfiles_uninstall_title"),
+            Labels.Get("sysfiles_uninstall_message"));
+        if (!confirmed)
+            return;
+
+        buttonSysFilesUninstall.IsEnabled = false;
+        buttonSysFilesFix.IsEnabled = false;
+        buttonSysFilesRecheck.IsEnabled = false;
+        try
+        {
+            string msg = await Installer.RunRemoveFromUiAsync();
+            // Expand the panel so the result line (which lives in the collapsed
+            // body) is actually visible.
+            _sysFilesExpanded = true;
+            ApplySysFilesExpanded();
+            labelSysFilesResult.Text = msg;
+            labelSysFilesResult.IsVisible = true;
+            RefreshSystemFiles();
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"UpdatesWindow.ButtonSysFilesUninstall failed: {ex.Message}");
+            labelSysFilesResult.Text = Labels.Get("sysfiles_remove_failed");
+            labelSysFilesResult.IsVisible = true;
+        }
+        finally
+        {
+            buttonSysFilesUninstall.IsEnabled = true;
+            buttonSysFilesFix.IsEnabled = true;
+            buttonSysFilesRecheck.IsEnabled = true;
+        }
     }
 
     private ChangelogWindow? _changelogWindow;
@@ -128,6 +294,66 @@ public partial class UpdatesWindow : Window
             {
                 buttonDiagnostics.Content = Labels.Get("copy_diagnostics");
                 buttonDiagnostics.IsEnabled = true;
+            }));
+    }
+
+    private async void ButtonExportDiag_Click(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            buttonExportDiag.IsEnabled = false;
+            buttonExportDiag.Content = Labels.Get("collecting");
+
+            var report = await Task.Run(() => Helpers.Diagnostics.GenerateReport());
+
+            var timestamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+            var suggestedName = $"ghelper-diagnostics-{timestamp}.txt";
+
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel?.StorageProvider is not { } storage)
+            {
+                buttonExportDiag.Content = Labels.Get("failed");
+                return;
+            }
+
+            var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = Labels.Get("export_diagnostics"),
+                SuggestedFileName = suggestedName,
+                DefaultExtension = "txt",
+                FileTypeChoices = new[]
+                {
+                    new FilePickerFileType("Text files") { Patterns = new[] { "*.txt" } },
+                    new FilePickerFileType("All files") { Patterns = new[] { "*" } },
+                },
+            });
+
+            if (file != null)
+            {
+                await using var stream = await file.OpenWriteAsync();
+                await using var writer = new System.IO.StreamWriter(stream);
+                await writer.WriteAsync(report);
+                buttonExportDiag.Content = Labels.Get("saved");
+                Helpers.Logger.WriteLine($"Diagnostics: exported {report.Length} chars to {file.Name}");
+            }
+            else
+            {
+                buttonExportDiag.Content = Labels.Get("export_diagnostics");
+                buttonExportDiag.IsEnabled = true;
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"Diagnostics export failed: {ex.Message}");
+            buttonExportDiag.Content = Labels.Get("failed");
+        }
+
+        _ = Task.Delay(2000).ContinueWith(_ =>
+            Dispatcher.UIThread.Post(() =>
+            {
+                buttonExportDiag.Content = Labels.Get("export_diagnostics");
+                buttonExportDiag.IsEnabled = true;
             }));
     }
 
@@ -315,7 +541,7 @@ public partial class UpdatesWindow : Window
         }
     }
 
-    private async Task DownloadAndInstallUpdate(string downloadUrl, Button btn)
+    internal static async Task DownloadAndInstallUpdate(string downloadUrl, Button btn)
     {
         try
         {
@@ -732,5 +958,154 @@ public partial class UpdatesWindow : Window
 
         grid.Children.Add(versionBtn);
         panel.Children.Add(grid);
+    }
+
+    public static void CheckForUpdateAtStartup(Window owner)
+    {
+        if (Helpers.AppConfig.Is("skip_update_prompt"))
+            return;
+
+        Task.Run(async () =>
+        {
+            try
+            {
+                using var http = new HttpClient();
+                http.DefaultRequestHeaders.Add("User-Agent", "G-Helper-Linux/" + Helpers.AppConfig.AppVersion);
+                http.Timeout = TimeSpan.FromSeconds(10);
+
+                var json = await http.GetStringAsync($"https://api.github.com/repos/{GitHubRepo}/releases/latest");
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                var tagName = root.GetProperty("tag_name").GetString() ?? "";
+                var latestVersion = tagName.TrimStart('v');
+
+                if (CompareVersions(latestVersion, Helpers.AppConfig.AppVersion) <= 0)
+                    return;
+
+                string targetAsset = IsAppImage ? "GHelper-x86_64.AppImage" : "ghelper";
+                var downloadUrl = $"https://github.com/{GitHubRepo}/releases/latest/download/{targetAsset}";
+                if (root.TryGetProperty("assets", out var assets))
+                {
+                    for (int i = 0; i < assets.GetArrayLength(); i++)
+                    {
+                        var name = assets[i].GetProperty("name").GetString() ?? "";
+                        if (name == targetAsset)
+                        {
+                            downloadUrl = assets[i].GetProperty("browser_download_url").GetString() ?? downloadUrl;
+                            break;
+                        }
+                    }
+                }
+
+                Helpers.Logger.WriteLine($"Startup update check: v{latestVersion} available (current v{Helpers.AppConfig.AppVersion})");
+
+                var dlUrl = downloadUrl;
+                Dispatcher.UIThread.Post(() =>
+                {
+                    try
+                    {
+                        ShowUpdatePrompt(owner, latestVersion, dlUrl);
+                    }
+                    catch (Exception ex)
+                    {
+                        Helpers.Logger.WriteLine($"Startup update prompt failed: {ex.Message}");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Helpers.Logger.WriteLine($"Startup update check failed: {ex.Message}");
+            }
+        });
+    }
+
+    private static void ShowUpdatePrompt(Window owner, string latestVersion, string downloadUrl)
+    {
+        var dialog = new Window
+        {
+            Title = Labels.Get("update_prompt_title"),
+            Width = 420,
+            MinWidth = 420,
+            MaxWidth = 420,
+            SizeToContent = SizeToContent.Height,
+            WindowStartupLocation = WindowStartupLocation.CenterScreen,
+            CanResize = false,
+            WindowDecorations = WindowDecorations.Full,
+            Background = new SolidColorBrush(Color.Parse("#1C1C1C")),
+        };
+        try
+        { dialog.Icon = owner.Icon; }
+        catch { }
+
+        var root = new StackPanel { Margin = new Avalonia.Thickness(20, 16, 20, 16), Spacing = 12 };
+
+        root.Children.Add(new TextBlock
+        {
+            Text = Labels.Get("update_prompt_title"),
+            FontSize = 15,
+            FontWeight = FontWeight.Bold,
+            Foreground = new SolidColorBrush(Color.Parse("#F0F0F0")),
+        });
+
+        root.Children.Add(new TextBlock
+        {
+            Text = Labels.Format("update_prompt_message", latestVersion, Helpers.AppConfig.AppVersion),
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.Parse("#CCCCCC")),
+        });
+
+        var dontShow = new CheckBox
+        {
+            Content = Labels.Get("dont_show_again"),
+            FontSize = 12,
+            Foreground = new SolidColorBrush(Color.Parse("#999999")),
+            IsChecked = false,
+            Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+        };
+        dontShow.IsCheckedChanged += (_, _) =>
+            Helpers.AppConfig.Set("skip_update_prompt", (dontShow.IsChecked ?? false) ? 1 : 0);
+        root.Children.Add(dontShow);
+
+        var btnUpdate = new Button
+        {
+            Content = Labels.Get("update_now"),
+            MinWidth = 130,
+            Padding = new Avalonia.Thickness(14, 8),
+            Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+        };
+
+        var btnLater = new Button
+        {
+            Content = Labels.Get("not_now"),
+            MinWidth = 100,
+            Padding = new Avalonia.Thickness(14, 8),
+            Margin = new Avalonia.Thickness(8, 0, 0, 0),
+            Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+        };
+        btnLater.Click += (_, _) => dialog.Close();
+
+        var url = downloadUrl;
+        btnUpdate.Click += async (_, _) =>
+        {
+            btnUpdate.IsEnabled = false;
+            btnLater.IsEnabled = false;
+            dontShow.IsEnabled = false;
+            btnUpdate.Content = Labels.Get("downloading");
+            await Task.Run(async () => await DownloadAndInstallUpdate(url, btnUpdate));
+        };
+
+        var btnRow = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+        };
+        btnRow.Children.Add(btnUpdate);
+        btnRow.Children.Add(btnLater);
+        root.Children.Add(btnRow);
+
+        dialog.Content = root;
+        dialog.Show();
     }
 }

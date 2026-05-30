@@ -1,129 +1,177 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace GHelper.Linux.Helpers;
 
 /// <summary>
-/// Ensures native libraries (libSkiaSharp.so, libHarfBuzzSharp.so) can be found at runtime.
-/// 
-/// Native .so files are embedded in the binary (stripped, added by build.sh from NuGet cache).
-/// On first launch they are extracted to ~/.cache/ghelper/libs/ and cached until the binary
-/// version changes.
-/// 
-/// Search order:
-///   1. Same directory as the binary (AppImage / dev builds with loose .so files)
-///   2. ~/.cache/ghelper/libs/ (extracted from embedded resources — primary path)
-///   3. System library paths (LD_LIBRARY_PATH, /usr/lib, etc.)
-/// 
-/// Must be called BEFORE any SkiaSharp/Avalonia code runs.
+/// Extracts embedded native libraries and helper executables to
+/// ~/.cache/ghelper/libs/ and preloads the libraries before SkiaSharp/
+/// Avalonia initialises.
+///
+/// Always re-extracts on launch so a new build's payload reaches disk
+/// without any version stamping. Any leftover helper process from a
+/// previous run is reaped first to avoid the Linux "Text file busy"
+/// race on overwriting a running executable.
+///
+/// Every extraction outcome is logged via <see cref="Logger"/> so the
+/// startup banner and the diagnostics dump show which resources made it
+/// to disk, where they came from, and how big they ended up.
 /// </summary>
 public static class NativeLibExtractor
 {
+    private static readonly string HomeDir =
+        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
     private static readonly string CacheDir = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-        ".cache", "ghelper", "libs");
+        HomeDir, ".cache", "ghelper", "libs");
 
     private static readonly string[] NativeLibs = ["libHarfBuzzSharp.so", "libSkiaSharp.so"];
 
+    /// <summary>
+    /// Replace the user's home prefix with "~/" so log lines stay concise
+    /// and don't leak the actual username into shared diagnostic dumps.
+    /// </summary>
+    private static string Short(string path)
+    {
+        if (!string.IsNullOrEmpty(HomeDir) && path.StartsWith(HomeDir, StringComparison.Ordinal))
+        {
+            var tail = path.Substring(HomeDir.Length).TrimStart('/');
+            return tail.Length == 0 ? "~" : "~/" + tail;
+        }
+        return path;
+    }
+
+    /// <summary>Helper executables extracted eagerly so spawn paths are fast.</summary>
+    private static readonly string[] EagerTools = ["ghelper-audio"];
+
     private static readonly Dictionary<string, IntPtr> _loadedLibs = new();
 
-    /// <summary>
-    /// Find, extract if needed, preload native libraries, and register a DLL import resolver.
-    /// Must be called BEFORE any SkiaSharp/Avalonia code runs.
-    /// </summary>
     public static void ExtractAndLoad()
     {
-        // Determine where the binary lives
         var exeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? ".";
+        Logger.WriteLine($"NativeLibExtractor: starting (cache={Short(CacheDir)})");
 
-        InvalidateStaleCacheIfNeeded();
+        KillStaleHelpers();
 
         foreach (var lib in NativeLibs)
         {
             IntPtr handle = IntPtr.Zero;
+            string loadSource = "none";
 
-            // Strategy 1: Look next to the binary
             var nextToBinary = Path.Combine(exeDir, lib);
             if (File.Exists(nextToBinary))
             {
-                handle = NativeLibrary.Load(nextToBinary);
-            }
-
-            // Strategy 2: Look in cache dir (previously extracted)
-            if (handle == IntPtr.Zero)
-            {
-                var cached = Path.Combine(CacheDir, lib);
-                if (File.Exists(cached))
+                try
                 {
-                    try
-                    { handle = NativeLibrary.Load(cached); }
-                    catch { }
+                    handle = NativeLibrary.Load(nextToBinary);
+                    loadSource = "exe-dir";
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteLine($"NativeLibExtractor: {lib} load from exe-dir failed: {ex.Message}");
                 }
             }
 
-            // Strategy 3: Try extracting from embedded resources
             if (handle == IntPtr.Zero)
             {
                 var extracted = ExtractFromResources(lib);
                 if (extracted != null)
                 {
                     try
-                    { handle = NativeLibrary.Load(extracted); }
-                    catch { }
+                    {
+                        handle = NativeLibrary.Load(extracted);
+                        loadSource = "embedded";
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.WriteLine($"NativeLibExtractor: {lib} load from cache failed: {ex.Message}");
+                    }
                 }
             }
 
-            // Strategy 4: Let the system find it (LD_LIBRARY_PATH, /usr/lib, etc.)
             if (handle == IntPtr.Zero)
             {
                 try
-                { handle = NativeLibrary.Load(lib); }
-                catch { }
+                {
+                    handle = NativeLibrary.Load(lib);
+                    loadSource = "system";
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteLine($"NativeLibExtractor: {lib} load from system path failed: {ex.Message}");
+                }
             }
 
             if (handle != IntPtr.Zero)
             {
-                var libName = Path.GetFileNameWithoutExtension(lib); // "libSkiaSharp"
+                var libName = Path.GetFileNameWithoutExtension(lib);
                 _loadedLibs[libName] = handle;
                 _loadedLibs[lib] = handle;
+                Logger.WriteLine($"NativeLibExtractor: loaded {lib} from {loadSource}");
+            }
+            else
+            {
+                Logger.WriteLine($"NativeLibExtractor: ERROR could not load {lib} from any source");
             }
         }
 
-        // Register resolver for all assemblies that might P/Invoke these libs
         try
         {
             NativeLibrary.SetDllImportResolver(typeof(SkiaSharp.SKPaint).Assembly, ResolveNativeLib);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Logger.WriteLine($"NativeLibExtractor: SkiaSharp resolver hook failed: {ex.Message}");
+        }
 
         try
         {
             NativeLibrary.SetDllImportResolver(typeof(HarfBuzzSharp.Blob).Assembly, ResolveNativeLib);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Logger.WriteLine($"NativeLibExtractor: HarfBuzz resolver hook failed: {ex.Message}");
+        }
+
+        foreach (var tool in EagerTools)
+        {
+            try
+            {
+                var path = ExtractFromResources(tool);
+                if (path == null)
+                    Logger.WriteLine($"NativeLibExtractor: eager extract of {tool} produced no path");
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine($"NativeLibExtractor: eager extract of {tool} threw: {ex.Message}");
+            }
+        }
+
+        Logger.WriteLine("NativeLibExtractor: done");
     }
 
     /// <summary>
-    /// Find an embedded tool binary (e.g. wlr-randr).
-    /// Search order: extract from resources → cache dir → system PATH.
-    /// Returns the full path to the executable, or null if not found.
+    /// Find an embedded tool binary (e.g. wlr-randr, ghelper-audio).
+    /// Always re-extracts when the resource exists; falls back to the
+    /// cached copy or the system PATH otherwise.
     /// </summary>
     public static string? FindTool(string toolName)
     {
-        // Strategy 1: Extract from embedded resources (always overwrites cache for freshness)
         var extracted = ExtractFromResources(toolName);
         if (extracted != null)
             return extracted;
 
-        // Strategy 2: Previously extracted to cache (fallback if resource not embedded, e.g. dev builds)
         var cached = Path.Combine(CacheDir, toolName);
         if (File.Exists(cached))
+        {
+            Logger.WriteLine($"NativeLibExtractor: FindTool({toolName}) using cached copy {Short(cached)}");
             return cached;
+        }
 
-        // Strategy 3: System PATH
         try
         {
-            var psi = new System.Diagnostics.ProcessStartInfo
+            var psi = new ProcessStartInfo
             {
                 FileName = "which",
                 Arguments = toolName,
@@ -131,84 +179,80 @@ public static class NativeLibExtractor
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
-            using var proc = System.Diagnostics.Process.Start(psi);
+            using var proc = Process.Start(psi);
             if (proc != null)
             {
                 var path = proc.StandardOutput.ReadToEnd().Trim();
                 proc.WaitForExit(3000);
                 if (proc.ExitCode == 0 && path.Length > 0)
+                {
+                    Logger.WriteLine($"NativeLibExtractor: FindTool({toolName}) resolved via PATH at {Short(path)}");
                     return path;
+                }
             }
         }
-        catch { }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Clear cached .so files if the binary version changed (e.g. after self-update).
-    /// Writes a VERSION stamp to the cache dir so subsequent launches skip re-extraction.
-    /// </summary>
-    private static void InvalidateStaleCacheIfNeeded()
-    {
-        try
+        catch (Exception ex)
         {
-            var versionFile = Path.Combine(CacheDir, "VERSION");
-            var currentVersion = AppConfig.AppVersion;
-
-            if (Directory.Exists(CacheDir))
-            {
-                var cachedVersion = File.Exists(versionFile) ? File.ReadAllText(versionFile).Trim() : "";
-                if (cachedVersion != currentVersion)
-                {
-                    foreach (var file in Directory.GetFiles(CacheDir))
-                        try
-                        { File.Delete(file); }
-                        catch { }
-                }
-                else
-                {
-                    return; // Cache is current, nothing to do
-                }
-            }
-
-            Directory.CreateDirectory(CacheDir);
-            File.WriteAllText(versionFile, currentVersion);
+            Logger.WriteLine($"NativeLibExtractor: FindTool({toolName}) PATH lookup failed: {ex.Message}");
         }
-        catch { }
+
+        Logger.WriteLine($"NativeLibExtractor: FindTool({toolName}) not found");
+        return null;
     }
 
     private static IntPtr ResolveNativeLib(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
     {
-        // Try exact match first ("libSkiaSharp" or "libSkiaSharp.so")
         if (_loadedLibs.TryGetValue(libraryName, out var handle))
             return handle;
-
-        // Try with .so suffix
         if (_loadedLibs.TryGetValue(libraryName + ".so", out handle))
             return handle;
-
-        // Fall back to default resolution
         return IntPtr.Zero;
     }
 
+    /// <summary>
+    /// Unconditionally extract an embedded resource to the cache directory.
+    /// Logs and returns null on failure; on ETXTBSY (cached binary still
+    /// executing) returns the existing stale path so the caller can fall
+    /// back to spawning what is already on disk.
+    /// </summary>
     private static string? ExtractFromResources(string resourceName)
     {
+        var asm = typeof(NativeLibExtractor).Assembly;
+        var targetPath = Path.Combine(CacheDir, resourceName);
+
+        Stream? stream = null;
         try
         {
-            using var stream = typeof(NativeLibExtractor).Assembly
-                .GetManifestResourceStream(resourceName);
-
+            stream = asm.GetManifestResourceStream(resourceName);
             if (stream == null)
+            {
+                Logger.WriteLine($"NativeLibExtractor: resource {resourceName} not embedded; skipping");
                 return null;
+            }
 
             Directory.CreateDirectory(CacheDir);
-            var targetPath = Path.Combine(CacheDir, resourceName);
+            long expectedLength = stream.Length;
 
-            using var fs = File.Create(targetPath);
-            stream.CopyTo(fs);
+            try
+            {
+                using var fs = File.Create(targetPath);
+                stream.CopyTo(fs);
+                if (fs.Length != expectedLength)
+                {
+                    Logger.WriteLine($"NativeLibExtractor: short write for {resourceName} ({fs.Length}/{expectedLength}) at {Short(targetPath)}");
+                    return null;
+                }
+            }
+            catch (IOException ex)
+            {
+                bool busy = ex.Message.Contains("Text file busy", StringComparison.OrdinalIgnoreCase)
+                         || ex.Message.Contains("ETXTBSY", StringComparison.OrdinalIgnoreCase);
+                Logger.WriteLine(busy
+                    ? $"NativeLibExtractor: {resourceName} is busy (ETXTBSY); falling back to stale {Short(targetPath)}"
+                    : $"NativeLibExtractor: IO error writing {resourceName} to {Short(targetPath)}: {ex.Message}");
+                return File.Exists(targetPath) ? targetPath : null;
+            }
 
-            // Make executable
 #pragma warning disable CA1416
             File.SetUnixFileMode(targetPath,
                 UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
@@ -216,11 +260,68 @@ public static class NativeLibExtractor
                 UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
 #pragma warning restore CA1416
 
+            Logger.WriteLine($"NativeLibExtractor: extracted {resourceName} -> {Short(targetPath)} ({FormatSize(expectedLength)})");
             return targetPath;
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.WriteLine($"NativeLibExtractor: extract failed for {resourceName}: {ex.Message}");
             return null;
         }
+        finally
+        {
+            stream?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Reap leftover helper processes by exact name so a still-running
+    /// child from a previous G-Helper run does not block File.Create from
+    /// overwriting its executable in the cache (Linux ETXTBSY rule).
+    /// </summary>
+    private static void KillStaleHelpers()
+    {
+        foreach (var name in EagerTools)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "pkill",
+                    Arguments = $"-x {name}",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                };
+                using var proc = Process.Start(psi);
+                if (proc != null)
+                {
+                    proc.WaitForExit(2000);
+                    if (proc.ExitCode == 0)
+                        Logger.WriteLine($"NativeLibExtractor: reaped leftover {name} process(es)");
+                    else
+                        Logger.WriteLine($"NativeLibExtractor: no leftover {name} processes to reap");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine($"NativeLibExtractor: could not reap {name}: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Human-readable byte size used in log messages so operators can
+    /// eyeball whether the expected payload sits on disk. Bytes / KiB /
+    /// MiB granularity is plenty for our ~150 KB - ~10 MB range.
+    /// </summary>
+    private static string FormatSize(long bytes)
+    {
+        if (bytes < 1024)
+            return bytes + " B";
+        if (bytes < 1024 * 1024)
+            return (bytes / 1024.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " KiB";
+        return (bytes / (1024.0 * 1024.0)).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " MiB";
     }
 }

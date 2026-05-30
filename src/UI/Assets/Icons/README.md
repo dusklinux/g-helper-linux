@@ -36,12 +36,24 @@ base icons, the build fails before compilation starts.
 
 ## Semantic icon names
 
-Required (15): `bolt`, `leaf`, `balance`, `rocket`, `cyclone`, `gamepad`,
-`herb`, `desktop`, `bulb`, `keyboard`, `gear`, `battery`, `package`,
-`power`, `warning`.
+Required laptop-control icons (15): `bolt`, `leaf`, `balance`, `rocket`,
+`cyclone`, `gamepad`, `herb`, `desktop`, `bulb`, `keyboard`, `gear`,
+`battery`, `package`, `power`, `warning`.
+
+Required audio-chain icons (6, used by the G-Helper Microphone window):
+`brain` (denoise), `robot` (vocoder), `equalizer` (EQ), `delay` (echo
+line - chose the repeat / loop visual over the original stopwatch
+because echo IS repeated sound), `wave` (reverb), `headphones`
+(self-monitor).
 
 Optional bold variants (5, used in section headers): `bolt-bold`,
 `gamepad-bold`, `desktop-bold`, `keyboard-bold`, `battery-bold`.
+
+The 6 audio icons were sourced via `scripts/download-audio-icons.sh`,
+which fetches per-set best-matches from upstream and falls back to
+`noto/` when a library lacks a direct equivalent (precedent: `power.svg`
+in twemoji/, blobmoji/, fluent-*). Re-run the script after refreshing
+an upstream source.
 
 ## Attribution
 

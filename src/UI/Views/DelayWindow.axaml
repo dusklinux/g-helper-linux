@@ -1,0 +1,59 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctrl="clr-namespace:GHelper.Linux.UI.Controls"
+        x:Class="GHelper.Linux.UI.Views.DelayWindow"
+        Title="Delay"
+        Width="420"
+        MinWidth="420"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        Background="#1C1C1C"
+        Icon="avares://ghelper/UI/Assets/favicon.ico">
+    <Border Classes="panel" Padding="14" Margin="10">
+        <StackPanel Spacing="14">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6"
+                            VerticalAlignment="Center">
+                    <ctrl:Icon IconName="delay" Width="18" Height="18"
+                               VerticalAlignment="Center" />
+                    <TextBlock x:Name="labelHeader"
+                               Text="Delay" FontSize="16"
+                               FontWeight="SemiBold" Foreground="White"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+                <Button Grid.Column="1" x:Name="buttonReset" Content="Reset"
+                        Click="ButtonReset_Click" Width="80" Height="28" />
+            </Grid>
+            <StackPanel Spacing="4">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" x:Name="labelTimeHeader"
+                               Text="Time" Foreground="#AAA" />
+                    <TextBlock Grid.Column="1" x:Name="labelTime" Text="250 ms"
+                               Foreground="#4CC2FF" />
+                </Grid>
+                <Slider x:Name="sliderTime" Minimum="20" Maximum="1000" Value="250"
+                        ValueChanged="OnChanged" />
+            </StackPanel>
+            <StackPanel Spacing="4">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" x:Name="labelFbHeader"
+                               Text="Feedback" Foreground="#AAA" />
+                    <TextBlock Grid.Column="1" x:Name="labelFb" Text="35%"
+                               Foreground="#4CC2FF" />
+                </Grid>
+                <Slider x:Name="sliderFb" Minimum="0" Maximum="900" Value="350"
+                        ValueChanged="OnChanged" />
+            </StackPanel>
+            <StackPanel Spacing="4">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" x:Name="labelMixHeader"
+                               Text="Mix" Foreground="#AAA" />
+                    <TextBlock Grid.Column="1" x:Name="labelMix" Text="30%"
+                               Foreground="#4CC2FF" />
+                </Grid>
+                <Slider x:Name="sliderMix" Minimum="0" Maximum="1000" Value="300"
+                        ValueChanged="OnChanged" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

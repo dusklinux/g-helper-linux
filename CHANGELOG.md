@@ -8,6 +8,71 @@
 
 ### Changed
 
+## v1.0.80 (2026-06-07)
+
+### Added
+
+- PipeWire audio helper: native C helper (`ghelper-audio`) that registers a
+  virtual "G-Helper Microphone" source directly in PipeWire. Three-stream design (capture, virtual
+  source output, monitor playback) with lock-free atomic parameter exchange
+  between the UI thread and the real-time audio callback.
+- Noise suppression via bundled RNNoise (Mozilla/Xiph, BSD-3-Clause): recurrent
+  neural network denoising with configurable aggressiveness
+- 9-band parametric EQ with RBJ-cookbook biquads (peak, low-shelf, high-shelf,
+  high-pass, low-pass, notch, band-pass).
+- Delay effect: sample-accurate delay line up to 1000 ms with feedback and
+  dry/wet mix.
+- Reverb effect: Schroeder-style reverberator with room, damping, width, and
+  mix controls.
+- Channel vocoder: multi-band analysis/synthesis with configurable carrier
+  (fixed Hz or pitch-following)
+- Voice effects chain: pitch shifter (granular, -24 to +24 semitones), autotune
+  (chromatic snap or fixed-pitch monotone), bitcrusher, ring modulation with
+  matrix intensity, band-pass voice filter, and stutter gate.
+- Monitor playback: route processed audio to the default sink so users hear
+  their virtual mic in real time.
+- Source selection: retarget the capture stream to a specific PipeWire source
+  node at runtime.
+- Master volume control with soft-clipping above unity (0..200%).
+- Persistent Eco mode: "Re-apply Eco on every boot" checkbox in the
+  Advanced panel. Survives mode switches and reboots. Models known to
+  forget Eco (G635L, G615L, G835L, G815L, FA506, FX517) have this always
+  enabled.
+- Service-disabled detection: added a system files integrity panel that detects
+  when the boot service is disabled and offers a one-click repair.
+- HID output-report padding: USB HID writes are padded to the device's
+  max report length, fixing silent message drops on controllers like the
+  G533QS.
+- Add drag entire fan curve with holding shift
+- Various fan curve changes
+- Auto-apply fan curves tooltip explaining what the checkbox does and why
+  fan settings reset without it.
+- Export Diagnostics button: opens a save file dialog
+- Startup update prompt: non-modal dialog offers to download and install
+  the update directly
+- ASUS ROG "Slash" LED bar support on compatible laptop lids
+- 9 new languages: Slovak, Slovenian, Filipino, Latvian, Lithuanian,
+  Malay, Nepali, Hindi, Bengali.
+
+### Fixed
+
+- Removed Switch Now button from Ultimate to Eco since it will always freeze the system
+- Boot service MUX=0 safety: udev block rules now include a boot_vga guard
+  so the dGPU is not removed when it is the sole display (Ultimate mode /
+  MUX=0).
+- Screen refresh rate detection fixes.
+- App startup no longer wipes modprobe/udev block artifacts installed by the
+  boot service for persistent Eco. On-disk marker is the ground truth.
+  persistent-preserve branch was taken.
+- Added FX517 (TUF Dash F15) to the Eco boot fix model list for issue #121.
+- Battery charge control udev rule permissions fix.
+
+### Changed
+
+- Boot service ordering, bring back nvidia-powerd.service.
+- Removed dead code: IsManualModeRequired(), rmmod_modules(),
+  pci_autoprobe_off/on(), remove_dgpu_pci().
+
 ## v1.0.79 (2026-05-30)
 
 ### Action required: re-run the install script

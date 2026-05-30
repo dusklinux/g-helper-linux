@@ -1,0 +1,123 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctrl="clr-namespace:GHelper.Linux.UI.Controls"
+        x:Class="GHelper.Linux.UI.Views.VocoderWindow"
+        Title="Vocoder"
+        Width="460"
+        MinWidth="460"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        Background="#1C1C1C"
+        Icon="avares://ghelper/UI/Assets/favicon.ico">
+    <Border Classes="panel" Padding="14" Margin="10">
+        <StackPanel Spacing="14">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6"
+                            VerticalAlignment="Center">
+                    <ctrl:Icon IconName="robot" Width="18" Height="18"
+                               VerticalAlignment="Center" />
+                    <TextBlock x:Name="labelHeader"
+                               Text="Vocoder"
+                               FontSize="16" FontWeight="SemiBold" Foreground="White"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+                <Button Grid.Column="1" x:Name="buttonReset" Content="Reset"
+                        Click="ButtonReset_Click" Width="80" Height="28" />
+            </Grid>
+
+            <TextBlock x:Name="labelDescription"
+                       Text="16-band filterbank vocoder. Speak into your mic - the analyser banks track your formants and modulate the internal carrier so the robot says what you say. Lower carrier = deeper voice, higher = chipmunk."
+                       TextWrapping="Wrap" FontSize="11" Foreground="#888" />
+
+            <!-- Preset picker. Each entry stamps the whole vocoder parameter
+                 set (mix, carrier, detune, attack, release, follow, shift)
+                 to a different character. The combo's selection is cleared
+                 (no highlighted entry) when the user starts adjusting any
+                 slider so they can see they have diverged from the preset. -->
+            <Border CornerRadius="4" Padding="8,6" Background="#0F1419">
+                <StackPanel Spacing="4">
+                    <TextBlock x:Name="labelPresetHeader"
+                               Text="Preset" Foreground="#FFFFFF"
+                               FontWeight="SemiBold" />
+                    <ComboBox x:Name="comboPreset"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="ComboPreset_Changed" />
+                </StackPanel>
+            </Border>
+
+            <!-- Dry / wet first: most-used knob, large prominent slider. -->
+            <Border CornerRadius="4" Padding="8,6" Background="#0F1419">
+                <StackPanel Spacing="4">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" x:Name="labelDryWet"
+                                   Text="Dry / Wet" Foreground="#FFFFFF"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="1" x:Name="labelMix" Text="70%"
+                                   Foreground="#50C878" FontWeight="SemiBold" />
+                    </Grid>
+                    <Slider x:Name="sliderMix" Minimum="0" Maximum="1000" Value="700"
+                            ValueChanged="OnChanged" />
+                </StackPanel>
+            </Border>
+
+            <!-- Pitch follow toggle: when ON, the carrier tracks your voice
+                 and the slider below becomes a +/- semitone transposition.
+                 When OFF, the slider is the fixed carrier frequency in Hz. -->
+            <Border CornerRadius="4" Padding="8,6" Background="#0F1419">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <CheckBox Grid.Column="0" x:Name="checkFollow"
+                              IsCheckedChanged="CheckFollow_Changed"
+                              Content="Follow voice pitch"
+                              Foreground="#FFFFFF" FontWeight="SemiBold" />
+                    <TextBlock Grid.Column="2" x:Name="labelTrackedPitch"
+                               Text="-" Foreground="#888" FontSize="11"
+                               VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <StackPanel Spacing="4">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" x:Name="labelCarrierHeader"
+                               Text="Carrier pitch" Foreground="#AAA" />
+                    <TextBlock Grid.Column="1" x:Name="labelCarrier" Text="110 Hz"
+                               Foreground="#4CC2FF" />
+                </Grid>
+                <Slider x:Name="sliderCarrier" Minimum="50" Maximum="440" Value="110"
+                        TickFrequency="10" ValueChanged="SliderCarrier_Changed" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" x:Name="labelDetuneHeader"
+                               Text="Detune" Foreground="#AAA" />
+                    <TextBlock Grid.Column="1" x:Name="labelDetune" Text="2%"
+                               Foreground="#4CC2FF" />
+                </Grid>
+                <Slider x:Name="sliderDetune" Minimum="0" Maximum="200" Value="20"
+                        ValueChanged="OnChanged" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                    <TextBlock Grid.Column="0" x:Name="labelAttackHeader"
+                               Text="Envelope attack" Foreground="#AAA" />
+                    <TextBlock Grid.Column="1" x:Name="labelAttack" Text="5 ms"
+                               Foreground="#4CC2FF" Margin="0,0,16,0" />
+                    <TextBlock Grid.Column="2" x:Name="labelReleaseHeader"
+                               Text="Release" Foreground="#AAA" />
+                </Grid>
+                <Grid ColumnDefinitions="*,8,*">
+                    <Slider Grid.Column="0" x:Name="sliderAttack"
+                            Minimum="1" Maximum="100" Value="5"
+                            ValueChanged="OnChanged" />
+                    <Slider Grid.Column="2" x:Name="sliderRelease"
+                            Minimum="5" Maximum="500" Value="30"
+                            ValueChanged="OnChanged" />
+                </Grid>
+                <TextBlock x:Name="labelRelease" Text="30 ms"
+                           HorizontalAlignment="Right"
+                           Foreground="#4CC2FF" FontSize="10" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

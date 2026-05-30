@@ -9,5 +9,6 @@ Terminal=false
 Categories=Settings;HardwareSettings;
 Keywords=ASUS;ROG;TUF;Zephyrus;Strix;performance;fan;GPU;keyboard;backlight;
 StartupNotify=false
+StartupWMClass=ghelper
 X-GNOME-Autostart-enabled=true
 X-GNOME-UsesNotifications=true

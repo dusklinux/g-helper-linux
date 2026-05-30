@@ -1,0 +1,11 @@
+# Matches audio-helper/main.c as hand-written: Allman braces, 4-space indent,
+# right-aligned pointers. ColumnLimit 0 disables line re-wrapping so manual
+# breaks in printf/comments are preserved (formatting only fixes indentation,
+# braces and spacing). Scoped to this directory.
+BasedOnStyle: Microsoft
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 0
+PointerAlignment: Right
+AllowShortFunctionsOnASingleLine: None

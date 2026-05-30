@@ -49,6 +49,12 @@ public interface IAsusWmi : IDisposable
     /// firmware is in control (pwm_enable==2 or 3) or if unsupported.</summary>
     bool IsFanCurveEnabled(int fanIndex);
 
+    /// <summary>Ensure the EC is in manual fan mode (FANM=4) by writing pwm_enable=1
+    /// for all fans. Some firmware (SPLX ACPI path) silently ignores PPT writes
+    /// unless FANM=4, which is a side-effect of enabling a custom fan curve.
+    /// This is a no-op when fan curves are already enabled.</summary>
+    void EnsureManualFanMode();
+
     // Battery
 
     /// <summary>Get charge limit (40-100).</summary>

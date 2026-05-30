@@ -10,10 +10,10 @@ echo ""
 dotnet format "$PROJECT" --verbosity normal
 
 echo ""
-echo "=== Format vendor C source (excluding wlr-randr) ==="
+echo "=== Format vendor + helper C source (excluding wlr-randr, rnnoise) ==="
 if command -v clang-format >/dev/null 2>&1; then
-    mapfile -t cfiles < <(find "$SCRIPT_DIR/vendor" \( -name '*.c' -o -name '*.h' \) \
-        -not -path '*/wlr-randr/*')
+    mapfile -t cfiles < <(find "$SCRIPT_DIR/vendor" "$SCRIPT_DIR/audio-helper" \( -name '*.c' -o -name '*.h' \) \
+        -not -path '*/wlr-randr/*' -not -path '*/rnnoise/*')
     if (( ${#cfiles[@]} )); then
         clang-format -i "${cfiles[@]}"
         printf '  formatted: %s\n' "${cfiles[@]#"$SCRIPT_DIR"/}"

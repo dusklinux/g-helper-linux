@@ -74,6 +74,15 @@ public static class FnLockKeymap
             FnLockTarget.Act("miniled", Labels.Get("action_miniled")),
             FnLockTarget.Act("camera", Labels.Get("action_camera")),
             FnLockTarget.Act("touchpad", Labels.Get("action_touchpad")),
+            // Audio chain action targets. Prefix in label so they cluster
+            // visually at the bottom of the dropdown next to each other.
+            FnLockTarget.Act("audio_toggle",  Labels.Get("action_audio_toggle")),
+            FnLockTarget.Act("audio_rnnoise", Labels.Get("action_audio_rnnoise")),
+            FnLockTarget.Act("audio_vocoder", Labels.Get("action_audio_vocoder")),
+            FnLockTarget.Act("audio_eq",      Labels.Get("action_audio_eq")),
+            FnLockTarget.Act("audio_delay",   Labels.Get("action_audio_delay")),
+            FnLockTarget.Act("audio_reverb",  Labels.Get("action_audio_reverb")),
+            FnLockTarget.Act("audio_monitor", Labels.Get("action_audio_monitor")),
         };
     }
 

@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
 using GHelper.Linux.Helpers;
+using GHelper.Linux.Install;
 using GHelper.Linux.Platform.Linux;
 
 namespace GHelper.Linux.Gpu;
@@ -41,7 +42,8 @@ public static class NvidiaProcessScanner
     private static readonly int _selfPid = Environment.ProcessId;
 
     private const string HelperPath = SysfsHelper.GpuHelperPath;
-    private static bool _helperChecked = false;
+    private static volatile bool _helperChecked = false;
+    private static readonly object _helperLock = new();
 
     private static readonly object _privCacheLock = new();
     private static DateTime _privCacheTime = DateTime.MinValue;
@@ -301,16 +303,49 @@ public static class NvidiaProcessScanner
 
     public static bool EnsureHelper()
     {
+        // Cheap re-check on every call: a later install (via the startup
+        // system-files prompt or its Install/Repair button) is picked up at once.
+        if (File.Exists(HelperPath))
+            return true;
         if (_helperChecked)
-            return File.Exists(HelperPath);
-        _helperChecked = true;
+            return false; // self-install already attempted/decided this process
 
+        // Don't race the startup system-files prompt's pkexec: wait for the user's
+        // decision first. No-op on the UI thread and once the decision is made, so
+        // this never blocks the thread showing the (modal) prompt. Done OUTSIDE
+        // the lock below so a long wait can't block UI-thread callers on the lock.
+        Installer.WaitForStartupDecision();
+
+        // The prompt may have just installed the helper.
         if (File.Exists(HelperPath))
             return true;
 
-        Helpers.Logger.WriteLine(
-            $"NvidiaProcessScanner: {HelperPath} not found - attempting pkexec self-install");
-        return RunPkexecInstall();
+        // When the startup prompt criteria were met, that prompt owns the
+        // gpu-helper install. It is still absent here => either it is mid-flight
+        // or the user declined; in both cases we must NOT fire a second, competing
+        // pkexec (the user's rule: the same check that shows the window cancels
+        // this self-install).
+        if (Installer.StartupWillPrompt)
+        {
+            _helperChecked = true;
+            Helpers.Logger.WriteLine(
+                "NvidiaProcessScanner: startup system-files prompt handles gpu-helper - skipping self-install pkexec");
+            return false;
+        }
+
+        // No prompt in play (check disabled, or no other problems): self-install,
+        // serialized so concurrent callers can't fire two pkexec dialogs.
+        lock (_helperLock)
+        {
+            if (File.Exists(HelperPath))
+                return true;
+            if (_helperChecked)
+                return false;
+            _helperChecked = true;
+            Helpers.Logger.WriteLine(
+                $"NvidiaProcessScanner: {HelperPath} not found - attempting pkexec self-install");
+            return RunPkexecInstall();
+        }
     }
 
     public static HelperState CheckHelper()
@@ -344,11 +379,14 @@ public static class NvidiaProcessScanner
 
     public static bool RunPkexecInstall()
     {
-        var ghelperBin = Environment.ProcessPath;
-        if (string.IsNullOrEmpty(ghelperBin) || !File.Exists(ghelperBin))
+        // Under an AppImage, ProcessPath is inside the per-user FUSE mount which
+        // root cannot read; resolve a root-runnable copy (deleted on dispose,
+        // after pkexec returns).
+        using var self = LinuxSystemIntegration.ResolvePrivilegedSelf();
+        if (string.IsNullOrEmpty(self.Path) || !File.Exists(self.Path))
         {
             Helpers.Logger.WriteLine(
-                "NvidiaProcessScanner: cannot self-install scan helper - ProcessPath unknown");
+                "NvidiaProcessScanner: cannot self-install scan helper - executable path unknown");
             return false;
         }
 
@@ -362,7 +400,7 @@ public static class NvidiaProcessScanner
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
             };
-            psi.ArgumentList.Add(ghelperBin);
+            psi.ArgumentList.Add(self.Path);
             psi.ArgumentList.Add("--install-gpu-helper");
             psi.ArgumentList.Add(Path.GetDirectoryName(HelperPath)!);
 

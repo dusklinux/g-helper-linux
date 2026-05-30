@@ -280,8 +280,23 @@ public class FanCurveChart : Control
         temp = Math.Clamp(temp, TempMin, TempMax);
         fan = Math.Clamp(fan, FanMin, FanMax);
 
+        // SHIFT-drag: move all fan points by the same delta (upstream 667a3ea5)
+        bool shiftHeld = (e.KeyModifiers & Avalonia.Input.KeyModifiers.Shift) != 0;
+        if (shiftHeld)
+        {
+            int delta = fan - data[8 + _dragIndex];
+            for (int i = 0; i < PointCount; i++)
+            {
+                int newFan = Math.Clamp(data[8 + i] + delta, FanMin, FanMax);
+                data[8 + i] = (byte)newFan;
+            }
+        }
+        else
+        {
+            data[8 + _dragIndex] = (byte)fan;
+        }
+
         data[_dragIndex] = (byte)temp;
-        data[8 + _dragIndex] = (byte)fan;
 
         CurveData = data;
         InvalidateVisual();
