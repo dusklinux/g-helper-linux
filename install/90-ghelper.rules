@@ -50,7 +50,7 @@ SUBSYSTEM=="platform", DRIVER=="asus-nb-wmi", \
 # platform device (timing race on dual-backend kernels with asus-armoury loaded).
 # This shell fallback catches any that were missed by the per-attribute rules.
 SUBSYSTEM=="platform", DRIVER=="asus-nb-wmi", \
-  RUN+="/bin/sh -c 'for attr in ppt_pl1_spl ppt_pl2_sppt ppt_fppt ppt_apu_sppt ppt_platform_sppt nv_dynamic_boost nv_temp_target; do [ -f /sys/devices/platform/asus-nb-wmi/$attr ] && chmod 0666 /sys/devices/platform/asus-nb-wmi/$attr; done'"
+  RUN+="/bin/sh -c 'for attr in ppt_pl1_spl ppt_pl2_sppt ppt_fppt ppt_apu_sppt ppt_platform_sppt nv_dynamic_boost nv_temp_target; do [ -f /sys/devices/platform/asus-nb-wmi/$$attr ] && chmod 0666 /sys/devices/platform/asus-nb-wmi/$$attr; done'"
 
 # eGPU and boot sound
 SUBSYSTEM=="platform", DRIVER=="asus-nb-wmi", \
@@ -117,10 +117,10 @@ SUBSYSTEM=="leds", KERNEL=="asus::kbd_backlight*", \
 # The asus_nb_wmi hwmon exposes pwm auto_point files for fan curve control.
 # We make them writable for non-root users.
 SUBSYSTEM=="hwmon", ATTR{name}=="asus_nb_wmi", \
-  RUN+="/bin/sh -c 'for f in /sys/class/hwmon/%k/pwm*_auto_point*; do [ -f \"$f\" ] && chmod 0666 \"$f\"; done'"
+  RUN+="/bin/sh -c 'for f in /sys/class/hwmon/%k/pwm*_auto_point*; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
 
 SUBSYSTEM=="hwmon", ATTR{name}=="asus_nb_wmi", \
-  RUN+="/bin/sh -c 'for f in /sys/class/hwmon/%k/pwm*_enable; do [ -f \"$f\" ] && chmod 0666 \"$f\"; done'"
+  RUN+="/bin/sh -c 'for f in /sys/class/hwmon/%k/pwm*_enable; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
 
 # ── CPU boost ──
 # Intel (module trigger — works when intel_pstate is a loadable module)
@@ -143,10 +143,10 @@ ACTION=="add|change", SUBSYSTEM=="acpi", \
 
 # ── Fan curves (asus_custom_fan_curve hwmon, newer kernels) ──
 SUBSYSTEM=="hwmon", ATTR{name}=="asus_custom_fan_curve", \
-  RUN+="/bin/sh -c 'for f in /sys/class/hwmon/%k/pwm*_auto_point*; do [ -f \"$f\" ] && chmod 0666 \"$f\"; done'"
+  RUN+="/bin/sh -c 'for f in /sys/class/hwmon/%k/pwm*_auto_point*; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
 
 SUBSYSTEM=="hwmon", ATTR{name}=="asus_custom_fan_curve", \
-  RUN+="/bin/sh -c 'for f in /sys/class/hwmon/%k/pwm*_enable; do [ -f \"$f\" ] && chmod 0666 \"$f\"; done'"
+  RUN+="/bin/sh -c 'for f in /sys/class/hwmon/%k/pwm*_enable; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
 
 # ── ASUS input devices (hotkeys) ──
 # Grant read access to event devices so non-root can receive Fn-key events.
@@ -179,13 +179,13 @@ ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="pcie_aspm", \
 # On newer kernels, ASUS WMI attributes move to firmware-attributes.
 # chmod all current_value files under the asus-armoury attributes dir.
 ACTION=="add|change", SUBSYSTEM=="firmware-attributes", \
-  RUN+="/bin/sh -c 'for f in /sys/class/firmware-attributes/asus-armoury/attributes/*/current_value; do [ -f \"$f\" ] && chmod 0666 \"$f\"; done'"
+  RUN+="/bin/sh -c 'for f in /sys/class/firmware-attributes/asus-armoury/attributes/*/current_value; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
 
 # Trigger on asus_armoury module load — the firmware-attributes subsystem event above
 # may fire before all attribute files are populated (race on fast kernels like CachyOS).
 # This module trigger provides a second chance with a brief delay.
 ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="asus_armoury", \
-  RUN+="/bin/sh -c 'sleep 1; for f in /sys/class/firmware-attributes/asus-armoury/attributes/*/current_value; do [ -f \"$f\" ] && chmod 0666 \"$f\"; done'"
+  RUN+="/bin/sh -c 'sleep 1; for f in /sys/class/firmware-attributes/asus-armoury/attributes/*/current_value; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
 
 # ── ryzen_smu (Curve Optimizer undervolting) ──
 # Only rsmu_cmd and smu_args need write access for sending CO commands.
@@ -202,4 +202,4 @@ SUBSYSTEM=="cpu", KERNEL=="cpu0", ACTION=="add|change", \
 
 # ── CPU online/offline (core toggling) ──
 SUBSYSTEM=="cpu", ACTION=="add", \
-  RUN+="/bin/sh -c 'for f in /sys/devices/system/cpu/cpu*/online; do [ -f \"$f\" ] && chmod 0666 \"$f\"; done'"
+  RUN+="/bin/sh -c 'for f in /sys/devices/system/cpu/cpu*/online; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
