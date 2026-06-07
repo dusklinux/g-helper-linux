@@ -73,6 +73,12 @@
 - Removed dead code: IsManualModeRequired(), rmmod_modules(),
   pci_autoprobe_off/on(), remove_dgpu_pci().
 
+<img width="1905" height="1197" alt="Screenshot_20260607_115445" src="https://github.com/user-attachments/assets/1ee2d99b-02cb-48f4-9b3e-dcee09fd2a9a" />
+<img width="588" height="341" alt="Screenshot_20260607_115807" src="https://github.com/user-attachments/assets/d050c979-326f-4437-936c-d23b0a402c0d" />
+<img width="855" height="755" alt="Screenshot_20260607_115830" src="https://github.com/user-attachments/assets/e40550ba-aac8-4b3a-9177-d4cb7382e942" />
+
+
+
 ## v1.0.79 (2026-05-30)
 
 ### Action required: re-run the install script
