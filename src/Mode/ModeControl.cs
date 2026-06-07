@@ -163,13 +163,21 @@ public class ModeControl
             }
         }
 
-        // 4. Apply power limits, ASPM, then fan curves LAST
-        // Fan curves must be written after everything else because:
-        // - AutoPower writes nv_dynamic_boost/nv_temp_target which can cause the EC
-        // to recalculate GPU fan strategy and override custom curves
-        // - ASPM policy changes trigger PCIe link renegotiation which can reset curves
-        // - The kernel resets fan curves when thermal profile changes (asusctl documents this)
-        // By writing curves last, nothing runs after them to reset them.
+        // 4. Apply fan curves, power limits, ASPM, then fan curves again.
+        //
+        // Fan curves are written FIRST because some firmware requires manual
+        // fan mode (FANM=4, set by pwm_enable=1) before accepting PPT writes
+        // via asus-armoury firmware-attributes. Without this, PPT writes may
+        // be silently ignored on affected models. (asusctl 6.3.8 documents
+        // this: "re-apply fan curves before PPT writes".)
+        //
+        // Fan curves are then written AGAIN after PPT/ASPM because:
+        // - nv_dynamic_boost/nv_temp_target can cause the EC to recalculate
+        //   GPU fan strategy and override custom curves
+        // - ASPM policy changes trigger PCIe link renegotiation which can
+        //   reset curves
+        // The final write ensures curves are authoritative after all other
+        // EC interactions settle.
         Task.Run(async () =>
         {
             // If reset was needed, wait for firmware to process the bounce
@@ -178,6 +186,11 @@ public class ModeControl
             else
                 await Task.Delay(100); // Let thermal policy settle
 
+            // Phase 1: fan curves first (sets FANM=4 for PPT acceptance)
+            AutoFans(mode);
+            await Task.Delay(100);
+
+            // Phase 2: power limits, undervolt, boost, ASPM
             AutoCpuPower(mode);
             AutoGpuPower(mode);
 
@@ -220,6 +233,8 @@ public class ModeControl
 
             await Task.Delay(100); // Let EC settle after power/ASPM changes
 
+            // Phase 3: re-apply fan curves to recover from PPT/ASPM-induced
+            // EC resets. This is the authoritative final write.
             AutoFans(mode);
 
             // 5. Mode-change shell command hook (per-mode, optional). Runs on every
@@ -284,9 +299,13 @@ public class ModeControl
     {
         try
         {
-            // Re-run the per-mode writes. AutoCpuPower / AutoGpuPower each short-circuit
-            // when their respective opt-in flag is off, which is the right behavior here.
+            // Re-apply fan curves first so FANM=4 is set before PPT writes.
+            // Some firmware silently ignores PPT writes when not in manual
+            // fan mode. AutoFans sets FANM=4 when auto_apply_fans is ON;
+            // AutoCpuPower/AutoGpuPower call EnsureManualFanMode() themselves
+            // when auto_apply_fans is OFF.
             int mode = Modes.GetCurrent();
+            AutoFans(mode);
             AutoCpuPower(mode);
             AutoGpuPower(mode);
         }
@@ -411,6 +430,14 @@ public class ModeControl
         if (wmi == null)
             return;
 
+        // Some firmware (SPLX ACPI path) silently ignores PPT writes unless
+        // the EC is in manual fan mode (FANM=4). When auto_apply_fans is ON,
+        // Phase 1 already called AutoFans() which sets FANM=4 via
+        // pwm_enable=1. When auto_apply_fans is OFF, ensure FANM=4 here
+        // before writing any PPT values.
+        if (!Helpers.AppConfig.IsMode("auto_apply_fans"))
+            wmi.EnsureManualFanMode();
+
         int maxTotal = GetMaxTotal();
 
         int pl1 = Helpers.AppConfig.GetMode("limit_slow");
@@ -507,6 +534,11 @@ public class ModeControl
             ResetGpuTuning(wmi, nvCtl);
             return;
         }
+
+        // Ensure FANM=4 for GPU PPT writes (nv_dynamic_boost, nv_temp_target,
+        // etc.) when fan curves are not auto-applied. See AutoCpuPower comment.
+        if (!Helpers.AppConfig.IsMode("auto_apply_fans"))
+            wmi.EnsureManualFanMode();
 
         int maxGpuBoost = GetMaxGpuBoost();
 

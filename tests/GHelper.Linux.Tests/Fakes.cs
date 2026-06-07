@@ -97,6 +97,7 @@ public sealed class FakeAsusWmi : IAsusWmi
     public Platform.Linux.AttrRange? GetAttributeRange(Platform.Linux.AttrDef attr) => null;
     public int GetKeyboardBrightness() => 0;
     public void SetKeyboardBrightness(int level) { }
+    public void EnsureManualFanMode() { }
     public void SetKeyboardRgb(byte r, byte g, byte b) { }
     public void SubscribeEvents() { }
     public void Dispose() { }

@@ -125,6 +125,16 @@ public class App : Application
         // BIOS revision and aren't standard XInput - Ally users will need to
         // discover them with `evtest` and map via the existing key-binding UI.
         { "ally_toggle_mode",  "Ally: Toggle Controller Mode" },
+        // Audio / DSP chain hotkey targets. Display names are prefixed
+        // "Audio: ..." so they cluster together at the bottom of the
+        // dropdown (Dictionary preserves insertion order in .NET 5+).
+        { "audio_toggle",   "Audio: Toggle Audio Helper" },
+        { "audio_rnnoise",  "Audio: Toggle Denoise (RNNoise)" },
+        { "audio_vocoder",  "Audio: Toggle Vocoder" },
+        { "audio_eq",       "Audio: Toggle Parametric EQ" },
+        { "audio_delay",    "Audio: Toggle Delay" },
+        { "audio_reverb",   "Audio: Toggle Reverb" },
+        { "audio_monitor",  "Audio: Toggle Monitor Playback" },
     };
 
     /// <summary>Default actions for each configurable key (matches Windows G-Helper).</summary>
@@ -166,6 +176,13 @@ public class App : Application
             "camera" => Labels.Get("action_camera"),
             "touchpad" => Labels.Get("action_touchpad"),
             "ally_toggle_mode" => Labels.Get("action_ally_toggle_mode"),
+            "audio_toggle" => Labels.Get("action_audio_toggle"),
+            "audio_rnnoise" => Labels.Get("action_audio_rnnoise"),
+            "audio_vocoder" => Labels.Get("action_audio_vocoder"),
+            "audio_eq" => Labels.Get("action_audio_eq"),
+            "audio_delay" => Labels.Get("action_audio_delay"),
+            "audio_reverb" => Labels.Get("action_audio_reverb"),
+            "audio_monitor" => Labels.Get("action_audio_monitor"),
             _ => actionId
         };
     }
@@ -300,19 +317,6 @@ public class App : Application
             // Run on background thread - SetGpuEco can block for 30-60 seconds
             Task.Run(() =>
             {
-                // Keep the on-disk gpu-helper in sync with the copy embedded in
-                // this binary. If the installed helper is stale or missing,
-                // prompt (pkexec) to overwrite it - runs before any GPU op that
-                // uses the helper. Re-checked every startup until hashes match.
-                var helperState = Gpu.NvidiaProcessScanner.CheckHelper();
-                if (helperState != Gpu.HelperState.InSync)
-                {
-                    Logger.WriteLine($"Startup: gpu-helper {helperState} - launching pkexec self-update");
-                    bool updated = Gpu.NvidiaProcessScanner.RunPkexecInstall();
-                    Logger.WriteLine(updated
-                        ? "Startup: gpu-helper updated"
-                        : "Startup: gpu-helper update failed/cancelled");
-                }
 
                 GpuModeCtrl?.CacheDgpuSlotIfPresent();
 
@@ -379,6 +383,28 @@ public class App : Application
                 UI.Views.ExtraWindow.StartClamshellInhibit();
 
             OptimalBrightness.Init();
+
+            // Auto-start the audio helper if the user enabled it in a prior
+            // session. The helper is cheap (~10 MB RSS, <1% CPU when idle),
+            // and starting at app launch keeps the FN-Lock-style toggle
+            // visually consistent with what's actually running.
+            if (AppConfig.Is("audio_enabled") && !AppConfig.Is("disable_audio"))
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    if (AudioHelper.Instance.Start())
+                    {
+                        AudioHelper.Instance.ReapplyAllState();
+                        MainWindowInstance?.RefreshAudioToggle();
+                    }
+                });
+            }
+
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                Install.Installer.CheckAndPromptAtStartup(MainWindowInstance));
+
+            if (MainWindowInstance != null)
+                UI.Views.UpdatesWindow.CheckForUpdateAtStartup(MainWindowInstance);
 
             // Register Unix signal handlers for clean shutdown on SIGTERM/SIGINT
             // This prevents KDE/GNOME from hanging on logout/reboot
@@ -729,7 +755,44 @@ public class App : Application
                         !tpOn.Value ? "input-touchpad-on" : "input-touchpad-off");
                 }
                 break;
+
+            case "audio_toggle":
+                {
+                    bool on = AudioHelper.Instance.ToggleMaster();
+                    System?.ShowNotification(Labels.Get("microphone"),
+                        on ? Labels.Get("enabled") : Labels.Get("disabled"),
+                        on ? "microphone-sensitivity-high" : "microphone-sensitivity-muted");
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        MainWindowInstance?.RefreshAudioToggle());
+                    break;
+                }
+
+            case "audio_rnnoise":
+                NotifyAudioToggle(AudioHelper.Instance.ToggleRnnoise(), "Denoise");
+                break;
+            case "audio_vocoder":
+                NotifyAudioToggle(AudioHelper.Instance.ToggleVocoder(), "Vocoder");
+                break;
+            case "audio_eq":
+                NotifyAudioToggle(AudioHelper.Instance.ToggleEq(), "EQ");
+                break;
+            case "audio_delay":
+                NotifyAudioToggle(AudioHelper.Instance.ToggleDelay(), "Delay");
+                break;
+            case "audio_reverb":
+                NotifyAudioToggle(AudioHelper.Instance.ToggleReverb(), "Reverb");
+                break;
+            case "audio_monitor":
+                NotifyAudioToggle(AudioHelper.Instance.ToggleMonitor(), "Monitor");
+                break;
         }
+    }
+
+    private void NotifyAudioToggle(bool on, string effectName)
+    {
+        System?.ShowNotification($"Audio: {effectName}",
+            on ? Labels.Get("enabled") : Labels.Get("disabled"),
+            on ? "audio-x-generic" : "audio-volume-muted");
     }
 
     private void CycleScreenRefreshRate()

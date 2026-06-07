@@ -21,6 +21,7 @@ public partial class FansWindow : Window
     private bool _updatingUV;
     private bool _updatingAdvanced;
     private bool _updatingGpu;
+    private bool _suppressModeCombo;
     private int _activeTab;
 
     public FansWindow()
@@ -53,6 +54,7 @@ public partial class FansWindow : Window
 
         Loaded += (_, _) =>
         {
+            InitModeCombo();
             LoadFanCurves();
             LoadPowerLimits();
             LoadUV();
@@ -154,6 +156,7 @@ public partial class FansWindow : Window
         {
             try
             {
+                InitModeCombo();
                 LoadFanCurves();
                 LoadPowerLimits();
                 LoadUV();
@@ -451,11 +454,13 @@ public partial class FansWindow : Window
     {
         Title = Labels.Get("fans_title");
         headerFanCurves.Text = Labels.Get("fan_curves");
+        InitModeCombo();
         labelMonitorButton.Text = Labels.Get("monitor_button");
         buttonApplyFans.Content = Labels.Get("apply");
         buttonReset.Content = Labels.Get("reset");
         buttonDisable.Content = Labels.Get("disable");
         checkApplyFans.Content = Labels.Get("auto_apply");
+        Avalonia.Controls.ToolTip.SetTip(checkApplyFans, Labels.Get("auto_apply_fans_tooltip"));
         headerPowerLimits.Text = Labels.Get("power_limits");
         labelPL1Label.Text = Labels.Get("cpu_pl1");
         labelPL2Label.Text = Labels.Get("cpu_pl2");
@@ -471,6 +476,11 @@ public partial class FansWindow : Window
         chartGPU.FanLabel = Labels.Get("gpu_fan");
         chartMid.FanLabel = Labels.Get("mid_fan");
         chartXGM.FanLabel = Labels.Get("xgm_fan");
+        string dragHint = Labels.Get("fan_drag_all");
+        Avalonia.Controls.ToolTip.SetTip(chartCPU, dragHint);
+        Avalonia.Controls.ToolTip.SetTip(chartGPU, dragHint);
+        Avalonia.Controls.ToolTip.SetTip(chartMid, dragHint);
+        Avalonia.Controls.ToolTip.SetTip(chartXGM, dragHint);
         headerUndervolt.Text = Labels.Get("undervolt_header");
         labelUndervoltDesc.Text = Labels.Get("undervolt_desc");
         labelUndervoltCpu.Text = Labels.Get("undervolt_cpu");
@@ -513,6 +523,42 @@ public partial class FansWindow : Window
         labelLivePcieKey.Text = Labels.Get("gpu_live_pcie");
         labelUndervoltIgpu.Text = Labels.Get("undervolt_igpu");
         labelCpuTempLabel.Text = Labels.Get("cpu_temp_target");
+    }
+
+    private void InitModeCombo()
+    {
+        _suppressModeCombo = true;
+        try
+        {
+            int current = Mode.Modes.GetCurrent();
+            comboMode.Items.Clear();
+            int selectedIdx = 0;
+            int idx = 0;
+            foreach (var kv in Mode.Modes.GetDictionary())
+            {
+                comboMode.Items.Add(new ComboBoxItem { Content = kv.Value, Tag = kv.Key });
+                if (kv.Key == current)
+                    selectedIdx = idx;
+                idx++;
+            }
+            comboMode.SelectedIndex = selectedIdx;
+        }
+        finally
+        {
+            _suppressModeCombo = false;
+        }
+    }
+
+    private void ComboMode_Changed(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressModeCombo)
+            return;
+        if (comboMode.SelectedItem is not ComboBoxItem item || item.Tag is not int modeId)
+            return;
+        if (modeId == Mode.Modes.GetCurrent())
+            return;
+
+        App.Mode?.SetPerformanceMode(modeId);
     }
 
     // Fan Curves
@@ -591,17 +637,6 @@ public partial class FansWindow : Window
         {
             chartXGM.IsVisible = false;
         }
-
-        // Update mode label
-        int mode = App.Wmi?.GetThrottleThermalPolicy() ?? -1;
-        string modeName = mode switch
-        {
-            0 => Labels.Get("mode_balanced"),
-            1 => Labels.Get("mode_turbo"),
-            2 => Labels.Get("mode_silent"),
-            _ => Labels.Get("mode_unknown")
-        };
-        labelMode.Text = Labels.Format("mode_prefix", modeName);
 
         checkApplyFans.IsChecked = Helpers.AppConfig.IsMode("auto_apply_fans");
 
@@ -909,6 +944,11 @@ public partial class FansWindow : Window
             var wmi = App.Wmi;
             if (wmi == null)
                 return;
+
+            // Ensure FANM=4 so PPT writes are not silently dropped by
+            // firmware. Mode-switch paths handle this via AutoFans /
+            // AutoCpuPower, but direct slider writes bypass that flow.
+            wmi.EnsureManualFanMode();
 
             int pl1 = (int)sliderPL1.Value;
             int pl2 = (int)sliderPL2.Value;
@@ -1405,6 +1445,8 @@ public partial class FansWindow : Window
             {
                 if (wmi != null)
                 {
+                    wmi.EnsureManualFanMode();
+
                     if (baseTgp != null)
                         wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvBaseTgp, baseTgp.Value);
                     if (maxTgp != null)

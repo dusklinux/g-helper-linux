@@ -247,6 +247,13 @@ public class GpuModeController
             Logger.WriteLine($"GpuModeController: RequestModeSwitch → {target}");
             var result = ComputeAndExecute(target);
 
+            // Sync the on-disk persistent marker with the current mode.
+            // Entering Eco writes the marker so the boot script re-applies Eco.
+            // Leaving Eco removes the marker so the boot script won't force Eco.
+            // The config/checkbox is NOT touched here (user preference survives).
+            if (IsEcoPersistentConfig())
+                SyncPersistentMarkerToDisk(target == GpuMode.Eco);
+
             // If the user has the AURA "GPU Mode" color effect selected,
             // refresh the keyboard so the new GPU mode color is visible
             // immediately. Failure here is non-fatal - log and continue.
@@ -293,7 +300,10 @@ public class GpuModeController
             Logger.WriteLine("GpuModeController: TryReleaseAndSwitch - attempting driver release");
             LogHoldersSnapshot("pre-release");
 
-            bool released = TryReleaseGpuDriver();
+            bool physicallyUltimate = _wmi.GetGpuMuxMode() == 0;
+            if (physicallyUltimate)
+                Logger.WriteLine("GpuModeController: MUX=0 (Ultimate) - skipping live release, deferring Eco to reboot");
+            bool released = !physicallyUltimate && TryReleaseGpuDriver();
             if (!released)
             {
                 Logger.WriteLine("GpuModeController: driver release failed - deferring to reboot");
@@ -509,6 +519,15 @@ public class GpuModeController
         bool needsDgpuChange = false;
         bool needsMuxChange = false;
 
+        // Eco half-state detection: firmware reports
+        // dgpu_disable=1 but the dGPU driver is still loaded. This happens
+        // when firmware fails to actually power down the dGPU. Log it so
+        // diagnostics can spot the mismatch.
+        if (ecoEnabled && IsDgpuDriverActive())
+        {
+            Logger.WriteLine("GpuModeController: startup - Eco half-state detected (dgpu_disable=1 but dGPU driver active)");
+        }
+
         if (target == GpuMode.Eco && !ecoEnabled)
         {
             if (mux == 0)
@@ -545,8 +564,23 @@ public class GpuModeController
         if (!needsDgpuChange && !needsMuxChange)
         {
             Logger.WriteLine($"GpuModeController: startup - hardware matches saved mode '{savedMode}'");
-            // Hardware matches - clean up block artifacts if they exist (mode was applied)
-            RemoveDriverBlock();
+            // Hardware matches. For persistent Eco, keep the modprobe+udev blocks
+            // so the next boot is protected even if try_release_nvidia fails.
+            // For one-shot Eco or non-Eco modes, clean up stale artifacts.
+            // Check the on-disk marker (not config) because config stays true
+            // even when the user is in Standard.
+            if (!IsEcoPersistentOnDisk())
+                RemoveDriverBlock();
+
+            // Model-based persistent Eco: if firmware is known to forget dgpu_disable
+            // across reboots, auto-enable the persistent marker so the boot service
+            // re-applies Eco on every startup.
+            if (target == GpuMode.Eco && AppConfig.IsEcoBootFixModel() && !IsEcoPersistentConfig())
+            {
+                Logger.WriteLine("GpuModeController: startup - model requires persistent Eco, auto-enabling");
+                SetEcoPersistent(true);
+            }
+
             return GpuSwitchResult.AlreadySet;
         }
 
@@ -616,8 +650,8 @@ public class GpuModeController
                 if (_wmi.GetGpuEco())
                 {
                     Logger.WriteLine("GpuModeController: startup - Eco mode applied successfully");
-                    // Eco confirmed - remove block artifacts (dgpu_disable=1 is persistent)
-                    RemoveDriverBlock();
+                    if (!IsEcoPersistentOnDisk())
+                        RemoveDriverBlock();
                     return GpuSwitchResult.Applied;
                 }
                 else
@@ -1371,6 +1405,36 @@ public class GpuModeController
             }
         }
         return AppConfig.GetString(DgpuSlotKey);
+    }
+
+    /// <summary>
+    /// Universal, vendor-neutral, Eco-resilient test for whether this machine has
+    /// a discrete GPU. Used to decide whether the GPU-mode boot integration
+    /// (ghelper-gpu-boot.service) is relevant on this hardware.
+    ///
+    ///   1. Live PCI scan (<see cref="FindDgpuPciDevice"/>): NVIDIA or non-iGPU
+    ///      AMD VGA/3D function - works on any vendor, no driver needed; NOT
+    ///      ASUS-specific.
+    ///   2. Cached dGPU slot (<see cref="DgpuSlotKey"/>): set whenever the dGPU was
+    ///      ever seen (<see cref="CacheDgpuSlotIfPresent"/> at startup). Survives
+    ///      Eco mode, where the dGPU is removed from the PCI bus and the live scan
+    ///      would otherwise miss it.
+    ///   3. ASUS firmware bonus: dgpu_disable / gpu_mux_mode attributes exist only
+    ///      on dGPU machines and persist in Eco. One extra signal, not the only one.
+    ///
+    /// Errs toward "true" when uncertain, so a dGPU laptop currently in Eco is
+    /// never misclassified as integrated-only.
+    /// </summary>
+    public static bool HasDiscreteGpu()
+    {
+        if (FindDgpuPciDevice() != null)
+            return true;
+        if (!string.IsNullOrEmpty(AppConfig.GetString(DgpuSlotKey)))
+            return true;
+        var wmi = App.Wmi;
+        return wmi != null
+            && (wmi.IsFeatureSupported(AsusAttributes.DgpuDisable)
+                || wmi.IsFeatureSupported(AsusAttributes.GpuMuxMode));
     }
 
     /// <summary>
@@ -2225,6 +2289,14 @@ public class GpuModeController
     /// <summary>Path to trigger file read by ghelper on startup.</summary>
     internal static readonly string TriggerPath = TestPathPrefix + "/etc/ghelper/pending-gpu-mode";
 
+    /// <summary>
+    /// Persistent Eco marker. Unlike TriggerPath (consumed after one boot),
+    /// this file survives boot-script cleanup. When present and TriggerPath is
+    /// absent, the boot script treats its content as the pending mode, making
+    /// Eco survive reboots on firmware that forgets dgpu_disable.
+    /// </summary>
+    internal static readonly string PersistentTriggerPath = TestPathPrefix + "/etc/ghelper/persistent-gpu-mode";
+
     /// <summary>Path to backend selector file. Content "asus-wmi" or "pci".</summary>
     internal static readonly string BackendPath = TestPathPrefix + "/etc/ghelper/backend";
 
@@ -2283,8 +2355,16 @@ public class GpuModeController
                     mkdir(BackendPath);
                     File.WriteAllText(BackendPath, backend ?? "asus-wmi");
                     break;
+                case "persist":
+                    mkdir(PersistentTriggerPath);
+                    File.WriteAllText(PersistentTriggerPath, "eco");
+                    break;
+                case "unpersist":
+                    if (File.Exists(PersistentTriggerPath))
+                        File.Delete(PersistentTriggerPath);
+                    break;
                 case "live-standard":
-                    // Mirror the bash helper: remove blocks + trigger.
+                    // Mirror the bash helper: remove blocks + trigger + persistent marker.
                     // udevadm + PCI rescan + modprobe are out-of-scope
                     // for a userland test sandbox (no real kernel).
                     if (File.Exists(ModprobeBlockPath))
@@ -2293,6 +2373,8 @@ public class GpuModeController
                         File.Delete(UdevRemovePath);
                     if (File.Exists(TriggerPath))
                         File.Delete(TriggerPath);
+                    if (File.Exists(PersistentTriggerPath))
+                        File.Delete(PersistentTriggerPath);
                     break;
             }
         }
@@ -2704,6 +2786,72 @@ public class GpuModeController
         {
             Logger.WriteLine($"GpuModeController: RemoveDriverBlock failed: {ex.Message}");
         }
+    }
+    /// <summary>
+    /// Write or remove the persistent Eco marker via the helper script.
+    /// When <paramref name="persistent"/> is true, the boot script will
+    /// re-apply <c>dgpu_disable=1</c> on every boot even after the one-shot
+    /// trigger is consumed. When false, the marker is removed and boot
+    /// behaviour returns to one-shot.
+    /// </summary>
+    private void SyncPersistentMarkerToDisk(bool present)
+    {
+        try
+        {
+            string action = present ? "persist" : "unpersist";
+            Logger.WriteLine($"GpuModeController: sync persistent marker to disk: {action}");
+
+            if (IsTestMode)
+            {
+                RunHelperInTestMode(action, GpuMode.Eco);
+                return;
+            }
+
+            string? helper = FindHelperScript();
+            if (helper != null)
+            {
+                var args = present
+                    ? new[] { "persist", "eco" }
+                    : new[] { "unpersist" };
+                SysfsHelper.RunSudoOrPkexec(helper, args, sudoTimeoutMs: 120000, pkexecTimeoutMs: 120000);
+            }
+            else
+            {
+                string script = present
+                    ? $"mkdir -p /etc/ghelper && echo eco > {PersistentTriggerPath} && chmod 644 {PersistentTriggerPath}"
+                    : $"rm -f {PersistentTriggerPath}";
+                SysfsHelper.RunPkexecBash(script);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine($"GpuModeController: SyncPersistentMarkerToDisk({present}) failed: {ex.Message}");
+        }
+    }
+
+    internal void SetEcoPersistent(bool persistent)
+    {
+        SyncPersistentMarkerToDisk(persistent);
+        AppConfig.Set("gpu_eco_persistent", persistent ? 1 : 0);
+
+        if (persistent)
+            Logger.WriteLine($"GpuModeController: persistent Eco enabled ({PersistentTriggerPath})");
+        else
+            Logger.WriteLine("GpuModeController: persistent Eco disabled");
+    }
+
+    /// <summary>Check whether the persistent Eco marker file exists on disk.</summary>
+    internal static bool IsEcoPersistentOnDisk()
+    {
+        try
+        { return File.Exists(PersistentTriggerPath); }
+        catch { return false; }
+    }
+
+    /// <summary>Check config flag (UI state). May be true even before the file is written.</summary>
+    internal static bool IsEcoPersistentConfig()
+    {
+        return AppConfig.Is("gpu_eco_persistent");
     }
 
     // Config helpers

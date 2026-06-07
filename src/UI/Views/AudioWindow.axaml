@@ -1,0 +1,307 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctrl="clr-namespace:GHelper.Linux.UI.Controls"
+        x:Class="GHelper.Linux.UI.Views.AudioWindow"
+        Title="G-Helper Audio"
+        Width="820"
+        Height="600"
+        MinWidth="700"
+        MinHeight="480"
+        WindowStartupLocation="CenterScreen"
+        Background="#1C1C1C"
+        Icon="avares://ghelper/UI/Assets/favicon.ico">
+
+    <Window.Styles>
+        <!-- Chain effect tile: top row hosts the on/off checkbox + name,
+             body is a clickable Button that opens the effect detail window.
+             A bright accent border highlights tiles where the effect is on. -->
+        <Style Selector="Border.effect-tile">
+            <Setter Property="Background" Value="#262A30" />
+            <Setter Property="BorderBrush" Value="#3F4248" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="MinWidth" Value="118" />
+        </Style>
+        <Style Selector="Border.effect-tile.on">
+            <Setter Property="BorderBrush" Value="#50C878" />
+            <Setter Property="Background" Value="#1E3328" />
+        </Style>
+        <Style Selector="Button.tile-body">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Padding" Value="4,4" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.tile-body:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#33FFFFFF" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="10">
+
+        <!-- Top control bar: source dropdown + master volume potentiometer +
+             monitor toggle. Master enable button lives on the main window's
+             Microphone panel (next to the FN-Lock-style label). -->
+        <Border Grid.Row="0" Classes="panel" Padding="10,8">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8"
+                            VerticalAlignment="Center">
+                    <TextBlock x:Name="labelInputSource"
+                               Text="Input source:" Foreground="#AAA"
+                               VerticalAlignment="Center" FontSize="12" />
+                    <ComboBox x:Name="comboSource"
+                              MinWidth="260" Height="34"
+                              SelectionChanged="ComboSource_Changed" />
+                    <Button x:Name="buttonSourceRefresh"
+                            Width="34" Height="34"
+                            Padding="0"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            Click="ButtonSourceRefresh_Click">
+                        <TextBlock Text="&#x21BB;" FontSize="18"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   TextAlignment="Center" />
+                    </Button>
+                </StackPanel>
+
+                <!-- Master volume Moog-style pot, custom drawn. Compact
+                     50x76 default so it tucks into the top control strip
+                     without dominating it. -->
+                <ctrl:KnobControl Grid.Column="2" x:Name="knobMaster"
+                                  Width="50" Height="76"
+                                  Margin="0,0,10,0"
+                                  VerticalAlignment="Center" />
+
+                <ToggleButton Grid.Column="3" x:Name="toggleMonitor"
+                              IsCheckedChanged="ToggleMonitor_Changed"
+                              MinWidth="120" Height="34">
+                    <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                        <ctrl:Icon IconName="headphones" Width="16" Height="16"
+                                   VerticalAlignment="Center" />
+                        <TextBlock x:Name="labelMonitor" Text="Monitor" FontSize="12"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </ToggleButton>
+            </Grid>
+        </Border>
+
+        <!-- Status strip -->
+        <TextBlock Grid.Row="1" x:Name="labelStatus" Text="Helper offline"
+                   Margin="4,4,0,2" Foreground="#888" FontSize="11" />
+
+        <!-- Chain: each tile has an enable CheckBox at top + clickable body
+             that opens the effect detail window. -->
+        <Border Grid.Row="2" Classes="panel" Padding="8" Margin="0,2,0,6">
+            <Grid ColumnDefinitions="*,Auto,*,Auto,*,Auto,*,Auto,*">
+                <Border Grid.Column="0" x:Name="tileRnn" Classes="effect-tile">
+                    <StackPanel Spacing="2">
+                        <CheckBox x:Name="checkRnn"
+                                  IsCheckedChanged="CheckRnn_Changed"
+                                  Content="Denoise" FontWeight="SemiBold" />
+                        <Button Classes="tile-body" Click="ButtonRnnOpen_Click">
+                            <StackPanel Spacing="2" HorizontalAlignment="Center">
+                                <ctrl:Icon IconName="brain" Width="28" Height="28"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock x:Name="labelRnnSubtitle"
+                                           Text="RNNoise" FontSize="10"
+                                           Foreground="#888"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Grid.Column="1" Text="&#x2192;" VerticalAlignment="Center"
+                           Foreground="#666" Margin="4,0" />
+
+                <Border Grid.Column="2" x:Name="tileVocoder" Classes="effect-tile">
+                    <StackPanel Spacing="2">
+                        <CheckBox x:Name="checkVocoder"
+                                  IsCheckedChanged="CheckVocoder_Changed"
+                                  Content="Vocoder" FontWeight="SemiBold" />
+                        <Button Classes="tile-body" Click="ButtonVocoderOpen_Click">
+                            <StackPanel Spacing="2" HorizontalAlignment="Center">
+                                <ctrl:Icon IconName="robot" Width="28" Height="28"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock x:Name="labelVocoderSubtitle"
+                                           Text="Robot" FontSize="10"
+                                           Foreground="#888"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Grid.Column="3" Text="&#x2192;" VerticalAlignment="Center"
+                           Foreground="#666" Margin="4,0" />
+
+                <Border Grid.Column="4" x:Name="tileEq" Classes="effect-tile">
+                    <StackPanel Spacing="2">
+                        <CheckBox x:Name="checkEq"
+                                  IsCheckedChanged="CheckEq_Changed"
+                                  Content="EQ" FontWeight="SemiBold" />
+                        <Button Classes="tile-body" Click="ButtonEqOpen_Click">
+                            <StackPanel Spacing="2" HorizontalAlignment="Center">
+                                <ctrl:Icon IconName="equalizer" Width="28" Height="28"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock x:Name="labelEqSubtitle"
+                                           Text="9-band" FontSize="10"
+                                           Foreground="#888"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Grid.Column="5" Text="&#x2192;" VerticalAlignment="Center"
+                           Foreground="#666" Margin="4,0" />
+
+                <Border Grid.Column="6" x:Name="tileDelay" Classes="effect-tile">
+                    <StackPanel Spacing="2">
+                        <CheckBox x:Name="checkDelay"
+                                  IsCheckedChanged="CheckDelay_Changed"
+                                  Content="Delay" FontWeight="SemiBold" />
+                        <Button Classes="tile-body" Click="ButtonDelayOpen_Click">
+                            <StackPanel Spacing="2" HorizontalAlignment="Center">
+                                <ctrl:Icon IconName="delay" Width="28" Height="28"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock x:Name="labelDelaySubtitle"
+                                           Text="Echo line" FontSize="10"
+                                           Foreground="#888"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Grid.Column="7" Text="&#x2192;" VerticalAlignment="Center"
+                           Foreground="#666" Margin="4,0" />
+
+                <Border Grid.Column="8" x:Name="tileReverb" Classes="effect-tile">
+                    <StackPanel Spacing="2">
+                        <CheckBox x:Name="checkReverb"
+                                  IsCheckedChanged="CheckReverb_Changed"
+                                  Content="Reverb" FontWeight="SemiBold" />
+                        <Button Classes="tile-body" Click="ButtonReverbOpen_Click">
+                            <StackPanel Spacing="2" HorizontalAlignment="Center">
+                                <ctrl:Icon IconName="wave" Width="28" Height="28"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock x:Name="labelReverbSubtitle"
+                                           Text="Deep room" FontSize="10"
+                                           Foreground="#888"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Visualizations + meters -->
+        <Grid Grid.Row="3" RowDefinitions="Auto,*,*">
+            <!-- Meters strip: each column gets ClipToBounds + label
+                 TextTrimming so a long localised label (e.g. "Voice activity"
+                 in languages with longer translations) cannot bleed into the
+                 neighbouring meter. Gaps are explicit fixed-width spacer
+                 columns (5 px each) rather than floating-point Margin values,
+                 because fractional pixel margins get inconsistently snapped
+                 at different X positions and produce visibly uneven gaps. -->
+            <Border Grid.Row="0" Classes="panel" Padding="10,6" Margin="0,0,0,4">
+                <Grid ColumnDefinitions="*,5,*,5,*,5,*">
+                    <StackPanel Grid.Column="0" ClipToBounds="True">
+                        <TextBlock x:Name="labelMeterIn" Text="Input level"
+                                   FontSize="10" Foreground="#888"
+                                   TextTrimming="CharacterEllipsis" />
+                        <ProgressBar x:Name="meterIn" Minimum="0" Maximum="100"
+                                     Height="10" Foreground="#4CC2FF"
+                                     Background="#202428" />
+                        <TextBlock x:Name="labelInDb" Text="-inf dB" FontSize="10"
+                                   Foreground="#AAA"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" ClipToBounds="True">
+                        <TextBlock x:Name="labelMeterOut" Text="Output level"
+                                   FontSize="10" Foreground="#888"
+                                   TextTrimming="CharacterEllipsis" />
+                        <ProgressBar x:Name="meterOut" Minimum="0" Maximum="100"
+                                     Height="10" Foreground="#50C878"
+                                     Background="#202428" />
+                        <TextBlock x:Name="labelOutDb" Text="-inf dB" FontSize="10"
+                                   Foreground="#AAA"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="4" ClipToBounds="True">
+                        <TextBlock x:Name="labelMeterRed" Text="Reduction"
+                                   FontSize="10" Foreground="#888"
+                                   TextTrimming="CharacterEllipsis" />
+                        <ProgressBar x:Name="meterRed" Minimum="0" Maximum="40"
+                                     Height="10" Foreground="#FFA500"
+                                     Background="#202428" />
+                        <TextBlock x:Name="labelRedDb" Text="0 dB" FontSize="10"
+                                   Foreground="#AAA"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="6" ClipToBounds="True">
+                        <TextBlock x:Name="labelMeterVad" Text="Voice activity"
+                                   FontSize="10" Foreground="#888"
+                                   TextTrimming="CharacterEllipsis" />
+                        <ProgressBar x:Name="meterVad" Minimum="0" Maximum="100"
+                                     Height="10" Foreground="#C778DD"
+                                     Background="#202428" />
+                        <TextBlock x:Name="labelVad" Text="0%" FontSize="10"
+                                   Foreground="#AAA"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="1" ColumnDefinitions="*,*">
+                <Border Grid.Column="0" Classes="panel" Padding="6" Margin="0,0,4,4">
+                    <Grid RowDefinitions="Auto,*">
+                        <TextBlock Grid.Row="0" x:Name="labelWaveIn"
+                                   Text="Input waveform"
+                                   FontSize="10" Foreground="#888" Margin="0,0,0,2" />
+                        <ctrl:WaveformView Grid.Row="1" x:Name="waveIn" />
+                    </Grid>
+                </Border>
+                <Border Grid.Column="1" Classes="panel" Padding="6" Margin="4,0,0,4">
+                    <Grid RowDefinitions="Auto,*">
+                        <TextBlock Grid.Row="0" x:Name="labelWaveOut"
+                                   Text="Output waveform"
+                                   FontSize="10" Foreground="#888" Margin="0,0,0,2" />
+                        <ctrl:WaveformView Grid.Row="1" x:Name="waveOut" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Grid Grid.Row="2" ColumnDefinitions="*,*">
+                <Border Grid.Column="0" Classes="panel" Padding="6" Margin="0,4,4,0">
+                    <Grid RowDefinitions="Auto,*">
+                        <TextBlock Grid.Row="0" x:Name="labelSpecIn"
+                                   Text="Input spectrum"
+                                   FontSize="10" Foreground="#888" Margin="0,0,0,2" />
+                        <ctrl:SpectrumView Grid.Row="1" x:Name="specIn" />
+                    </Grid>
+                </Border>
+                <Border Grid.Column="1" Classes="panel" Padding="6" Margin="4,4,0,0">
+                    <Grid RowDefinitions="Auto,*">
+                        <TextBlock Grid.Row="0" x:Name="labelSpecOut"
+                                   Text="Output spectrum"
+                                   FontSize="10" Foreground="#888" Margin="0,0,0,2" />
+                        <ctrl:SpectrumView Grid.Row="1" x:Name="specOut" />
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- Footer hint -->
+        <TextBlock Grid.Row="4" x:Name="labelHint"
+                   Text="Tip: tick the checkbox to enable an effect. Click the icon to open its detail window."
+                   FontSize="10" Foreground="#666" Margin="0,8,0,0"
+                   TextWrapping="Wrap" />
+    </Grid>
+
+</Window>

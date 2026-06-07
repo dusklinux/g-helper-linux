@@ -256,11 +256,28 @@ public static class AsusHid
             try
             {
                 using var stream = device.Open();
+                // Some keyboard controllers (e.g. G533QS firmware) silently
+                // discard HID output reports shorter than the declared OUTPUT
+                // report size. Pad every write to the device's max length so
+                // short messages (AuraMessage 17B, SET 5B, APPLY 2B) are not
+                // silently dropped. Trailing zeros match the HID descriptor
+                // layout and are accepted by older controllers too.
+                int maxLen = device.GetMaxOutputReportLength();
                 foreach (var data in dataList)
                 {
                     try
                     {
-                        stream.Write(data);
+                        byte[] padded;
+                        if (data.Length >= maxLen)
+                        {
+                            padded = data;
+                        }
+                        else
+                        {
+                            padded = new byte[maxLen];
+                            Array.Copy(data, padded, data.Length);
+                        }
+                        stream.Write(padded);
                         wroteToAny = true;
                         if (log != null)
                             Helpers.Logger.WriteLine($"{log} {device.ProductID:X}: {BitConverter.ToString(data)}");

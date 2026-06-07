@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>GHelper.Linux.AudioTests</RootNamespace>
+    <!-- Reuse the real AudioFrame.cs + AudioHelper.cs from the main project
+         so a wire-format drift breaks this test before it breaks the UI. -->
+    <DefineConstants>$(DefineConstants);AUDIO_TESTBED</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\src\Helpers\AudioFrame.cs" Link="AudioFrame.cs" />
+  </ItemGroup>
+</Project>

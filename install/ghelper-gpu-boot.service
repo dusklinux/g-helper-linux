@@ -1,31 +1,23 @@
 [Unit]
 Description=G-Helper GPU Mode Boot Application
-# Must run after sysfs is populated (asus-nb-wmi or asus-armoury module loaded)
 After=local-fs.target systemd-modules-load.service systemd-udevd.service
-# Must run BEFORE display manager starts — critical ordering
-# Without this, dGPU driver loads before dgpu_disable=1 is written
-Before=display-manager.service
-# Run on ASUS hardware with either legacy (asus-nb-wmi) or modern (asus-armoury) module,
-# OR on any hardware where the PCI backend is in use (signalled by /etc/ghelper/backend).
-# ConditionPathExists uses pipe (|) prefix — ANY match triggers the unit.
-# Without pipe prefix, systemd requires ALL conditions to pass.
+Before=graphical.target multi-user.target display-manager.service nvidia-powerd.service
 ConditionPathExists=|/sys/bus/platform/devices/asus-nb-wmi
 ConditionPathExists=|/sys/class/firmware-attributes/asus-armoury
 ConditionPathExists=|/etc/ghelper/backend
-# NOTE: No ConditionPathExists for trigger file — the boot script's MUX=0
-# safety check must run on EVERY boot, even without a pending mode change.
+# No condition for trigger file: the MUX=0 safety check must run every boot.
 
 [Service]
 Type=oneshot
 ExecStart=/usr/local/lib/ghelper/ghelper-gpu-boot.sh
 RemainAfterExit=no
-# dgpu_disable write typically takes <5s when dGPU driver is blocked
-# but can theoretically block longer. 30s safety valve.
-TimeoutStartSec=30
+# Internal timeouts cap each hardware write. This is the systemd backstop
+# in case those fail to fire. Must exceed the sum of internal timeouts.
+TimeoutStartSec=60
 StandardOutput=journal
 StandardError=journal
 
-# Hardening (adapted from asusctl)
+# Hardening
 NoNewPrivileges=true
 LockPersonality=true
 KeyringMode=private
@@ -43,9 +35,8 @@ ProtectProc=invisible
 ProtectSystem=strict
 ProtectHome=true
 
-# /sys, /dev, /proc remain writable under ProtectSystem=strict by default.
-# Explicit RW paths for our config + block artifacts + udev socket.
-ReadWritePaths=/etc/ghelper
+# Writable paths for config, block artifacts, and udev socket.
+ReadWritePaths=-/etc/ghelper
 ReadWritePaths=/etc/modprobe.d
 ReadWritePaths=/etc/udev/rules.d
 ReadWritePaths=/run

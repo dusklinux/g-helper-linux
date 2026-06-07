@@ -689,7 +689,7 @@ public static class SysfsHelper
 
         // Distinguish sudo auth/permission failure from command-side failure.
         // sudo (classic and sudo-rs) prefixes its own error messages with "sudo:".
-        // If stderr starts with "sudo:" the issue is permission / auth — pkexec
+        // If stderr starts with "sudo:" the issue is permission / auth - pkexec
         // can help. Any other stderr came from the command itself; re-running via
         // pkexec would produce the same failure and just add an unnecessary prompt.
         bool sudoRefused = stderr.StartsWith("sudo:", StringComparison.Ordinal)

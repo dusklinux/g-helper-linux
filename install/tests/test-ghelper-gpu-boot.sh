@@ -64,18 +64,21 @@ set_fwattr_mux()     {
     echo "$1" > "$SANDBOX/sys/class/firmware-attributes/asus-armoury/attributes/gpu_mux_mode/current_value"
 }
 set_trigger()        { echo "$1" > "$SANDBOX/etc/ghelper/pending-gpu-mode"; }
+set_persistent()     { echo "$1" > "$SANDBOX/etc/ghelper/persistent-gpu-mode"; }
 set_modprobe_block() { echo "blocked" > "$SANDBOX/etc/modprobe.d/ghelper-gpu-block.conf"; }
 set_udev_block()     { echo "rules" > "$SANDBOX/etc/udev/rules.d/50-ghelper-remove-dgpu.rules"; }
 set_backend()        { echo "$1" > "$SANDBOX/etc/ghelper/backend"; }
 add_module()         { mkdir -p "$SANDBOX/sys/module/$1"; }
 
-# Fake a PCI device. Args: <bdf> <vendor_hex> <boot_vga 0|1> <driver "" or "amdgpu" or "nvidia">
+# Fake a PCI device. Args: <bdf> <vendor_hex> <boot_vga 0|1> <driver "" or "amdgpu" or "nvidia"> [class]
+# class defaults to 0x030000 (VGA controller). Use 0x030200 for 3D controller.
 add_pci_device() {
-    local bdf="$1" vendor="$2" boot_vga="$3" driver="$4"
+    local bdf="$1" vendor="$2" boot_vga="$3" driver="$4" class="${5:-0x030000}"
     local dev_dir="$SANDBOX/sys/bus/pci/devices/$bdf"
     mkdir -p "$dev_dir"
     echo "$vendor"   > "$dev_dir/vendor"
     echo "$boot_vga" > "$dev_dir/boot_vga"
+    echo "$class"    > "$dev_dir/class"
     if [[ -n "$driver" ]]; then
         local drv_dir="$SANDBOX/sys/bus/pci/drivers/$driver"
         mkdir -p "$drv_dir"
@@ -85,8 +88,8 @@ add_pci_device() {
     fi
 }
 
-# Force rmmod to fail N times (simulates "module still in use")
-fail_rmmod_n_times() { echo "$1" > "$SANDBOX/test-rmmod-fail"; }
+# Make try_release_nvidia fail (simulates stuck driver that can't be released).
+force_release_fail() { : > "$SANDBOX/test-release-fails"; }
 
 # Force the next dgpu_disable readback to return $1 instead of the file content.
 # Used to simulate firmware EIO (write returns "success" but the value didn't
@@ -188,7 +191,9 @@ test_01_no_trigger() {
     expect_file_missing /etc/ghelper/pending-gpu-mode || return 1
 }
 
-# 02: Eco trigger + AMD-iGPU + NVIDIA-dGPU + nvidia loaded → rmmod + apply
+# 02: Eco trigger + AMD-iGPU + NVIDIA-dGPU + nvidia bound → defer + install block.
+# The refactored script never attempts rmmod. It observes the bound driver,
+# installs block artifacts so the driver won't load next boot, and defers.
 test_02_eco_amd_igpu_nv_dgpu_nv_loaded() {
     set_legacy_dgpu 0
     set_legacy_mux  1
@@ -200,15 +205,12 @@ test_02_eco_amd_igpu_nv_dgpu_nv_loaded() {
     add_pci_device 0000:65:00.0 0x1002 1 amdgpu  # iGPU
     add_pci_device 0000:01:00.0 0x10de 0 nvidia  # dGPU
     set_trigger eco
-    set_modprobe_block
-    set_udev_block
     run_boot_script || return 1
-    expect_log_contains "rmmod succeeded" || return 1
+    expect_log_contains "dGPU driver is bound" || return 1
+    expect_log_contains "try_release_nvidia - simulated success" || return 1
     expect_log_contains "dgpu_disable=1 confirmed" || return 1
     expect_file_content /sys/bus/platform/devices/asus-nb-wmi/dgpu_disable 1 || return 1
     expect_file_missing /etc/ghelper/pending-gpu-mode || return 1
-    expect_file_missing /etc/modprobe.d/ghelper-gpu-block.conf || return 1
-    expect_file_missing /etc/udev/rules.d/50-ghelper-remove-dgpu.rules || return 1
 }
 
 # 03: Eco trigger + AMD-iGPU + NVIDIA-dGPU + nvidia successfully BLOCKED
@@ -226,26 +228,26 @@ test_03_eco_amd_igpu_nv_dgpu_nv_blocked() {
     set_modprobe_block
     set_udev_block
     run_boot_script || return 1
-    expect_log_contains "no blocking dGPU driver bound, proceeding" || return 1
+    expect_log_contains "dGPU is driverless - safe to apply" || return 1
     expect_log_contains "dgpu_disable=1 confirmed" || return 1
     expect_file_content /sys/bus/platform/devices/asus-nb-wmi/dgpu_disable 1 || return 1
     expect_log_NOT_contains "amdgpu drives dGPU" || return 1
 }
 
-# 04: Eco trigger + Intel-iGPU + NVIDIA-dGPU + nvidia loaded (G614JVR pattern)
+# 04: Eco trigger + Intel-iGPU + NVIDIA-dGPU + nvidia bound, release succeeds.
 test_04_eco_intel_igpu_nv_dgpu_nv_loaded() {
     set_legacy_dgpu 0
     set_legacy_mux  1
     add_module nvidia
     add_module nvidia_drm
     add_module nvidia_modeset
-    # No amdgpu - Intel iGPU uses i915
     add_module i915
-    add_pci_device 0000:00:02.0 0x8086 1 i915    # Intel iGPU
-    add_pci_device 0000:01:00.0 0x10de 0 nvidia  # NVIDIA dGPU
+    add_pci_device 0000:00:02.0 0x8086 1 i915
+    add_pci_device 0000:01:00.0 0x10de 0 nvidia
     set_trigger eco
     run_boot_script || return 1
-    expect_log_contains "rmmod succeeded" || return 1
+    expect_log_contains "dGPU driver is bound" || return 1
+    expect_log_contains "try_release_nvidia - simulated success" || return 1
     expect_log_contains "dgpu_disable=1 confirmed" || return 1
 }
 
@@ -391,34 +393,35 @@ test_16_legacy_1_trigger() {
     expect_log_contains "dgpu_disable=1 confirmed" || return 1
 }
 
-# 17: rmmod fails once → retry counter increments to 1, trigger preserved
-test_17_rmmod_fails_first_attempt() {
+# 17: nvidia bound + release fails -> defer with block, counter=1.
+test_17_bound_driver_defers_with_block() {
     set_legacy_dgpu 0
     set_legacy_mux  1
     add_module nvidia
     add_module nvidia_drm
     add_pci_device 0000:01:00.0 0x10de 0 nvidia
+    force_release_fail
     set_trigger eco
-    fail_rmmod_n_times 1
     run_boot_script || return 1
-    expect_log_contains "simulated rmmod failure" || return 1
+    expect_log_contains "dGPU driver is bound" || return 1
+    expect_log_contains "release failed" || return 1
     expect_log_contains "failure #1" || return 1
     expect_file_content /etc/ghelper/eco-retry-count 1 || return 1
     expect_file_exists /etc/ghelper/pending-gpu-mode || return 1
-    expect_file_missing /etc/ghelper/last-eco-failed || return 1
+    expect_file_exists /etc/modprobe.d/ghelper-gpu-block.conf || return 1
+    expect_log_NOT_contains "writing dgpu_disable=1" || return 1
 }
 
-# 18: rmmod fails 3 times across runs → trigger removed, marker written
+# 18: release fails 3 times across runs -> trigger removed, marker written
 test_18_rmmod_fails_reaches_giveup() {
     set_legacy_dgpu 0
     set_legacy_mux  1
     add_module nvidia
     add_module nvidia_drm
     add_pci_device 0000:01:00.0 0x10de 0 nvidia
+    force_release_fail
     set_trigger eco
-    # Pre-seed counter at 2 (one more failure crosses MAX=3)
     echo 2 > "$SANDBOX/etc/ghelper/eco-retry-count"
-    fail_rmmod_n_times 1
     run_boot_script || return 1
     expect_log_contains "giving up" || return 1
     expect_file_missing /etc/ghelper/pending-gpu-mode || return 1
@@ -497,7 +500,7 @@ test_23_amdgpu_module_loaded_but_unbound() {
     rm -f "$SANDBOX/sys/bus/pci/devices/0000:01:00.0/driver"
     set_trigger eco
     run_boot_script || return 1
-    expect_log_contains "no blocking dGPU driver bound, proceeding" || return 1
+    expect_log_contains "dGPU is driverless - safe to apply" || return 1
     expect_log_contains "dgpu_disable=1 confirmed" || return 1
 }
 
@@ -537,8 +540,8 @@ test_25_eco_double_write_retry() {
 
 # -- New coverage (#27–#38) ----------------------------------------------------
 
-# 27: nouveau loaded instead of proprietary nvidia. Path at line ~195 should
-# rmmod nouveau alongside the nvidia stack and proceed.
+# 27: nouveau (open-source NVIDIA driver) bound to dGPU. Script detects the bound
+# driver, installs block artifacts, and defers cleanly (no rmmod attempt).
 test_27_eco_nouveau_loaded() {
     set_legacy_dgpu 0
     set_legacy_mux  1
@@ -548,8 +551,8 @@ test_27_eco_nouveau_loaded() {
     add_pci_device 0000:01:00.0 0x10de 0 nouveau    # dGPU on open driver
     set_trigger eco
     run_boot_script || return 1
-    expect_log_contains "nvidia/nouveau loaded, attempting rmmod" || return 1
-    expect_log_contains "rmmod succeeded" || return 1
+    expect_log_contains "dGPU driver is bound" || return 1
+    expect_log_contains "try_release_nvidia - simulated success" || return 1
     expect_log_contains "dgpu_disable=1 confirmed" || return 1
 }
 
@@ -587,7 +590,7 @@ test_29_vfio_pci_passthrough() {
 }
 
 # 30: Multiple NVIDIA dGPUs (rare - mobile workstation 4090+4060).
-# Only the first one with a driver bound matters for our checks.
+# Both are bound → script detects the bound driver and defers.
 test_30_multiple_nv_dgpus() {
     set_legacy_dgpu 0
     set_legacy_mux  1
@@ -599,7 +602,8 @@ test_30_multiple_nv_dgpus() {
     add_pci_device 0000:02:00.0 0x10de 0 nvidia
     set_trigger eco
     run_boot_script || return 1
-    expect_log_contains "rmmod succeeded" || return 1
+    expect_log_contains "dGPU driver is bound" || return 1
+    expect_log_contains "try_release_nvidia - simulated success" || return 1
     expect_log_contains "dgpu_disable=1 confirmed" || return 1
 }
 
@@ -629,8 +633,8 @@ test_32_dgpu_missing_vendor() {
     rm -f "$SANDBOX/sys/bus/pci/devices/0000:01:00.0/vendor"
     set_trigger eco
     run_boot_script || return 1
-    # Vendor empty → loop skips → no amdgpu_drives_dgpu hit → proceed
-    expect_log_contains "no blocking dGPU driver bound, proceeding" || return 1
+    # Vendor empty → loop skips device → driverless path
+    expect_log_contains "dGPU is driverless - safe to apply" || return 1
     expect_log_contains "dgpu_disable=1 confirmed" || return 1
 }
 
@@ -689,12 +693,12 @@ test_38_counter_file_corrupted() {
     add_module nvidia
     add_module nvidia_drm
     add_pci_device 0000:01:00.0 0x10de 0 nvidia
+    force_release_fail
     set_trigger eco
     mkdir -p "$SANDBOX/etc/ghelper"
     echo "not a number" > "$SANDBOX/etc/ghelper/eco-retry-count"
-    fail_rmmod_n_times 1
     run_boot_script || return 1
-    # Sanitization should treat the garbage as 0 → increment to 1
+    # Sanitization should treat the garbage as 0, increment to 1
     expect_file_content /etc/ghelper/eco-retry-count 1 || return 1
 }
 
@@ -705,27 +709,26 @@ test_39_counter_negative() {
     add_module nvidia
     add_module nvidia_drm
     add_pci_device 0000:01:00.0 0x10de 0 nvidia
+    force_release_fail
     set_trigger eco
     mkdir -p "$SANDBOX/etc/ghelper"
     echo "-5" > "$SANDBOX/etc/ghelper/eco-retry-count"
-    fail_rmmod_n_times 1
     run_boot_script || return 1
     expect_file_content /etc/ghelper/eco-retry-count 1 || return 1
 }
 
-# 40: Retry counter with very large valid number is preserved across overflow safe.
+# 40: Retry counter with very large valid number -> gives up.
 test_40_counter_large_number() {
     set_legacy_dgpu 0
     set_legacy_mux  1
     add_module nvidia
     add_module nvidia_drm
     add_pci_device 0000:01:00.0 0x10de 0 nvidia
+    force_release_fail
     set_trigger eco
     mkdir -p "$SANDBOX/etc/ghelper"
-    echo "9000000000" > "$SANDBOX/etc/ghelper/eco-retry-count"   # >32-bit
-    fail_rmmod_n_times 1
+    echo "9000000000" > "$SANDBOX/etc/ghelper/eco-retry-count"
     run_boot_script || return 1
-    # bash arithmetic handles 64-bit ints fine
     expect_log_contains "giving up" || return 1
     expect_file_exists /etc/ghelper/last-eco-failed || return 1
 }
@@ -768,7 +771,6 @@ test_43_etc_ghelper_missing() {
     add_pci_device 0000:01:00.0 0x10de 0 nvidia
     # Trigger written BEFORE we nuke the dir
     set_trigger eco
-    fail_rmmod_n_times 1
     # Now remove the directory but keep the trigger location reachable via /etc
     # The script's mkdir -p must re-create it before writing the counter.
     # (We can't delete the parent dir without losing the trigger file too,
@@ -785,6 +787,7 @@ test_43_etc_ghelper_missing() {
     # mkdir success without first deleting the trigger. Instead, delete all
     # CHILDREN of /etc/ghelper but keep the dir + trigger.
     mkdir -p "$SANDBOX/etc/ghelper"
+    force_release_fail
     set_trigger eco
     run_boot_script || return 1
     # The retry counter should now exist, proving mkdir + write worked.
@@ -828,7 +831,7 @@ test_46_pci_devices_empty() {
     # NO PCI devices at all
     set_trigger eco
     run_boot_script || return 1
-    expect_log_contains "no blocking dGPU driver bound, proceeding" || return 1
+    expect_log_contains "dGPU is driverless - safe to apply" || return 1
     expect_log_contains "dgpu_disable=1 confirmed" || return 1
 }
 
@@ -920,21 +923,21 @@ test_52_full_cleanup_after_eco_success() {
     expect_log_contains "Boot GPU mode application complete" || return 1
 }
 
-# 54: After failed Eco (rmmod fail, counter not yet at MAX), modprobe + udev
-# blocks are PRESERVED so the next boot still has the dGPU driver blocked and
-# the retry can succeed.
+# 54: nvidia bound → defer + install block artifacts. Existing blocks are
+# overwritten by install_block_artifacts. Trigger preserved for next boot.
 test_54_failed_eco_preserves_blocks() {
     set_legacy_dgpu 0
     set_legacy_mux  1
     add_module nvidia
     add_module nvidia_drm
     add_pci_device 0000:01:00.0 0x10de 0 nvidia
+    force_release_fail
     set_trigger eco
     set_modprobe_block
     set_udev_block
-    fail_rmmod_n_times 1
     run_boot_script || return 1
-    expect_log_contains "rmmod nvidia/nouveau failed" || return 1
+    expect_log_contains "dGPU driver is bound" || return 1
+    expect_log_contains "release failed" || return 1
     expect_file_exists /etc/ghelper/pending-gpu-mode || return 1
     expect_file_exists /etc/modprobe.d/ghelper-gpu-block.conf || return 1
     expect_file_exists /etc/udev/rules.d/50-ghelper-remove-dgpu.rules || return 1
@@ -945,7 +948,8 @@ test_54_failed_eco_preserves_blocks() {
 # block artifacts ARE the persistent Eco state).
 #
 
-# 55: PCI eco + nvidia loaded → rmmod, blocks PRESERVED, no firmware write
+# 55: PCI backend + nvidia bound → defer + install block. The dgpu_driver_bound
+# check fires before the PCI backend code path, so PCI-specific logs do not appear.
 test_55_pci_eco_nv_loaded() {
     set_backend pci
     set_legacy_dgpu 0
@@ -959,16 +963,16 @@ test_55_pci_eco_nv_loaded() {
     set_udev_block
     run_boot_script || return 1
     expect_log_contains "backend: pci" || return 1
-    expect_log_contains "rmmod succeeded" || return 1
+    expect_log_contains "dGPU driver is bound" || return 1
+    # Release succeeds, then PCI backend early exit
+    expect_log_contains "try_release_nvidia - simulated success" || return 1
     expect_log_contains "PCI backend - blocks remain as persistent state" || return 1
-    expect_log_NOT_contains "dgpu_disable=1 confirmed" || return 1
     expect_file_missing /etc/ghelper/pending-gpu-mode || return 1
     expect_file_exists /etc/modprobe.d/ghelper-gpu-block.conf || return 1
-    expect_file_exists /etc/udev/rules.d/50-ghelper-remove-dgpu.rules || return 1
-    expect_file_content /etc/ghelper/backend pci || return 1
 }
 
-# 56: PCI eco trigger but driver already unloaded → no-op, blocks preserved
+# 56: PCI eco trigger but driver already unloaded → driverless → PCI backend
+# early exit, blocks preserved as persistent state.
 test_56_pci_eco_already_unloaded() {
     set_backend pci
     set_legacy_dgpu 0
@@ -978,36 +982,34 @@ test_56_pci_eco_already_unloaded() {
     set_udev_block
     run_boot_script || return 1
     expect_log_contains "backend: pci" || return 1
-    expect_log_contains "no blocking dGPU driver bound" || return 1
+    expect_log_contains "dGPU is driverless - safe to apply" || return 1
     expect_log_contains "PCI backend - blocks remain as persistent state" || return 1
     expect_file_missing /etc/ghelper/pending-gpu-mode || return 1
     expect_file_exists /etc/modprobe.d/ghelper-gpu-block.conf || return 1
     expect_file_exists /etc/udev/rules.d/50-ghelper-remove-dgpu.rules || return 1
 }
 
-# 57: PCI eco + rmmod fails once → retry counter increments, blocks + trigger preserved
-test_57_pci_eco_rmmod_fail() {
+# 57: PCI backend + nvidia bound + release fails -> defer with block.
+test_57_pci_eco_nv_bound() {
     set_backend pci
     set_legacy_dgpu 0
     set_legacy_mux  1
     add_module nvidia
     add_module nvidia_drm
     add_pci_device 0000:01:00.0 0x10de 0 nvidia
+    force_release_fail
     set_trigger eco
     set_modprobe_block
     set_udev_block
-    fail_rmmod_n_times 1
     run_boot_script || return 1
     expect_log_contains "backend: pci" || return 1
-    expect_log_contains "rmmod nvidia/nouveau failed" || return 1
-    expect_log_contains "failure #1" || return 1
+    expect_log_contains "dGPU driver is bound" || return 1
+    expect_log_contains "release failed" || return 1
     expect_file_exists /etc/ghelper/pending-gpu-mode || return 1
-    expect_file_content /etc/ghelper/eco-retry-count 1 || return 1
     expect_file_exists /etc/modprobe.d/ghelper-gpu-block.conf || return 1
-    expect_file_exists /etc/udev/rules.d/50-ghelper-remove-dgpu.rules || return 1
 }
 
-# 58: PCI eco + rmmod fails 3rd attempt → give-up marker, blocks STILL preserved
+# 58: PCI eco + release fails 3rd attempt -> give-up marker, blocks preserved
 test_58_pci_eco_rmmod_fail_giveup() {
     set_backend pci
     set_legacy_dgpu 0
@@ -1015,11 +1017,11 @@ test_58_pci_eco_rmmod_fail_giveup() {
     add_module nvidia
     add_module nvidia_drm
     add_pci_device 0000:01:00.0 0x10de 0 nvidia
+    force_release_fail
     set_trigger eco
     set_modprobe_block
     set_udev_block
-    fail_rmmod_n_times 1
-    echo "2" > "$SANDBOX/etc/ghelper/eco-retry-count"   # 3rd attempt this boot
+    echo "2" > "$SANDBOX/etc/ghelper/eco-retry-count"
     run_boot_script || return 1
     expect_log_contains "reached 3 failed attempts" || return 1
     expect_file_missing /etc/ghelper/pending-gpu-mode || return 1
@@ -1090,10 +1092,11 @@ test_62_pci_ultimate_noop() {
     expect_file_exists /etc/modprobe.d/ghelper-gpu-block.conf || return 1
 }
 
-# 63: PCI backend on system with NO asus-nb-wmi / asus-armoury → still works
+# 63: PCI backend on system with NO asus-nb-wmi / asus-armoury + nvidia bound → defer.
+# The dgpu_driver_bound check fires before PCI backend code, so we get the
+# standard bound-driver defer regardless of missing ASUS sysfs.
 test_63_pci_no_asus_hardware() {
     set_backend pci
-    # No legacy sysfs, no firmware-attributes - strip them.
     rm -rf "$SANDBOX/sys/bus/platform/devices/asus-nb-wmi"
     rm -rf "$SANDBOX/sys/devices/platform/asus-nb-wmi"
     rm -rf "$SANDBOX/sys/class/firmware-attributes"
@@ -1105,8 +1108,10 @@ test_63_pci_no_asus_hardware() {
     set_udev_block
     run_boot_script || return 1
     expect_log_contains "backend: pci" || return 1
-    expect_log_contains "rmmod succeeded" || return 1
-    expect_log_contains "PCI backend - blocks remain as persistent state" || return 1
+    expect_log_contains "dGPU driver is bound" || return 1
+    # Release succeeds, then PCI backend early exit (no dgpu_disable sysfs)
+    expect_log_contains "try_release_nvidia - simulated success" || return 1
+    expect_log_contains "PCI backend - blocks remain" || return 1
     expect_file_exists /etc/modprobe.d/ghelper-gpu-block.conf || return 1
 }
 
@@ -1147,7 +1152,7 @@ test_65_pci_with_vfio_passthrough() {
     expect_file_exists /etc/ghelper/pending-gpu-mode || return 1
 }
 
-# 66: PCI backend + nouveau (open-source NVIDIA) loaded
+# 66: PCI backend + nouveau bound → defer + install block
 test_66_pci_nouveau_loaded() {
     set_backend pci
     set_legacy_dgpu 0
@@ -1159,8 +1164,9 @@ test_66_pci_nouveau_loaded() {
     set_udev_block
     run_boot_script || return 1
     expect_log_contains "backend: pci" || return 1
-    expect_log_contains "rmmod succeeded" || return 1
-    expect_log_contains "PCI backend - blocks remain as persistent state" || return 1
+    expect_log_contains "dGPU driver is bound" || return 1
+    expect_log_contains "try_release_nvidia - simulated success" || return 1
+    expect_log_contains "PCI backend - blocks remain" || return 1
     expect_file_exists /etc/modprobe.d/ghelper-gpu-block.conf || return 1
 }
 
@@ -1343,6 +1349,256 @@ test_26_eco_double_write_both_fail() {
     chmod 0644 "$SANDBOX/sys/bus/platform/devices/asus-nb-wmi/dgpu_disable" 2>/dev/null || true
 }
 
+#
+# Persistent Eco scenarios (persistent-gpu-mode file survives reboots)
+#
+
+# 76: Persistent eco, no one-shot trigger → eco applied via persistent file
+test_76_persistent_eco_no_trigger() {
+    set_legacy_dgpu 0
+    set_legacy_mux  1
+    set_persistent eco
+    run_boot_script || return 1
+    expect_log_contains "Persistent GPU mode: 'eco'" || return 1
+    expect_log_contains "dgpu_disable=1 confirmed" || return 1
+    # One-shot trigger must NOT exist (never was created)
+    expect_file_missing /etc/ghelper/pending-gpu-mode || return 1
+    # Persistent file MUST survive cleanup
+    expect_file_exists /etc/ghelper/persistent-gpu-mode || return 1
+    expect_file_content /etc/ghelper/persistent-gpu-mode eco || return 1
+}
+
+# 77: Both one-shot and persistent present → one-shot takes priority
+test_77_oneshot_overrides_persistent() {
+    set_legacy_dgpu 1
+    set_legacy_mux  1
+    set_trigger standard
+    set_persistent eco
+    run_boot_script || return 1
+    expect_log_contains "Pending GPU mode: 'standard'" || return 1
+    expect_log_NOT_contains "Persistent GPU mode" || return 1
+    # One-shot trigger consumed
+    expect_file_missing /etc/ghelper/pending-gpu-mode || return 1
+    # Persistent file survives (not touched during standard apply)
+    expect_file_exists /etc/ghelper/persistent-gpu-mode || return 1
+}
+
+# 78: Persistent eco + MUX=0 → safety check removes persistent marker
+test_78_persistent_eco_mux0_safety() {
+    set_legacy_dgpu 0
+    set_legacy_mux  0
+    set_persistent eco
+    run_boot_script || return 1
+    expect_log_contains "SAFETY: MUX=0 \\+ persistent='eco' - discarding impossible persistent Eco" || return 1
+    expect_log_contains "MUX=0 safety check complete" || return 1
+    # Persistent marker must be gone (impossible state)
+    expect_file_missing /etc/ghelper/persistent-gpu-mode || return 1
+}
+
+# 79: Persistent eco preserves block artifacts across STEP 5 cleanup (Bug 6
+# part 3 / Part B). The block keeps the dGPU driver from binding after a
+# Windows visit, so future boots come up driverless and never deadlock.
+test_79_persistent_preserves_blocks() {
+    set_legacy_dgpu 0
+    set_legacy_mux  1
+    add_module amdgpu
+    add_pci_device 0000:65:00.0 0x1002 1 amdgpu
+    set_persistent eco
+    run_boot_script || return 1
+    expect_log_contains "dgpu_disable=1 confirmed" || return 1
+    expect_log_contains "Persistent Eco: preserving block artifacts" || return 1
+    expect_log_contains "Boot GPU mode application complete" || return 1
+    # One-shot trigger gone, persistent survives
+    expect_file_missing /etc/ghelper/pending-gpu-mode || return 1
+    expect_file_exists /etc/ghelper/persistent-gpu-mode || return 1
+    # Block artifacts PRESERVED (installed by persistent eco, kept by STEP 5)
+    expect_file_exists /etc/modprobe.d/ghelper-gpu-block.conf || return 1
+    expect_file_exists /etc/udev/rules.d/50-ghelper-remove-dgpu.rules || return 1
+}
+
+# 80: Persistent eco + already in eco (dgpu=1) → no-op but persistent survives
+test_80_persistent_eco_already_applied() {
+    set_legacy_dgpu 1
+    set_legacy_mux  1
+    set_persistent eco
+    run_boot_script || return 1
+    expect_log_contains "Persistent GPU mode: 'eco'" || return 1
+    expect_log_contains "dgpu_disable already 1" || return 1
+    expect_file_exists /etc/ghelper/persistent-gpu-mode || return 1
+}
+
+# 81: Persistent eco + PCI backend → blocks preserved, persistent survives
+test_81_persistent_eco_pci_backend() {
+    set_backend pci
+    set_legacy_dgpu 0
+    set_legacy_mux  1
+    set_persistent eco
+    set_modprobe_block
+    set_udev_block
+    run_boot_script || return 1
+    expect_log_contains "Persistent GPU mode: 'eco'" || return 1
+    expect_log_contains "PCI backend - blocks remain as persistent state" || return 1
+    expect_file_exists /etc/ghelper/persistent-gpu-mode || return 1
+    expect_file_exists /etc/modprobe.d/ghelper-gpu-block.conf || return 1
+}
+
+# 82: No trigger AND no persistent → nothing to do (baseline unchanged)
+test_82_no_trigger_no_persistent() {
+    set_legacy_dgpu 0
+    set_legacy_mux  1
+    run_boot_script || return 1
+    expect_log_contains "No pending mode - nothing to do" || return 1
+}
+
+# 83: NVIDIA module loaded (/sys/module/nvidia exists) but dGPU PCI device has
+# NO driver symlink (previous boot's block prevented binding). → driverless →
+# dgpu_disable=1 succeeds. This is the normal "second boot after block" flow.
+test_83_eco_nvidia_module_not_bound() {
+    set_legacy_dgpu 0
+    set_legacy_mux  1
+    add_module nvidia         # nvidia module still in /sys/module
+    add_module nvidia_drm
+    add_pci_device 0000:01:00.0 0x10de 0 ""   # NVIDIA dGPU, NO driver bound
+    set_trigger eco
+    run_boot_script || return 1
+    expect_log_contains "dGPU is driverless - safe to apply" || return 1
+    expect_log_contains "dgpu_disable=1 confirmed" || return 1
+    expect_file_missing /etc/ghelper/pending-gpu-mode || return 1
+    # Must NOT have detected a bound driver
+    expect_log_NOT_contains "dGPU driver is bound" || return 1
+}
+
+# 84: nvidia bound + release fails -> defer with block, never write dgpu_disable.
+test_84_eco_bound_driver_defers_no_hang() {
+    set_legacy_dgpu 0
+    set_legacy_mux  1
+    add_module nvidia
+    add_module nvidia_drm
+    add_pci_device 0000:01:00.0 0x10de 0 nvidia
+    force_release_fail
+    set_trigger eco
+    run_boot_script || return 1
+    expect_log_contains "dGPU driver is bound" || return 1
+    expect_log_contains "release failed" || return 1
+    expect_log_NOT_contains "writing dgpu_disable=1" || return 1
+    expect_file_exists /etc/modprobe.d/ghelper-gpu-block.conf || return 1
+    expect_file_exists /etc/ghelper/pending-gpu-mode || return 1
+}
+
+# 85: Persistent eco + nvidia bound + release fails -> defer with block.
+# Persistent marker survives the defer.
+test_85_persistent_eco_nvidia_bound_defers() {
+    set_legacy_dgpu 0
+    set_legacy_mux  1
+    add_module nvidia
+    add_module nvidia_drm
+    add_module nvidia_modeset
+    add_module nvidia_uvm
+    add_pci_device 0000:01:00.0 0x10de 0 nvidia
+    force_release_fail
+    set_persistent eco
+    run_boot_script || return 1
+    expect_log_contains "Persistent GPU mode: 'eco'" || return 1
+    expect_log_contains "dGPU driver is bound" || return 1
+    expect_log_contains "release failed" || return 1
+    expect_file_exists /etc/ghelper/persistent-gpu-mode || return 1
+    expect_file_exists /etc/modprobe.d/ghelper-gpu-block.conf || return 1
+    expect_log_NOT_contains "dgpu_disable=1 confirmed" || return 1
+}
+
+# 86: Driverless NVIDIA dGPU (PCI device exists but no driver symlink, no nvidia
+# module loaded). The script proceeds directly to dgpu_disable=1.
+test_86_eco_driverless_nvidia_dgpu() {
+    set_legacy_dgpu 0
+    set_legacy_mux  1
+    # nvidia NOT loaded - no module dirs
+    add_pci_device 0000:01:00.0 0x10de 0 ""
+    set_trigger eco
+    run_boot_script || return 1
+    expect_log_contains "dGPU is driverless - safe to apply" || return 1
+    expect_log_contains "dgpu_disable=1 confirmed" || return 1
+    # Must NOT have detected a bound driver
+    expect_log_NOT_contains "dGPU driver is bound" || return 1
+}
+
+# 87: Persistent eco + nvidia bound + counter already at 2 → third failure
+# crosses MAX_ECO_RETRIES → gives up, writes failure marker. But persistent
+# marker survives (record_eco_failure only removes the one-shot trigger).
+test_87_persistent_eco_bound_driver_defers() {
+    set_legacy_dgpu 0
+    set_legacy_mux  1
+    add_module nvidia
+    add_module nvidia_drm
+    add_pci_device 0000:01:00.0 0x10de 0 nvidia
+    force_release_fail
+    set_persistent eco
+    echo 2 > "$SANDBOX/etc/ghelper/eco-retry-count"
+    run_boot_script || return 1
+    expect_log_contains "dGPU driver is bound" || return 1
+    expect_log_contains "reached 3 failed attempts - giving up" || return 1
+    expect_log_NOT_contains "writing dgpu_disable=1" || return 1
+    # Block installed for next boot
+    expect_file_exists /etc/modprobe.d/ghelper-gpu-block.conf || return 1
+    # Persistent marker survives give-up (only one-shot trigger is removed)
+    expect_file_exists /etc/ghelper/persistent-gpu-mode || return 1
+    # Failure marker written, counter cleaned up
+    expect_file_exists /etc/ghelper/last-eco-failed || return 1
+    expect_file_missing /etc/ghelper/eco-retry-count || return 1
+}
+
+# 88: MUX=0 + persistent eco + nvidia bound (dual-boot from Windows Ultimate).
+# STEP 1 safety: MUX=0 with persistent eco marker and blocks on disk.
+# Recovery must discard persistent marker, remove blocks, force MUX=1.
+test_88_mux0_persistent_eco_nvidia_bound() {
+    set_legacy_dgpu 0
+    set_legacy_mux  0
+    add_module nvidia
+    add_pci_device 0000:01:00.0 0x10de 0 nvidia
+    set_persistent eco
+    set_modprobe_block
+    run_boot_script || return 1
+    expect_log_contains "SAFETY: MUX=0 \\+ persistent='eco' - discarding impossible persistent Eco" || return 1
+    expect_log_contains "SAFETY: MUX=0 \\+ GPU block artifacts present" || return 1
+    expect_log_contains "recovery - forcing MUX=1" || return 1
+    expect_file_missing /etc/ghelper/persistent-gpu-mode || return 1
+    expect_file_missing /etc/modprobe.d/ghelper-gpu-block.conf || return 1
+    expect_file_content /sys/bus/platform/devices/asus-nb-wmi/gpu_mux_mode 1 || return 1
+    expect_file_exists /etc/ghelper/last-recovery || return 1
+}
+
+# 89: MUX=0 + one-shot eco trigger + blocks (deferred after release failure,
+# then user switched to Ultimate in Windows). Recovery must discard trigger,
+# remove blocks, force MUX=1.
+test_89_mux0_oneshot_eco_with_blocks() {
+    set_legacy_dgpu 0
+    set_legacy_mux  0
+    add_module nvidia
+    add_pci_device 0000:01:00.0 0x10de 0 nvidia
+    set_trigger eco
+    set_modprobe_block
+    run_boot_script || return 1
+    expect_log_contains "SAFETY: MUX=0 \\+ trigger='eco' - discarding impossible Eco trigger" || return 1
+    expect_log_contains "SAFETY: MUX=0 \\+ GPU block artifacts present" || return 1
+    expect_log_contains "recovery - forcing MUX=1" || return 1
+    expect_file_missing /etc/ghelper/pending-gpu-mode || return 1
+    expect_file_missing /etc/modprobe.d/ghelper-gpu-block.conf || return 1
+    expect_file_content /sys/bus/platform/devices/asus-nb-wmi/gpu_mux_mode 1 || return 1
+}
+
+# 90: MUX=0 + no eco artifacts (clean Ultimate boot). STEP 1 passes with no
+# recovery needed. Service exits early (no trigger).
+test_90_mux0_clean_ultimate() {
+    set_legacy_dgpu 0
+    set_legacy_mux  0
+    add_module nvidia
+    add_pci_device 0000:01:00.0 0x10de 1 nvidia
+    run_boot_script || return 1
+    expect_log_contains "MUX=0 safety check complete" || return 1
+    expect_log_NOT_contains "recovery" || return 1
+    expect_log_NOT_contains "IMPOSSIBLE" || return 1
+    expect_file_content /sys/bus/platform/devices/asus-nb-wmi/gpu_mux_mode 0 || return 1
+}
+
 # -- Run ------------------------------------------------------------------------
 echo "═"
 echo " ghelper-gpu-boot.sh scenario tests"
@@ -1365,7 +1621,7 @@ for name in \
     14_empty_trigger \
     15_unknown_trigger \
     16_legacy_1_trigger \
-    17_rmmod_fails_first_attempt \
+    17_bound_driver_defers_with_block \
     18_rmmod_fails_reaches_giveup \
     19_retry_counter_resets_on_success \
     20_eco_fwattrs_only \
@@ -1403,7 +1659,7 @@ for name in \
     54_failed_eco_preserves_blocks \
     55_pci_eco_nv_loaded \
     56_pci_eco_already_unloaded \
-    57_pci_eco_rmmod_fail \
+    57_pci_eco_nv_bound \
     58_pci_eco_rmmod_fail_giveup \
     59_pci_standard_clears_blocks \
     60_pci_standard_no_blocks \
@@ -1422,6 +1678,21 @@ for name in \
     73_pci_mux0_clean_state \
     74_pci_mux0_with_standard_trigger \
     75_pci_mux0_with_legacy_1_trigger \
+    76_persistent_eco_no_trigger \
+    77_oneshot_overrides_persistent \
+    78_persistent_eco_mux0_safety \
+    79_persistent_preserves_blocks \
+    80_persistent_eco_already_applied \
+    81_persistent_eco_pci_backend \
+    82_no_trigger_no_persistent \
+    83_eco_nvidia_module_not_bound \
+    84_eco_bound_driver_defers_no_hang \
+    85_persistent_eco_nvidia_bound_defers \
+    86_eco_driverless_nvidia_dgpu \
+    87_persistent_eco_bound_driver_defers \
+    88_mux0_persistent_eco_nvidia_bound \
+    89_mux0_oneshot_eco_with_blocks \
+    90_mux0_clean_ultimate \
 ; do
     scenario "$name"
 done

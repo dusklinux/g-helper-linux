@@ -1167,8 +1167,9 @@ public static class Aura
             _initDirect = false;
             // Re-handshake with SetFeature + a small delay before the first
             // direct packet keeps the firmware from dropping the next frame
-            // on cold-start.
-            AsusHid.SetFeatureAura(new byte[] { AsusHid.AURA_ID, 0xBC });
+            // on cold-start. The trailing 0x01 byte enables direct-RGB mode
+            // (upstream commit 284ab9c7, fixes init on some models).
+            AsusHid.SetFeatureAura(new byte[] { AsusHid.AURA_ID, 0xBC, 1 });
             Thread.Sleep(50);
         }
 

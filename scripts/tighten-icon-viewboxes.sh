@@ -35,11 +35,18 @@ import re
 m = re.match(r'(\d+)x(\d+)\+(\d+)\+(\d+)', '$geom')
 if not m: raise SystemExit(2)
 pw, ph, px, py = [int(x) for x in m.groups()]
-scale = $vw / $RENDER_WIDTH
-nx = max(0.0, px*scale - $MARGIN)
-ny = max(0.0, py*scale - $MARGIN)
-nw = min($vw - nx, pw*scale + 2*$MARGIN)
-nh = min($vh - ny, ph*scale + 2*$MARGIN)
+# Honour the original viewBox origin (vx, vy) - some libraries (e.g. Google
+# Material Symbols) use 'viewBox=\"0 -960 960 960\"' where the visible Y
+# range starts negative. Treating origin as (0,0) collapses the new box to
+# positive Y, which is outside the path data and renders empty.
+scale_x = $vw / $RENDER_WIDTH
+ratio = ph / pw if pw else 1.0
+rendered_h = $RENDER_WIDTH * ratio
+scale_y = $vh / rendered_h if rendered_h else scale_x
+nx = max(float($vx), $vx + px*scale_x - $MARGIN)
+ny = max(float($vy), $vy + py*scale_y - $MARGIN)
+nw = min(float($vw) - (nx - $vx), pw*scale_x + 2*$MARGIN)
+nh = min(float($vh) - (ny - $vy), ph*scale_y + 2*$MARGIN)
 # Sanity: if new bbox is too small (< 5% of original), skip - raster failed
 if nw < $vw * 0.05 or nh < $vh * 0.05: raise SystemExit(3)
 print(f'{nx:.2f} {ny:.2f} {nw:.2f} {nh:.2f}')

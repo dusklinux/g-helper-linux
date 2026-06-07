@@ -1,0 +1,40 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctrl="clr-namespace:GHelper.Linux.UI.Controls"
+        x:Class="GHelper.Linux.UI.Views.NoiseWindow"
+        Title="Noise Suppression"
+        Width="420"
+        MinWidth="420"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        Background="#1C1C1C"
+        Icon="avares://ghelper/UI/Assets/favicon.ico">
+    <Border Classes="panel" Padding="14" Margin="10">
+        <StackPanel Spacing="14">
+            <StackPanel Orientation="Horizontal" Spacing="6"
+                        VerticalAlignment="Center">
+                <ctrl:Icon IconName="brain" Width="18" Height="18"
+                           VerticalAlignment="Center" />
+                <TextBlock x:Name="labelHeader"
+                           Text="RNNoise" FontSize="16"
+                           FontWeight="SemiBold" Foreground="White"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock x:Name="labelDescription"
+                       Text="Neural-network voice/noise discrimination. The model is bundled and runs in the helper RT thread."
+                       TextWrapping="Wrap" FontSize="11" Foreground="#888" />
+            <StackPanel Spacing="4">
+                <TextBlock x:Name="labelVadHeader" Text="Live voice activity" Foreground="#AAA" />
+                <ProgressBar x:Name="meterVad" Minimum="0" Maximum="100" Height="14"
+                             Foreground="#C778DD" Background="#202428" />
+                <TextBlock x:Name="labelVad" Text="0%" Foreground="#4CC2FF" />
+            </StackPanel>
+            <StackPanel Spacing="4">
+                <TextBlock x:Name="labelRedHeader" Text="Noise reduction" Foreground="#AAA" />
+                <ProgressBar x:Name="meterRed" Minimum="0" Maximum="40" Height="14"
+                             Foreground="#FFA500" Background="#202428" />
+                <TextBlock x:Name="labelRed" Text="0 dB" Foreground="#4CC2FF" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

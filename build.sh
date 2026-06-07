@@ -38,6 +38,35 @@ if ! command -v clang &>/dev/null; then
     [[ "$ans" =~ ^[Yy] ]] || exit 1
 fi
 
+# Build ghelper-audio (PipeWire audio helper for noise suppression + DSP chain).
+# Compiled as a tiny native helper, embedded into the AOT binary, extracted
+# at runtime by NativeLibExtractor. Vendored rnnoise (BSD-3) is GPL-3 compatible.
+AUDIO_HELPER_DIR="$SCRIPT_DIR/audio-helper"
+AUDIO_HELPER_BIN=""
+
+if command -v pkg-config &>/dev/null && pkg-config --exists libpipewire-0.3 2>/dev/null && command -v cc &>/dev/null; then
+    echo ""
+    echo "Building ghelper-audio (PipeWire helper)..."
+    (
+        cd "$AUDIO_HELPER_DIR"
+        make clean >/dev/null 2>&1
+        make -j"$(nproc 2>/dev/null || echo 2)"
+    )
+    if [[ -f "$AUDIO_HELPER_DIR/ghelper-audio" ]]; then
+        AUDIO_HELPER_BIN="$AUDIO_HELPER_DIR/ghelper-audio"
+        echo "  ghelper-audio built: $(du -sh "$AUDIO_HELPER_BIN" | cut -f1)"
+    else
+        echo "WARNING: ghelper-audio build failed (mic noise suppression unavailable)"
+    fi
+else
+    echo ""
+    echo "NOTE: libpipewire-0.3 dev headers not found, skipping ghelper-audio build."
+    echo "  Install with:"
+    echo "    Ubuntu/Debian: sudo apt install libpipewire-0.3-dev pkg-config"
+    echo "    Fedora:        sudo dnf install pipewire-devel pkg-config"
+    echo "    Arch:          sudo pacman -S libpipewire pkg-config"
+fi
+
 # Build wlr-randr (Wayland display tool — vendored v0.5.0, MIT license)
 WLR_RANDR_DIR="$SCRIPT_DIR/vendor/wlr-randr"
 WLR_RANDR_BIN=""
@@ -124,6 +153,12 @@ for lib_spec in \
     fi
 done
 
+# Embed ghelper-audio helper if it was built
+if [[ -n "$AUDIO_HELPER_BIN" && -f "$AUDIO_HELPER_BIN" ]]; then
+    cp "$AUDIO_HELPER_BIN" "$EMBED_DIR/ghelper-audio"
+    echo "  Embedded ghelper-audio: $(du -sh "$EMBED_DIR/ghelper-audio" | cut -f1)"
+fi
+
 # Publish as native AOT
 echo "[3/4] Compiling native AOT binary (this may take a minute)..."
 dotnet publish "$SRC_DIR" -c Release --no-restore 2>&1 | grep -v "^.*error : Deleting file" || true
@@ -159,6 +194,11 @@ if [[ -n "$WLR_RANDR_BIN" ]]; then
     rm -f "$WLR_RANDR_DIR/wlr-randr" \
           "$WLR_RANDR_DIR/wlr-output-management-unstable-v1-client-protocol.h" \
           "$WLR_RANDR_DIR/wlr-output-management-unstable-v1-protocol.c"
+fi
+
+# Clean ghelper-audio build artifacts (binary is embedded)
+if [[ -n "$AUDIO_HELPER_BIN" ]]; then
+    (cd "$AUDIO_HELPER_DIR" && make clean >/dev/null 2>&1) || true
 fi
 
 # Clean gpu-helper build artifact from vendor dir (binary is embedded in ghelper)

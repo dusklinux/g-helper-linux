@@ -31,6 +31,21 @@
         <Style Selector="Button.fnlock-on:pressed /template/ ContentPresenter">
             <Setter Property="Background" Value="#3AAEEF" />
         </Style>
+        <!-- audio-on mirrors fnlock-on but in a greener accent to signal
+             "noise suppression / DSP chain active" without clashing with
+             the existing perf / GPU blue. -->
+        <Style Selector="Button.audio-on">
+            <Setter Property="Background" Value="#50C878" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#50C878" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Button.audio-on:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#67D48B" />
+        </Style>
+        <Style Selector="Button.audio-on:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#3FB565" />
+        </Style>
     </Window.Styles>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -316,6 +331,48 @@
                                 IsVisible="False"
                                 CornerRadius="5" />
                     </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- AUDIO SECTION (microphone noise suppression + DSP chain).
+                 The header toggle on the right enables or disables the whole
+                 audio helper, same UX shape as the FN-Lock button above. The
+                 body button below opens the dedicated G-Helper Audio window
+                 for fine-grained per-effect control. -->
+            <Border x:Name="panelAudio" Classes="panel">
+                <StackPanel>
+                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="2,0,2,8">
+                        <TextBlock Grid.Column="0" Text="&#x1F399;"
+                                   FontSize="16"
+                                   VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Grid.Column="1" x:Name="labelAudio" Classes="header"
+                                   Text="Microphone"
+                                   VerticalAlignment="Center" />
+                        <Button Grid.Column="2" x:Name="buttonAudioToggle" Classes="ghelper"
+                                Click="ButtonAudioToggle_Click"
+                                Height="26" Padding="10,0"
+                                MinWidth="78"
+                                VerticalAlignment="Center">
+                            <TextBlock x:Name="labelAudioToggle"
+                                       Text="Off"
+                                       HorizontalAlignment="Center"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       VerticalAlignment="Center" />
+                        </Button>
+                    </Grid>
+
+                    <Button x:Name="buttonAudio" Classes="ghelper"
+                            Margin="0,0" Click="ButtonAudio_Click"
+                            HorizontalAlignment="Stretch"
+                            Height="36">
+                        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                            <ctrl:Icon IconName="equalizer" Width="16" Height="16"
+                                       VerticalAlignment="Center" />
+                            <TextBlock x:Name="labelAudioConfigure"
+                                       Text="Configure chain..." FontSize="11"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Border>
 

@@ -392,9 +392,12 @@
             <!-- HEADER -->
             <Border Grid.Row="0" Classes="panel-header" Margin="10,10,10,5">
                 <StackPanel Spacing="6">
-                    <TextBlock x:Name="headerFanCurves" Classes="header" Text="Fan Curves" FontSize="14" />
-                    <TextBlock x:Name="labelMode" Classes="label-dim"
-                               Text="Mode: Balanced" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock x:Name="headerFanCurves" Classes="header" Text="Fan Curves" FontSize="14" VerticalAlignment="Center" />
+                        <ComboBox x:Name="comboMode" Width="200" Height="28"
+                                  VerticalAlignment="Center"
+                                  SelectionChanged="ComboMode_Changed" />
+                    </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2,0,0">
                         <Button x:Name="buttonMonitor" Classes="ghelper" Height="30"
                                 Click="ButtonMonitor_Click">

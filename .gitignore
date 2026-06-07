@@ -6,6 +6,13 @@ tests/**/obj/
 dist/
 build/
 
+# Audio helper (C build artifacts; sources are tracked, objects/binary are not)
+audio-helper/*.o
+audio-helper/rnnoise/*.o
+audio-helper/ghelper-audio
+audio-helper/tests/cs/bin/
+audio-helper/tests/cs/obj/
+
 # AppImage
 *.AppImage
 GHelper.AppDir/

@@ -17,6 +17,10 @@ public static class ResourceExtractorCli
             return ExtractHelper(args);
         if (args.Length >= 1 && args[0] == "--install-gpu-helper")
             return InstallHelperResource("gpu-helper", args);
+        if (args.Length >= 1 && args[0] == "--apply-system-files")
+            return GHelper.Linux.Install.Installer.ApplyAsRoot(args);
+        if (args.Length >= 1 && args[0] == "--remove-system-files")
+            return GHelper.Linux.Install.Installer.RemoveAsRoot(args);
         return null;
     }
 
