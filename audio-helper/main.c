@@ -1339,6 +1339,23 @@ static void cb_in_process(void *userdata)
      * blurring the chop). */
     const float stutter_gate_coef = 1.0f - expf(-1.0f / ((float)SAMPLE_RATE * 0.005f));
 
+    /* When the vocoder is off, force all voice-effect stages to their bypass
+     * values. These stages (pitch shifter, autotune, bitcrush, band-pass,
+     * stutter) are part of the vocoder preset stack — their parameters are
+     * stamped by presets and persisted independently, but conceptually they
+     * only make sense as part of the vocoder chain. Without this gate, the
+     * VOC checkbox fails to silence a preset's pitch shift / bitcrush / etc.
+     * because the atomics retain the preset's values after VOC 0. */
+    if (!voc_on)
+    {
+        target_ratio = 1.0f; /* psh_tick has a unity fast-path */
+        bc_bits = 0;
+        bc_ds = 1;
+        voice_hpf_hz = 0;
+        voice_lpf_hz = 0;
+        stutter_hz = 0;
+    }
+
     uint32_t phead = atomic_load_explicit(&g_post.head, memory_order_relaxed);
     uint32_t mhead = atomic_load_explicit(&g_mon.head, memory_order_relaxed);
     int mon_on = atomic_load(&g_params.monitor_on);
@@ -1728,35 +1745,40 @@ static const struct pw_stream_events mon_stream_events = {
  *   Audio frame emitter (60 Hz timer in main loop)
  * ---------------------------------------------------------------------------*/
 
-/* Reconnect the capture stream to a new target source. Called on the main
- * loop thread so it's safe to disconnect/connect pw_stream. */
-static void apply_pending_source(struct app *app)
+/* Create (or recreate) the capture stream and connect it. When target is
+ * non-NULL and not "default", PW_KEY_TARGET_OBJECT pins the stream to that
+ * source and NODE_DONT_RECONNECT prevents WirePlumber from overriding it.
+ * For "System default" (NULL / "" / "default") WirePlumber picks the default
+ * source and NODE_DONT_RECONNECT stays false so it tracks default changes.
+ *
+ * Baking PW_KEY_TARGET_OBJECT into the initial properties (rather than
+ * updating them on a live stream) guarantees WirePlumber sees the target on
+ * the node's very first link evaluation — no timing dependency on whether
+ * the stream has reached STREAMING state yet. */
+static int create_capture_stream(struct app *app, const char *target)
 {
-    if (!atomic_load(&app->src_pending))
-        return;
-    atomic_store(&app->src_pending, 0);
+    int has_target = (target && target[0] && strcmp(target, "default") != 0);
 
-    const char *target = app->src_pending_target;
-    uint32_t target_id = PW_ID_ANY;
-    /* PipeWire honours the PW_KEY_TARGET_OBJECT property updated via
-     * pw_stream_update_properties before reconnect. For node-name matching
-     * wireplumber resolves the actual node id. */
-    if (target[0] != '\0' && strcmp(target, "default") != 0)
-    {
-        struct pw_properties *up = pw_properties_new(
-            PW_KEY_TARGET_OBJECT, target, NULL);
-        pw_stream_update_properties(app->in_stream, &up->dict);
-        pw_properties_free(up);
-    }
-    else
-    {
-        struct pw_properties *up = pw_properties_new(
-            PW_KEY_TARGET_OBJECT, "", NULL);
-        pw_stream_update_properties(app->in_stream, &up->dict);
-        pw_properties_free(up);
-    }
+    struct pw_properties *props = pw_properties_new(
+        PW_KEY_MEDIA_TYPE, "Audio",
+        PW_KEY_MEDIA_CATEGORY, "Capture",
+        PW_KEY_MEDIA_ROLE, "Communication",
+        PW_KEY_NODE_NAME, "ghelper-audio-capture",
+        PW_KEY_NODE_DESCRIPTION, "G-Helper Audio capture",
+        PW_KEY_NODE_AUTOCONNECT, "true",
+        PW_KEY_NODE_DONT_RECONNECT, has_target ? "true" : "false",
+        NULL);
 
-    pw_stream_disconnect(app->in_stream);
+    if (has_target)
+        pw_properties_set(props, PW_KEY_TARGET_OBJECT, target);
+
+    app->in_stream = pw_stream_new_simple(
+        pw_main_loop_get_loop(app->loop),
+        "ghelper-audio-capture",
+        props,
+        &in_stream_events,
+        &g_in_ctx);
+    g_in_ctx.stream = app->in_stream;
 
     uint8_t pod_buf[1024];
     struct spa_pod_builder b = SPA_POD_BUILDER_INIT(pod_buf, sizeof(pod_buf));
@@ -1766,21 +1788,35 @@ static void apply_pending_source(struct app *app)
                                                    .format = SPA_AUDIO_FORMAT_F32,
                                                    .channels = 1,
                                                    .rate = SAMPLE_RATE));
-    if (pw_stream_connect(app->in_stream,
-                          PW_DIRECTION_INPUT,
-                          target_id,
-                          PW_STREAM_FLAG_AUTOCONNECT |
-                              PW_STREAM_FLAG_MAP_BUFFERS |
-                              PW_STREAM_FLAG_RT_PROCESS,
-                          params, 1) < 0)
-    {
+
+    return pw_stream_connect(app->in_stream,
+                             PW_DIRECTION_INPUT, PW_ID_ANY,
+                             PW_STREAM_FLAG_AUTOCONNECT |
+                                 PW_STREAM_FLAG_MAP_BUFFERS |
+                                 PW_STREAM_FLAG_RT_PROCESS,
+                             params, 1);
+}
+
+/* Retarget the capture stream to a new source. Destroys the old stream and
+ * creates a fresh one via create_capture_stream so the target is in the
+ * initial properties — see the comment there for why this matters. */
+static void apply_pending_source(struct app *app)
+{
+    if (!atomic_load(&app->src_pending))
+        return;
+    atomic_store(&app->src_pending, 0);
+
+    const char *target = app->src_pending_target;
+
+    pw_stream_destroy(app->in_stream);
+    app->in_stream = NULL;
+    g_in_ctx.stream = NULL;
+
+    if (create_capture_stream(app, target) < 0)
         fprintf(stderr, "[ghelper-audio] reconnect to '%s' failed\n", target);
-    }
     else
-    {
         fprintf(stderr, "[ghelper-audio] capture target set to '%s'\n",
                 target[0] ? target : "default");
-    }
 }
 
 /* Connect or disconnect the monitor playback stream. */
@@ -2265,43 +2301,8 @@ int main(int argc, char *argv[])
 
     /* ---- Capture stream (PW_DIRECTION_INPUT): records from the default
      * mic into our raw ring. media.category=Capture so wireplumber routes
-     * a real source into it. */
-    struct pw_properties *in_props = pw_properties_new(
-        PW_KEY_MEDIA_TYPE, "Audio",
-        PW_KEY_MEDIA_CATEGORY, "Capture",
-        PW_KEY_MEDIA_ROLE, "Communication",
-        PW_KEY_NODE_NAME, "ghelper-audio-capture",
-        PW_KEY_NODE_DESCRIPTION, "G-Helper Audio capture",
-        PW_KEY_NODE_AUTOCONNECT, "true",
-        PW_KEY_NODE_DONT_RECONNECT, "false",
-        /* Capture is the always-on driver of our DSP chain; must NOT be
-         * passive or wireplumber will wait for the virtual source to be
-         * recorded from before activating the mic, defeating viz updates. */
-        NULL);
-
-    app->in_stream = pw_stream_new_simple(
-        pw_main_loop_get_loop(app->loop),
-        "ghelper-audio-capture",
-        in_props,
-        &in_stream_events,
-        &g_in_ctx);
-    g_in_ctx.stream = app->in_stream;
-
-    struct spa_pod_builder b_in = SPA_POD_BUILDER_INIT(pod_buf, sizeof(pod_buf));
-    const struct spa_pod *in_params[1];
-    in_params[0] = spa_format_audio_raw_build(&b_in, SPA_PARAM_EnumFormat,
-                                              &SPA_AUDIO_INFO_RAW_INIT(
-                                                      .format = SPA_AUDIO_FORMAT_F32,
-                                                      .channels = 1,
-                                                      .rate = SAMPLE_RATE));
-
-    if (pw_stream_connect(app->in_stream,
-                          PW_DIRECTION_INPUT,
-                          PW_ID_ANY,
-                          PW_STREAM_FLAG_AUTOCONNECT |
-                              PW_STREAM_FLAG_MAP_BUFFERS |
-                              PW_STREAM_FLAG_RT_PROCESS,
-                          in_params, 1) < 0)
+     * a real source into it. NULL target = system default. */
+    if (create_capture_stream(app, NULL) < 0)
     {
         fprintf(stderr, "in_stream connect failed\n");
         return 1;
