@@ -245,13 +245,13 @@ chmod +x GHelper-x86_64.AppImage
 
 ```bash
 # Ubuntu/Debian
-sudo apt install dotnet-sdk-10.0 clang zlib1g-dev upx-ucl
+sudo apt install dotnet-sdk-10.0 clang zlib1g-dev upx-ucl libpipewire-0.3-dev pkg-config
 
 # Fedora
-sudo dnf install dotnet-sdk-10.0 clang zlib-devel upx
+sudo dnf install dotnet-sdk-10.0 clang zlib-devel upx pipewire-devel pkg-config
 
 # Arch
-sudo pacman -S dotnet-sdk clang upx
+sudo pacman -S dotnet-sdk clang upx libpipewire pkg-config
 ```
 
 ```bash

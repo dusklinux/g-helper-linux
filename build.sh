@@ -44,27 +44,32 @@ fi
 AUDIO_HELPER_DIR="$SCRIPT_DIR/audio-helper"
 AUDIO_HELPER_BIN=""
 
-if command -v pkg-config &>/dev/null && pkg-config --exists libpipewire-0.3 2>/dev/null && command -v cc &>/dev/null; then
+if ! command -v pkg-config &>/dev/null || \
+   ! pkg-config --exists libpipewire-0.3 2>/dev/null || \
+   ! command -v cc &>/dev/null; then
     echo ""
-    echo "Building ghelper-audio (PipeWire helper)..."
-    (
-        cd "$AUDIO_HELPER_DIR"
-        make clean >/dev/null 2>&1
-        make -j"$(nproc 2>/dev/null || echo 2)"
-    )
-    if [[ -f "$AUDIO_HELPER_DIR/ghelper-audio" ]]; then
-        AUDIO_HELPER_BIN="$AUDIO_HELPER_DIR/ghelper-audio"
-        echo "  ghelper-audio built: $(du -sh "$AUDIO_HELPER_BIN" | cut -f1)"
-    else
-        echo "WARNING: ghelper-audio build failed (mic noise suppression unavailable)"
-    fi
-else
-    echo ""
-    echo "NOTE: libpipewire-0.3 dev headers not found, skipping ghelper-audio build."
+    echo "ERROR: Cannot build ghelper-audio — libpipewire-0.3 dev headers not found."
     echo "  Install with:"
     echo "    Ubuntu/Debian: sudo apt install libpipewire-0.3-dev pkg-config"
     echo "    Fedora:        sudo dnf install pipewire-devel pkg-config"
     echo "    Arch:          sudo pacman -S libpipewire pkg-config"
+    exit 1
+fi
+
+echo ""
+echo "Building ghelper-audio (PipeWire helper)..."
+(
+    cd "$AUDIO_HELPER_DIR"
+    make clean >/dev/null 2>&1
+    make -j"$(nproc 2>/dev/null || echo 2)"
+)
+if [[ -f "$AUDIO_HELPER_DIR/ghelper-audio" ]]; then
+    AUDIO_HELPER_BIN="$AUDIO_HELPER_DIR/ghelper-audio"
+    echo "  ghelper-audio built: $(du -sh "$AUDIO_HELPER_BIN" | cut -f1)"
+else
+    echo ""
+    echo "ERROR: ghelper-audio build failed — see make output above."
+    exit 1
 fi
 
 # Build wlr-randr (Wayland display tool — vendored v0.5.0, MIT license)
