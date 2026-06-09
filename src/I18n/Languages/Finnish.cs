@@ -319,6 +319,8 @@ public static class Finnish
 
         ["other_header"] = "Muut",
         ["boot_sound"] = "Käynnistysääni",
+        ["deep_sleep"] = "Lepotila",
+        ["deep_sleep_tooltip"] = "Miten kannettava nukkuu. s2idle = ohjelmistopohjainen valmiustila: herää heti, mutta akku voi tyhjentyä huomattavasti lepotilassa. deep = täysi S3-lepotila: herääminen kestää hetken pidempään, kulutus on minimaalinen. Otetaan käyttöön heti ja palautetaan jokaisella käynnistyksellä.",
         ["window_topmost"] = "Ikkuna aina päällimmäisenä",
         ["bw_tray_icon"] = "Mustavalkoinen ilmaisinalueen kuvake",
         ["clamshell_mode"] = "Simpukkatila (estä lepotila kannen sulkiessa)",
@@ -345,6 +347,10 @@ public static class Finnish
         ["profile_silent_label"] = "Hiljainen profiili",
         ["profile_balanced_label"] = "Tasapainotettu profiili",
         ["profile_turbo_label"] = "Turbo-profiili",
+        ["epp_silent_label"] = "Hiljainen EPP",
+        ["epp_balanced_label"] = "Tasapainoinen EPP",
+        ["epp_turbo_label"] = "Turbo EPP",
+        ["epp_tooltip"] = "CPU:n energia/suorituskyky-tasapaino (energy_performance_preference). power suosii akunkestoa, performance suosii nopeutta. Sovelletaan kaikkiin ytimiin tilan aktivoinnissa.",
         ["battery_health_format"] = "Akun kunto: {0}%",
         ["battery_health_unknown"] = "Akun kunto: --%",
         ["power_draw_discharge"] = "Virrankulutus: {0} mW (purkaa)",
@@ -867,5 +873,6 @@ public static class Finnish
         ["sysfiles_name_desktop"] = "Sovellusvalikon kohde",
         ["sysfiles_name_icon"] = "Sovelluskuvake",
         ["sysfiles_name_autostart"] = "Automaattikäynnistyksen kohde",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo-ydinmoduulit (modules-load.d)",
     };
 }

@@ -322,6 +322,10 @@
                               Margin="0,4"
                               IsCheckedChanged="CheckBootSound_Changed" />
 
+                    <CheckBox x:Name="checkStatusLed" Content="LED status indicators"
+                              Margin="0,4" IsVisible="False"
+                              IsCheckedChanged="CheckStatusLed_Changed" />
+
                     <CheckBox x:Name="checkTopmost" Content="Window Always on Top"
                               Margin="0,4"
                               IsCheckedChanged="CheckTopmost_Changed" />
@@ -333,6 +337,18 @@
                     <CheckBox x:Name="checkClamshell" Content="Clamshell Mode (disable sleep on lid close)"
                               Margin="0,4"
                               IsCheckedChanged="CheckClamshell_Changed" />
+
+                    <Grid x:Name="panelDeepSleep" ColumnDefinitions="*,160" Margin="0,4" IsVisible="False">
+                        <TextBlock Grid.Column="0" x:Name="labelDeepSleep" Text="Suspend mode"
+                                   VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboDeepSleep"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ComboDeepSleep_SelectionChanged" />
+                    </Grid>
+
+                    <CheckBox x:Name="checkFahrenheit" Content="Show temperatures in Fahrenheit"
+                              Margin="0,4"
+                              IsCheckedChanged="CheckFahrenheit_Changed" />
 
                     <CheckBox x:Name="checkSilentStart" Content="Start minimized to tray"
                               Margin="0,4"
@@ -372,6 +388,74 @@
                     <CheckBox x:Name="checkTouchscreen" Content="Touchscreen"
                               Margin="0,4" IsVisible="False"
                               IsCheckedChanged="CheckTouchscreen_Changed" />
+
+                    <Button x:Name="buttonNumberPad" Classes="ghelper" IsVisible="False"
+                            Margin="0,4" Height="28" Click="ButtonNumberPad_Click">
+                        <TextBlock Text="NumberPad..." FontSize="11" />
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- LENOVO (Vantage-parity hardware toggles; visible on Lenovo only) -->
+            <Border Classes="panel" x:Name="panelLenovo" IsVisible="False">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock x:Name="headerLenovo" Classes="header" Text="Lenovo" />
+                    </Border>
+
+                    <CheckBox x:Name="checkLenovoConservation"
+                              Content="Battery conservation mode (cap charge at ~60%)"
+                              Margin="0,4" IsVisible="False"
+                              IsCheckedChanged="CheckLenovoConservation_Changed" />
+
+                    <CheckBox x:Name="checkLenovoRapidCharge"
+                              Content="Rapid charge"
+                              Margin="0,4" IsVisible="False"
+                              IsCheckedChanged="CheckLenovoRapidCharge_Changed" />
+                    <TextBlock Classes="label-dim" x:Name="labelLenovoRapidChargeHint"
+                               Text="Mutually exclusive with conservation mode - enabling one turns the other off (enforced by the firmware)."
+                               FontSize="10" Margin="20,0,0,4" TextWrapping="Wrap" IsVisible="False" />
+
+                    <CheckBox x:Name="checkLenovoUsbCharging"
+                              Content="Always-on USB charging (charge devices while asleep/off)"
+                              Margin="0,4" IsVisible="False"
+                              IsCheckedChanged="CheckLenovoUsbCharging_Changed" />
+
+                    <CheckBox x:Name="checkLenovoFnLock"
+                              Content="Fn lock (F1-F12 act as function keys)"
+                              Margin="0,4" IsVisible="False"
+                              IsCheckedChanged="CheckLenovoFnLock_Changed" />
+
+                    <CheckBox x:Name="checkLenovoFlipToStart"
+                              Content="Flip to Start (power on when the lid opens)"
+                              Margin="0,4" IsVisible="False"
+                              IsCheckedChanged="CheckLenovoFlipToStart_Changed" />
+
+                    <CheckBox x:Name="checkLenovoExtremeTurbo"
+                              Content="Turbo uses Extreme mode (max-power)"
+                              Margin="0,4" IsVisible="False"
+                              IsCheckedChanged="CheckLenovoExtremeTurbo_Changed" />
+                    <TextBlock Classes="label-dim" x:Name="labelLenovoExtremeHint"
+                               Text="Maps the Turbo button to the firmware's Extreme thermal mode (SmartFan 6+, AC power recommended)."
+                               FontSize="10" Margin="20,0,0,4" TextWrapping="Wrap" IsVisible="False" />
+
+                    <CheckBox x:Name="checkLenovoMicFix"
+                              Content="Fix internal microphone distortion (limit mic boost)"
+                              Margin="0,4" IsVisible="False"
+                              IsCheckedChanged="CheckLenovoMicFix_Changed" />
+                    <TextBlock Classes="label-dim" x:Name="labelLenovoMicFixHint"
+                               Text="Realtek ALC287 Legion generations ship with excessive internal mic boost that clips and distorts recordings. Clamps the ALSA 'Internal Mic Boost' control to 0 dB on startup and resume."
+                               FontSize="10" Margin="20,0,0,4" TextWrapping="Wrap" IsVisible="False" />
+
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,4" x:Name="rowLenovoDustClean" IsVisible="False">
+                        <TextBlock Grid.Column="0" x:Name="labelLenovoDustClean"
+                                   Text="Dust cleaning (run all fans at max for 30 s)"
+                                   VerticalAlignment="Center" />
+                        <Button Grid.Column="1" x:Name="buttonLenovoDustClean" Classes="ghelper"
+                                Height="28" MinWidth="80" Click="ButtonLenovoDustClean_Click">
+                            <TextBlock x:Name="labelLenovoDustCleanBtn" Text="Start" FontSize="11" />
+                        </Button>
+                    </Grid>
                 </StackPanel>
             </Border>
 
@@ -567,6 +651,30 @@
                         <ComboBox Grid.Column="1" x:Name="comboProfileTurbo"
                                   Width="200" SelectionChanged="ComboProfileTurbo_Changed" />
                     </Grid>
+
+                    <!-- Per-mode CPU EPP pickers. Items populated at runtime from
+                         cpufreq energy_performance_available_preferences. Hidden
+                         when the kernel does not expose EPP. -->
+                    <StackPanel x:Name="panelEpp" IsVisible="False">
+                        <Grid ColumnDefinitions="120,*" Margin="0,4">
+                            <TextBlock Grid.Column="0" x:Name="labelEppSilent" Text="Silent EPP"
+                                       Classes="label-dim" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1" x:Name="comboEppSilent"
+                                      Width="200" SelectionChanged="ComboEppSilent_Changed" />
+                        </Grid>
+                        <Grid ColumnDefinitions="120,*" Margin="0,4">
+                            <TextBlock Grid.Column="0" x:Name="labelEppBalanced" Text="Balanced EPP"
+                                       Classes="label-dim" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1" x:Name="comboEppBalanced"
+                                      Width="200" SelectionChanged="ComboEppBalanced_Changed" />
+                        </Grid>
+                        <Grid ColumnDefinitions="120,*" Margin="0,4">
+                            <TextBlock Grid.Column="0" x:Name="labelEppTurbo" Text="Turbo EPP"
+                                       Classes="label-dim" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1" x:Name="comboEppTurbo"
+                                      Width="200" SelectionChanged="ComboEppTurbo_Changed" />
+                        </Grid>
+                    </StackPanel>
 
                     <!-- Battery Health -->
                     <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">

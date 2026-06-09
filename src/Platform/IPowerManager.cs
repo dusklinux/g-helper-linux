@@ -47,6 +47,12 @@ public interface IPowerManager
     /// </summary>
     event Action<bool>? PowerStateChanged;
 
+    /// <summary>
+    /// Fired after the system wakes from suspend. Some ASUS firmware resets
+    /// the battery charge limit on resume, so subscribers re-apply settings.
+    /// </summary>
+    event Action? SystemResumed;
+
     /// <summary>Start monitoring power state changes (polls AC adapter status).</summary>
     void StartPowerMonitoring();
 

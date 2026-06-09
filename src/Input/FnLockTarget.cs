@@ -4,7 +4,7 @@ namespace GHelper.Linux.Input;
 /// What an F-key (F1..F12) produces when the software fn-lock remapper is
 /// active and FnLockOn=false. Either:
 ///   - a Linux KEY_* code (forwarded to the virtual keyboard), or
-///   - a g-helper internal action (dispatched via App.RaiseActionFromFnLock),
+///   - a g-helper internal action (dispatched via InputDispatcher.RaiseActionFromFnLock),
 ///     reusing the same action vocabulary as the Extra window's Key Bindings
 ///     section ("ghelper", "aura", "performance", "micmute", etc.).
 ///

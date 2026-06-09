@@ -316,6 +316,8 @@ public static class Russian
 
         ["other_header"] = "Прочее",
         ["boot_sound"] = "Звук загрузки",
+        ["deep_sleep"] = "Режим сна",
+        ["deep_sleep_tooltip"] = "Как ноутбук засыпает. s2idle = программный сон: мгновенное пробуждение, но батарея может заметно разряжаться во сне. deep = полный S3-сон: пробуждение чуть дольше, разряд минимален. Применяется сразу и восстанавливается при каждой загрузке.",
         ["window_topmost"] = "Окно всегда поверх",
         ["bw_tray_icon"] = "Чёрно-белая иконка в трее",
         ["clamshell_mode"] = "Режим «раскладушки» (не засыпать при закрытии крышки)",
@@ -342,6 +344,10 @@ public static class Russian
         ["profile_silent_label"] = "Профиль Тихий",
         ["profile_balanced_label"] = "Профиль Сбалансированный",
         ["profile_turbo_label"] = "Профиль Турбо",
+        ["epp_silent_label"] = "EPP Тихий",
+        ["epp_balanced_label"] = "EPP Сбалансированный",
+        ["epp_turbo_label"] = "EPP Турбо",
+        ["epp_tooltip"] = "Баланс энергии и производительности CPU (energy_performance_preference). power экономит батарею, performance повышает отзывчивость. Применяется ко всем ядрам при активации режима.",
         ["battery_health_format"] = "Здоровье батареи: {0}%",
         ["battery_health_unknown"] = "Здоровье батареи: --%",
         ["power_draw_discharge"] = "Потребление: {0} мВт (разряд)",
@@ -864,5 +870,6 @@ public static class Russian
         ["sysfiles_name_desktop"] = "Пункт меню приложений",
         ["sysfiles_name_icon"] = "Значок приложения",
         ["sysfiles_name_autostart"] = "Запись автозапуска",
+        ["sysfiles_name_lenovo_modules"] = "Модули ядра Lenovo (modules-load.d)",
     };
 }

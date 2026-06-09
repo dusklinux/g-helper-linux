@@ -408,6 +408,8 @@ public static class Latvian
 
         ["other_header"] = "Citi",
         ["boot_sound"] = "Startēšanas skaņa",
+        ["deep_sleep"] = "Miega režīms",
+        ["deep_sleep_tooltip"] = "Kā dators guļ. s2idle = programmatūras gaidstāve: tūlītēja pamošanās, bet akumulators miegā var manāmi izlādēties. deep = pilna S3 iemidzināšana: pamošanās aizņem mirkli ilgāk, izlāde ir minimāla. Tiek lietots uzreiz un atjaunots katrā palaišanā.",
         ["window_topmost"] = "Logs vienmēr virspusē",
         ["bw_tray_icon"] = "Melnbalta paplātes ikona",
         ["clamshell_mode"] = "Clamshell režīms (atspējot miegu, aizverot vāku)",
@@ -478,6 +480,10 @@ public static class Latvian
         ["profile_silent_label"] = "Klusais profils",
         ["profile_balanced_label"] = "Līdzsvarotais profils",
         ["profile_turbo_label"] = "Turbo profils",
+        ["epp_silent_label"] = "Klusais EPP",
+        ["epp_balanced_label"] = "Lidzsvarotais EPP",
+        ["epp_turbo_label"] = "Turbo EPP",
+        ["epp_tooltip"] = "CPU energijas un veiktspejas lidzsvars (energy_performance_preference). power taupa bateriju, performance uzlabo atsaucibu. Tiek piemerots visiem kodoliem, aktivizejot rezimu.",
         ["battery_health_format"] = "Akumulatora stāvoklis: {0} %",
         ["battery_health_unknown"] = "Akumulatora stāvoklis: --%",
         ["power_draw_discharge"] = "Jaudas patēriņš: {0} mW (izlāde)",
@@ -919,5 +925,6 @@ public static class Latvian
         ["sysfiles_name_desktop"] = "Lietotņu izvēlnes ieraksts",
         ["sysfiles_name_icon"] = "Lietotnes ikona",
         ["sysfiles_name_autostart"] = "Automātiskās palaišanas ieraksts",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo kodola moduļi (modules-load.d)",
     };
 }

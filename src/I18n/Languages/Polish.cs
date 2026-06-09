@@ -316,6 +316,8 @@ public static class Polish
 
         ["other_header"] = "Inne",
         ["boot_sound"] = "Dźwięk rozruchu",
+        ["deep_sleep"] = "Tryb uśpienia",
+        ["deep_sleep_tooltip"] = "Jak laptop zasypia. s2idle = uśpienie programowe: natychmiastowe wybudzenie, ale bateria może się wyraźnie rozładowywać podczas snu. deep = pełne uśpienie S3: wybudzenie trwa chwilę dłużej, rozładowanie jest minimalne. Stosowane od razu i przywracane przy każdym uruchomieniu.",
         ["window_topmost"] = "Okno zawsze na wierzchu",
         ["bw_tray_icon"] = "Czarno-biała ikona w zasobniku",
         ["clamshell_mode"] = "Tryb zamkniętej klapy (wyłącz uśpienie po zamknięciu)",
@@ -342,6 +344,10 @@ public static class Polish
         ["profile_silent_label"] = "Profil Cichy",
         ["profile_balanced_label"] = "Profil Zrównoważony",
         ["profile_turbo_label"] = "Profil Turbo",
+        ["epp_silent_label"] = "EPP Cichy",
+        ["epp_balanced_label"] = "EPP Zrownowazony",
+        ["epp_turbo_label"] = "EPP Turbo",
+        ["epp_tooltip"] = "Balans energii i wydajnosci CPU (energy_performance_preference). power oszczedza baterie, performance poprawia responsywnosc. Stosowane do wszystkich rdzeni przy aktywacji trybu.",
         ["battery_health_format"] = "Kondycja baterii: {0}%",
         ["battery_health_unknown"] = "Kondycja baterii: --%",
         ["power_draw_discharge"] = "Pobór mocy: {0} mW (rozładowywanie)",
@@ -864,5 +870,6 @@ public static class Polish
         ["sysfiles_name_desktop"] = "Pozycja menu aplikacji",
         ["sysfiles_name_icon"] = "Ikona aplikacji",
         ["sysfiles_name_autostart"] = "Pozycja autostartu",
+        ["sysfiles_name_lenovo_modules"] = "Moduły jądra Lenovo (modules-load.d)",
     };
 }

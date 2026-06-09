@@ -13,6 +13,12 @@ public class LinuxPowerManager : IPowerManager
     private bool? _lastAcState;
 
     public event Action<bool>? PowerStateChanged;
+    public event Action? SystemResumed;
+
+    // Poll interval for the power monitor loop. A wall-clock gap much larger
+    // than this between iterations means the system was suspended.
+    private const int PollIntervalMs = 3000;
+    private const long SuspendGapThresholdMs = 10000;
 
     public LinuxPowerManager()
     {
@@ -44,13 +50,28 @@ public class LinuxPowerManager : IPowerManager
 
     private void PowerMonitorLoop()
     {
+        long lastWallMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
         while (_powerMonitoring)
         {
             try
             {
-                Thread.Sleep(3000); // Poll every 3 seconds
+                Thread.Sleep(PollIntervalMs);
                 if (!_powerMonitoring)
                     break;
+
+                // Suspend detection: wall clock keeps advancing during suspend
+                // while this loop is frozen, so the first iteration after wake
+                // sees a gap far beyond the poll interval. Environment.TickCount64
+                // is CLOCK_MONOTONIC on Linux, which stops during suspend, so it
+                // cannot be used here.
+                long nowWallMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                if (nowWallMs - lastWallMs > PollIntervalMs + SuspendGapThresholdMs)
+                {
+                    Helpers.Logger.WriteLine($"System Resume (slept ~{(nowWallMs - lastWallMs) / 1000}s)");
+                    SystemResumed?.Invoke();
+                }
+                lastWallMs = nowWallMs;
 
                 bool currentAc = IsOnAcPower();
                 if (_lastAcState.HasValue && currentAc != _lastAcState.Value)
@@ -120,6 +141,37 @@ public class LinuxPowerManager : IPowerManager
                 }
                 Helpers.Logger.WriteLine($"Platform profile '{profile}' not available, using '{fallback}' (choices: {string.Join(' ', available)})");
                 profile = fallback;
+            }
+
+            // Legion 5 Pro 16IAH7H (J2CN BIOS): switching low-power directly to
+            // performance is unreliable in firmware - bounce through balanced.
+            if (profile == "performance"
+                && Helpers.AppConfig.IsLenovoDevice()
+                && Lenovo.LenovoDetection.HasQuietToPerformanceBug())
+            {
+                string? current = SysfsHelper.ReadAttribute(SysfsHelper.PlatformProfile);
+                if (current is "low-power" or "quiet")
+                {
+                    SysfsHelper.WriteAttribute(SysfsHelper.PlatformProfile, "balanced");
+                    Thread.Sleep(500);
+                }
+            }
+
+            // Legion 2023 (K1CN BIOS): leaving the custom (God-mode) profile by
+            // jumping straight to another mode hits a firmware bug (LLT quirk:
+            // "leave custom by stepping modes one at a time") - bounce through
+            // balanced first.
+            if (profile != "custom" && profile != "balanced"
+                && Helpers.AppConfig.IsLenovoDevice()
+                && Lenovo.LenovoDetection.HasCustomModeSwitchBug())
+            {
+                string? current = SysfsHelper.ReadAttribute(SysfsHelper.PlatformProfile);
+                if (current == "custom")
+                {
+                    Helpers.Logger.WriteLine("K1CN quirk: stepping custom -> balanced before target profile");
+                    SysfsHelper.WriteAttribute(SysfsHelper.PlatformProfile, "balanced");
+                    Thread.Sleep(500);
+                }
             }
 
             SysfsHelper.WriteAttribute(SysfsHelper.PlatformProfile, profile);

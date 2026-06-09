@@ -316,6 +316,8 @@ public static class French
 
         ["other_header"] = "Autres",
         ["boot_sound"] = "Son de démarrage",
+        ["deep_sleep"] = "Mode de veille",
+        ["deep_sleep_tooltip"] = "Comment l'ordinateur se met en veille. s2idle = veille logicielle : réveil instantané, mais la batterie peut se décharger sensiblement pendant la veille. deep = suspension S3 complète : le réveil prend un peu plus de temps, la décharge est minime. Appliqué immédiatement et restauré à chaque démarrage.",
         ["window_topmost"] = "Fenêtre toujours au premier plan",
         ["bw_tray_icon"] = "Icône de barre des tâches N&B",
         ["clamshell_mode"] = "Mode coquille (pas de veille à la fermeture du couvercle)",
@@ -342,6 +344,10 @@ public static class French
         ["profile_silent_label"] = "Profil Silencieux",
         ["profile_balanced_label"] = "Profil Équilibré",
         ["profile_turbo_label"] = "Profil Turbo",
+        ["epp_silent_label"] = "EPP Silencieux",
+        ["epp_balanced_label"] = "EPP Equilibre",
+        ["epp_turbo_label"] = "EPP Turbo",
+        ["epp_tooltip"] = "Compromis energie/performance du CPU (energy_performance_preference). power privilegie l'autonomie, performance privilegie la reactivite. Applique a tous les coeurs CPU a l'activation du mode.",
         ["battery_health_format"] = "Santé de la batterie : {0}%",
         ["battery_health_unknown"] = "Santé de la batterie : --%",
         ["power_draw_discharge"] = "Consommation : {0} mW (décharge)",
@@ -864,5 +870,6 @@ public static class French
         ["sysfiles_name_desktop"] = "Entrée du menu des applications",
         ["sysfiles_name_icon"] = "Icône de l'application",
         ["sysfiles_name_autostart"] = "Entrée de démarrage automatique",
+        ["sysfiles_name_lenovo_modules"] = "Modules noyau Lenovo (modules-load.d)",
     };
 }

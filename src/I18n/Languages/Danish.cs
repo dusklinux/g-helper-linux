@@ -319,6 +319,8 @@ public static class Danish
 
         ["other_header"] = "Andet",
         ["boot_sound"] = "Opstartslyd",
+        ["deep_sleep"] = "Dvaletilstand",
+        ["deep_sleep_tooltip"] = "Hvordan laptoppen sover. s2idle = software-standby: øjeblikkelig opvågning, men batteriet kan aflades mærkbart under søvn. deep = fuld S3-dvale: opvågning tager et øjeblik længere, afladning er minimal. Anvendes straks og gendannes ved hver opstart.",
         ["window_topmost"] = "Vindue altid øverst",
         ["bw_tray_icon"] = "Sort-hvid statusikon",
         ["clamshell_mode"] = "Skaltilstand (deaktiver dvale ved lukning af låg)",
@@ -345,6 +347,10 @@ public static class Danish
         ["profile_silent_label"] = "Stille-profil",
         ["profile_balanced_label"] = "Balanceret profil",
         ["profile_turbo_label"] = "Turbo-profil",
+        ["epp_silent_label"] = "Lydlos EPP",
+        ["epp_balanced_label"] = "Balanceret EPP",
+        ["epp_turbo_label"] = "Turbo EPP",
+        ["epp_tooltip"] = "CPU-afvejning mellem energi og ydelse (energy_performance_preference). power prioriterer batteritid, performance prioriterer respons. Anvendes paa alle kerner naar tilstanden aktiveres.",
         ["battery_health_format"] = "Batterisundhed: {0}%",
         ["battery_health_unknown"] = "Batterisundhed: --%",
         ["power_draw_discharge"] = "Strømforbrug: {0} mW (afladning)",
@@ -867,5 +873,6 @@ public static class Danish
         ["sysfiles_name_desktop"] = "Programmenupunkt",
         ["sysfiles_name_icon"] = "Programikon",
         ["sysfiles_name_autostart"] = "Autostart-punkt",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo-kernemoduler (modules-load.d)",
     };
 }

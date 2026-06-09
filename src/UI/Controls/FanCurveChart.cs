@@ -227,7 +227,8 @@ public class FanCurveChart : Control
             // Draw value tooltip for hovered/dragged point
             if (i == _dragIndex)
             {
-                var tipText = new FormattedText($"{data[i]}°C → {data[8 + i]}%",
+                var tipText = new FormattedText(
+                    $"{Helpers.TempHelper.FormatTemp(data[i])} → {data[8 + i]}%",
                     System.Globalization.CultureInfo.InvariantCulture,
                     FlowDirection.LeftToRight,
                     new Typeface("Segoe UI, Ubuntu, sans-serif"),

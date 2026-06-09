@@ -8,6 +8,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using GHelper.Linux.Gpu;
+using GHelper.Linux.Gpu.NVidia;
 using GHelper.Linux.Helpers;
 using GHelper.Linux.I18n;
 using GHelper.Linux.Platform.Linux;
@@ -133,9 +134,129 @@ public partial class MainWindow : Window
         RefreshKeyboard();
         RefreshFnLockButton();
         RefreshAudioToggle();
+        RefreshAnimeMatrix();
         RefreshSensorData();
         RefreshFooter();
         RefreshAllyPanel();
+
+        // ASUS mice: show a button per connected mouse, update on hot-plug,
+        // refresh battery readings whenever the window regains focus.
+        Peripherals.PeripheralsProvider.DeviceChanged += () =>
+            Avalonia.Threading.Dispatcher.UIThread.Post(VisualizePeripherals);
+        Activated += (_, _) => Task.Run(() =>
+        {
+            Peripherals.PeripheralsProvider.RefreshBatteryForAllDevices();
+            Avalonia.Threading.Dispatcher.UIThread.Post(VisualizePeripherals);
+        });
+        VisualizePeripherals();
+
+        // Dev-only launchers for UI checks on machines without the
+        // matching hardware: every app window, and force-show toggles
+        // for hardware-gated panels.
+        bool devMode = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GHELPER_DEV"));
+        buttonDevWindows.IsVisible = devMode;
+        buttonDevPanels.IsVisible = devMode;
+    }
+
+    // Peripherals (ASUS mice)
+
+    /// <summary>One button per connected mouse (up to 3, like Windows G-Helper).
+    /// Text only: display name plus battery state. Hidden when no mouse is
+    /// connected, unless the show_mouse_dev toggle forces a placeholder.</summary>
+    public void VisualizePeripherals()
+    {
+        var mice = Peripherals.PeripheralsProvider.ConnectedMice;
+        var buttons = new[] { buttonPeripheral1, buttonPeripheral2, buttonPeripheral3 };
+        var labels = new[] { labelPeripheral1, labelPeripheral2, labelPeripheral3 };
+
+        if (mice.Count == 0)
+        {
+            bool devPlaceholder = Helpers.AppConfig.Is("show_mouse_dev");
+            panelPeripherals.IsVisible = devPlaceholder;
+            if (devPlaceholder)
+            {
+                labels[0].Text = "No ASUS mouse detected (dev)";
+                buttons[0].IsVisible = true;
+                buttons[1].IsVisible = false;
+                buttons[2].IsVisible = false;
+            }
+            return;
+        }
+
+        panelPeripherals.IsVisible = true;
+
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            if (i >= mice.Count)
+            {
+                buttons[i].IsVisible = false;
+                continue;
+            }
+
+            var mouse = mice[i];
+            string text = mouse.GetDisplayName();
+            if (mouse.IsDeviceReady && mouse.HasBattery() && mouse.Battery >= 0)
+                text += mouse.Charging ? $"  {mouse.Battery}% +" : $"  {mouse.Battery}%";
+
+            labels[i].Text = text;
+            buttons[i].IsVisible = true;
+        }
+    }
+
+    private MouseWindow? _mouseWindow;
+
+    private void ButtonPeripheral_Click(object? sender, RoutedEventArgs e)
+    {
+        int index = 0;
+        if (sender == buttonPeripheral2)
+            index = 1;
+        if (sender == buttonPeripheral3)
+            index = 2;
+
+        var mice = Peripherals.PeripheralsProvider.ConnectedMice;
+        var mouse = index < mice.Count ? mice[index] : null;
+
+        if (_mouseWindow != null && _mouseWindow.IsVisible)
+        {
+            _mouseWindow.Close();
+            _mouseWindow = null;
+            return;
+        }
+
+        _mouseWindow = new MouseWindow(mouse);
+        if (Helpers.AppConfig.Is("topmost"))
+            _mouseWindow.Topmost = true;
+        WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_mouseWindow);
+        _mouseWindow.Show();
+    }
+
+    private DevWindowsWindow? _devWindowsWindow;
+    private DevPanelsWindow? _devPanelsWindow;
+
+    private void ButtonDevWindows_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_devWindowsWindow == null || !_devWindowsWindow.IsVisible)
+        {
+            _devWindowsWindow = new DevWindowsWindow();
+            _devWindowsWindow.Show(this);
+        }
+        else
+        {
+            _devWindowsWindow.Activate();
+        }
+    }
+
+    private void ButtonDevPanels_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_devPanelsWindow == null || !_devPanelsWindow.IsVisible)
+        {
+            _devPanelsWindow = new DevPanelsWindow();
+            _devPanelsWindow.Show(this);
+        }
+        else
+        {
+            _devPanelsWindow.Activate();
+        }
     }
 
     private void ApplyLabels()
@@ -144,6 +265,18 @@ public partial class MainWindow : Window
         SetButtonText(buttonSilent, Labels.Get("mode_silent"));
         SetButtonText(buttonBalanced, Labels.Get("mode_balanced"));
         SetButtonText(buttonTurbo, Labels.Get("mode_turbo"));
+
+        // Lenovo: the power button LED mirrors the firmware thermal mode -
+        // surface the color mapping as tooltips for discoverability.
+        if (Helpers.AppConfig.IsLenovoDevice())
+        {
+            ToolTip.SetTip(buttonSilent, "Quiet - power button LED: blue");
+            ToolTip.SetTip(buttonBalanced, "Balanced - power button LED: white");
+            ToolTip.SetTip(buttonTurbo,
+                Helpers.AppConfig.GetString("platform_profile_1") == "max-power"
+                    ? "Extreme (max-power) - power button LED: purple"
+                    : "Performance - power button LED: red");
+        }
         SetButtonText(buttonFans, Labels.Get("fans_power"));
         SetButtonText(buttonEco, Labels.Get("gpu_eco"));
         SetButtonText(buttonStandard, Labels.Get("gpu_standard"));
@@ -212,27 +345,25 @@ public partial class MainWindow : Window
             int cpuFan = wmi.GetFanRpm(0);
             int gpuFan = wmi.GetFanRpm(1);
 
-            string cpuTempStr = cpuTemp > 0 ? $"{cpuTemp}°C" : "--";
-            string cpuFanStr = cpuFan > 0 ? $"{cpuFan}RPM" : "0RPM";
+            string cpuTempStr = cpuTemp > 0 ? Helpers.TempHelper.FormatTemp(cpuTemp) : "--";
+            string cpuFanStr = Fan.FanSensorControl.FormatFan(0, cpuFan);
 
             // GPU fan: might be RPM or percentage from nvidia-smi
             string gpuFanStr;
-            if (gpuFan > 0)
-                gpuFanStr = $"{gpuFan}RPM";
-            else if (gpuFan <= -2)
+            if (gpuFan <= -2)
             {
-                // Encoded percentage: -2 - percent
+                // Encoded percentage: -2 - percent (nvidia-smi returns this)
                 int percent = -(gpuFan + 2);
                 gpuFanStr = $"{percent}%";
             }
             else
-                gpuFanStr = "0RPM";
+                gpuFanStr = Fan.FanSensorControl.FormatFan(1, gpuFan);
 
             // Right-aligned compact format: "CPU: 32°C Fan: 0RPM"
             labelCPUFan.Text = Labels.Format("cpu_fan_info", cpuTempStr, cpuFanStr);
 
             // GPU fan info - compact for right-aligned display
-            string gpuTempStr = gpuTemp > 0 ? $"{gpuTemp}°C" : "";
+            string gpuTempStr = gpuTemp > 0 ? Helpers.TempHelper.FormatTemp(gpuTemp) : "";
 
             // GPU load: only show when dGPU is active (not in Eco mode)
             string gpuLoadStr = "";
@@ -258,7 +389,7 @@ public partial class MainWindow : Window
             // Mid fan if available
             int midFan = wmi.GetFanRpm(2);
             if (midFan > 0)
-                labelMidFan.Text = Labels.Format("mid_fan_info", $"{midFan}RPM");
+                labelMidFan.Text = Labels.Format("mid_fan_info", Fan.FanSensorControl.FormatFan(2, midFan));
 
             // Keyboard brightness, detect external changes (physical keys, kernel driver)
             int kbdBrightness = wmi.GetKeyboardBrightness();
@@ -353,7 +484,7 @@ public partial class MainWindow : Window
             return;
 
         // No GPU Eco support → hide entire GPU panel
-        if (!wmi.IsGpuEcoAvailable())
+        if (!wmi.IsGpuEcoAvailable() && !Helpers.AppConfig.Is("show_gpu_dev"))
         {
             panelGPU.IsVisible = false;
             return;
@@ -395,6 +526,17 @@ public partial class MainWindow : Window
 
         labelGPU.Text = Labels.Format("gpu_mode_prefix", modeName);
         labelGPUMode.Text = modeName;
+
+        // Lenovo: append the dGPU's runtime PM status (active/suspended) -
+        // there is no firmware Eco state to show, but runtime_status tells
+        // the user whether the dGPU is actually powered right now.
+        if (Helpers.AppConfig.IsLenovoDevice())
+        {
+            string? runtime = ReadDgpuRuntimeStatus();
+            if (runtime != null)
+                labelGPU.Text += $" (dGPU {runtime})";
+        }
+
         UpdateGpuButtons();
 
         // GPU tip - check for pending reboot first
@@ -416,13 +558,40 @@ public partial class MainWindow : Window
         }
 
         bool pciBackend = Helpers.AppConfig.IsPciGpuBackend();
-        buttonUltimate.IsVisible = !pciBackend && wmi.IsFeatureSupported(AsusAttributes.GpuMuxMode);
-        buttonOptimized.IsVisible = !pciBackend && Helpers.AppConfig.IsOptimizedGpuModeEnabled();
+        bool gpuDev = Helpers.AppConfig.Is("show_gpu_dev");
+        buttonUltimate.IsVisible = (!pciBackend && wmi.IsFeatureSupported(AsusAttributes.GpuMuxMode)) || gpuDev;
+        buttonOptimized.IsVisible = (!pciBackend && Helpers.AppConfig.IsOptimizedGpuModeEnabled()) || gpuDev;
 
         int visibleGpuButtons = 2
             + (buttonUltimate.IsVisible ? 1 : 0)
             + (buttonOptimized.IsVisible ? 1 : 0);
         panelGpuModes.Columns = visibleGpuButtons;
+    }
+
+    /// <summary>runtime PM status ("active"/"suspended") of the first non-boot
+    /// discrete GPU on the PCI bus, or null when no dGPU is present.</summary>
+    private static string? ReadDgpuRuntimeStatus()
+    {
+        try
+        {
+            foreach (var dev in Directory.EnumerateDirectories("/sys/bus/pci/devices"))
+            {
+                string cls = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(dev, "class")) ?? "";
+                if (!cls.StartsWith("0x0300", StringComparison.Ordinal)
+                    && !cls.StartsWith("0x0302", StringComparison.Ordinal))
+                    continue;
+                // Skip the boot display (iGPU)
+                if (Platform.Linux.SysfsHelper.ReadInt(Path.Combine(dev, "boot_vga"), 0) == 1)
+                    continue;
+                string vendor = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(dev, "vendor")) ?? "";
+                if (!vendor.StartsWith("0x10de", StringComparison.OrdinalIgnoreCase)
+                    && !vendor.StartsWith("0x1002", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                return Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(dev, "power/runtime_status"));
+            }
+        }
+        catch { }
+        return null;
     }
 
     private void UpdateGpuButtons()
@@ -460,7 +629,7 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// Common handler for all 4 GPU mode buttons.
-    /// Locks buttons, calls GpuModeController on background thread,
+    /// Locks buttons, calls GPUModeControl on background thread,
     /// handles the result on UI thread.
     /// </summary>
     private void RequestGpuModeSwitch(GpuMode target, string switchingText)
@@ -727,8 +896,8 @@ public partial class MainWindow : Window
 
         string ComposeHolderSummary()
         {
-            int fdN = Gpu.NvidiaProcessScanner.CountFdHolders();
-            int totalN = Gpu.NvidiaProcessScanner.CountHolders();
+            int fdN = Gpu.NVidia.NvidiaProcessScanner.CountFdHolders();
+            int totalN = Gpu.NVidia.NvidiaProcessScanner.CountHolders();
             int libN = totalN - fdN;
             string text = Labels.Format("gpu_dgpu_users_count", fdN);
             if (libN > 0)
@@ -926,7 +1095,7 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// Switch Now flow: fresh-scan holders, send SIGTERM, escalate to SIGKILL,
-    /// then either proceed with <see cref="GpuModeController.TryReleaseAndSwitch"/>
+    /// then either proceed with <see cref="GPUModeControl.TryReleaseAndSwitch"/>
     /// or - if any holder refused to die - abort and show the failure dialog.
     /// Called by the Switch Now button and by Retry in the failure dialog.
     /// </summary>
@@ -950,15 +1119,16 @@ public partial class MainWindow : Window
         LockGpuButtons(Labels.Get("gpu_switching_eco"));
         Task.Run(() =>
         {
-            // Fresh scan at click time - matches what the dgpu-processes window
-            // currently shows (system processes already filtered upstream).
-            var snapshot = Gpu.NvidiaProcessScanner.ScanHolders();
+            // Fresh scan at click time (the privileged scan caches up to 5s -
+            // drop it so holders started after the dialog appeared are included).
+            Gpu.NVidia.NvidiaProcessScanner.InvalidateScanCache();
+            var snapshot = Gpu.NVidia.NvidiaProcessScanner.ScanHolders();
             Logger.WriteLine($"RunSwitchNowKillFlow: snapshot={snapshot.Count}");
-            Gpu.NvidiaProcessScanner.KillHoldersGracefulThenForce(snapshot, out var survivors);
+            Gpu.NVidia.NvidiaProcessScanner.KillHoldersGracefulThenForce(snapshot, out var survivors);
             Logger.WriteLine($"RunSwitchNowKillFlow: snapshot-accounting survivors={survivors.Count}");
 
             System.Threading.Thread.Sleep(300);
-            var stillAlive = Gpu.NvidiaProcessScanner.ScanHolders();
+            var stillAlive = Gpu.NVidia.NvidiaProcessScanner.ScanHolders();
             Logger.WriteLine($"RunSwitchNowKillFlow: verify-scan stillAlive={stillAlive.Count}");
 
             if (stillAlive.Count > 0)
@@ -1167,7 +1337,7 @@ public partial class MainWindow : Window
 
         // Check for MiniLED support
         bool hasMiniLed = App.Wmi?.IsFeatureSupported(AsusAttributes.MiniLedMode) ?? false;
-        buttonMiniled.IsVisible = hasMiniLed;
+        buttonMiniled.IsVisible = hasMiniLed || Helpers.AppConfig.Is("show_miniled_dev");
     }
 
     private void ButtonScreenAuto_Click(object? sender, RoutedEventArgs e)
@@ -1257,12 +1427,25 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// Initialize AURA hardware - HID handshake, load config, apply RGB.
+    /// On Lenovo the ITE 4-zone / Spectrum backend takes this role instead.
     /// </summary>
     public static bool InitAuraHardware()
     {
         if (_auraHardwareInitialized)
-            return Aura.IsAvailable();
+            return Helpers.AppConfig.IsLenovoDevice() ? USB.LenovoRgb.IsAvailable() : Aura.IsAvailable();
         _auraHardwareInitialized = true;
+
+        if (Helpers.AppConfig.IsLenovoDevice())
+        {
+            if (!USB.LenovoRgb.IsAvailable())
+            {
+                Helpers.Logger.WriteLine("No Lenovo RGB HID device found - RGB controls hidden");
+                return false;
+            }
+            Helpers.Logger.WriteLine($"Lenovo RGB keyboard found ({USB.LenovoRgb.Kind}) - initializing RGB controls");
+            USB.LenovoRgb.Init();
+            return true;
+        }
 
         if (!Aura.IsAvailable())
         {
@@ -1297,6 +1480,10 @@ public partial class MainWindow : Window
         return true;
     }
 
+    /// <summary>True when the RGB panel drives the Lenovo ITE backend
+    /// (LenovoRgb) instead of ASUS Aura.</summary>
+    private bool IsLenovoRgb => Helpers.AppConfig.IsLenovoDevice() && USB.LenovoRgb.IsAvailable();
+
     private void InitAura()
     {
         if (_auraInitialized)
@@ -1307,9 +1494,17 @@ public partial class MainWindow : Window
         // if the background InitAuraHardware() hasn't finished yet, we'll retry
         // when it posts RefreshKeyboard() back to the UI thread.
         bool hasAura = InitAuraHardware();
-        panelAura.IsVisible = hasAura;
+        panelAura.IsVisible = hasAura || Helpers.AppConfig.Is("show_aura_dev");
         if (!hasAura)
             return;
+
+        if (IsLenovoRgb)
+        {
+            InitLenovoRgbCombos();
+            _auraInitialized = true;
+            UpdateColorButtons();
+            return;
+        }
 
         _auraInitialized = true;
 
@@ -1356,6 +1551,18 @@ public partial class MainWindow : Window
 
     private void UpdateColorButtons()
     {
+        if (IsLenovoRgb)
+        {
+            buttonColor1.Background = new SolidColorBrush(
+                Color.FromRgb(USB.LenovoRgb.ColorR, USB.LenovoRgb.ColorG, USB.LenovoRgb.ColorB));
+            buttonColor2.Background = new SolidColorBrush(
+                Color.FromRgb(USB.LenovoRgb.Color2R, USB.LenovoRgb.Color2G, USB.LenovoRgb.Color2B));
+            buttonColor1.IsVisible = USB.LenovoRgb.UsesColor();
+            buttonColor2.IsVisible = USB.LenovoRgb.HasSecondColor();
+            comboAuraSpeed.IsVisible = USB.LenovoRgb.UsesSpeed();
+            return;
+        }
+
         buttonColor1.Background = new SolidColorBrush(
             Color.FromRgb(Aura.ColorR, Aura.ColorG, Aura.ColorB));
         buttonColor2.Background = new SolidColorBrush(
@@ -1374,11 +1581,48 @@ public partial class MainWindow : Window
         comboAuraSpeed.IsVisible = Aura.UsesSpeed();
     }
 
+    /// <summary>Populate the mode/speed combos from the Lenovo RGB backend.</summary>
+    private void InitLenovoRgbCombos()
+    {
+        _suppressAuraEvents = true;
+
+        comboAuraMode.Items.Clear();
+        int selectedIdx = 0, idx = 0;
+        foreach (var kv in USB.LenovoRgb.GetModes())
+        {
+            comboAuraMode.Items.Add(new ComboBoxItem { Content = kv.Value, Tag = kv.Key });
+            if (kv.Key == (int)USB.LenovoRgb.Mode)
+                selectedIdx = idx;
+            idx++;
+        }
+        comboAuraMode.SelectedIndex = selectedIdx;
+
+        comboAuraSpeed.Items.Clear();
+        selectedIdx = 0;
+        idx = 0;
+        foreach (var kv in USB.LenovoRgb.GetSpeeds())
+        {
+            comboAuraSpeed.Items.Add(new ComboBoxItem { Content = kv.Value, Tag = kv.Key });
+            if (kv.Key == USB.LenovoRgb.Speed)
+                selectedIdx = idx;
+            idx++;
+        }
+        comboAuraSpeed.SelectedIndex = selectedIdx;
+
+        _suppressAuraEvents = false;
+    }
+
     /// <summary>Rebuild Aura mode/speed combo items with current language strings.</summary>
     private void RefreshAuraCombos()
     {
         if (!_auraInitialized)
             return;
+
+        if (IsLenovoRgb)
+        {
+            InitLenovoRgbCombos();
+            return;
+        }
 
         _suppressAuraEvents = true;
 
@@ -1418,6 +1662,15 @@ public partial class MainWindow : Window
             return;
         if (comboAuraMode.SelectedItem is ComboBoxItem item && item.Tag is int modeVal)
         {
+            if (IsLenovoRgb)
+            {
+                Helpers.Logger.WriteLine($"Lenovo RGB mode changed → {(USB.LenovoRgbMode)modeVal}");
+                Helpers.AppConfig.Set("lenovo_rgb_mode", modeVal);
+                USB.LenovoRgb.Mode = (USB.LenovoRgbMode)modeVal;
+                UpdateColorButtons();
+                ApplyAuraAsync();
+                return;
+            }
             Helpers.Logger.WriteLine($"AURA mode changed → {(AuraMode)modeVal}");
             Helpers.AppConfig.Set("aura_mode", modeVal);
             Aura.Mode = (AuraMode)modeVal;
@@ -1432,6 +1685,13 @@ public partial class MainWindow : Window
             return;
         if (comboAuraSpeed.SelectedItem is ComboBoxItem item && item.Tag is int speedVal)
         {
+            if (IsLenovoRgb)
+            {
+                Helpers.AppConfig.Set("lenovo_rgb_speed", speedVal);
+                USB.LenovoRgb.Speed = speedVal;
+                ApplyAuraAsync();
+                return;
+            }
             Helpers.AppConfig.Set("aura_speed", speedVal);
             Aura.Speed = (AuraSpeed)speedVal;
             ApplyAuraAsync();
@@ -1440,6 +1700,20 @@ public partial class MainWindow : Window
 
     private void ButtonColor1_Click(object? sender, RoutedEventArgs e)
     {
+        if (IsLenovoRgb)
+        {
+            ShowColorPicker("lenovo_rgb_color", USB.LenovoRgb.ColorR, USB.LenovoRgb.ColorG, USB.LenovoRgb.ColorB, (r, g, b) =>
+            {
+                USB.LenovoRgb.ColorR = r;
+                USB.LenovoRgb.ColorG = g;
+                USB.LenovoRgb.ColorB = b;
+                Helpers.AppConfig.Set("lenovo_rgb_color", USB.LenovoRgb.GetColorArgb());
+                UpdateColorButtons();
+                ApplyAuraAsync();
+            });
+            return;
+        }
+
         ShowColorPicker("aura_color", Aura.ColorR, Aura.ColorG, Aura.ColorB, (r, g, b) =>
         {
             Aura.ColorR = r;
@@ -1453,6 +1727,20 @@ public partial class MainWindow : Window
 
     private void ButtonColor2_Click(object? sender, RoutedEventArgs e)
     {
+        if (IsLenovoRgb)
+        {
+            ShowColorPicker("lenovo_rgb_color2", USB.LenovoRgb.Color2R, USB.LenovoRgb.Color2G, USB.LenovoRgb.Color2B, (r, g, b) =>
+            {
+                USB.LenovoRgb.Color2R = r;
+                USB.LenovoRgb.Color2G = g;
+                USB.LenovoRgb.Color2B = b;
+                Helpers.AppConfig.Set("lenovo_rgb_color2", USB.LenovoRgb.GetColor2Argb());
+                UpdateColorButtons();
+                ApplyAuraAsync();
+            });
+            return;
+        }
+
         ShowColorPicker("aura_color2", Aura.Color2R, Aura.Color2G, Aura.Color2B, (r, g, b) =>
         {
             Aura.Color2R = r;
@@ -1478,11 +1766,15 @@ public partial class MainWindow : Window
 
     private void ApplyAuraAsync()
     {
+        bool lenovo = IsLenovoRgb;
         Task.Run(() =>
         {
             try
             {
-                Aura.ApplyAura();
+                if (lenovo)
+                    USB.LenovoRgb.Apply();
+                else
+                    Aura.ApplyAura();
             }
             catch (Exception ex)
             {
@@ -1501,6 +1793,69 @@ public partial class MainWindow : Window
         int next = (current + 1) % 4; // Cycle 0→1→2→3→0
         wmi.SetKeyboardBrightness(next);
         RefreshKeyboard();
+    }
+
+    // AnimeMatrix / Slash LED
+
+    /// <summary>
+    /// Show the AnimeMatrix panel if a device is detected or the dev
+    /// checkbox (<c>show_anime_matrix_dev</c>) is enabled.
+    /// </summary>
+    public void RefreshAnimeMatrix()
+    {
+        bool devMode = Helpers.AppConfig.Is("show_anime_matrix_dev");
+        bool hasDevice = App.AnimeMatrix?.IsValid == true;
+        bool show = devMode || hasDevice || Helpers.AppConfig.IsAnimeMatrix() || Helpers.AppConfig.IsSlash();
+
+        panelAnimeMatrix.IsVisible = show;
+
+        if (!show)
+            return;
+
+        // Sync combos to saved config
+        int mode = Helpers.AppConfig.Get("matrix_running", 0);
+        if (mode >= 0 && mode < comboMatrixMode.ItemCount)
+            comboMatrixMode.SelectedIndex = mode;
+
+        int bright = Helpers.AppConfig.Get("matrix_brightness", 2);
+        if (bright >= 0 && bright < comboMatrixBrightness.ItemCount)
+            comboMatrixBrightness.SelectedIndex = bright;
+    }
+
+    private void ComboMatrixMode_SelectionChanged(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)
+    {
+        if (!_layoutReady)
+            return;
+        int mode = comboMatrixMode.SelectedIndex;
+        Helpers.AppConfig.Set("matrix_running", mode);
+        App.AnimeMatrix?.SetDevice();
+    }
+
+    private void ComboMatrixBrightness_SelectionChanged(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)
+    {
+        if (!_layoutReady)
+            return;
+        int bright = comboMatrixBrightness.SelectedIndex;
+        Helpers.AppConfig.Set("matrix_brightness", bright);
+        App.AnimeMatrix?.SetDevice();
+    }
+
+    private MatrixWindow? _matrixWindow;
+
+    private void ButtonMatrixSettings_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_matrixWindow == null || !_matrixWindow.IsVisible)
+        {
+            _matrixWindow = new MatrixWindow();
+            if (Helpers.AppConfig.Is("topmost"))
+                _matrixWindow.Topmost = true;
+            WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_matrixWindow);
+            _matrixWindow.Show();
+        }
+        else
+        {
+            _matrixWindow.Activate();
+        }
     }
 
     // Battery
@@ -1584,43 +1939,30 @@ public partial class MainWindow : Window
 
     private void BatteryDebounce_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
-        // Timer fires on thread pool - read slider value and write to sysfs
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             int limit = (int)sliderBattery.Value;
-            bool ok = App.Wmi?.SetBatteryChargeLimit(limit) ?? false;
+            int actual = Battery.BatteryControl.SetBatteryChargeLimit(limit);
 
-            if (ok)
-            {
-                // Re-read actual (firmware may clamp on 6080 models)
-                int actual = App.Wmi?.GetBatteryChargeLimit() ?? limit;
-                labelBatteryLimit.Text = $"{actual}%";
-                labelBattery.Text = Labels.Format("battery_limit_prefix", actual);
-                Helpers.AppConfig.Set("charge_limit", actual);
+            labelBatteryLimit.Text = $"{actual}%";
+            labelBattery.Text = Labels.Format("battery_limit_prefix", actual);
 
-                if (actual != limit && actual > 0)
-                {
-                    _updatingBatterySlider = true;
-                    sliderBattery.Value = actual;
-                    _updatingBatterySlider = false;
-                }
-            }
-            else
+            if (actual != limit && actual > 0)
             {
-                // Write failed - save user intent to config anyway
-                Helpers.AppConfig.Set("charge_limit", limit);
+                _updatingBatterySlider = true;
+                sliderBattery.Value = actual;
+                _updatingBatterySlider = false;
             }
         });
     }
 
     private void SetBatteryLimit(int percent)
     {
-        _batteryDebounce?.Stop(); // Cancel any pending debounce
+        _batteryDebounce?.Stop();
+        int actual = Battery.BatteryControl.SetBatteryChargeLimit(percent);
         _updatingBatterySlider = true;
-        sliderBattery.Value = percent;
+        sliderBattery.Value = actual;
         _updatingBatterySlider = false;
-        App.Wmi?.SetBatteryChargeLimit(percent);
-        Helpers.AppConfig.Set("charge_limit", percent);
         RefreshBattery();
     }
 
@@ -1665,8 +2007,16 @@ public partial class MainWindow : Window
         labelSysBios.Text = Labels.Format("bios_prefix", sys.GetBiosVersion());
         labelSysKernel.Text = Labels.Format("kernel_prefix", sys.GetKernelVersion());
 
-        bool wmiLoaded = sys.IsAsusWmiLoaded();
-        labelSysWmi.Text = wmiLoaded ? Labels.Get("asus_wmi_loaded") : Labels.Get("asus_wmi_not_loaded");
+        bool wmiLoaded = sys.IsPlatformDriverLoaded();
+        if (Helpers.AppConfig.IsLenovoDevice())
+        {
+            var (driver, loaded) = Platform.Linux.Lenovo.LenovoDetection.PlatformDriver();
+            labelSysWmi.Text = $"{driver}: {(loaded ? "loaded" : "not loaded")}";
+        }
+        else
+        {
+            labelSysWmi.Text = wmiLoaded ? Labels.Get("asus_wmi_loaded") : Labels.Get("asus_wmi_not_loaded");
+        }
 
         var features = new List<string>();
         var wmi = App.Wmi;
@@ -1789,7 +2139,7 @@ public partial class MainWindow : Window
     public void RefreshAllyPanel()
     {
         bool isAlly = Helpers.AppConfig.IsAlly();
-        panelAlly.IsVisible = isAlly;
+        panelAlly.IsVisible = isAlly || Helpers.AppConfig.Is("show_ally_dev");
 
         // Hide the laptop GPU mode buttons (Eco / Standard / Optimized /
         // Ultimate) on Ally - there's no MUX and no dGPU. Match Windows
@@ -1832,8 +2182,8 @@ public partial class MainWindow : Window
         // iGPU sensors (refreshed lazily; the existing tray sensor timer
         // could also call this, but for now a one-shot on panel show is
         // enough to verify rendering).
-        int? busy = Gpu.LinuxAmdGpuMetrics.GetIgpuBusyPercent();
-        float? power = Gpu.LinuxAmdGpuMetrics.GetIgpuPowerWatts();
+        int? busy = Gpu.AMD.LinuxAmdGpuMetrics.GetIgpuBusyPercent();
+        float? power = Gpu.AMD.LinuxAmdGpuMetrics.GetIgpuPowerWatts();
         if (busy != null || power != null)
         {
             labelAllyMetrics.Text =
@@ -1909,7 +2259,7 @@ public partial class MainWindow : Window
         _xgmConnectedSnapshot = connectedRaw;
 
         bool connected = connectedRaw == "1";
-        buttonXGM.IsVisible = connected;
+        buttonXGM.IsVisible = connected || Helpers.AppConfig.Is("show_xgm_dev");
         if (!connected)
         {
             _xgmEnabledSnapshot = null;
@@ -1949,7 +2299,7 @@ public partial class MainWindow : Window
         }
 
         bool blockedByEco = false;
-        if (App.GpuControl is Platform.Linux.LinuxNvidiaGpuControl
+        if (App.GpuControl is Gpu.NVidia.LinuxNvidiaGpuControl
             && !Helpers.AppConfig.IsAMDiGPU()
             && App.Wmi?.GetGpuEco() == true)
         {
@@ -2163,7 +2513,7 @@ public partial class MainWindow : Window
             }
 
             try
-            { Gpu.LinuxAmdDgpuDetect.RefreshXgmSpecialFlag(); }
+            { Gpu.AMD.LinuxAmdDgpuDetect.RefreshXgmSpecialFlag(); }
             catch (Exception ex) { Helpers.Logger.WriteLine($"XGM RX6850M probe: {ex.Message}"); }
         });
 

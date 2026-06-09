@@ -319,6 +319,8 @@ public static class Korean
 
         ["other_header"] = "기타",
         ["boot_sound"] = "부팅 소리",
+        ["deep_sleep"] = "절전 모드",
+        ["deep_sleep_tooltip"] = "노트북의 절전 방식. s2idle = 소프트웨어 대기: 즉시 깨어나지만 절전 중 배터리가 눈에 띄게 소모될 수 있음. deep = 완전한 S3 절전: 깨어나는 데 조금 더 걸리지만 소모가 최소화됨. 즉시 적용되며 부팅할 때마다 복원됨.",
         ["window_topmost"] = "창 항상 맨 위에 표시",
         ["bw_tray_icon"] = "흑백 트레이 아이콘",
         ["clamshell_mode"] = "클램셸 모드 (덮개 닫아도 절전 안 함)",
@@ -345,6 +347,10 @@ public static class Korean
         ["profile_silent_label"] = "사일런트 프로필",
         ["profile_balanced_label"] = "밸런스드 프로필",
         ["profile_turbo_label"] = "터보 프로필",
+        ["epp_silent_label"] = "저소음 EPP",
+        ["epp_balanced_label"] = "균형 EPP",
+        ["epp_turbo_label"] = "터보 EPP",
+        ["epp_tooltip"] = "CPU 에너지 대 성능 균형 (energy_performance_preference). power는 배터리, performance는 반응성을 우선합니다. 모드 활성화 시 모든 코어에 적용됩니다.",
         ["battery_health_format"] = "배터리 건강 상태: {0}%",
         ["battery_health_unknown"] = "배터리 건강 상태: --%",
         ["power_draw_discharge"] = "소비 전력: {0} mW (방전 중)",
@@ -867,5 +873,6 @@ public static class Korean
         ["sysfiles_name_desktop"] = "응용 프로그램 메뉴 항목",
         ["sysfiles_name_icon"] = "응용 프로그램 아이콘",
         ["sysfiles_name_autostart"] = "자동 시작 항목",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo 커널 모듈 (modules-load.d)",
     };
 }

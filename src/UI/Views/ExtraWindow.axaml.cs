@@ -46,6 +46,7 @@ public partial class ExtraWindow : Window
             RefreshDisplay();
             RefreshGpuBackend();
             RefreshOther();
+            RefreshLenovo();
             RefreshTrayIcons();
             RefreshPower();
             RefreshSystemInfo();
@@ -204,6 +205,9 @@ public partial class ExtraWindow : Window
         // Ally has no lid - clamshell-mode toggle is meaningless on a handheld.
         checkClamshell.IsVisible = !Helpers.AppConfig.IsAlly();
 
+        labelDeepSleep.Text = Labels.Get("deep_sleep");
+        ToolTip.SetTip(panelDeepSleep, Labels.Get("deep_sleep_tooltip"));
+
         // ROG Ally: APU UMA buffer combo. Read possible_values from the
         // kernel; show the panel only when the attribute is exposed (newer
         // asus-armoury on AMD APU systems).
@@ -249,6 +253,10 @@ public partial class ExtraWindow : Window
         labelProfileSilent.Text = Labels.Get("profile_silent_label");
         labelProfileBalanced.Text = Labels.Get("profile_balanced_label");
         labelProfileTurbo.Text = Labels.Get("profile_turbo_label");
+        labelEppSilent.Text = Labels.Get("epp_silent_label");
+        labelEppBalanced.Text = Labels.Get("epp_balanced_label");
+        labelEppTurbo.Text = Labels.Get("epp_turbo_label");
+        ToolTip.SetTip(panelEpp, Labels.Get("epp_tooltip"));
         labelBatteryDetails.Text = Labels.Get("details");
 
         // System Info
@@ -483,13 +491,14 @@ public partial class ExtraWindow : Window
 
         // Populate mode combo
         comboSlashMode.Items.Clear();
-        int savedMode = Helpers.AppConfig.Get("slash_mode", (int)Slash.SlashMode.Flow);
+        int savedMode = Helpers.AppConfig.Get("slash_mode", Slash.ModeCode(AnimeMatrix.SlashMode.Flow));
         int selectedIdx = 0;
         for (int i = 0; i < Slash.AllModes.Length; i++)
         {
             var m = Slash.AllModes[i];
-            comboSlashMode.Items.Add(new ComboBoxItem { Content = Slash.ModeName(m), Tag = (int)m });
-            if ((int)m == savedMode)
+            int code = Slash.ModeCode(m);
+            comboSlashMode.Items.Add(new ComboBoxItem { Content = Slash.ModeName(m), Tag = code });
+            if (code == savedMode)
                 selectedIdx = i;
         }
         comboSlashMode.SelectedIndex = selectedIdx;
@@ -534,7 +543,7 @@ public partial class ExtraWindow : Window
         if (_suppressEvents)
             return;
         if (comboSlashMode.SelectedItem is ComboBoxItem item && item.Tag is int modeVal)
-            Task.Run(() => Slash.SetMode((Slash.SlashMode)modeVal));
+            Task.Run(() => Slash.SetMode(modeVal));
     }
 
     private void SliderSlashSpeed_Changed(object? sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
@@ -707,15 +716,31 @@ public partial class ExtraWindow : Window
     private void InitKeyBindings()
     {
         bool isAlly = Helpers.AppConfig.IsAlly();
-        _keyBindingCombos[comboKeyM4] = "m4";
-        _keyBindingCombos[comboKeyFnF4] = isAlly ? "paddle" : "fnf4";
-        _keyBindingCombos[comboKeyFnF5] = isAlly ? "cc" : "fnf5";
+        bool isLenovo = Helpers.AppConfig.IsLenovoDevice();
 
-        if (isAlly)
+        if (isLenovo)
         {
-            labelKeyM4.Text = Labels.Get("ally_extra_btn_rog");
-            labelKeyFnF4.Text = Labels.Get("ally_extra_btn_paddle");
-            labelKeyFnF5.Text = Labels.Get("ally_extra_btn_cc");
+            // Lenovo bindable keys: Novo button (KEY_PROG1/2) and the
+            // refresh-rate toggle key; there is no third configurable key.
+            _keyBindingCombos[comboKeyM4] = "novo";
+            _keyBindingCombos[comboKeyFnF4] = "refresh_rate";
+            labelKeyM4.Text = Input.InputDispatcher.ConfigurableKeyNames["novo"];
+            labelKeyFnF4.Text = Input.InputDispatcher.ConfigurableKeyNames["refresh_rate"];
+            comboKeyFnF5.IsVisible = false;
+            labelKeyFnF5.IsVisible = false;
+        }
+        else
+        {
+            _keyBindingCombos[comboKeyM4] = "m4";
+            _keyBindingCombos[comboKeyFnF4] = isAlly ? "paddle" : "fnf4";
+            _keyBindingCombos[comboKeyFnF5] = isAlly ? "cc" : "fnf5";
+
+            if (isAlly)
+            {
+                labelKeyM4.Text = Labels.Get("ally_extra_btn_rog");
+                labelKeyFnF4.Text = Labels.Get("ally_extra_btn_paddle");
+                labelKeyFnF5.Text = Labels.Get("ally_extra_btn_cc");
+            }
         }
 
         foreach (var (combo, bindingName) in _keyBindingCombos)
@@ -728,13 +753,13 @@ public partial class ExtraWindow : Window
     {
         combo.Items.Clear();
 
-        string currentAction = App.GetKeyAction(bindingName);
+        string currentAction = Input.InputDispatcher.GetKeyAction(bindingName);
         int selectedIdx = 0;
         int idx = 0;
 
-        foreach (var (actionId, _) in App.AvailableKeyActions)
+        foreach (var (actionId, _) in Input.InputDispatcher.AvailableKeyActions)
         {
-            combo.Items.Add(new ComboBoxItem { Content = App.GetKeyActionDisplayName(actionId), Tag = actionId });
+            combo.Items.Add(new ComboBoxItem { Content = Input.InputDispatcher.GetKeyActionDisplayName(actionId), Tag = actionId });
             if (actionId == currentAction)
                 selectedIdx = idx;
             idx++;
@@ -987,6 +1012,9 @@ public partial class ExtraWindow : Window
         // Clamshell mode
         checkClamshell.IsChecked = Helpers.AppConfig.Is("toggle_clamshell_mode");
 
+        // Fahrenheit temperature display
+        checkFahrenheit.IsChecked = Helpers.AppConfig.Is("fahrenheit");
+
         // Silent start (minimized to tray)
         checkSilentStart.IsChecked = Helpers.AppConfig.Is("silent_start");
 
@@ -1003,19 +1031,30 @@ public partial class ExtraWindow : Window
         // Keep keyboard/lightbar lit (override system/idle dimming)
         checkKeepBacklight.IsChecked = Helpers.AppConfig.Is("kb_keep_on");
 
-        // Camera
-        checkCamera.IsChecked = LinuxSystemIntegration.IsCameraEnabled();
+        // Camera (Lenovo: read the EC power gate when present)
+        if (Helpers.AppConfig.IsLenovoDevice() && Platform.Linux.Lenovo.LenovoDetection.HasCameraPower())
+            checkCamera.IsChecked = Platform.Linux.Lenovo.LenovoFeatures.GetCameraPower();
+        else
+            checkCamera.IsChecked = LinuxSystemIntegration.IsCameraEnabled();
 
-        // Touchpad (hide if not found)
-        var touchpadState = LinuxSystemIntegration.IsTouchpadEnabled();
-        if (touchpadState == null)
+        // Touchpad (hide if not found; Lenovo EC gate preferred when registered)
+        if (Helpers.AppConfig.IsLenovoDevice() && Platform.Linux.Lenovo.LenovoDetection.HasTouchpadCtl())
         {
-            checkTouchpad.IsVisible = false;
+            checkTouchpad.IsVisible = true;
+            checkTouchpad.IsChecked = Platform.Linux.Lenovo.LenovoFeatures.GetTouchpad();
         }
         else
         {
-            checkTouchpad.IsVisible = true;
-            checkTouchpad.IsChecked = touchpadState.Value;
+            var touchpadState = LinuxSystemIntegration.IsTouchpadEnabled();
+            if (touchpadState == null)
+            {
+                checkTouchpad.IsVisible = false;
+            }
+            else
+            {
+                checkTouchpad.IsVisible = true;
+                checkTouchpad.IsChecked = touchpadState.Value;
+            }
         }
 
         // Touchscreen (hide if not found)
@@ -1029,6 +1068,300 @@ public partial class ExtraWindow : Window
             checkTouchscreen.IsVisible = true;
             checkTouchscreen.IsChecked = touchscreenState.Value;
         }
+
+        RefreshDeepSleep();
+        RefreshStatusLed();
+
+        // NumberPad button: visible when the touchpad hardware exists, even
+        // with missing permissions (the window shows the actionable hints).
+        try
+        {
+            buttonNumberPad.IsVisible =
+                GHelper.Linux.Input.NumberPad.Probe().Status != GHelper.Linux.Input.NumberPad.ProbeStatus.NoHardware
+                || Helpers.AppConfig.Is("show_numberpad_dev");
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"NumberPad probe failed: {ex.Message}");
+        }
+    }
+
+    //  LENOVO (Vantage-parity hardware toggles) 
+
+    private void RefreshLenovo()
+    {
+        if (!Helpers.AppConfig.IsLenovoDevice())
+        {
+            panelLenovo.IsVisible = false;
+            return;
+        }
+
+        bool any = false;
+
+        // Conservation: proper on/off toggle (the slider mapping stays too)
+        bool hasConservation = Platform.Linux.Lenovo.LenovoDetection.HasChargeTypes()
+            || Platform.Linux.Lenovo.LenovoDetection.HasConservationMode();
+        checkLenovoConservation.IsVisible = hasConservation;
+        if (hasConservation)
+        {
+            checkLenovoConservation.IsChecked = Platform.Linux.Lenovo.LenovoFeatures.IsConservationActive();
+            any = true;
+        }
+
+        bool hasRapid = Platform.Linux.Lenovo.LenovoDetection.HasRapidCharge();
+        checkLenovoRapidCharge.IsVisible = hasRapid;
+        labelLenovoRapidChargeHint.IsVisible = hasRapid;
+        if (hasRapid)
+        {
+            checkLenovoRapidCharge.IsChecked = Platform.Linux.Lenovo.LenovoFeatures.GetRapidCharge();
+            any = true;
+        }
+
+        bool hasUsb = Platform.Linux.Lenovo.LenovoDetection.HasUsbCharging();
+        checkLenovoUsbCharging.IsVisible = hasUsb;
+        if (hasUsb)
+        {
+            checkLenovoUsbCharging.IsChecked = Platform.Linux.Lenovo.LenovoFeatures.GetUsbCharging();
+            any = true;
+        }
+
+        bool hasFnLock = Platform.Linux.Lenovo.LenovoDetection.HasFnLock();
+        checkLenovoFnLock.IsVisible = hasFnLock;
+        if (hasFnLock)
+        {
+            checkLenovoFnLock.IsChecked = Platform.Linux.Lenovo.LenovoFeatures.GetFnLock();
+            any = true;
+        }
+
+        var flip = Platform.Linux.Lenovo.LenovoFeatures.GetFlipToStart();
+        checkLenovoFlipToStart.IsVisible = flip != null;
+        if (flip != null)
+        {
+            checkLenovoFlipToStart.IsChecked = flip.Value;
+            any = true;
+        }
+
+        bool hasExtreme = Platform.Linux.Lenovo.LenovoDetection.HasExtremeProfile();
+        checkLenovoExtremeTurbo.IsVisible = hasExtreme;
+        labelLenovoExtremeHint.IsVisible = hasExtreme;
+        if (hasExtreme)
+        {
+            checkLenovoExtremeTurbo.IsChecked =
+                Helpers.AppConfig.GetString("platform_profile_1") == "max-power";
+            any = true;
+        }
+
+        bool hasMicFix = Platform.Linux.Lenovo.LenovoFeatures.IsMicBoostFixAvailable();
+        checkLenovoMicFix.IsVisible = hasMicFix;
+        labelLenovoMicFixHint.IsVisible = hasMicFix;
+        if (hasMicFix)
+        {
+            checkLenovoMicFix.IsChecked = Helpers.AppConfig.Is("lenovo_mic_boost_fix");
+            any = true;
+        }
+
+        bool hasDust = Platform.Linux.Lenovo.LenovoFeatures.IsDustCleanSupported();
+        rowLenovoDustClean.IsVisible = hasDust;
+        if (hasDust)
+        {
+            labelLenovoDustCleanBtn.Text = Platform.Linux.Lenovo.LenovoFeatures.IsDustCleanRunning ? "Stop" : "Start";
+            any = true;
+        }
+
+        panelLenovo.IsVisible = any;
+    }
+
+    private void CheckLenovoConservation_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool on = checkLenovoConservation.IsChecked ?? false;
+        // Route through BatteryControl so the charge_limit config + main
+        // window slider stay coherent (60 = conservation, 100 = standard).
+        Battery.BatteryControl.SetBatteryChargeLimit(on ? 60 : 100);
+        _suppressEvents = true;
+        RefreshLenovo();
+        _suppressEvents = false;
+    }
+
+    private void CheckLenovoRapidCharge_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool on = checkLenovoRapidCharge.IsChecked ?? false;
+        Platform.Linux.Lenovo.LenovoFeatures.SetRapidCharge(on);
+        // Firmware turns conservation off when rapid charge goes on.
+        _suppressEvents = true;
+        RefreshLenovo();
+        _suppressEvents = false;
+    }
+
+    private void CheckLenovoUsbCharging_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        Platform.Linux.Lenovo.LenovoFeatures.SetUsbCharging(checkLenovoUsbCharging.IsChecked ?? false);
+    }
+
+    private void CheckLenovoFnLock_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        Platform.Linux.Lenovo.LenovoFeatures.SetFnLock(checkLenovoFnLock.IsChecked ?? false);
+    }
+
+    private void CheckLenovoFlipToStart_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool on = checkLenovoFlipToStart.IsChecked ?? false;
+        Task.Run(() =>
+        {
+            bool ok = Platform.Linux.Lenovo.LenovoFeatures.SetFlipToStart(on);
+            if (!ok)
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    _suppressEvents = true;
+                    RefreshLenovo();
+                    _suppressEvents = false;
+                });
+            }
+        });
+    }
+
+    private void CheckLenovoExtremeTurbo_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool on = checkLenovoExtremeTurbo.IsChecked ?? false;
+        // Rides the existing per-mode platform_profile override: Turbo (base
+        // mode 1) maps to max-power instead of performance.
+        if (on)
+            Helpers.AppConfig.Set("platform_profile_1", "max-power");
+        else
+            Helpers.AppConfig.Remove("platform_profile_1");
+        // Re-apply if currently in Turbo so the change takes effect now.
+        if (Mode.Modes.GetCurrentBase() == 1)
+            App.Mode?.SetPerformanceMode();
+        RefreshPower();
+    }
+
+    private void CheckLenovoMicFix_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool on = checkLenovoMicFix.IsChecked ?? false;
+        Helpers.AppConfig.Set("lenovo_mic_boost_fix", on ? 1 : 0);
+        if (on)
+            Task.Run(() => Platform.Linux.Lenovo.LenovoFeatures.ApplyMicBoostFix());
+    }
+
+    private void ButtonLenovoDustClean_Click(object? sender, RoutedEventArgs e)
+    {
+        if (Platform.Linux.Lenovo.LenovoFeatures.IsDustCleanRunning)
+        {
+            Platform.Linux.Lenovo.LenovoFeatures.StopDustClean();
+            labelLenovoDustCleanBtn.Text = "Start";
+            return;
+        }
+
+        Platform.Linux.Lenovo.LenovoFeatures.StartDustClean(30, () =>
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                if (rowLenovoDustClean.IsVisible)
+                    labelLenovoDustCleanBtn.Text = "Start";
+            }));
+        labelLenovoDustCleanBtn.Text = "Stop";
+        App.System?.ShowNotification("Lenovo", "Dust cleaning: fans at maximum for 30 s", "preferences-system");
+    }
+
+    // Status LED indicators (raw WMI only). Probe runs on a background
+    // thread because the DSTS read is a privileged call.
+    private void RefreshStatusLed()
+    {
+        if (!Platform.Linux.StatusLed.IsChannelAvailable())
+        {
+            checkStatusLed.IsVisible = false;
+            return;
+        }
+
+        Task.Run(() =>
+        {
+            int state = Platform.Linux.StatusLed.Get();
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                _suppressEvents = true;
+                checkStatusLed.IsVisible = state >= 0;
+                checkStatusLed.IsChecked = state > 0;
+                _suppressEvents = false;
+            });
+        });
+    }
+
+    private void CheckStatusLed_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool on = checkStatusLed.IsChecked ?? false;
+        Task.Run(() => Platform.Linux.StatusLed.Set(on));
+    }
+
+    private NumberPadWindow? _numberPadWindow;
+
+    private void ButtonNumberPad_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_numberPadWindow == null || !_numberPadWindow.IsVisible)
+        {
+            _numberPadWindow = new NumberPadWindow();
+            _numberPadWindow.Show(this);
+        }
+        else
+        {
+            _numberPadWindow.Activate();
+        }
+    }
+
+    // Suspend variant (/sys/power/mem_sleep). Only shown when the firmware
+    // offers both s2idle and deep - nothing to toggle otherwise.
+    private void RefreshDeepSleep()
+    {
+        if (!Platform.Linux.MemSleep.IsToggleSupported()
+            && !Helpers.AppConfig.Is("show_deep_sleep_dev"))
+        {
+            panelDeepSleep.IsVisible = false;
+            return;
+        }
+
+        panelDeepSleep.IsVisible = true;
+
+        var options = Platform.Linux.MemSleep.GetOptions();
+        var active = Platform.Linux.MemSleep.GetActive();
+
+        _suppressEvents = true;
+        comboDeepSleep.ItemsSource = options;
+        comboDeepSleep.SelectedIndex = Math.Max(0, Array.IndexOf(options, active));
+        _suppressEvents = false;
+    }
+
+    private void ComboDeepSleep_SelectionChanged(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+
+        if (comboDeepSleep.SelectedItem is not string variant)
+            return;
+
+        if (variant == Platform.Linux.MemSleep.GetActive())
+            return;
+
+        // pkexec prompt - run off the UI thread, revert the combo on failure.
+        Task.Run(() =>
+        {
+            bool ok = Platform.Linux.MemSleep.Set(variant);
+            if (!ok)
+                Avalonia.Threading.Dispatcher.UIThread.Post(RefreshDeepSleep);
+        });
     }
 
     private void CheckBootSound_Changed(object? sender, RoutedEventArgs e)
@@ -1051,6 +1384,13 @@ public partial class ExtraWindow : Window
         }
 
         Helpers.Logger.WriteLine($"Boot sound → {val}");
+    }
+
+    private void CheckFahrenheit_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        Helpers.AppConfig.Set("fahrenheit", (checkFahrenheit.IsChecked ?? false) ? 1 : 0);
     }
 
     private void CheckTopmost_Changed(object? sender, RoutedEventArgs e)
@@ -1344,7 +1684,12 @@ public partial class ExtraWindow : Window
         if (_suppressEvents)
             return;
         bool enabled = checkCamera.IsChecked ?? true;
-        LinuxSystemIntegration.SetCameraEnabled(enabled);
+        // Lenovo: prefer the EC-level ideapad camera_power attr (true hardware
+        // power gate) over the generic uvcvideo modprobe approach.
+        if (Helpers.AppConfig.IsLenovoDevice() && Platform.Linux.Lenovo.LenovoDetection.HasCameraPower())
+            Platform.Linux.Lenovo.LenovoFeatures.SetCameraPower(enabled);
+        else
+            LinuxSystemIntegration.SetCameraEnabled(enabled);
         App.System?.ShowNotification(Labels.Get("camera"),
             enabled ? Labels.Get("enabled") : Labels.Get("disabled"),
             enabled ? "camera-on" : "camera-off");
@@ -1355,7 +1700,11 @@ public partial class ExtraWindow : Window
         if (_suppressEvents)
             return;
         bool enabled = checkTouchpad.IsChecked ?? true;
-        LinuxSystemIntegration.SetTouchpadEnabled(enabled);
+        // Lenovo: ideapad EC touchpad gate when registered (touchpad_ctrl_via_ec=1).
+        if (Helpers.AppConfig.IsLenovoDevice() && Platform.Linux.Lenovo.LenovoDetection.HasTouchpadCtl())
+            Platform.Linux.Lenovo.LenovoFeatures.SetTouchpad(enabled);
+        else
+            LinuxSystemIntegration.SetTouchpadEnabled(enabled);
         App.System?.ShowNotification(Labels.Get("touchpad"),
             enabled ? Labels.Get("enabled") : Labels.Get("disabled"),
             enabled ? "input-touchpad-on" : "input-touchpad-off");
@@ -1479,6 +1828,8 @@ public partial class ExtraWindow : Window
             RefreshProfileCombo(comboProfileTurbo, 1, choices);
         }
 
+        RefreshEpp();
+
         // Battery health
         int health = power.GetBatteryHealth();
         if (health >= 0)
@@ -1520,6 +1871,82 @@ public partial class ExtraWindow : Window
 
     private void ComboProfileTurbo_Changed(object? sender, SelectionChangedEventArgs e)
         => OnProfileComboChanged(1, comboProfileTurbo);
+
+    // Per-mode CPU EPP pickers. Stored as epp_(baseMode). ModeControl applies
+    // the saved value on every mode switch. Changing the combo for the active
+    // mode applies immediately.
+
+    private bool _eppInitialized;
+
+    private void RefreshEpp()
+    {
+        bool eppDev = Helpers.AppConfig.Is("show_epp_dev");
+
+        if (!Platform.Linux.CpuEpp.IsSupported() && !eppDev)
+        {
+            panelEpp.IsVisible = false;
+            return;
+        }
+
+        var choices = Platform.Linux.CpuEpp.GetChoices();
+        if (choices.Length == 0 && !eppDev)
+        {
+            panelEpp.IsVisible = false;
+            return;
+        }
+
+        panelEpp.IsVisible = true;
+
+        var combos = new[] { comboEppSilent, comboEppBalanced, comboEppTurbo };
+
+        _suppressEvents = true;
+        if (!_eppInitialized)
+        {
+            foreach (var combo in combos)
+            {
+                combo.Items.Clear();
+                foreach (var choice in choices)
+                    combo.Items.Add(new ComboBoxItem { Content = choice });
+            }
+            _eppInitialized = true;
+        }
+
+        string current = Platform.Linux.CpuEpp.Get() ?? "default";
+        RefreshEppCombo(comboEppSilent, 2, current);
+        RefreshEppCombo(comboEppBalanced, 0, current);
+        RefreshEppCombo(comboEppTurbo, 1, current);
+        _suppressEvents = false;
+    }
+
+    private static void RefreshEppCombo(ComboBox combo, int baseMode, string fallback)
+    {
+        string desired = Helpers.AppConfig.GetString($"epp_{baseMode}") ?? fallback;
+        SelectComboValue(combo, desired);
+    }
+
+    private void OnEppComboChanged(int baseMode, ComboBox combo)
+    {
+        if (_suppressEvents)
+            return;
+        if (combo.SelectedItem is not ComboBoxItem item || item.Content is not string epp)
+            return;
+
+        Helpers.AppConfig.Set($"epp_{baseMode}", epp);
+        Helpers.Logger.WriteLine($"EPP (mode {baseMode}) saved: {epp}");
+
+        int activeBase = Mode.Modes.GetBase(Helpers.AppConfig.Get("performance_mode", 0));
+        if (activeBase == baseMode)
+            Task.Run(() => Platform.Linux.CpuEpp.SetAll(epp));
+    }
+
+    private void ComboEppSilent_Changed(object? sender, SelectionChangedEventArgs e)
+        => OnEppComboChanged(2, comboEppSilent);
+
+    private void ComboEppBalanced_Changed(object? sender, SelectionChangedEventArgs e)
+        => OnEppComboChanged(0, comboEppBalanced);
+
+    private void ComboEppTurbo_Changed(object? sender, SelectionChangedEventArgs e)
+        => OnEppComboChanged(1, comboEppTurbo);
 
     private BatteryInfoWindow? _batteryInfoWindow;
     private SystemInfoWindow? _systemInfoWindow;
@@ -1568,8 +1995,16 @@ public partial class ExtraWindow : Window
         labelBios.Text = Labels.Format("bios_prefix", sys.GetBiosVersion());
         labelKernel.Text = Labels.Format("kernel_prefix", sys.GetKernelVersion());
 
-        bool wmiLoaded = sys.IsAsusWmiLoaded();
-        labelAsusWmi.Text = wmiLoaded ? Labels.Get("asus_wmi_loaded") : Labels.Get("asus_wmi_not_loaded");
+        bool wmiLoaded = sys.IsPlatformDriverLoaded();
+        if (Helpers.AppConfig.IsLenovoDevice())
+        {
+            var (driver, loaded) = Platform.Linux.Lenovo.LenovoDetection.PlatformDriver();
+            labelAsusWmi.Text = $"{driver}: {(loaded ? "loaded" : "not loaded")}";
+        }
+        else
+        {
+            labelAsusWmi.Text = wmiLoaded ? Labels.Get("asus_wmi_loaded") : Labels.Get("asus_wmi_not_loaded");
+        }
 
         // Feature detection
         var features = new List<string>();
@@ -1669,7 +2104,7 @@ public partial class ExtraWindow : Window
         {
             bool isFixModel = Helpers.AppConfig.IsEcoBootFixModel();
             checkEcoPersistent.Content = Labels.Get("gpu_eco_persistent");
-            checkEcoPersistent.IsChecked = isFixModel || GpuModeController.IsEcoPersistentConfig();
+            checkEcoPersistent.IsChecked = isFixModel || GPUModeControl.IsEcoPersistentConfig();
             checkEcoPersistent.IsEnabled = !isFixModel;
             ToolTip.SetTip(checkEcoPersistent,
                 isFixModel

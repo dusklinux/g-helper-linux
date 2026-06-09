@@ -46,18 +46,15 @@ public static class CustomRgb
 
     /// <summary>
     /// Linear interpolation between two colors. <c>t</c> is clamped to [0,1].
-    /// Matches the math in upstream <c>ColorUtils.GetWeightedAverage</c>.
+    /// Delegates to <see cref="ColorUtils.GetWeightedAverage"/>.
     /// </summary>
     private static Rgb Lerp(Rgb a, Rgb b, float t)
     {
-        if (t <= 0)
-            return a;
-        if (t >= 1)
-            return b;
-        byte r = (byte)(a.R + (b.R - a.R) * t);
-        byte g = (byte)(a.G + (b.G - a.G) * t);
-        byte bl = (byte)(a.B + (b.B - a.B) * t);
-        return new Rgb(r, g, bl);
+        var c = ColorUtils.GetWeightedAverage(
+            Avalonia.Media.Color.FromRgb(a.R, a.G, a.B),
+            Avalonia.Media.Color.FromRgb(b.R, b.G, b.B),
+            t);
+        return new Rgb(c.R, c.G, c.B);
     }
 
     /// <summary>

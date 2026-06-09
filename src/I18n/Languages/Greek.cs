@@ -319,6 +319,8 @@ public static class Greek
 
         ["other_header"] = "Άλλα",
         ["boot_sound"] = "Ήχος εκκίνησης",
+        ["deep_sleep"] = "Λειτουργία αναστολής",
+        ["deep_sleep_tooltip"] = "Πώς κοιμάται ο φορητός. s2idle = αναμονή λογισμικού: άμεση αφύπνιση, αλλά η μπαταρία μπορεί να αδειάζει αισθητά στον ύπνο. deep = πλήρης αναστολή S3: η αφύπνιση αργεί λίγο περισσότερο, η εκφόρτιση είναι ελάχιστη. Εφαρμόζεται αμέσως και επαναφέρεται σε κάθε εκκίνηση.",
         ["window_topmost"] = "Παράθυρο πάντα στην κορυφή",
         ["bw_tray_icon"] = "Ασπρόμαυρο εικονίδιο δίσκου",
         ["clamshell_mode"] = "Λειτουργία κλειστού καπακιού (απενεργοποίηση αναστολής κατά το κλείσιμο)",
@@ -345,6 +347,10 @@ public static class Greek
         ["profile_silent_label"] = "Προφίλ Σιωπηλό",
         ["profile_balanced_label"] = "Προφίλ Ισορροπημένο",
         ["profile_turbo_label"] = "Προφίλ Turbo",
+        ["epp_silent_label"] = "EPP Αθόρυβο",
+        ["epp_balanced_label"] = "EPP Ισορροπημένο",
+        ["epp_turbo_label"] = "EPP Turbo",
+        ["epp_tooltip"] = "Ισορροπία ενέργειας/απόδοσης CPU (energy_performance_preference). Το power ευνοεί την μπαταρία, το performance την απόκριση. Εφαρμόζεται σε όλους τους πυρήνες κατά την ενεργοποίηση της λειτουργίας.",
         ["battery_health_format"] = "Υγεία μπαταρίας: {0}%",
         ["battery_health_unknown"] = "Υγεία μπαταρίας: --%",
         ["power_draw_discharge"] = "Κατανάλωση ισχύος: {0} mW (εκφόρτιση)",
@@ -867,5 +873,6 @@ public static class Greek
         ["sysfiles_name_desktop"] = "Καταχώριση μενού εφαρμογών",
         ["sysfiles_name_icon"] = "Εικονίδιο εφαρμογής",
         ["sysfiles_name_autostart"] = "Καταχώριση αυτόματης εκκίνησης",
+        ["sysfiles_name_lenovo_modules"] = "Λειτουργικές μονάδες πυρήνα Lenovo (modules-load.d)",
     };
 }

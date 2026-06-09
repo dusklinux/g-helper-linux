@@ -316,6 +316,8 @@ public static class PortugueseBR
 
         ["other_header"] = "Outros",
         ["boot_sound"] = "Som de inicialização",
+        ["deep_sleep"] = "Modo de suspensão",
+        ["deep_sleep_tooltip"] = "Como o notebook dorme. s2idle = espera por software: despertar instantâneo, mas a bateria pode descarregar bastante durante o repouso. deep = suspensão S3 completa: despertar um pouco mais lento, descarga mínima. Aplicado na hora e restaurado a cada inicialização.",
         ["window_topmost"] = "Janela sempre no topo",
         ["bw_tray_icon"] = "Ícone da bandeja em P&B",
         ["clamshell_mode"] = "Modo clamshell (não suspender ao fechar a tampa)",
@@ -342,6 +344,10 @@ public static class PortugueseBR
         ["profile_silent_label"] = "Perfil Silencioso",
         ["profile_balanced_label"] = "Perfil Balanceado",
         ["profile_turbo_label"] = "Perfil Turbo",
+        ["epp_silent_label"] = "EPP Silencioso",
+        ["epp_balanced_label"] = "EPP Equilibrado",
+        ["epp_turbo_label"] = "EPP Turbo",
+        ["epp_tooltip"] = "Equilibrio energia/desempenho da CPU (energy_performance_preference). power favorece a bateria, performance favorece a resposta. Aplicado a todos os nucleos ao ativar o modo.",
         ["battery_health_format"] = "Saúde da bateria: {0}%",
         ["battery_health_unknown"] = "Saúde da bateria: --%",
         ["power_draw_discharge"] = "Consumo: {0} mW (descarregando)",
@@ -864,5 +870,6 @@ public static class PortugueseBR
         ["sysfiles_name_desktop"] = "Entrada do menu de aplicativos",
         ["sysfiles_name_icon"] = "Ícone do aplicativo",
         ["sysfiles_name_autostart"] = "Entrada de inicialização automática",
+        ["sysfiles_name_lenovo_modules"] = "Módulos de kernel Lenovo (modules-load.d)",
     };
 }

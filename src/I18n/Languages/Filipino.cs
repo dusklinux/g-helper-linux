@@ -408,6 +408,8 @@ public static class Filipino
 
         ["other_header"] = "Iba pa",
         ["boot_sound"] = "Boot Sound",
+        ["deep_sleep"] = "Suspend mode",
+        ["deep_sleep_tooltip"] = "Paano natutulog ang laptop. s2idle = software standby: agad na gising, pero maaaring kapansin-pansing maubos ang baterya habang tulog. deep = buong S3 suspend: bahagyang mas matagal gumising, minimal ang ubos. Agad na inilalapat at naibabalik sa bawat boot.",
         ["window_topmost"] = "Laging nasa itaas ang window",
         ["bw_tray_icon"] = "B&W na Tray Icon",
         ["clamshell_mode"] = "Clamshell Mode (i-disable ang sleep kapag isinara ang lid)",
@@ -478,6 +480,10 @@ public static class Filipino
         ["profile_silent_label"] = "Silent profile",
         ["profile_balanced_label"] = "Balanced profile",
         ["profile_turbo_label"] = "Turbo profile",
+        ["epp_silent_label"] = "Silent EPP",
+        ["epp_balanced_label"] = "Balanced EPP",
+        ["epp_turbo_label"] = "Turbo EPP",
+        ["epp_tooltip"] = "Balanse ng enerhiya at performance ng CPU (energy_performance_preference). Ang power ay para sa baterya, ang performance ay para sa bilis ng tugon. Inilalapat sa lahat ng core kapag in-activate ang mode.",
         ["battery_health_format"] = "Kalusugan ng baterya: {0} %",
         ["battery_health_unknown"] = "Kalusugan ng baterya: --%",
         ["power_draw_discharge"] = "Power draw: {0} mW (nagdi-discharge)",
@@ -919,5 +925,6 @@ public static class Filipino
         ["sysfiles_name_desktop"] = "Application menu entry",
         ["sysfiles_name_icon"] = "Application icon",
         ["sysfiles_name_autostart"] = "Autostart entry",
+        ["sysfiles_name_lenovo_modules"] = "Mga kernel module ng Lenovo (modules-load.d)",
     };
 }

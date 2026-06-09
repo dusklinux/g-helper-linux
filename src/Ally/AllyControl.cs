@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text;
-using GHelper.Linux.Gpu;
+using GHelper.Linux.Gpu.AMD;
 using GHelper.Linux.Helpers;
 using GHelper.Linux.I18n;
 using GHelper.Linux.Input;

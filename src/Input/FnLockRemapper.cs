@@ -521,9 +521,9 @@ public sealed class FnLockRemapper : IDisposable
 
     /// <summary>
     /// Heuristic for the default-tick state in the device picker. Considers
-    /// internal-bus devices (i8042, i2c, hil, host) AND ASUS-vendor devices
-    /// (0x0B05) integrated. Everything else (USB Logitech, Bluetooth) defaults
-    /// off until the user explicitly opts in.
+    /// internal-bus devices (i8042, i2c, hil, host) AND laptop-vendor devices
+    /// (ASUS 0x0B05, Lenovo 0x17EF) integrated. Everything else (USB Logitech,
+    /// Bluetooth) defaults off until the user explicitly opts in.
     /// </summary>
     private static bool LooksIntegrated(EvdevInterop.InputId info, string name)
     {
@@ -533,6 +533,8 @@ public sealed class FnLockRemapper : IDisposable
             || info.bustype == EvdevInterop.BUS_HOST)
             return true;
         if (info.vendor == 0x0B05) // ASUSTeK
+            return true;
+        if (info.vendor == 0x17EF) // Lenovo
             return true;
         if (name.Contains("N-KEY", StringComparison.OrdinalIgnoreCase))
             return true;
@@ -824,8 +826,8 @@ public sealed class FnLockRemapper : IDisposable
         // (N-KEY) or event7 (WMI hotkeys), the M5/Fn+F4/Fn+F5 + brightness
         // events stop reaching LinuxAsusWmi. Detect them here, suppress the
         // passthrough (these aren't supposed to reach apps), and dispatch
-        // the same action via App.RaiseKeyBindingFromFnLock /
-        // App.RaiseHotkeyFromFnLock so user-configured bindings still fire.
+        // the same action via InputDispatcher.RaiseKeyBindingFromFnLock /
+        // InputDispatcher.RaiseHotkeyFromFnLock so user-configured bindings still fire.
         int cachedScan = _lastScanByFd.TryGetValue(fd, out var sc) ? sc : 0;
         string bindingName = LinuxAsusWmi.MapLinuxKeyToBindingName(ev.code);
         if (string.IsNullOrEmpty(bindingName) && cachedScan != 0)
@@ -835,7 +837,7 @@ public sealed class FnLockRemapper : IDisposable
             if (ev.value == 1) // press only; release/repeat consumed silently
             {
                 DebugLogIfInterest(ev, $"bridge-binding({bindingName})", ev.code);
-                App.RaiseKeyBindingFromFnLock(bindingName);
+                InputDispatcher.RaiseKeyBindingFromFnLock(bindingName);
             }
             // Always suppress; clear cached scan so it isn't reused.
             _lastScanByFd.Remove(fd);
@@ -851,7 +853,7 @@ public sealed class FnLockRemapper : IDisposable
             if (ev.value == 1)
             {
                 DebugLogIfInterest(ev, $"bridge-hotkey({legacyEvent})", ev.code);
-                App.RaiseHotkeyFromFnLock(legacyEvent);
+                InputDispatcher.RaiseHotkeyFromFnLock(legacyEvent);
             }
             _lastScanByFd.Remove(fd);
             return;
@@ -912,7 +914,7 @@ public sealed class FnLockRemapper : IDisposable
                 if (ev.value == 1)
                 {
                     DebugLogIfInterest(ev, $"remap-action({target.Action})", ev.code);
-                    App.RaiseActionFromFnLock(target.Action!);
+                    InputDispatcher.RaiseActionFromFnLock(target.Action!);
                 }
             }
             // KEY consumed; clear scan cache so it doesn't bleed into the next event.

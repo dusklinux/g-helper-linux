@@ -408,6 +408,8 @@ public static class Bengali
 
         ["other_header"] = "অন্যান্য",
         ["boot_sound"] = "বুট শব্দ",
+        ["deep_sleep"] = "সাসপেন্ড মোড",
+        ["deep_sleep_tooltip"] = "ল্যাপটপ কীভাবে ঘুমায়। s2idle = সফটওয়্যার স্ট্যান্ডবাই: তাৎক্ষণিক জাগরণ, তবে ঘুমের সময় ব্যাটারি লক্ষণীয়ভাবে খরচ হতে পারে। deep = পূর্ণ S3 সাসপেন্ড: জাগতে একটু বেশি সময় লাগে, খরচ ন্যূনতম। সাথে সাথে প্রযোজ্য হয় এবং প্রতিটি বুটে পুনরুদ্ধার হয়।",
         ["window_topmost"] = "উইন্ডো সর্বদা উপরে",
         ["bw_tray_icon"] = "সাদা-কালো ট্রে আইকন",
         ["clamshell_mode"] = "Clamshell মোড (ঢাকনা বন্ধে স্লিপ নিষ্ক্রিয় করুন)",
@@ -478,6 +480,10 @@ public static class Bengali
         ["profile_silent_label"] = "নীরব প্রোফাইল",
         ["profile_balanced_label"] = "সুষম প্রোফাইল",
         ["profile_turbo_label"] = "টার্বো প্রোফাইল",
+        ["epp_silent_label"] = "সাইলেন্ট EPP",
+        ["epp_balanced_label"] = "ব্যালান্সড EPP",
+        ["epp_turbo_label"] = "টার্বো EPP",
+        ["epp_tooltip"] = "CPU শক্তি বনাম কর্মক্ষমতা ভারসাম্য (energy_performance_preference)। power ব্যাটারিকে, performance প্রতিক্রিয়াকে অগ্রাধিকার দেয়। মোড সক্রিয় হলে সব কোরে প্রযোজ্য।",
         ["battery_health_format"] = "ব্যাটারি স্বাস্থ্য: {0} %",
         ["battery_health_unknown"] = "ব্যাটারি স্বাস্থ্য: --%",
         ["power_draw_discharge"] = "পাওয়ার ব্যবহার: {0} mW (ডিসচার্জ)",
@@ -919,5 +925,6 @@ public static class Bengali
         ["sysfiles_name_desktop"] = "অ্যাপ্লিকেশন মেনু এন্ট্রি",
         ["sysfiles_name_icon"] = "অ্যাপ্লিকেশন আইকন",
         ["sysfiles_name_autostart"] = "অটোস্টার্ট এন্ট্রি",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo কার্নেল মডিউল (modules-load.d)",
     };
 }

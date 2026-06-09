@@ -12,8 +12,9 @@
  *   list [skip_pid]
  *       Enumerate dGPU holders. Output (one TSV line per holder):
  *         <pid>\t<fdCount>\t<uid>\t<comm>\t<libsMapped>\t<serviceUnit>
- *       serviceUnit is the systemd unit owning the process (from
- *       /proc/<pid>/cgroup) or "-" when not part of a service.
+ *       A /dev/nvidia* mapping with no open fd still pins the driver and is
+ *       reported as fdCount=1. serviceUnit is the systemd unit owning the
+ *       process (from /proc/<pid>/cgroup) or "-" when not part of a service.
  *
  *   kill <signal> <pid> [pid...]
  *       Service-aware kill. signal is -15 or -9. For each holder pid that
@@ -74,10 +75,21 @@
  *       without ever opening /dev/nvidia* in its own process (a persistent NVML
  *       handle there would block the live Eco PCI unbind).
  *
+ *   nvml-procs
+ *       List pids with a live GPU context straight from the driver
+ *       (nvmlDeviceGetGraphicsRunningProcesses + ComputeRunningProcesses, all
+ *       devices). One "<pid>\t<graphics|compute>" line each. Cross-check
+ *       source for the /proc scan; also surfaces MPS clients.
+ *
  *   wmi-dsts <devid> | wmi-devs <devid> <ctrl_param> | wmi-probe
  *       Raw asus-nb-wmi debugfs DSTS/DEVS access (root-only debugfs). devid is
  *       restricted to the known GPU / eGPU ACPI device IDs; ctrl_param is the
  *       data value. wmi-probe DSTS-reads all whitelisted IDs, one line each.
+ *
+ *   lenovo-flip-to-start <0|1>
+ *       Write the Lenovo "Flip to Start" FBSWIF UEFI variable (power on when
+ *       the lid opens). Hardcoded variable path; clears the efivarfs
+ *       immutable flag first. Payload: 4-byte attrs (0x7) + enabled byte.
  *
  *   msr-uv <mv>
  *       Intel CPU undervolt via the OC mailbox (MSR 0x150), applied to the core
@@ -98,6 +110,7 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -132,14 +145,163 @@ static void glog(int prio, const char *fmt, ...)
 
 /* ---------- shared /proc detection ---------- */
 
-static int count_nvidia_fds(int pid)
+/* One pass over /proc/<pid>/maps. devMapped: a /dev/nvidia* mapping (pins the
+ * driver exactly like an open fd, even after the fd is closed - rmmod fails
+ * while it exists). libsMapped: NVIDIA userspace libs loaded. */
+static void scan_maps(int pid, int *libsMapped, int *devMapped)
 {
+    *libsMapped = 0;
+    *devMapped = 0;
+    char path[64];
+    snprintf(path, sizeof(path), "/proc/%d/maps", pid);
+    FILE *f = fopen(path, "r");
+    if (!f)
+        return;
+    char line[MAPS_LINE_SIZE];
+    while (fgets(line, sizeof(line), f) != NULL)
+    {
+        if (!*devMapped && strstr(line, NVIDIA_PREFIX) != NULL)
+            *devMapped = 1;
+        if (!*libsMapped && (strstr(line, "/libnvidia-") != NULL || strstr(line, "/libcuda.so") != NULL || strstr(line, "/libnvcuvid.so") != NULL))
+            *libsMapped = 1;
+        if (*devMapped && *libsMapped)
+            break;
+    }
+    fclose(f);
+}
+
+/* ---------- nvidia DRM + I2C device discovery ---------- */
+
+#define MAX_AUX_DEVICES 32
+
+static int nvidia_card_nums[MAX_AUX_DEVICES];
+static int nvidia_card_count = 0;
+static int nvidia_render_nums[MAX_AUX_DEVICES];
+static int nvidia_render_count = 0;
+static int nvidia_i2c_nums[MAX_AUX_DEVICES];
+static int nvidia_i2c_count = 0;
+static int aux_devices_resolved = 0;
+
+/* The nvidia driver parents its I2C adapters directly on the GPU's PCI device
+ * (nv-i2c.c: dev.parent = nvl->dev), so /sys/bus/i2c/devices/i2c-N resolves to
+ * .../0000:01:00.0/i2c-N. Returns 1 when the parent's PCI vendor is 0x10de,
+ * 0 when it is some other vendor, -1 when indeterminate (no vendor attribute,
+ * e.g. a non-PCI/SOC parent) - callers fall back to name matching then. */
+static int i2c_parent_is_nvidia_pci(const char *i2cname)
+{
+    char link[PATH_BUF_SIZE];
+    char real[PATH_MAX];
+    snprintf(link, sizeof(link), "/sys/bus/i2c/devices/%s", i2cname);
+    if (realpath(link, real) == NULL)
+        return -1;
+    char *slash = strrchr(real, '/');
+    if (slash == NULL)
+        return -1;
+    *slash = '\0'; /* parent dir = owning device */
+    char vendor_path[PATH_MAX + 8];
+    snprintf(vendor_path, sizeof(vendor_path), "%s/vendor", real);
+    FILE *f = fopen(vendor_path, "r");
+    if (!f)
+        return -1;
+    char buf[32];
+    int nv = (fgets(buf, sizeof(buf), f) && strncmp(buf, "0x10de", 6) == 0);
+    fclose(f);
+    return nv;
+}
+
+/* Discover DRM card/renderD and I2C adapters owned by nvidia, so the holder
+ * scan can detect processes holding DRI or I2C devices that pin the nvidia
+ * module refcount (invisible to bare /dev/nvidia scans). */
+static void resolve_aux_devices(void)
+{
+    if (aux_devices_resolved)
+        return;
+    aux_devices_resolved = 1;
+
+    DIR *pcidir = opendir("/sys/bus/pci/devices");
+    if (pcidir)
+    {
+        struct dirent *e;
+        char path[PATH_BUF_SIZE];
+        char buf[32];
+        while ((e = readdir(pcidir)) != NULL)
+        {
+            if (e->d_name[0] == '.')
+                continue;
+            snprintf(path, sizeof(path), "/sys/bus/pci/devices/%s/vendor", e->d_name);
+            FILE *f = fopen(path, "r");
+            if (!f)
+                continue;
+            int nv = (fgets(buf, sizeof(buf), f) && strncmp(buf, "0x10de", 6) == 0);
+            fclose(f);
+            if (!nv)
+                continue;
+
+            snprintf(path, sizeof(path), "/sys/bus/pci/devices/%s/drm", e->d_name);
+            DIR *drmdir = opendir(path);
+            if (!drmdir)
+                continue;
+            struct dirent *de;
+            while ((de = readdir(drmdir)) != NULL)
+            {
+                if (strncmp(de->d_name, "card", 4) == 0 && isdigit((unsigned char)de->d_name[4]) && !strchr(de->d_name + 4, '-') && nvidia_card_count < MAX_AUX_DEVICES)
+                    nvidia_card_nums[nvidia_card_count++] = atoi(de->d_name + 4);
+                else if (strncmp(de->d_name, "renderD", 7) == 0 && isdigit((unsigned char)de->d_name[7]) && nvidia_render_count < MAX_AUX_DEVICES)
+                    nvidia_render_nums[nvidia_render_count++] = atoi(de->d_name + 7);
+            }
+            closedir(drmdir);
+        }
+        closedir(pcidir);
+    }
+
+    /* I2C adapters: nvidia registers them with name "NVIDIA i2c adapter ..."
+     * and parent = the PCI device. Programs like powerdevil or OpenRGB hold
+     * /dev/i2c-N for DDC/CI, silently pinning the nvidia module refcount. */
+    DIR *i2cdir = opendir("/sys/bus/i2c/devices");
+    if (i2cdir)
+    {
+        struct dirent *e;
+        char path[PATH_BUF_SIZE];
+        char name[256];
+        while ((e = readdir(i2cdir)) != NULL)
+        {
+            if (strncmp(e->d_name, "i2c-", 4) != 0)
+                continue;
+            snprintf(path, sizeof(path), "/sys/bus/i2c/devices/%s/name", e->d_name);
+            FILE *f = fopen(path, "r");
+            if (!f)
+                continue;
+            int found = (fgets(name, sizeof(name), f) && strstr(name, "NVIDIA") != NULL);
+            fclose(f);
+            /* Adapter names could in principle collide; when the adapter's
+             * sysfs parent exposes a PCI vendor, require 0x10de. -1 (no PCI
+             * parent, e.g. SOC) falls back to the name match. */
+            if (found && i2c_parent_is_nvidia_pci(e->d_name) == 0)
+                found = 0;
+            if (found && nvidia_i2c_count < MAX_AUX_DEVICES)
+                nvidia_i2c_nums[nvidia_i2c_count++] = atoi(e->d_name + 4);
+        }
+        closedir(i2cdir);
+    }
+}
+
+/* Single pass over /proc/<pid>/fd counting nvidia, DRI, and I2C fds. */
+
+struct gpu_fd_counts
+{
+    int nvidia;
+    int dri;
+    int i2c;
+};
+
+static struct gpu_fd_counts count_all_gpu_fds(int pid)
+{
+    struct gpu_fd_counts c = {0, 0, 0};
     char fdDir[64];
     snprintf(fdDir, sizeof(fdDir), "/proc/%d/fd", pid);
     DIR *dir = opendir(fdDir);
     if (!dir)
-        return 0;
-    int count = 0;
+        return c;
     struct dirent *e;
     char fdPath[PATH_BUF_SIZE];
     char target[PATH_BUF_SIZE];
@@ -149,41 +311,61 @@ static int count_nvidia_fds(int pid)
             continue;
         snprintf(fdPath, sizeof(fdPath), "%s/%s", fdDir, e->d_name);
         ssize_t n = readlink(fdPath, target, sizeof(target) - 1);
-        if (n > 0)
+        if (n <= 0)
+            continue;
+        target[n] = '\0';
+
+        if (strncmp(target, NVIDIA_PREFIX, NVIDIA_PREFIX_LEN) == 0)
         {
-            target[n] = '\0';
-            if (strncmp(target, NVIDIA_PREFIX, NVIDIA_PREFIX_LEN) == 0)
-                count++;
+            c.nvidia++;
+        }
+        else if (strncmp(target, "/dev/dri/card", 13) == 0)
+        {
+            int num = atoi(target + 13);
+            for (int i = 0; i < nvidia_card_count; i++)
+                if (nvidia_card_nums[i] == num)
+                {
+                    c.dri++;
+                    break;
+                }
+        }
+        else if (strncmp(target, "/dev/dri/renderD", 16) == 0)
+        {
+            int num = atoi(target + 16);
+            for (int i = 0; i < nvidia_render_count; i++)
+                if (nvidia_render_nums[i] == num)
+                {
+                    c.dri++;
+                    break;
+                }
+        }
+        else if (strncmp(target, "/dev/i2c-", 9) == 0)
+        {
+            int num = atoi(target + 9);
+            for (int i = 0; i < nvidia_i2c_count; i++)
+                if (nvidia_i2c_nums[i] == num)
+                {
+                    c.i2c++;
+                    break;
+                }
         }
     }
     closedir(dir);
-    return count;
-}
-
-static int has_libnvidia_mapped(int pid)
-{
-    char path[64];
-    snprintf(path, sizeof(path), "/proc/%d/maps", pid);
-    FILE *f = fopen(path, "r");
-    if (!f)
-        return 0;
-    char line[MAPS_LINE_SIZE];
-    int found = 0;
-    while (fgets(line, sizeof(line), f) != NULL)
-    {
-        if (strstr(line, "/libnvidia-") != NULL || strstr(line, "/libcuda.so") != NULL || strstr(line, "/libnvcuvid.so") != NULL)
-        {
-            found = 1;
-            break;
-        }
-    }
-    fclose(f);
-    return found;
+    return c;
 }
 
 static int is_holder(int pid)
 {
-    return count_nvidia_fds(pid) > 0 || has_libnvidia_mapped(pid);
+    /* The kill path reaches here without do_list's resolve; without it the
+     * DRI/I2C tables are empty and an i2c-only holder (powerdevil) would not
+     * be recognized, so its service would never be stopped before the kill. */
+    resolve_aux_devices();
+    struct gpu_fd_counts c = count_all_gpu_fds(pid);
+    if (c.nvidia > 0 || c.dri > 0 || c.i2c > 0)
+        return 1;
+    int libs, dev;
+    scan_maps(pid, &libs, &dev);
+    return libs || dev;
 }
 
 static unsigned int read_uid(int pid)
@@ -428,6 +610,8 @@ static int do_kill(int argc, char **argv)
 
 static int do_list(int skip_pid)
 {
+    resolve_aux_devices();
+
     DIR *proc = opendir("/proc");
     if (!proc)
     {
@@ -443,9 +627,15 @@ static int do_list(int skip_pid)
         int pid = atoi(e->d_name);
         if (pid <= 0 || pid == skip_pid)
             continue;
-        int fds = count_nvidia_fds(pid);
-        int libs = has_libnvidia_mapped(pid);
-        if (fds > 0 || libs)
+        struct gpu_fd_counts c = count_all_gpu_fds(pid);
+        int libs, devMapped;
+        scan_maps(pid, &libs, &devMapped);
+        int fds = c.nvidia;
+        /* A closed-fd /dev/nvidia* mapping still pins the driver - report it
+         * in the fd column so callers treat it as an rmmod blocker. */
+        if (fds == 0 && devMapped)
+            fds = 1;
+        if (fds > 0 || libs || c.dri > 0 || c.i2c > 0)
         {
             unsigned int uid = read_uid(pid);
             read_comm(pid, comm, sizeof(comm));
@@ -455,7 +645,7 @@ static int do_list(int skip_pid)
             unsigned int suid;
             if (read_cgroup(pid, cgroup, sizeof(cgroup)) && classify_service(cgroup, unit, sizeof(unit), &suid) != 0)
                 unit_out = unit;
-            printf("%d\t%d\t%u\t%s\t%d\t%s\n", pid, fds, uid, comm, libs, unit_out);
+            printf("%d\t%d\t%u\t%s\t%d\t%s\t%d\t%d\n", pid, fds, uid, comm, libs, unit_out, c.dri, c.i2c);
         }
     }
     closedir(proc);
@@ -762,6 +952,153 @@ static int do_vulkan_icd(int argc, char **argv)
         return 3;
     }
     glog(LOG_INFO, "vulkan-icd %s: %s -> %s", argv[2], src, dst);
+    return 0;
+}
+
+/* ---------- EGL vendor (nvidia) ---------- */
+
+static const char *egl_nvidia_paths[] = {
+    "/usr/share/glvnd/egl_vendor.d/10_nvidia.json",
+    "/usr/share/glvnd/egl_vendor.d/10_nvidia_wayland.json",
+    NULL,
+};
+
+static int do_egl_vendor(int argc, char **argv)
+{
+    if (argc != 3)
+    {
+        fprintf(stderr, "usage: egl-vendor <hide|show>\n");
+        return 1;
+    }
+    int hide;
+    if (strcmp(argv[2], "hide") == 0)
+        hide = 1;
+    else if (strcmp(argv[2], "show") == 0)
+        hide = 0;
+    else
+    {
+        fprintf(stderr, "egl-vendor: arg must be hide or show\n");
+        return 1;
+    }
+
+    int acted = 0;
+    for (const char **p = egl_nvidia_paths; *p; p++)
+    {
+        char inactive[PATH_BUF_SIZE];
+        snprintf(inactive, sizeof(inactive), "%s_inactive", *p);
+        const char *src = hide ? *p : inactive;
+        const char *dst = hide ? inactive : *p;
+        if (access(src, F_OK) != 0)
+            continue;
+        if (rename(src, dst) != 0)
+        {
+            glog(LOG_ERR, "egl-vendor %s: rename %s -> %s: %s", argv[2], src, dst, strerror(errno));
+            fprintf(stderr, "egl-vendor: rename %s -> %s: %s\n", src, dst, strerror(errno));
+        }
+        else
+        {
+            glog(LOG_INFO, "egl-vendor %s: %s -> %s", argv[2], src, dst);
+            acted++;
+        }
+    }
+    if (acted == 0)
+        glog(LOG_INFO, "egl-vendor %s: no files to %s", argv[2], argv[2]);
+    return 0;
+}
+
+/* ---------- DRM compositor notify ---------- */
+
+/* Write a synthetic "remove" uevent to the DRM card sysfs node for a PCI BDF,
+ * so compositors (KWin, mutter) release /dev/dri/cardN gracefully before the
+ * real driver unbind. Refuses to signal if no non-nvidia DRM card exists
+ * (would crash a single-GPU compositor). */
+static int do_drm_notify_remove(int argc, char **argv)
+{
+    if (argc != 3)
+    {
+        fprintf(stderr, "usage: drm-notify-remove <bdf>\n");
+        return 1;
+    }
+    const char *bdf = argv[2];
+    if (!valid_bdf(bdf))
+    {
+        fprintf(stderr, "drm-notify-remove: invalid bdf\n");
+        return 1;
+    }
+
+    /* Safety: verify a non-nvidia DRM card exists (the iGPU). Signaling
+     * removal of the primary/only GPU crashes KWin (QCoreApplication::exit). */
+    int non_nvidia_found = 0;
+    DIR *drmdir = opendir("/sys/class/drm");
+    if (drmdir)
+    {
+        struct dirent *e;
+        char path[PATH_BUF_SIZE];
+        char buf[32];
+        while ((e = readdir(drmdir)) != NULL)
+        {
+            if (strncmp(e->d_name, "card", 4) != 0 || !isdigit((unsigned char)e->d_name[4]) || strchr(e->d_name + 4, '-') != NULL)
+                continue;
+            snprintf(path, sizeof(path), "/sys/class/drm/%s/device/vendor", e->d_name);
+            FILE *f = fopen(path, "r");
+            if (!f)
+                continue;
+            int nv = (fgets(buf, sizeof(buf), f) && strncmp(buf, "0x10de", 6) == 0);
+            fclose(f);
+            if (!nv)
+            {
+                non_nvidia_found = 1;
+                break;
+            }
+        }
+        closedir(drmdir);
+    }
+
+    if (!non_nvidia_found)
+    {
+        glog(LOG_WARNING, "drm-notify-remove: no non-nvidia DRM card, skipping");
+        fprintf(stderr, "drm-notify-remove: no non-nvidia DRM card (would crash compositor)\n");
+        return 2;
+    }
+
+    char drmpath[PATH_BUF_SIZE];
+    snprintf(drmpath, sizeof(drmpath), "/sys/bus/pci/devices/%s/drm", bdf);
+    DIR *dir = opendir(drmpath);
+    if (!dir)
+    {
+        glog(LOG_INFO, "drm-notify-remove %s: no drm dir (driver not bound?)", bdf);
+        return 0;
+    }
+
+    int signaled = 0;
+    struct dirent *de;
+    while ((de = readdir(dir)) != NULL)
+    {
+        if (strncmp(de->d_name, "card", 4) != 0 || !isdigit((unsigned char)de->d_name[4]) || strchr(de->d_name + 4, '-') != NULL)
+            continue;
+
+        char uevent[1024];
+        snprintf(uevent, sizeof(uevent), "%s/%.255s/uevent", drmpath, de->d_name);
+        int fd = open(uevent, O_WRONLY);
+        if (fd < 0)
+        {
+            glog(LOG_WARNING, "drm-notify-remove %s/%s: open: %s", bdf, de->d_name, strerror(errno));
+            continue;
+        }
+        if (write(fd, "remove", 6) < 0)
+            glog(LOG_WARNING, "drm-notify-remove %s/%s: write: %s", bdf, de->d_name, strerror(errno));
+        else
+        {
+            glog(LOG_INFO, "drm-notify-remove: signaled %s for %s", de->d_name, bdf);
+            printf("%s\n", de->d_name);
+            signaled++;
+        }
+        close(fd);
+    }
+    closedir(dir);
+
+    if (signaled == 0)
+        glog(LOG_INFO, "drm-notify-remove %s: no card entries", bdf);
     return 0;
 }
 
@@ -1151,6 +1488,118 @@ static int do_nvml_info(void)
     return 0;
 }
 
+/* ---------- nvml running processes ---------- */
+
+/* nvmlProcessInfo layouts. v1 (unsuffixed symbols) lacks the MIG instance
+ * fields; v2/v3 share the wider struct. The matching layout is picked by
+ * which symbol resolves. */
+typedef struct
+{
+    unsigned int pid;
+    unsigned long long usedGpuMemory;
+} nvml_proc_v1_t;
+
+typedef struct
+{
+    unsigned int pid;
+    unsigned long long usedGpuMemory;
+    unsigned int gpuInstanceId;
+    unsigned int computeInstanceId;
+} nvml_proc_v2_t;
+
+typedef int (*nvmlGetCount_fn)(unsigned int *count);
+typedef int (*nvmlGetProcs_fn)(void *dev, unsigned int *count, void *infos);
+
+#define NVML_PROCS_MAX 512
+
+static void print_nvml_procs(void *dev, nvmlGetProcs_fn getProcs, int wide, const char *kind)
+{
+    if (!getProcs)
+        return;
+    unsigned int count = NVML_PROCS_MAX;
+    /* Static: wide structs * 512 would be large on the stack. */
+    static unsigned char buf[NVML_PROCS_MAX * sizeof(nvml_proc_v2_t)];
+    memset(buf, 0, sizeof(buf));
+    int rc = getProcs(dev, &count, buf);
+    if (rc != 0 && rc != NVML_ERROR_INSUFFICIENT_SIZE)
+        return;
+    if (count > NVML_PROCS_MAX)
+        count = NVML_PROCS_MAX;
+    size_t stride = wide ? sizeof(nvml_proc_v2_t) : sizeof(nvml_proc_v1_t);
+    for (unsigned int i = 0; i < count; i++)
+    {
+        unsigned int pid;
+        memcpy(&pid, buf + i * stride, sizeof(pid));
+        if (pid > 0)
+            printf("%u\t%s\n", pid, kind);
+    }
+}
+
+static int do_nvml_procs(void)
+{
+    void *lib = dlopen("libnvidia-ml.so.1", RTLD_NOW);
+    if (!lib)
+    {
+        fprintf(stderr, "dlopen libnvidia-ml.so.1 failed: %s\n", dlerror());
+        return 2;
+    }
+
+    nvmlInit_fn nvmlInit = (nvmlInit_fn)dlsym(lib, "nvmlInit_v2");
+    nvmlGetCount_fn nvmlGetCount = (nvmlGetCount_fn)dlsym(lib, "nvmlDeviceGetCount_v2");
+    nvmlGetHandle_fn nvmlGetHandle = (nvmlGetHandle_fn)dlsym(lib, "nvmlDeviceGetHandleByIndex_v2");
+    nvmlShutdown_fn nvmlShutdown = (nvmlShutdown_fn)dlsym(lib, "nvmlShutdown");
+
+    /* Prefer the newest process-list symbols; struct width follows the symbol. */
+    int gfxWide = 1, cmpWide = 1;
+    nvmlGetProcs_fn getGraphics = (nvmlGetProcs_fn)dlsym(lib, "nvmlDeviceGetGraphicsRunningProcesses_v3");
+    if (!getGraphics)
+        getGraphics = (nvmlGetProcs_fn)dlsym(lib, "nvmlDeviceGetGraphicsRunningProcesses_v2");
+    if (!getGraphics)
+    {
+        getGraphics = (nvmlGetProcs_fn)dlsym(lib, "nvmlDeviceGetGraphicsRunningProcesses");
+        gfxWide = 0;
+    }
+    nvmlGetProcs_fn getCompute = (nvmlGetProcs_fn)dlsym(lib, "nvmlDeviceGetComputeRunningProcesses_v3");
+    if (!getCompute)
+        getCompute = (nvmlGetProcs_fn)dlsym(lib, "nvmlDeviceGetComputeRunningProcesses_v2");
+    if (!getCompute)
+    {
+        getCompute = (nvmlGetProcs_fn)dlsym(lib, "nvmlDeviceGetComputeRunningProcesses");
+        cmpWide = 0;
+    }
+
+    if (!nvmlInit || !nvmlGetCount || !nvmlGetHandle || !nvmlShutdown || (!getGraphics && !getCompute))
+    {
+        fprintf(stderr, "dlsym failed (NVML too old?)\n");
+        dlclose(lib);
+        return 2;
+    }
+
+    int rc = nvmlInit();
+    if (rc != 0)
+    {
+        fprintf(stderr, "nvmlInit_v2 failed: %d\n", rc);
+        dlclose(lib);
+        return 2;
+    }
+
+    unsigned int devCount = 0;
+    if (nvmlGetCount(&devCount) != 0)
+        devCount = 0;
+    for (unsigned int i = 0; i < devCount; i++)
+    {
+        void *dev = NULL;
+        if (nvmlGetHandle(i, &dev) != 0 || dev == NULL)
+            continue;
+        print_nvml_procs(dev, getGraphics, gfxWide, "graphics");
+        print_nvml_procs(dev, getCompute, cmpWide, "compute");
+    }
+
+    nvmlShutdown();
+    dlclose(lib);
+    return 0;
+}
+
 /* ---------- raw asus-nb-wmi debugfs (DSTS / DEVS) ---------- */
 
 #define WMI_DEBUGFS_DIR "/sys/kernel/debug/asus-nb-wmi"
@@ -1436,6 +1885,75 @@ static int do_msr_uv(int argc, char **argv)
     return rc;
 }
 
+/* ---------- Lenovo Flip to Start (FBSWIF UEFI variable) ---------- */
+
+#include <sys/ioctl.h>
+#ifndef FS_IOC_GETFLAGS
+#define FS_IOC_GETFLAGS _IOR('f', 1, long)
+#define FS_IOC_SETFLAGS _IOW('f', 2, long)
+#endif
+#ifndef FS_IMMUTABLE_FL
+#define FS_IMMUTABLE_FL 0x00000010
+#endif
+
+#define FBSWIF_EFIVAR "/sys/firmware/efi/efivars/FBSWIF-d743491e-f484-4952-a87d-8d5dd189b70c"
+
+/* Write the Lenovo "Flip to Start" (power on when the lid opens) UEFI
+ * variable. efivarfs layout: 4-byte LE attributes word (0x7 = NV|BS|RT)
+ * followed by the 4-byte payload (byte0 = enabled). efivarfs marks existing
+ * variables immutable; the flag must be cleared before the write. Only this
+ * one hardcoded variable can be touched. */
+static int do_lenovo_flip_to_start(int argc, char **argv)
+{
+    if (argc != 3 || (strcmp(argv[2], "0") != 0 && strcmp(argv[2], "1") != 0))
+    {
+        fprintf(stderr, "usage: lenovo-flip-to-start <0|1>\n");
+        return 1;
+    }
+    unsigned char enabled = (unsigned char)(argv[2][0] - '0');
+
+    if (access(FBSWIF_EFIVAR, F_OK) != 0)
+    {
+        glog(LOG_WARNING, "lenovo-flip-to-start: %s absent (not a Lenovo with FBSWIF?)", FBSWIF_EFIVAR);
+        fprintf(stderr, "lenovo-flip-to-start: variable not present\n");
+        return 1;
+    }
+
+    /* Clear the immutable flag efivarfs sets on existing variables. */
+    int fd = open(FBSWIF_EFIVAR, O_RDONLY);
+    if (fd >= 0)
+    {
+        long flags = 0;
+        if (ioctl(fd, FS_IOC_GETFLAGS, &flags) == 0 && (flags & FS_IMMUTABLE_FL))
+        {
+            flags &= ~FS_IMMUTABLE_FL;
+            if (ioctl(fd, FS_IOC_SETFLAGS, &flags) != 0)
+                glog(LOG_WARNING, "lenovo-flip-to-start: clearing immutable failed: %s", strerror(errno));
+        }
+        close(fd);
+    }
+
+    unsigned char buf[8] = {0x07, 0x00, 0x00, 0x00, enabled, 0x00, 0x00, 0x00};
+    fd = open(FBSWIF_EFIVAR, O_WRONLY);
+    if (fd < 0)
+    {
+        glog(LOG_ERR, "lenovo-flip-to-start: open failed: %s", strerror(errno));
+        fprintf(stderr, "lenovo-flip-to-start: open: %s\n", strerror(errno));
+        return 3;
+    }
+    ssize_t n = write(fd, buf, sizeof(buf));
+    int werr = errno;
+    close(fd);
+    if (n != (ssize_t)sizeof(buf))
+    {
+        glog(LOG_ERR, "lenovo-flip-to-start: write failed: %s", strerror(werr));
+        fprintf(stderr, "lenovo-flip-to-start: write: %s\n", strerror(werr));
+        return 3;
+    }
+    glog(LOG_INFO, "lenovo-flip-to-start: set to %u", enabled);
+    return 0;
+}
+
 /* ---------- dispatch ---------- */
 
 int main(int argc, char **argv)
@@ -1466,6 +1984,10 @@ int main(int argc, char **argv)
             return do_pci_power(argc, argv);
         if (strcmp(argv[1], "vulkan-icd") == 0)
             return do_vulkan_icd(argc, argv);
+        if (strcmp(argv[1], "egl-vendor") == 0)
+            return do_egl_vendor(argc, argv);
+        if (strcmp(argv[1], "drm-notify-remove") == 0)
+            return do_drm_notify_remove(argc, argv);
         if (strcmp(argv[1], "smi") == 0)
             return do_smi(argc, argv);
         if (strcmp(argv[1], "modprobe") == 0)
@@ -1474,6 +1996,8 @@ int main(int argc, char **argv)
             return do_nvml(argc, argv);
         if (strcmp(argv[1], "nvml-info") == 0)
             return do_nvml_info();
+        if (strcmp(argv[1], "nvml-procs") == 0)
+            return do_nvml_procs();
         if (strcmp(argv[1], "wmi-dsts") == 0)
             return do_wmi_dsts(argc, argv);
         if (strcmp(argv[1], "wmi-devs") == 0)
@@ -1482,6 +2006,8 @@ int main(int argc, char **argv)
             return do_wmi_probe();
         if (strcmp(argv[1], "msr-uv") == 0)
             return do_msr_uv(argc, argv);
+        if (strcmp(argv[1], "lenovo-flip-to-start") == 0)
+            return do_lenovo_flip_to_start(argc, argv);
     }
 
     /* Backward-compatible default: bare numeric arg is the legacy skip_pid. */

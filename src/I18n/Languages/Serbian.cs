@@ -319,6 +319,8 @@ public static class Serbian
 
         ["other_header"] = "Остало",
         ["boot_sound"] = "Звук при покретању",
+        ["deep_sleep"] = "Режим спавања",
+        ["deep_sleep_tooltip"] = "Како лаптоп спава. s2idle = софтверско спавање: тренутно буђење, али се батерија може приметно празнити током спавања. deep = пуно S3 спавање: буђење траје тренутак дуже, пражњење је минимално. Примењује се одмах и враћа при сваком покретању.",
         ["window_topmost"] = "Прозор увек на врху",
         ["bw_tray_icon"] = "Црно-бела икона у траци",
         ["clamshell_mode"] = "Режим шкољке (онемогући спавање при затварању поклопца)",
@@ -345,6 +347,10 @@ public static class Serbian
         ["profile_silent_label"] = "Тихи профил",
         ["profile_balanced_label"] = "Балансирани профил",
         ["profile_turbo_label"] = "Турбо профил",
+        ["epp_silent_label"] = "EPP Тихи",
+        ["epp_balanced_label"] = "EPP Балансирани",
+        ["epp_turbo_label"] = "EPP Турбо",
+        ["epp_tooltip"] = "Однос енергије и перформанси CPU (energy_performance_preference). power штеди батерију, performance побољшава одзив. Примењује се на сва језгра при активацији режима.",
         ["battery_health_format"] = "Здравље батерије: {0}%",
         ["battery_health_unknown"] = "Здравље батерије: --%",
         ["power_draw_discharge"] = "Потрошња: {0} mW (пражњење)",
@@ -867,5 +873,6 @@ public static class Serbian
         ["sysfiles_name_desktop"] = "Ставка менија апликација",
         ["sysfiles_name_icon"] = "Икона апликације",
         ["sysfiles_name_autostart"] = "Ставка аутоматског покретања",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo модули кернела (modules-load.d)",
     };
 }

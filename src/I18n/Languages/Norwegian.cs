@@ -319,6 +319,8 @@ public static class Norwegian
 
         ["other_header"] = "Annet",
         ["boot_sound"] = "Oppstartslyd",
+        ["deep_sleep"] = "Hvilemodus",
+        ["deep_sleep_tooltip"] = "Hvordan laptopen sover. s2idle = programvare-standby: øyeblikkelig oppvåkning, men batteriet kan lades merkbart ut under søvn. deep = full S3-hvile: oppvåkning tar et øyeblikk lenger, utladning er minimal. Brukes umiddelbart og gjenopprettes ved hver oppstart.",
         ["window_topmost"] = "Vindu alltid øverst",
         ["bw_tray_icon"] = "Svart-hvitt systemstatusikon",
         ["clamshell_mode"] = "Skallmodus (deaktiver hvilemodus ved lukking av lokk)",
@@ -345,6 +347,10 @@ public static class Norwegian
         ["profile_silent_label"] = "Stille-profil",
         ["profile_balanced_label"] = "Balansert profil",
         ["profile_turbo_label"] = "Turbo-profil",
+        ["epp_silent_label"] = "Stille EPP",
+        ["epp_balanced_label"] = "Balansert EPP",
+        ["epp_turbo_label"] = "Turbo EPP",
+        ["epp_tooltip"] = "CPU-avveining mellom energi og ytelse (energy_performance_preference). power prioriterer batteritid, performance prioriterer respons. Brukes paa alle kjerner naar modusen aktiveres.",
         ["battery_health_format"] = "Batterihelse: {0}%",
         ["battery_health_unknown"] = "Batterihelse: --%",
         ["power_draw_discharge"] = "Strømforbruk: {0} mW (utlading)",
@@ -867,5 +873,6 @@ public static class Norwegian
         ["sysfiles_name_desktop"] = "Programmenyoppføring",
         ["sysfiles_name_icon"] = "Programikon",
         ["sysfiles_name_autostart"] = "Autostart-oppføring",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo-kjernemoduler (modules-load.d)",
     };
 }

@@ -316,6 +316,8 @@ public static class Czech
 
         ["other_header"] = "Ostatní",
         ["boot_sound"] = "Zvuk při spuštění",
+        ["deep_sleep"] = "Režim spánku",
+        ["deep_sleep_tooltip"] = "Jak notebook spí. s2idle = softwarový spánek: okamžité probuzení, ale baterie se může během spánku znatelně vybíjet. deep = plné uspání S3: probuzení trvá o chvíli déle, vybíjení je minimální. Použije se ihned a obnoví se při každém spuštění.",
         ["window_topmost"] = "Okno vždy nahoře",
         ["bw_tray_icon"] = "Černobílá ikona v panelu",
         ["clamshell_mode"] = "Režim zavřeného víka (zakázat spánek při zavření)",
@@ -342,6 +344,10 @@ public static class Czech
         ["profile_silent_label"] = "Profil Tichý",
         ["profile_balanced_label"] = "Profil Vyvážený",
         ["profile_turbo_label"] = "Profil Turbo",
+        ["epp_silent_label"] = "EPP Tichy",
+        ["epp_balanced_label"] = "EPP Vyvazeny",
+        ["epp_turbo_label"] = "EPP Turbo",
+        ["epp_tooltip"] = "Pomer energie a vykonu CPU (energy_performance_preference). power setri baterii, performance zlepsuje odezvu. Pouzije se na vsechna jadra pri aktivaci rezimu.",
         ["battery_health_format"] = "Zdraví baterie: {0}%",
         ["battery_health_unknown"] = "Zdraví baterie: --%",
         ["power_draw_discharge"] = "Spotřeba: {0} mW (vybíjení)",
@@ -864,5 +870,6 @@ public static class Czech
         ["sysfiles_name_desktop"] = "Položka nabídky aplikací",
         ["sysfiles_name_icon"] = "Ikona aplikace",
         ["sysfiles_name_autostart"] = "Položka po spuštění",
+        ["sysfiles_name_lenovo_modules"] = "Moduly jádra Lenovo (modules-load.d)",
     };
 }

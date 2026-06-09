@@ -1,0 +1,58 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="GHelper.Linux.UI.Views.NumberPadWindow"
+        Title="NumberPad"
+        Width="380"
+        Height="360"
+        MinWidth="320"
+        MinHeight="300"
+        WindowStartupLocation="CenterScreen"
+        CanResize="True"
+        Background="#1C1C1C"
+        Icon="avares://ghelper/UI/Assets/standard.ico">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12" Spacing="6">
+
+            <!-- Master enable -->
+            <Border Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock Classes="header" Text="NumberPad" />
+                    </Border>
+                    <CheckBox x:Name="checkEnabled" Content="Enable NumberPad" IsCheckedChanged="CheckEnabled_Changed" />
+                    <TextBlock Classes="label-dim" TextWrapping="Wrap" Margin="0,6,0,0"
+                               Text="Hold a finger in the top-right corner of the touchpad for one second to toggle the numpad on or off." />
+                </StackPanel>
+            </Border>
+
+            <!-- Detection status -->
+            <Border Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock Classes="header" Text="Status" />
+                    </Border>
+                    <TextBlock x:Name="labelStatus" Classes="value" Text="--" TextWrapping="Wrap" />
+                    <TextBlock x:Name="labelHint" Classes="label-dim" Text="" TextWrapping="Wrap" Margin="0,4,0,0" />
+                </StackPanel>
+            </Border>
+
+            <!-- Layout info -->
+            <Border Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock Classes="header" Text="Layout" />
+                    </Border>
+                    <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto" Margin="0,2">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="label-dim" Text="Grid" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="labelLayout" Classes="value" Text="--" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="label-dim" Text="Model" Margin="0,4,0,0" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="labelModel" Classes="value" Text="--" Margin="0,4,0,0" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</Window>

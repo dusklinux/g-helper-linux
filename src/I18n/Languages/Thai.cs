@@ -319,6 +319,8 @@ public static class Thai
 
         ["other_header"] = "อื่นๆ",
         ["boot_sound"] = "เสียงบูต",
+        ["deep_sleep"] = "โหมดพักเครื่อง",
+        ["deep_sleep_tooltip"] = "วิธีที่แล็ปท็อปพักเครื่อง s2idle = สแตนด์บายซอฟต์แวร์: ตื่นทันที แต่แบตเตอรี่อาจลดลงอย่างเห็นได้ชัดระหว่างพัก deep = พักแบบ S3 เต็มรูปแบบ: ตื่นช้ากว่าเล็กน้อย แบตลดน้อยมาก มีผลทันทีและคืนค่าทุกครั้งที่บูต",
         ["window_topmost"] = "หน้าต่างอยู่บนสุดเสมอ",
         ["bw_tray_icon"] = "ไอคอนถาดขาวดำ",
         ["clamshell_mode"] = "โหมดปิดฝา (ปิดการพักเครื่องเมื่อปิดฝา)",
@@ -345,6 +347,10 @@ public static class Thai
         ["profile_silent_label"] = "โปรไฟล์เงียบ",
         ["profile_balanced_label"] = "โปรไฟล์สมดุล",
         ["profile_turbo_label"] = "โปรไฟล์เทอร์โบ",
+        ["epp_silent_label"] = "EPP เงียบ",
+        ["epp_balanced_label"] = "EPP สมดุล",
+        ["epp_turbo_label"] = "EPP เทอร์โบ",
+        ["epp_tooltip"] = "สมดุลพลังงานกับประสิทธิภาพของ CPU (energy_performance_preference) power เน้นแบตเตอรี่ performance เน้นการตอบสนอง ใช้กับทุกคอร์เมื่อเปิดใช้งานโหมด",
         ["battery_health_format"] = "สุขภาพแบตเตอรี่: {0}%",
         ["battery_health_unknown"] = "สุขภาพแบตเตอรี่: --%",
         ["power_draw_discharge"] = "การใช้พลังงาน: {0} mW (คายประจุ)",
@@ -867,5 +873,6 @@ public static class Thai
         ["sysfiles_name_desktop"] = "รายการเมนูแอปพลิเคชัน",
         ["sysfiles_name_icon"] = "ไอคอนแอปพลิเคชัน",
         ["sysfiles_name_autostart"] = "รายการเริ่มอัตโนมัติ",
+        ["sysfiles_name_lenovo_modules"] = "โมดูลเคอร์เนล Lenovo (modules-load.d)",
     };
 }

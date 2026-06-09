@@ -359,18 +359,31 @@ public partial class UpdatesWindow : Window
 
     private void LoadUpdates()
     {
+        bool isLenovo = Helpers.AppConfig.IsLenovoDevice();
+
         // Get model and BIOS from DMI sysfs
         var biosRaw = App.System?.GetBiosVersion() ?? "";
-        var parts = biosRaw.Split('.');
-        if (parts.Length >= 2)
+        if (isLenovo)
         {
-            _model = parts[0];
-            _biosVersion = parts[1];
+            // Lenovo: the support catalog is keyed by machine type (DMI
+            // product_name, e.g. "83DX"); BIOS version is the whole DMI
+            // string (e.g. "NZCN26WW"), not a dot-separated pair.
+            _model = Helpers.AppConfig.GetModel();
+            _biosVersion = string.IsNullOrWhiteSpace(biosRaw) ? null : biosRaw.Trim();
         }
         else
         {
-            _model = biosRaw;
-            _biosVersion = null;
+            var parts = biosRaw.Split('.');
+            if (parts.Length >= 2)
+            {
+                _model = parts[0];
+                _biosVersion = parts[1];
+            }
+            else
+            {
+                _model = biosRaw;
+                _biosVersion = null;
+            }
         }
 
         var modelName = App.System?.GetModelName() ?? Labels.Get("unknown");
@@ -393,6 +406,13 @@ public partial class UpdatesWindow : Window
         labelSelfUpdateStatus.Text = Labels.Get("checking_updates");
         labelSelfUpdateStatus.Foreground = ColorDim;
         Task.Run(async () => await CheckSelfUpdateAsync());
+
+        if (isLenovo)
+        {
+            // One catalog call covers BIOS and drivers.
+            Task.Run(async () => await FetchLenovoUpdatesAsync());
+            return;
+        }
 
         string rogParam = Helpers.AppConfig.IsROG() ? "&systemCode=rog" : "";
 
@@ -861,6 +881,215 @@ public partial class UpdatesWindow : Window
         }
     }
 
+    private const string LenovoCatalogBaseUrl = "https://pcsupport.lenovo.com/us/en/api/v4/downloads/drivers?productId=";
+
+    /// <summary>
+    /// Lenovo pcsupport catalog. One call returns BIOS and drivers together; entries
+    /// with category "BIOS/UEFI" go to the BIOS panel with a version compare
+    /// against the DMI BIOS string (NZCN26WW vs NZCN37WW), the rest land in
+    /// the drivers panel as download links.
+    /// </summary>
+    private async Task FetchLenovoUpdatesAsync()
+    {
+        string url = LenovoCatalogBaseUrl + WebUtility.UrlEncode(_model ?? "");
+        try
+        {
+            Helpers.Logger.WriteLine($"Updates: fetching {url}");
+
+            using var httpClient = new HttpClient(new HttpClientHandler
+            {
+                AutomaticDecompression = DecompressionMethods.All
+            });
+            // The catalog endpoint rejects non-browser user agents.
+            httpClient.DefaultRequestHeaders.Add("User-Agent",
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36");
+            httpClient.DefaultRequestHeaders.Referrer = new Uri("https://pcsupport.lenovo.com/");
+            httpClient.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip, deflate, br");
+            httpClient.Timeout = TimeSpan.FromSeconds(20);
+
+            var json = await httpClient.GetStringAsync(url);
+            using var doc = JsonDocument.Parse(json);
+
+            var biosEntries = new List<DriverInfo>();
+            var driverEntries = new List<DriverInfo>();
+
+            if (doc.RootElement.TryGetProperty("body", out var body)
+                && body.TryGetProperty("DownloadItems", out var items))
+            {
+                for (int i = 0; i < items.GetArrayLength(); i++)
+                {
+                    var entry = ParseLenovoDownloadItem(items[i]);
+                    if (entry == null)
+                        continue;
+                    if (entry.Value.Category.Contains("BIOS", StringComparison.OrdinalIgnoreCase))
+                        biosEntries.Add(entry.Value);
+                    else
+                        driverEntries.Add(entry.Value);
+                }
+            }
+
+            int localUpdates = 0;
+            foreach (var entry in biosEntries)
+            {
+                int status = CompareLenovoBiosVersions(entry.Version, _biosVersion);
+                string tooltip = status == 0
+                    ? entry.Version
+                    : Labels.Format("download_tooltip", entry.Version, _biosVersion ?? "");
+                if (status == 1)
+                    localUpdates++;
+                var d = entry;
+                int s = status;
+                string t = tooltip;
+                Dispatcher.UIThread.Post(() => AddDriverRow(panelBios, d, s, t));
+            }
+            foreach (var entry in driverEntries)
+            {
+                var d = entry;
+                Dispatcher.UIThread.Post(() => AddDriverRow(panelDrivers, d, 0, d.Version));
+            }
+
+            if (localUpdates > 0)
+            {
+                _updatesCount += localUpdates;
+                Dispatcher.UIThread.Post(() =>
+                {
+                    labelUpdates.Text = Labels.Format("updates_available_format", _updatesCount);
+                    labelUpdates.Foreground = ColorRed;
+                    labelUpdates.FontWeight = FontWeight.Bold;
+                });
+            }
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (panelBios.Children.Contains(labelBiosLoading))
+                    panelBios.Children.Remove(labelBiosLoading);
+                if (panelDrivers.Children.Contains(labelDriversLoading))
+                    panelDrivers.Children.Remove(labelDriversLoading);
+
+                if (biosEntries.Count == 0)
+                    panelBios.Children.Add(new TextBlock { Text = Labels.Get("no_entries"), Foreground = ColorDim, FontSize = 12 });
+                if (driverEntries.Count == 0)
+                    panelDrivers.Children.Add(new TextBlock { Text = Labels.Get("no_entries"), Foreground = ColorDim, FontSize = 12 });
+
+                if (_updatesCount == 0)
+                {
+                    labelUpdates.Text = Labels.Get("no_new_updates");
+                    labelUpdates.Foreground = ColorGreen;
+                }
+            });
+
+            Helpers.Logger.WriteLine($"Updates: fetched {biosEntries.Count} BIOS + {driverEntries.Count} driver entries from Lenovo catalog");
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"Updates fetch error (Lenovo): {ex.Message}");
+            Dispatcher.UIThread.Post(() =>
+            {
+                foreach (var panel in new[] { panelBios, panelDrivers })
+                {
+                    panel.Children.Clear();
+                    panel.Children.Add(new TextBlock
+                    {
+                        Text = Labels.Format("fetch_failed", ex.Message),
+                        Foreground = ColorRed,
+                        FontSize = 12,
+                        TextWrapping = TextWrapping.Wrap,
+                    });
+                }
+            });
+        }
+    }
+
+    /// One catalog DownloadItem -> DriverInfo. Prefers the EXE file, then ZIP,
+    /// then the first file for the download link. Null when no file exists.
+    private static DriverInfo? ParseLenovoDownloadItem(JsonElement item)
+    {
+        try
+        {
+            string category = item.TryGetProperty("Category", out var cat)
+                && cat.TryGetProperty("Name", out var catName)
+                ? catName.GetString() ?? "" : "";
+            string title = item.TryGetProperty("Title", out var t) ? t.GetString() ?? "" : "";
+            string version = item.TryGetProperty("SummaryInfo", out var si)
+                && si.TryGetProperty("Version", out var v)
+                ? v.GetString() ?? "" : "";
+
+            if (!item.TryGetProperty("Files", out var files) || files.GetArrayLength() == 0)
+                return null;
+
+            JsonElement? mainFile = null;
+            foreach (var preferred in new[] { "exe", "zip" })
+            {
+                for (int i = 0; i < files.GetArrayLength() && mainFile == null; i++)
+                {
+                    if (files[i].TryGetProperty("TypeString", out var ts)
+                        && string.Equals(ts.GetString(), preferred, StringComparison.OrdinalIgnoreCase))
+                        mainFile = files[i];
+                }
+                if (mainFile != null)
+                    break;
+            }
+            mainFile ??= files[0];
+
+            string downloadUrl = mainFile.Value.TryGetProperty("URL", out var u) ? u.GetString() ?? "" : "";
+            string date = "";
+            if (mainFile.Value.TryGetProperty("Date", out var dateNode)
+                && dateNode.TryGetProperty("Unix", out var unix)
+                && long.TryParse(unix.ToString(), out long unixMs))
+            {
+                date = DateTimeOffset.FromUnixTimeMilliseconds(unixMs).ToString("yyyy/MM/dd");
+            }
+
+            if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(downloadUrl))
+                return null;
+
+            return new DriverInfo
+            {
+                Category = category,
+                Title = title,
+                Version = version,
+                DownloadUrl = downloadUrl,
+                Date = date,
+            };
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Compare Lenovo BIOS version strings like "NZCN37WW" vs "NZCN26WW":
+    /// same alpha prefix, numeric build in the middle. Returns 1 when the
+    /// remote is newer, -1 when up to date, 0 when not comparable.
+    /// </summary>
+    private static int CompareLenovoBiosVersions(string? remote, string? local)
+    {
+        var (remotePrefix, remoteNum) = SplitLenovoBiosVersion(remote);
+        var (localPrefix, localNum) = SplitLenovoBiosVersion(local);
+        if (remoteNum < 0 || localNum < 0)
+            return 0;
+        if (!string.Equals(remotePrefix, localPrefix, StringComparison.OrdinalIgnoreCase))
+            return 0;
+        return remoteNum > localNum ? 1 : -1;
+    }
+
+    private static (string prefix, int number) SplitLenovoBiosVersion(string? version)
+    {
+        if (string.IsNullOrWhiteSpace(version))
+            return ("", -1);
+        string s = version.Trim();
+        int start = 0;
+        while (start < s.Length && !char.IsDigit(s[start]))
+            start++;
+        int end = start;
+        while (end < s.Length && char.IsDigit(s[end]))
+            end++;
+        if (start == end)
+            return ("", -1);
+        return (s.Substring(0, start), int.Parse(s.Substring(start, end - start)));
+    }
+
     private int _rowIndex = 0;
 
     private void AddDriverRow(StackPanel panel, DriverInfo driver, int status, string tooltip)
@@ -1029,7 +1258,7 @@ public partial class UpdatesWindow : Window
             MinWidth = 420,
             MaxWidth = 420,
             SizeToContent = SizeToContent.Height,
-            WindowStartupLocation = WindowStartupLocation.CenterScreen,
+            WindowStartupLocation = WindowStartupLocation.Manual,
             CanResize = false,
             WindowDecorations = WindowDecorations.Full,
             Background = new SolidColorBrush(Color.Parse("#1C1C1C")),
@@ -1037,6 +1266,8 @@ public partial class UpdatesWindow : Window
         try
         { dialog.Icon = owner.Icon; }
         catch { }
+
+        Helpers.WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(dialog);
 
         var root = new StackPanel { Margin = new Avalonia.Thickness(20, 16, 20, 16), Spacing = 12 };
 

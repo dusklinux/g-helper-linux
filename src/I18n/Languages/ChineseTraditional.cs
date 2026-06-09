@@ -319,6 +319,8 @@ public static class ChineseTraditional
 
         ["other_header"] = "其他",
         ["boot_sound"] = "開機音效",
+        ["deep_sleep"] = "睡眠模式",
+        ["deep_sleep_tooltip"] = "筆電的睡眠方式。s2idle = 軟體待機:即時喚醒,但睡眠期間電池可能明顯耗電。deep = 完整 S3 暫停:喚醒稍慢,耗電極少。立即生效,並在每次開機時還原。",
         ["window_topmost"] = "視窗始終置頂",
         ["bw_tray_icon"] = "黑白系統匣圖示",
         ["clamshell_mode"] = "合蓋模式（合蓋時不休眠）",
@@ -345,6 +347,10 @@ public static class ChineseTraditional
         ["profile_silent_label"] = "靜音設定檔",
         ["profile_balanced_label"] = "均衡設定檔",
         ["profile_turbo_label"] = "增強設定檔",
+        ["epp_silent_label"] = "安靜 EPP",
+        ["epp_balanced_label"] = "平衡 EPP",
+        ["epp_turbo_label"] = "增強 EPP",
+        ["epp_tooltip"] = "CPU 能耗與效能的取捨 (energy_performance_preference)。power 偏向續航,performance 偏向反應速度。啟用模式時套用到所有 CPU 核心。",
         ["battery_health_format"] = "電池健康度：{0}%",
         ["battery_health_unknown"] = "電池健康度：--%",
         ["power_draw_discharge"] = "功耗：{0} mW（放電中）",
@@ -867,5 +873,6 @@ public static class ChineseTraditional
         ["sysfiles_name_desktop"] = "應用程式選單項目",
         ["sysfiles_name_icon"] = "應用程式圖示",
         ["sysfiles_name_autostart"] = "自動啟動項目",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo 核心模組 (modules-load.d)",
     };
 }

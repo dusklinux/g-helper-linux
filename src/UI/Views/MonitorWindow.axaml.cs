@@ -269,9 +269,9 @@ public partial class MonitorWindow : Window
             AddValue(_batteryPowerValues, batteryW);
 
             // Update header with live summary
-            string stats = $"CPU: {(cpuTemp > 0 ? $"{cpuTemp}°C" : "--")}  " +
-                           $"GPU: {(gpuTemp > 0 ? $"{gpuTemp}°C" : "--")}  " +
-                           $"Fans: {(cpuFan > 0 ? $"{cpuFan}" : "0")}/{(gpuFan > 0 ? $"{gpuFan}" : "0")} RPM";
+            string stats = $"CPU: {(cpuTemp > 0 ? Helpers.TempHelper.FormatTemp(cpuTemp) : "--")}  " +
+                           $"GPU: {(gpuTemp > 0 ? Helpers.TempHelper.FormatTemp(gpuTemp) : "--")}  " +
+                           $"Fans: {Fan.FanSensorControl.FormatFan(0, cpuFan)}/{Fan.FanSensorControl.FormatFan(1, gpuFan)}";
             if (gpuLoad.HasValue && gpuLoad.Value >= 0)
                 stats += $"  Load: {gpuLoad.Value}%";
             if (batteryW > 0)

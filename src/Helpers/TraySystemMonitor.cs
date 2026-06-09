@@ -253,9 +253,9 @@ public static class TraySystemMonitor
         // all-AMD Z13) it returns -1 / 0 and the GPU surface stays empty.
         // Fall back to amdgpu sysfs (read once, ~60 µs) so users on those
         // machines get a populated GPU readout in the tray.
-        if (gpuTemp <= 0 && Gpu.LinuxAmdGpuMetrics.IsAvailable)
+        if (gpuTemp <= 0 && Gpu.AMD.LinuxAmdGpuMetrics.IsAvailable)
         {
-            int? igpu = Gpu.LinuxAmdGpuMetrics.GetIgpuTempCelsius();
+            int? igpu = Gpu.AMD.LinuxAmdGpuMetrics.GetIgpuTempCelsius();
             if (igpu != null)
                 gpuTemp = igpu.Value;
         }
@@ -273,7 +273,7 @@ public static class TraySystemMonitor
             // same i18n key ("tray_tooltip_cpu" = "CPU: {0}") that the main
             // icon uses, so we get free localization across all 29 langs.
             TrySetSniTooltip(_cpuTray,
-                Labels.Format("tray_tooltip_cpu", cpuTemp > 0 ? $"{cpuTemp}°C" : "--"));
+                Labels.Format("tray_tooltip_cpu", cpuTemp > 0 ? TempHelper.FormatTemp(cpuTemp) : "--"));
         }
 
         // Surface 3: GPU temp icon (if active).
@@ -282,7 +282,7 @@ public static class TraySystemMonitor
             UpdateGpuIcon(gpuTemp);
             // Mirror of CPU tooltip - see above.
             TrySetSniTooltip(_gpuTray,
-                Labels.Format("tray_tooltip_gpu", gpuTemp > 0 ? $"{gpuTemp}°C" : "--"));
+                Labels.Format("tray_tooltip_gpu", gpuTemp > 0 ? TempHelper.FormatTemp(gpuTemp) : "--"));
         }
     }
 
@@ -299,10 +299,10 @@ public static class TraySystemMonitor
     /// </summary>
     private static string BuildTooltipBody(int cpuTemp, int gpuTemp)
     {
-        string line1 = Labels.Format("tray_tooltip_cpu", cpuTemp > 0 ? $"{cpuTemp}°C" : "--");
+        string line1 = Labels.Format("tray_tooltip_cpu", cpuTemp > 0 ? TempHelper.FormatTemp(cpuTemp) : "--");
         if (gpuTemp > 0)
         {
-            string line2 = Labels.Format("tray_tooltip_gpu", $"{gpuTemp}°C");
+            string line2 = Labels.Format("tray_tooltip_gpu", TempHelper.FormatTemp(gpuTemp));
             return line1 + "\n" + line2;
         }
         return line1;

@@ -86,6 +86,8 @@ Pull requests and feature requests are welcome!
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Experimental Lenovo support (IdeaPad / Legion / LOQ / Yoga): performance modes, battery conservation, fan monitoring, PPT limits and keyboard backlight via the mainline ideapad-laptop and lenovo-wmi kernel drivers (kernel 6.17+ for power limits).
+
 ---
 
 ## `░▒▓█ ╔══[ GPU MODE SWITCHING ]══╗ █▓▒░`
@@ -270,6 +272,9 @@ sudo ./install/install-local.sh
 ```bash
 # Development (JIT, fast iteration)
 cd src && dotnet restore && dotnet run
+
+# GHELPER_DEV=1 shows a "Dev Windows" button in the main window to open any app window without the matching hardware
+GHELPER_DEV=1 dotnet run
 
 # Production (Native AOT)
 cd src && dotnet publish -c Release

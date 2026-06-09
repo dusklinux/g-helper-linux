@@ -63,7 +63,7 @@ public static class FnLockKeymap
             FnLockTarget.Key(EvdevInterop.KEY_F15, "F15"),
             FnLockTarget.Key(EvdevInterop.KEY_F16, "F16"),
 
-            // Action targets (synced with App.AvailableKeyActions)
+            // Action targets (synced with InputDispatcher.AvailableKeyActions)
             FnLockTarget.Act("ghelper", Labels.Get("action_ghelper")),
             FnLockTarget.Act("performance", Labels.Get("action_performance")),
             FnLockTarget.Act("aura", Labels.Get("action_aura")),

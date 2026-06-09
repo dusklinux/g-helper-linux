@@ -316,6 +316,8 @@ public static class Hungarian
 
         ["other_header"] = "Egyéb",
         ["boot_sound"] = "Indítási hang",
+        ["deep_sleep"] = "Alvó mód",
+        ["deep_sleep_tooltip"] = "Hogyan alszik a laptop. s2idle = szoftveres készenlét: azonnali ébredés, de az akkumulátor alvás közben észrevehetően merülhet. deep = teljes S3 felfüggesztés: az ébredés kicsit tovább tart, a merülés minimális. Azonnal érvénybe lép és minden indításkor helyreáll.",
         ["window_topmost"] = "Ablak mindig felül",
         ["bw_tray_icon"] = "Fekete-fehér tálca ikon",
         ["clamshell_mode"] = "Zárt fedél mód (alvás letiltása fedél bezárásakor)",
@@ -342,6 +344,10 @@ public static class Hungarian
         ["profile_silent_label"] = "Csendes profil",
         ["profile_balanced_label"] = "Kiegyensúlyozott profil",
         ["profile_turbo_label"] = "Turbó profil",
+        ["epp_silent_label"] = "Csendes EPP",
+        ["epp_balanced_label"] = "Kiegyensulyozott EPP",
+        ["epp_turbo_label"] = "Turbo EPP",
+        ["epp_tooltip"] = "CPU energia/teljesitmeny egyensuly (energy_performance_preference). power az akkumulatort, performance a valaszkeszseget reszesiti elonyben. A mod aktivalasakor minden magra ervenyes.",
         ["battery_health_format"] = "Akkumulátor állapot: {0}%",
         ["battery_health_unknown"] = "Akkumulátor állapot: --%",
         ["power_draw_discharge"] = "Energiafogyasztás: {0} mW (merülés)",
@@ -864,5 +870,6 @@ public static class Hungarian
         ["sysfiles_name_desktop"] = "Alkalmazásmenü-bejegyzés",
         ["sysfiles_name_icon"] = "Alkalmazás ikon",
         ["sysfiles_name_autostart"] = "Automatikus indítási bejegyzés",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo kernelmodulok (modules-load.d)",
     };
 }

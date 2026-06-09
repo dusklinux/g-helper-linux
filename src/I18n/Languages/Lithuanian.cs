@@ -408,6 +408,8 @@ public static class Lithuanian
 
         ["other_header"] = "Kita",
         ["boot_sound"] = "Paleidimo garsas",
+        ["deep_sleep"] = "Miego režimas",
+        ["deep_sleep_tooltip"] = "Kaip kompiuteris miega. s2idle = programinė parengtis: pabunda akimirksniu, bet miegant akumuliatorius gali pastebimai išsikrauti. deep = pilnas S3 pristabdymas: pabudimas užtrunka šiek tiek ilgiau, iškrova minimali. Pritaikoma iš karto ir atkuriama kiekvieno paleidimo metu.",
         ["window_topmost"] = "Langas visada viršuje",
         ["bw_tray_icon"] = "Nespalvota dėklo piktograma",
         ["clamshell_mode"] = "Clamshell režimas (išjungti miegą uždarius dangtį)",
@@ -478,6 +480,10 @@ public static class Lithuanian
         ["profile_silent_label"] = "Tylus profilis",
         ["profile_balanced_label"] = "Subalansuotas profilis",
         ["profile_turbo_label"] = "Turbo profilis",
+        ["epp_silent_label"] = "Tylus EPP",
+        ["epp_balanced_label"] = "Subalansuotas EPP",
+        ["epp_turbo_label"] = "Turbo EPP",
+        ["epp_tooltip"] = "CPU energijos ir nasumo balansas (energy_performance_preference). power taupo baterija, performance gerina reakcija. Pritaikoma visiems branduoliams aktyvavus rezima.",
         ["battery_health_format"] = "Baterijos būklė: {0} %",
         ["battery_health_unknown"] = "Baterijos būklė: --%",
         ["power_draw_discharge"] = "Galios naudojimas: {0} mW (iškrovimas)",
@@ -919,5 +925,6 @@ public static class Lithuanian
         ["sysfiles_name_desktop"] = "Programų meniu įrašas",
         ["sysfiles_name_icon"] = "Programos piktograma",
         ["sysfiles_name_autostart"] = "Automatinio paleidimo įrašas",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo branduolio moduliai (modules-load.d)",
     };
 }

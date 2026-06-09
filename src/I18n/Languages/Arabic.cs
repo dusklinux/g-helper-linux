@@ -319,6 +319,8 @@ public static class Arabic
 
         ["other_header"] = "أخرى",
         ["boot_sound"] = "صوت الإقلاع",
+        ["deep_sleep"] = "وضع السكون",
+        ["deep_sleep_tooltip"] = "كيفية سكون الحاسوب. s2idle = استعداد برمجي: استيقاظ فوري لكن البطارية قد تستنزف بشكل ملحوظ أثناء السكون. deep = تعليق S3 كامل: الاستيقاظ يستغرق لحظة أطول والاستنزاف ضئيل. يطبق فورا ويستعاد عند كل إقلاع.",
         ["window_topmost"] = "النافذة دائماً في المقدمة",
         ["bw_tray_icon"] = "أيقونة علبة النظام بالأبيض والأسود",
         ["clamshell_mode"] = "وضع الإغلاق (تعطيل السكون عند إغلاق الغطاء)",
@@ -345,6 +347,10 @@ public static class Arabic
         ["profile_silent_label"] = "ملف الوضع الصامت",
         ["profile_balanced_label"] = "ملف الوضع المتوازن",
         ["profile_turbo_label"] = "ملف الوضع التوربو",
+        ["epp_silent_label"] = "EPP صامت",
+        ["epp_balanced_label"] = "EPP متوازن",
+        ["epp_turbo_label"] = "EPP تيربو",
+        ["epp_tooltip"] = "موازنة الطاقة والأداء للمعالج (energy_performance_preference). يفضل power عمر البطارية ويفضل performance سرعة الاستجابة. يطبق على جميع الأنوية عند تفعيل الوضع.",
         ["battery_health_format"] = "صحة البطارية: {0}%",
         ["battery_health_unknown"] = "صحة البطارية: --%",
         ["power_draw_discharge"] = "استهلاك الطاقة: {0} mW (تفريغ)",
@@ -867,5 +873,6 @@ public static class Arabic
         ["sysfiles_name_desktop"] = "إدخال قائمة التطبيقات",
         ["sysfiles_name_icon"] = "أيقونة التطبيق",
         ["sysfiles_name_autostart"] = "إدخال البدء التلقائي",
+        ["sysfiles_name_lenovo_modules"] = "وحدات نواة Lenovo (modules-load.d)",
     };
 }

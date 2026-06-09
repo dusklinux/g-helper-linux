@@ -316,6 +316,8 @@ public static class Romanian
 
         ["other_header"] = "Altele",
         ["boot_sound"] = "Sunet la pornire",
+        ["deep_sleep"] = "Mod de repaus",
+        ["deep_sleep_tooltip"] = "Cum doarme laptopul. s2idle = standby software: trezire instantanee, dar bateria se poate descărca vizibil în repaus. deep = suspendare S3 completă: trezirea durează puțin mai mult, descărcarea este minimă. Se aplică imediat și se restaurează la fiecare pornire.",
         ["window_topmost"] = "Fereastră mereu deasupra",
         ["bw_tray_icon"] = "Pictogramă alb-negru în tray",
         ["clamshell_mode"] = "Mod capac închis (dezactivează repausul la închiderea capacului)",
@@ -342,6 +344,10 @@ public static class Romanian
         ["profile_silent_label"] = "Profil Silențios",
         ["profile_balanced_label"] = "Profil Echilibrat",
         ["profile_turbo_label"] = "Profil Turbo",
+        ["epp_silent_label"] = "EPP Silentios",
+        ["epp_balanced_label"] = "EPP Echilibrat",
+        ["epp_turbo_label"] = "EPP Turbo",
+        ["epp_tooltip"] = "Echilibrul energie/performanta al CPU (energy_performance_preference). power favorizeaza bateria, performance favorizeaza reactivitatea. Aplicat tuturor nucleelor la activarea modului.",
         ["battery_health_format"] = "Sănătate baterie: {0}%",
         ["battery_health_unknown"] = "Sănătate baterie: --%",
         ["power_draw_discharge"] = "Consum: {0} mW (descărcare)",
@@ -864,5 +870,6 @@ public static class Romanian
         ["sysfiles_name_desktop"] = "Intrare în meniul aplicații",
         ["sysfiles_name_icon"] = "Pictograma aplicației",
         ["sysfiles_name_autostart"] = "Intrare de pornire automată",
+        ["sysfiles_name_lenovo_modules"] = "Module de kernel Lenovo (modules-load.d)",
     };
 }

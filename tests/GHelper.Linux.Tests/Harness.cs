@@ -22,16 +22,16 @@ public static class Harness
         public string ConfigDir { get; }
         public FakeAsusWmi Wmi { get; }
         public FakePowerManager Power { get; }
-        public GpuModeController Controller { get; }
+        public GPUModeControl Controller { get; }
 
         public Sandbox(string scenarioName)
         {
             // GHELPER_TEST_ROOT is consumed at static-ctor time of
-            // GpuModeController, so we cannot vary it per scenario. Place
+            // GPUModeControl, so we cannot vary it per scenario. Place
             // all scenarios under a shared root that was set before the
             // first SUT touch (see Program.Main).
             string root = Environment.GetEnvironmentVariable("GHELPER_TEST_ROOT")
-                ?? throw new InvalidOperationException("GHELPER_TEST_ROOT not set - Program.Main must set it before any GpuModeController access");
+                ?? throw new InvalidOperationException("GHELPER_TEST_ROOT not set - Program.Main must set it before any GPUModeControl access");
             TempRoot = root;
 
             // Wipe every test path so each scenario starts clean.
@@ -72,17 +72,17 @@ public static class Harness
 
             Wmi = new FakeAsusWmi();
             Power = new FakePowerManager();
-            Controller = new GpuModeController(Wmi, Power);
+            Controller = new GPUModeControl(Wmi, Power);
         }
 
         public void Dispose() { /* Per-scenario state is reset on next ctor */ }
 
         // Convenience helpers -------------------------------------------------
 
-        public string ModprobePath => GpuModeController.ModprobeBlockPath;
-        public string UdevPath => GpuModeController.UdevRemovePath;
-        public string TriggerPath => GpuModeController.TriggerPath;
-        public string BackendPath => GpuModeController.BackendPath;
+        public string ModprobePath => GPUModeControl.ModprobeBlockPath;
+        public string UdevPath => GPUModeControl.UdevRemovePath;
+        public string TriggerPath => GPUModeControl.TriggerPath;
+        public string BackendPath => GPUModeControl.BackendPath;
 
         public bool ModprobePresent() => File.Exists(ModprobePath);
         public bool UdevPresent() => File.Exists(UdevPath);
