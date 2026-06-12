@@ -78,6 +78,8 @@
 - `GPUModeControl` renamed from `GpuModeController`; GPU files reorganized
   into `NVidia/` and `AMD/` subdirectories.
 
+<img width="1088" height="1099" alt="Screenshot_20260612_093759" src="https://github.com/user-attachments/assets/eed6d005-ff74-491d-9eeb-14879ea48a97" />
+
 ## v1.0.82 (2026-06-08)
 
 ### Fixed
