@@ -8,6 +8,91 @@
 
 ### Changed
 
+## v1.0.83 (2026-06-12)
+
+### Added (Lenovo)
+
+- Lenovo IdeaPad / Legion / LOQ / Yoga support via mainline `ideapad-laptop`
+  and `lenovo-wmi-*` drivers.
+- Main window: performance modes, keyboard backlight, battery conservation,
+  GPU row (PCI backend Eco/Standard). Fn+Q via `platform_profile` watcher.
+- Updates window: BIOS + driver updates from Lenovo support catalog API.
+  BIOS version comparison
+- Diagnostics window: Lenovo state dump (ideapad attrs, WMI, PPT readback).
+- Installer: udev rules, `modules-load.d` for Lenovo kernel modules.
+- Vendor auto-detection from DMI; `IHardwareControl` interface replaces
+  `IAsusWmi`.
+
+### Added (ASUS)
+
+- Matrix window: AniMatrix LED panel (images, animations, clock/audio).
+- NumberPad window: touchpad calculator overlay.
+- Mouse window: (buttons, DPI, polling, lighting).
+- Main window: status LED toggle.
+- Extra window: per-mode CPU EPP slider, deep sleep (`mem_sleep`).
+
+### Added (GPU switching)
+
+- DRM compositor signaling: synthetic `"remove"` uevent on the nvidia DRM
+  card before PCI unbind. KWin/mutter release `/dev/dri/cardN` gracefully.
+  Skipped when nvidia is the only GPU.
+- I2C holder detection: finds processes holding nvidia DDC/CI adapters
+  (`/dev/i2c-*`) that silently pin the module refcount (powerdevil, OpenRGB).
+- DRI holder detection: finds processes holding `/dev/dri/cardN` or
+  `renderDN` on the nvidia DRM device. Single-pass scan covers nvidia, DRI,
+  and I2C fds together.
+- EGL vendor management: hides/shows `10_nvidia.json` alongside the Vulkan
+  ICD during Eco/Standard. Stops Chromium from probing `/dev/nvidia0` via
+  EGL. Restored on uninstall.
+- Diagnostics window: GPU switching health section (modeset, DynPM, DRM
+  mapping, I2C adapters, KWIN_DRM_DEVICES, ICD state).
+- NVML process cross-check: queries the driver's own process list via NVML
+  (v3/v2/v1 fallback) to catch holders invisible to fd/maps scans.
+- Kill-before-rmmod convergence loop: purge holders, rmmod, re-scan + retry
+  up to 3 waves. Zombie-aware survivor checks.
+- GpuQueryGate: pauses nvidia-smi polling during driver release/re-enable.
+- dGPU re-enable escalation: bridge wake, dgpu_disable bounce, bridge
+  remove + full PCI rescan. Parent bridge BDF cached.
+- Driverless dGPU recovery: detects dgpu_disable=0 with no driver bound,
+  triggers full re-enable with explicit PCI bind by device class.
+- Process scan cache invalidated on "Switch Now" click.
+- `gpu-helper scan_maps`: detects `/dev/nvidia*` memory mappings that pin
+  the driver after fd close.
+
+### Added (general)
+
+- InputDispatcher extracted from App.axaml.cs.
+- Display backends moved to `src/Display/`.
+- Dev tooling: `GHELPER_DEV=1` opens any window without matching hardware.
+
+### Fixed
+
+- Unbind timeout raised to 30s + 30s late-completion polling (was 10s).
+- Refcnt settle wait (1s stable) before unbind.
+- Processes window: sorts by total blocking fds (nvidia + DRI + I2C),
+  shows `+N DRI` / `+N I2C` suffixes.
+
+### Changed
+
+- `gpu-helper list` gains `driFds` and `i2cFds` TSV columns.
+- `GPUModeControl` renamed from `GpuModeController`; GPU files reorganized
+  into `NVidia/` and `AMD/` subdirectories.
+
+<img width="1088" height="1099" alt="Screenshot_20260612_093759" src="https://github.com/user-attachments/assets/eed6d005-ff74-491d-9eeb-14879ea48a97" />
+
+## v1.0.82 (2026-06-08)
+
+### Fixed
+
+- Audio helper: fix vocoder disable and streamline capture stream creation.
+
+## v1.0.81 (2026-06-08)
+
+### Fixed
+
+- Audio helper: fix `ghelper-audio` build error handling in CI.
+- Updated installation instructions.
+
 ## v1.0.80 (2026-06-07)
 
 ### Added

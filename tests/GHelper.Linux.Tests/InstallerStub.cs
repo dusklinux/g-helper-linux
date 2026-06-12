@@ -1,4 +1,4 @@
-// Minimal stubs for types that NvidiaProcessScanner.cs and GpuModeController.cs
+// Minimal stubs for types that NvidiaProcessScanner.cs and GPUModeControl.cs
 // reference but that are too heavy (Avalonia, I18n, etc.) for the test build.
 
 using GHelper.Linux.Platform;
@@ -32,6 +32,6 @@ namespace GHelper.Linux
 {
     internal static class App
     {
-        public static IAsusWmi? Wmi => null;
+        public static IHardwareControl? Wmi => null;
     }
 }

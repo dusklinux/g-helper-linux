@@ -319,6 +319,8 @@ public static class Indonesian
 
         ["other_header"] = "Lainnya",
         ["boot_sound"] = "Suara Boot",
+        ["deep_sleep"] = "Mode tidur",
+        ["deep_sleep_tooltip"] = "Cara laptop tidur. s2idle = siaga perangkat lunak: bangun seketika, tetapi baterai bisa terkuras cukup banyak saat tidur. deep = suspensi S3 penuh: bangun sedikit lebih lama, pengurasan minimal. Diterapkan segera dan dipulihkan di setiap boot.",
         ["window_topmost"] = "Jendela Selalu di Atas",
         ["bw_tray_icon"] = "Ikon Tray Hitam-Putih",
         ["clamshell_mode"] = "Mode Clamshell (nonaktifkan tidur saat penutup ditutup)",
@@ -345,6 +347,10 @@ public static class Indonesian
         ["profile_silent_label"] = "Profil Senyap",
         ["profile_balanced_label"] = "Profil Seimbang",
         ["profile_turbo_label"] = "Profil Turbo",
+        ["epp_silent_label"] = "EPP Senyap",
+        ["epp_balanced_label"] = "EPP Seimbang",
+        ["epp_turbo_label"] = "EPP Turbo",
+        ["epp_tooltip"] = "Keseimbangan energi vs performa CPU (energy_performance_preference). power mengutamakan baterai, performance mengutamakan respons. Diterapkan ke semua core saat mode diaktifkan.",
         ["battery_health_format"] = "Kesehatan baterai: {0}%",
         ["battery_health_unknown"] = "Kesehatan baterai: --%",
         ["power_draw_discharge"] = "Konsumsi daya: {0} mW (mengosongkan)",
@@ -867,5 +873,6 @@ public static class Indonesian
         ["sysfiles_name_desktop"] = "Entri menu aplikasi",
         ["sysfiles_name_icon"] = "Ikon aplikasi",
         ["sysfiles_name_autostart"] = "Entri mulai otomatis",
+        ["sysfiles_name_lenovo_modules"] = "Modul kernel Lenovo (modules-load.d)",
     };
 }

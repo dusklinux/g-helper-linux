@@ -54,6 +54,7 @@ public partial class FansWindow : Window
 
         Loaded += (_, _) =>
         {
+            ApplyFanCurveCapability();
             InitModeCombo();
             LoadFanCurves();
             LoadPowerLimits();
@@ -65,6 +66,7 @@ public partial class FansWindow : Window
             RefreshGpuTabVisibility();
             RefreshFansDgpuProcessCount();
             ToggleNavigation(_activeTab);
+            InitHysteresis();
             _sensorTimer.Start();
         };
 
@@ -79,6 +81,110 @@ public partial class FansWindow : Window
             if (App.Mode != null)
                 App.Mode.ModeApplied -= OnModeApplied;
         };
+    }
+
+    /// <summary>Hide the fan-curve editor on hardware without a writable fan
+    /// curve interface (Lenovo mainline kernels expose fan RPM but no curve
+    /// control). Sensors, PPT sliders and the rest of the window stay.</summary>
+    private void ApplyFanCurveCapability()
+    {
+        if (Helpers.AppConfig.IsAsusDevice())
+            return;
+
+        chartGrid.IsVisible = false;
+        buttonApplyFans.IsVisible = false;
+        buttonReset.IsVisible = false;
+        buttonDisable.IsVisible = false;
+        checkApplyFans.IsVisible = false;
+        headerFanCurves.Text = Labels.Get("fans_power");
+        MinHeight = 0;
+        Height = 480;
+
+        InitLenovoFanTargets();
+    }
+
+    //  Lenovo manual fan target RPM (lenovo_wmi_other hwmon, kernel 7.0+) 
+
+    private readonly List<(int Fan, Slider Slider, TextBlock Value)> _lenovoFanSliders = new();
+
+    private void InitLenovoFanTargets()
+    {
+        if (!Platform.Linux.Lenovo.LenovoDetection.HasFanTarget())
+            return;
+
+        string[] names = { "CPU Fan", "GPU Fan", "Fan 3", "Fan 4" };
+        bool anyFan = false;
+
+        for (int fan = 1; fan <= 4; fan++)
+        {
+            if (Platform.Linux.Lenovo.LenovoSysfs.FanTargetPath(fan) == null)
+                continue;
+            var range = Platform.Linux.Lenovo.LenovoSysfs.FanTargetRange(fan);
+            if (range == null)
+                continue;
+
+            var (min, max, div) = range.Value;
+            // One slider step below min = "Auto" (writes 0).
+            double sliderMin = Math.Max(0, min - div);
+
+            var grid = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("110,*,90"),
+                Margin = new Avalonia.Thickness(0, 2),
+            };
+            var label = new TextBlock
+            {
+                Text = names[fan - 1],
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            };
+            label.Classes.Add("label-dim");
+            Grid.SetColumn(label, 0);
+
+            var slider = new Slider
+            {
+                Minimum = sliderMin,
+                Maximum = max,
+                TickFrequency = div,
+                IsSnapToTickEnabled = true,
+            };
+            Grid.SetColumn(slider, 1);
+
+            var value = new TextBlock
+            {
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            };
+            value.Classes.Add("value");
+            Grid.SetColumn(value, 2);
+
+            int target = Platform.Linux.Lenovo.LenovoFeatures.GetFanTarget(fan);
+            slider.Value = target <= 0 ? sliderMin : Math.Clamp(target, min, max);
+            value.Text = target <= 0 ? "Auto" : $"{target} RPM";
+
+            int fanNum = fan; // capture
+            double lastApplied = slider.Value;
+            slider.ValueChanged += (_, args) =>
+            {
+                if (Math.Abs(args.NewValue - lastApplied) < div / 2.0)
+                    return;
+                lastApplied = args.NewValue;
+                bool auto = args.NewValue < min;
+                int rpm = auto ? 0 : (int)args.NewValue;
+                value.Text = auto ? "Auto" : $"{rpm} RPM";
+                Task.Run(() => Platform.Linux.Lenovo.LenovoFeatures.SetFanTarget(fanNum, rpm));
+            };
+
+            grid.Children.Add(label);
+            grid.Children.Add(slider);
+            grid.Children.Add(value);
+            stackLenovoFanTarget.Children.Add(grid);
+            _lenovoFanSliders.Add((fan, slider, value));
+            anyFan = true;
+        }
+
+        panelLenovoFanTarget.IsVisible = anyFan;
+        if (anyFan)
+            Helpers.Logger.WriteLine("FansWindow: Lenovo manual fan-target sliders enabled");
     }
 
     private void RefreshGpuTabVisibility()
@@ -121,7 +227,7 @@ public partial class FansWindow : Window
             rowFansDgpuProcesses.IsVisible = false;
             return;
         }
-        int count = Gpu.NvidiaProcessScanner.CountHolders();
+        int count = Gpu.NVidia.NvidiaProcessScanner.CountHolders();
         labelFansDgpuProcessCount.Text = Labels.Format("gpu_dgpu_users_count", count);
         labelFansViewDgpuProcesses.Text = Labels.Get("gpu_dgpu_users_view");
         rowFansDgpuProcesses.IsVisible = true;
@@ -163,12 +269,106 @@ public partial class FansWindow : Window
                 LoadAdvanced();
                 LoadGpuTuning();
                 RefreshBoostButton();
+                LoadHysteresisValues();
             }
             catch (Exception ex)
             {
                 Helpers.Logger.WriteLine("FansWindow OnModeApplied refresh failed", ex);
             }
         });
+    }
+
+    // Fan hysteresis (raw WMI only)
+
+    private bool _updatingHysteresis;
+    private System.Timers.Timer? _hysteresisDebounce;
+    private (int up, int down) _hysteresisDefaults = (-1, -1);
+
+    private static readonly string[] HysteresisLabels =
+        { "Very Low", "Low", "Medium", "High", "Very High" };
+
+    /// <summary>Probe the device once on window load (one privileged call,
+    /// background thread). Panel stays hidden when raw_wmi is off or the
+    /// device does not respond.</summary>
+    private void InitHysteresis()
+    {
+        if (!Fan.FanHysteresis.IsChannelAvailable())
+        {
+            panelHysteresis.IsVisible = false;
+            return;
+        }
+
+        Task.Run(() =>
+        {
+            var defaults = Fan.FanHysteresis.Get();
+            Dispatcher.UIThread.Post(() =>
+            {
+                _hysteresisDefaults = defaults;
+                if (defaults.up < 0 || defaults.down < 0)
+                {
+                    panelHysteresis.IsVisible = false;
+                    return;
+                }
+
+                panelHysteresis.IsVisible = true;
+                LoadHysteresisValues();
+            });
+        });
+    }
+
+    /// <summary>Sync sliders to the saved per-mode values (or hardware defaults).</summary>
+    private void LoadHysteresisValues()
+    {
+        if (!panelHysteresis.IsVisible)
+            return;
+
+        int up = Helpers.AppConfig.GetMode("hysteresis_up");
+        int down = Helpers.AppConfig.GetMode("hysteresis_down");
+
+        if (up < 0)
+            up = _hysteresisDefaults.up > 0 ? _hysteresisDefaults.up : 3;
+        if (down < 0)
+            down = _hysteresisDefaults.down > 0 ? _hysteresisDefaults.down : 3;
+
+        _updatingHysteresis = true;
+        sliderHysteresisUp.Value = Math.Clamp(up, Fan.FanHysteresis.Min, Fan.FanHysteresis.Max);
+        sliderHysteresisDown.Value = Math.Clamp(down, Fan.FanHysteresis.Min, Fan.FanHysteresis.Max);
+        VisualiseHysteresis();
+        _updatingHysteresis = false;
+    }
+
+    private void VisualiseHysteresis()
+    {
+        labelHysteresisUpValue.Text = HysteresisLabels[(int)sliderHysteresisUp.Value - 1];
+        labelHysteresisDownValue.Text = HysteresisLabels[(int)sliderHysteresisDown.Value - 1];
+    }
+
+    private void SliderHysteresis_ValueChanged(object? sender,
+        Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        // Setting Minimum coerces the value during XAML load, before named
+        // controls are populated; ignore events until the window is ready.
+        if (_updatingHysteresis || labelHysteresisUpValue is null || labelHysteresisDownValue is null)
+            return;
+
+        VisualiseHysteresis();
+        Helpers.AppConfig.SetMode("hysteresis_up", (int)sliderHysteresisUp.Value);
+        Helpers.AppConfig.SetMode("hysteresis_down", (int)sliderHysteresisDown.Value);
+
+        // Debounce the privileged write until the user stops dragging.
+        _hysteresisDebounce?.Stop();
+        _hysteresisDebounce ??= new System.Timers.Timer(500) { AutoReset = false };
+        _hysteresisDebounce.Elapsed -= HysteresisDebounce_Elapsed;
+        _hysteresisDebounce.Elapsed += HysteresisDebounce_Elapsed;
+        _hysteresisDebounce.Start();
+    }
+
+    private void HysteresisDebounce_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        int up = Helpers.AppConfig.GetMode("hysteresis_up");
+        int down = Helpers.AppConfig.GetMode("hysteresis_down");
+        if (up > 0 && down > 0)
+            Fan.FanHysteresis.Set(up, down);
     }
 
     private void ToggleNavigation(int index)
@@ -195,7 +395,7 @@ public partial class FansWindow : Window
         _updatingGpu = true;
         try
         {
-            var nv = App.GpuControl as Platform.Linux.LinuxNvidiaGpuControl;
+            var nv = App.GpuControl as Gpu.NVidia.LinuxNvidiaGpuControl;
             bool nvAvail = nv?.IsAvailable() == true;
             var wmi = App.Wmi;
 
@@ -297,7 +497,7 @@ public partial class FansWindow : Window
         finally { _updatingGpu = false; }
     }
 
-    private void LoadNvBaseTgpRow(Platform.IAsusWmi? wmi)
+    private void LoadNvBaseTgpRow(Platform.IHardwareControl? wmi)
     {
         if (wmi == null
             || !wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvBaseTgp))
@@ -319,7 +519,7 @@ public partial class FansWindow : Window
         rowNvBaseTgp.IsVisible = true;
     }
 
-    private void LoadNvTgpRow(Platform.IAsusWmi? wmi)
+    private void LoadNvTgpRow(Platform.IHardwareControl? wmi)
     {
         if (wmi == null
             || !wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvTgp))
@@ -341,7 +541,7 @@ public partial class FansWindow : Window
         rowNvTgp.IsVisible = true;
     }
 
-    private void LoadGpuBoostRow(Platform.IAsusWmi? wmi)
+    private void LoadGpuBoostRow(Platform.IHardwareControl? wmi)
     {
         if (wmi == null
             || !wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvDynamicBoost))
@@ -363,7 +563,7 @@ public partial class FansWindow : Window
         rowGpuBoost.IsVisible = true;
     }
 
-    private void LoadGpuTempRow(Platform.IAsusWmi? wmi)
+    private void LoadGpuTempRow(Platform.IHardwareControl? wmi)
     {
         if (wmi == null
             || !wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvTempTarget))
@@ -384,7 +584,7 @@ public partial class FansWindow : Window
         rowGpuTemp.IsVisible = true;
     }
 
-    private void LoadClockOffsetRows(Platform.Linux.LinuxNvidiaGpuControl nv, bool fromConfig)
+    private void LoadClockOffsetRows(Gpu.NVidia.LinuxNvidiaGpuControl nv, bool fromConfig)
     {
         if (!nv.IsClockOffsetSupported())
         {
@@ -847,40 +1047,48 @@ public partial class FansWindow : Window
 
         _updatingPLSliders = true;
 
-        // Read from hardware, fall back to saved config
-        int pl1 = wmi.GetPptLimit(Platform.Linux.AsusAttributes.PptPl1Spl);
+        int maxTotal = Mode.ModeControl.GetMaxTotal();
+
+        // Seed sliders from saved config first. The hardware readback is only
+        // a fallback because legacy ppt_* sysfs attributes read back a bogus
+        // minimum (5) on some models (e.g. FX517ZR). Seeding sliders from that
+        // value ends up persisting a 5W limit that cripples the machine.
+        int pl1 = Helpers.AppConfig.GetMode("limit_slow");
         if (pl1 <= 0)
-            pl1 = Helpers.AppConfig.GetMode("limit_slow");
+        {
+            pl1 = wmi.GetPptLimit(Platform.Linux.AsusAttributes.PptPl1Spl);
+            if (pl1 <= Mode.ModeControl.MinTotal || pl1 > maxTotal)
+                pl1 = Math.Min(maxTotal, (int)sliderPL1.Maximum);
+        }
 
-        int pl2 = wmi.GetPptLimit(Platform.Linux.AsusAttributes.PptPl2Sppt);
+        int pl2 = Helpers.AppConfig.GetMode("limit_fast");
         if (pl2 <= 0)
-            pl2 = Helpers.AppConfig.GetMode("limit_fast");
-
-        if (pl1 > 0)
         {
-            sliderPL1.Value = pl1;
-            labelPL1.Text = $"{pl1}W";
+            pl2 = wmi.GetPptLimit(Platform.Linux.AsusAttributes.PptPl2Sppt);
+            if (pl2 <= Mode.ModeControl.MinTotal || pl2 > maxTotal)
+                pl2 = Math.Min(maxTotal, (int)sliderPL2.Maximum);
         }
 
-        if (pl2 > 0)
-        {
-            sliderPL2.Value = pl2;
-            labelPL2.Text = $"{pl2}W";
-        }
+        sliderPL1.Value = pl1;
+        labelPL1.Text = $"{pl1}W";
+
+        sliderPL2.Value = pl2;
+        labelPL2.Text = $"{pl2}W";
 
         // fPPT (fast boost) - only show if supported
         bool hasFppt = wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.PptFppt);
         gridFppt.IsVisible = hasFppt;
         if (hasFppt)
         {
-            int fppt = wmi.GetPptLimit(Platform.Linux.AsusAttributes.PptFppt);
+            int fppt = Helpers.AppConfig.GetMode("limit_fppt");
             if (fppt <= 0)
-                fppt = Helpers.AppConfig.GetMode("limit_fppt");
-            if (fppt > 0)
             {
-                sliderFppt.Value = fppt;
-                labelFppt.Text = $"{fppt}W";
+                fppt = wmi.GetPptLimit(Platform.Linux.AsusAttributes.PptFppt);
+                if (fppt <= Mode.ModeControl.MinTotal || fppt > maxTotal)
+                    fppt = Math.Min(maxTotal, (int)sliderFppt.Maximum);
             }
+            sliderFppt.Value = fppt;
+            labelFppt.Text = $"{fppt}W";
         }
 
         _updatingPLSliders = false;
@@ -1033,11 +1241,14 @@ public partial class FansWindow : Window
             // it on the UI thread - it can block when the dGPU is wedged.
             string gpuLoadStr = _gpuLoadStr;
 
-            string info = $"CPU: {(cpuTemp > 0 ? $"{cpuTemp}°C" : "--")} / {(cpuFan > 0 ? $"{cpuFan} RPM" : "--")}   " +
-                          $"GPU: {(gpuTemp > 0 ? $"{gpuTemp}°C" : "--")}{gpuLoadStr} / {(gpuFan > 0 ? $"{gpuFan} RPM" : "--")}";
+            string cpuFanStr = cpuFan > 0 ? Fan.FanSensorControl.FormatFan(0, cpuFan) : "--";
+            string gpuFanStr = gpuFan > 0 ? Fan.FanSensorControl.FormatFan(1, gpuFan) : "--";
+
+            string info = $"CPU: {(cpuTemp > 0 ? Helpers.TempHelper.FormatTemp(cpuTemp) : "--")} / {cpuFanStr}   " +
+                          $"GPU: {(gpuTemp > 0 ? Helpers.TempHelper.FormatTemp(gpuTemp) : "--")}{gpuLoadStr} / {gpuFanStr}";
 
             if (midFan > 0)
-                info += $"   Mid: {midFan} RPM";
+                info += $"   Mid: {Fan.FanSensorControl.FormatFan(2, midFan)}";
 
             labelSensors.Text = info;
         }
@@ -1069,7 +1280,7 @@ public partial class FansWindow : Window
             return;
         }
 
-        var nv = App.GpuControl as Platform.Linux.LinuxNvidiaGpuControl;
+        var nv = App.GpuControl as Gpu.NVidia.LinuxNvidiaGpuControl;
         bool eco = App.Wmi?.GetGpuEco() ?? false; // WMI read, fast
         if (nv == null || !nv.IsAvailable() || eco)
         {
@@ -1082,7 +1293,7 @@ public partial class FansWindow : Window
         Task.Run(() =>
         {
             string loadStr = "";
-            Platform.Linux.LinuxNvidiaGpuControl.GpuLiveStatus? live = null;
+            Gpu.NVidia.LinuxNvidiaGpuControl.GpuLiveStatus? live = null;
             (int core, int mem)? offsets = null;
             bool haveOffsets = false;
             try
@@ -1121,7 +1332,7 @@ public partial class FansWindow : Window
     }
 
     /// <summary>Render a GPU live-status sample into the GPU Status block (UI thread).</summary>
-    private void ApplyLiveStatus(Platform.Linux.LinuxNvidiaGpuControl.GpuLiveStatus v)
+    private void ApplyLiveStatus(Gpu.NVidia.LinuxNvidiaGpuControl.GpuLiveStatus v)
     {
         string na = Labels.Get("not_available_short");
         string C(int? x, string suffix) => x.HasValue ? $"{x.Value}{suffix}" : na;
@@ -1413,7 +1624,7 @@ public partial class FansWindow : Window
     private void ButtonGpuApply_Click(object? sender, RoutedEventArgs e)
     {
         var wmi = App.Wmi;
-        var nv = App.GpuControl as Platform.Linux.LinuxNvidiaGpuControl;
+        var nv = App.GpuControl as Gpu.NVidia.LinuxNvidiaGpuControl;
 
         int? baseTgp = rowNvBaseTgp.IsVisible ? (int)sliderNvBaseTgp.Value : null;
         int? maxTgp = rowNvTgp.IsVisible ? (int)sliderNvTgp.Value : null;
@@ -1486,7 +1697,7 @@ public partial class FansWindow : Window
     private void ButtonGpuReset_Click(object? sender, RoutedEventArgs e)
     {
         var wmi = App.Wmi;
-        var nv = App.GpuControl as Platform.Linux.LinuxNvidiaGpuControl;
+        var nv = App.GpuControl as Gpu.NVidia.LinuxNvidiaGpuControl;
 
         Helpers.AppConfig.RemoveMode("gpu_base_tgp");
         Helpers.AppConfig.RemoveMode("gpu_tgp");
@@ -1528,7 +1739,7 @@ public partial class FansWindow : Window
                         nvmlOk ? 0 : null,
                         nvmlOk ? 0 : null);
                     nv.ApplyMemClockLock(0);
-                    Platform.Linux.LinuxNvidiaGpuControl.ResetLastApplyState();
+                    Gpu.NVidia.LinuxNvidiaGpuControl.ResetLastApplyState();
                 }
             }
             catch (Exception ex)
@@ -1543,7 +1754,7 @@ public partial class FansWindow : Window
         });
     }
 
-    private static void WriteFwAttrDefault(Platform.IAsusWmi wmi, Platform.Linux.AttrDef attr)
+    private static void WriteFwAttrDefault(Platform.IHardwareControl wmi, Platform.Linux.AttrDef attr)
     {
         if (!wmi.IsFeatureSupported(attr))
             return;

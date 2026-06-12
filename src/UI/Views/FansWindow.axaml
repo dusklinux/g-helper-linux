@@ -387,7 +387,7 @@
         </Border>
 
         <!-- ============ RIGHT COLUMN: panelFans ============ -->
-        <Grid Grid.Column="1" RowDefinitions="Auto,*">
+        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
 
             <!-- HEADER -->
             <Border Grid.Row="0" Classes="panel-header" Margin="10,10,10,5">
@@ -448,6 +448,47 @@
                                          LineColor="#FFA500"
                                          IsVisible="False" />
             </Grid>
+
+            <!-- MANUAL FAN SPEED (Lenovo lenovo_wmi_other hwmon, kernel 7.0+) -->
+            <Border Grid.Row="1" x:Name="panelLenovoFanTarget" Classes="panel"
+                    Margin="10,5,10,10" IsVisible="False" VerticalAlignment="Top">
+                <StackPanel x:Name="stackLenovoFanTarget">
+                    <TextBlock x:Name="headerLenovoFanTarget" Classes="header"
+                               Text="Manual fan speed" Margin="0,0,0,4" />
+                    <TextBlock x:Name="labelLenovoFanTargetHint" Classes="label-dim"
+                               Text="Fixed fan RPM via the firmware's fan-target interface. Leftmost position returns the fan to automatic EC control. Targets reset to automatic on reboot."
+                               FontSize="10" Margin="0,0,0,6" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <!-- FAN HYSTERESIS (raw WMI only) -->
+            <Border Grid.Row="2" x:Name="panelHysteresis" Classes="panel"
+                    Margin="10,0,10,10" IsVisible="False">
+                <StackPanel>
+                    <TextBlock x:Name="headerHysteresis" Classes="header"
+                               Text="Fan Hysteresis" Margin="0,0,0,4" />
+                    <Grid ColumnDefinitions="110,*,70" Margin="0,2">
+                        <TextBlock Grid.Column="0" x:Name="labelHysteresisUp" Text="Ramp up"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderHysteresisUp"
+                                Minimum="1" Maximum="5" TickFrequency="1"
+                                IsSnapToTickEnabled="True"
+                                ValueChanged="SliderHysteresis_ValueChanged" />
+                        <TextBlock Grid.Column="2" x:Name="labelHysteresisUpValue" Classes="value"
+                                   Text="" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="110,*,70" Margin="0,2">
+                        <TextBlock Grid.Column="0" x:Name="labelHysteresisDown" Text="Ramp down"
+                                   Classes="label-dim" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderHysteresisDown"
+                                Minimum="1" Maximum="5" TickFrequency="1"
+                                IsSnapToTickEnabled="True"
+                                ValueChanged="SliderHysteresis_ValueChanged" />
+                        <TextBlock Grid.Column="2" x:Name="labelHysteresisDownValue" Classes="value"
+                                   Text="" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+            </Border>
 
         </Grid>
 

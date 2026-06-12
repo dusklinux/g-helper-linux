@@ -319,6 +319,8 @@ public static class ChineseSimplified
 
         ["other_header"] = "其他",
         ["boot_sound"] = "启动声音",
+        ["deep_sleep"] = "睡眠模式",
+        ["deep_sleep_tooltip"] = "笔记本的睡眠方式。s2idle = 软件待机:即时唤醒,但睡眠期间电池可能明显耗电。deep = 完整 S3 挂起:唤醒稍慢,耗电极少。立即生效,并在每次开机时恢复。",
         ["window_topmost"] = "窗口始终置顶",
         ["bw_tray_icon"] = "黑白托盘图标",
         ["clamshell_mode"] = "合盖模式（合盖时不休眠）",
@@ -345,6 +347,10 @@ public static class ChineseSimplified
         ["profile_silent_label"] = "静音配置文件",
         ["profile_balanced_label"] = "均衡配置文件",
         ["profile_turbo_label"] = "增强配置文件",
+        ["epp_silent_label"] = "安静 EPP",
+        ["epp_balanced_label"] = "平衡 EPP",
+        ["epp_turbo_label"] = "增强 EPP",
+        ["epp_tooltip"] = "CPU 能耗与性能的取舍 (energy_performance_preference)。power 偏向续航,performance 偏向响应速度。激活模式时应用到所有 CPU 核心。",
         ["battery_health_format"] = "电池健康：{0}%",
         ["battery_health_unknown"] = "电池健康：--%",
         ["power_draw_discharge"] = "功耗：{0} mW（放电中）",
@@ -867,5 +873,6 @@ public static class ChineseSimplified
         ["sysfiles_name_desktop"] = "应用程序菜单项",
         ["sysfiles_name_icon"] = "应用程序图标",
         ["sysfiles_name_autostart"] = "自启动项",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo 内核模块 (modules-load.d)",
     };
 }

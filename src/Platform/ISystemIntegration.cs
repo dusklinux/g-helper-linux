@@ -26,7 +26,7 @@ public interface ISystemIntegration
     void ShowNotification(string title, string body, string? iconName = null);
 
     /// <summary>Check if the required asus-wmi kernel module is loaded.</summary>
-    bool IsAsusWmiLoaded();
+    bool IsPlatformDriverLoaded();
 
     /// <summary>Get the minimum required kernel version for full features.</summary>
     Version GetKernelVersionParsed();

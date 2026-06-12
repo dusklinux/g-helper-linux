@@ -38,6 +38,9 @@ public static class Diagnostics
         // Module Backend (asus-nb-wmi vs asus-armoury)
         AppendModuleBackend(sb);
 
+        // Lenovo platform state (only emitted on Lenovo hardware)
+        AppendLenovoState(sb);
+
         // Raw WMI (debugfs)
         AppendRawWmiProbe(sb);
 
@@ -237,6 +240,123 @@ public static class Diagnostics
                 string backend = Platform.Linux.SysfsHelper.IsFirmwareAttributesPath(resolved)
                     ? "asus-armoury" : "asus-nb-wmi";
                 sb.AppendLine($"  {attr.LegacyName}: {backend} → {resolved}");
+            }
+        }
+
+        sb.AppendLine();
+    }
+
+    private static void AppendLenovoState(StringBuilder sb)
+    {
+        if (!AppConfig.IsLenovoDevice())
+            return;
+
+        sb.AppendLine("--- Lenovo Platform ---");
+        sb.AppendLine($"  Vendor: {AppConfig.GetDmiVendor()}");
+        sb.AppendLine($"  BIOS prefix: {Platform.Linux.Lenovo.LenovoDetection.BiosPrefix()}");
+
+        var (driver, loaded) = Platform.Linux.Lenovo.LenovoDetection.PlatformDriver();
+        sb.AppendLine($"  Driver: {driver} ({(loaded ? "loaded" : "not loaded")})");
+        sb.AppendLine($"  ideapad device: {Platform.Linux.Lenovo.LenovoSysfs.IdeapadDevice() ?? "none"}");
+
+        string? profile = Platform.Linux.SysfsHelper.ReadAttribute(Platform.Linux.SysfsHelper.PlatformProfile);
+        string? choices = Platform.Linux.SysfsHelper.ReadAttribute(Platform.Linux.SysfsHelper.PlatformProfileChoices);
+        sb.AppendLine($"  platform_profile: {profile ?? "n/a"} (choices: {choices ?? "n/a"})");
+
+        foreach (var attr in new[] { "fan_mode", "conservation_mode", "fn_lock", "usb_charging", "camera_power" })
+        {
+            var path = Platform.Linux.Lenovo.LenovoSysfs.IdeapadAttr(attr);
+            sb.AppendLine($"  ideapad {attr}: {(path != null ? Platform.Linux.SysfsHelper.ReadAttribute(path) ?? "?" : "n/a")}");
+        }
+
+        var fwAttrs = Platform.Linux.Lenovo.LenovoSysfs.FirmwareAttributesDir();
+        sb.AppendLine($"  lenovo-wmi-other attributes: {fwAttrs ?? "none"}");
+        if (fwAttrs != null)
+        {
+            foreach (var name in new[] { "ppt_pl1_spl", "ppt_pl2_sppt", "ppt_pl3_fppt" })
+            {
+                var path = Platform.Linux.Lenovo.LenovoSysfs.FirmwareAttrCurrentValue(name);
+                sb.AppendLine($"    {name}: {(path != null ? Platform.Linux.SysfsHelper.ReadAttribute(path) ?? "?" : "n/a")}");
+            }
+        }
+
+        sb.AppendLine($"  fan hwmon: {Platform.Linux.Lenovo.LenovoSysfs.FanHwmon() ?? "none"}");
+        sb.AppendLine($"  kbd backlight LED: {Platform.Linux.Lenovo.LenovoSysfs.KbdBacklightLed() ?? "none"}");
+
+        var chargeTypes = Platform.Linux.Lenovo.LenovoSysfs.BatteryChargeTypes();
+        sb.AppendLine($"  battery charge_types: {(chargeTypes != null ? Platform.Linux.SysfsHelper.ReadAttribute(chargeTypes) ?? "?" : "n/a")}");
+
+        // Generation capability note (BIOS-prefix table from LenovoLegionLinux research)
+        var note = Platform.Linux.Lenovo.LenovoDetection.BiosCapabilityNote();
+        if (note != null)
+            sb.AppendLine($"  generation: {note}");
+
+        // fan_mode friendly names (model-dependent EC presets)
+        var fanModePath = Platform.Linux.Lenovo.LenovoSysfs.IdeapadAttr("fan_mode");
+        if (fanModePath != null)
+        {
+            int fm = Platform.Linux.SysfsHelper.ReadInt(fanModePath, -1);
+            string fmName = fm switch
+            {
+                0 => "Super Silent",
+                1 => "Standard",
+                2 => "Dual / Dust Cleaning",
+                4 => "Efficient Thermal Dissipation",
+                133 => "Super Silent (133 readback quirk)",
+                _ => "unknown",
+            };
+            sb.AppendLine($"  fan_mode decoded: {fm} = {fmName}");
+        }
+
+        // Manual fan target (kernel 7.0+)
+        var targetHwmon = Platform.Linux.Lenovo.LenovoSysfs.FanTargetHwmon();
+        sb.AppendLine($"  fan target hwmon: {targetHwmon ?? "none (kernel < 7.0 or unsupported)"}");
+        if (targetHwmon != null)
+        {
+            for (int fan = 1; fan <= 4; fan++)
+            {
+                var range = Platform.Linux.Lenovo.LenovoSysfs.FanTargetRange(fan);
+                if (range == null)
+                    continue;
+                int target = Platform.Linux.Lenovo.LenovoFeatures.GetFanTarget(fan);
+                sb.AppendLine($"    fan{fan}: target={(target <= 0 ? "auto" : target.ToString())} range={range.Value.Min}-{range.Value.Max} step={range.Value.Div}");
+            }
+        }
+
+        // Lenovo LEDs (fnlock; micmute/mute from lenovo-wmi-hotkey-utilities 6.14+)
+        var leds = new List<string>();
+        foreach (var led in new[] { "platform::fnlock", "platform::micmute", "platform::mute", "platform::ylogo", "platform::ioport" })
+            if (Platform.Linux.Lenovo.LenovoSysfs.Led(led) != null)
+                leds.Add(led);
+        sb.AppendLine($"  LEDs: {(leds.Count > 0 ? string.Join(", ", leds) : "none")}");
+
+        // Flip to Start UEFI variable
+        var flip = Platform.Linux.Lenovo.LenovoFeatures.GetFlipToStart();
+        sb.AppendLine($"  flip-to-start (FBSWIF): {(flip == null ? "n/a" : flip.Value ? "on" : "off")}");
+
+        // RGB keyboard
+        sb.AppendLine($"  RGB keyboard: {USB.LenovoRgb.Kind}");
+
+        // ideapad debugfs feature dump (root-only; readable when perms allow)
+        foreach (var (label, path) in new[]
+        {
+            ("debugfs cfg", Platform.Linux.Lenovo.LenovoSysfs.IdeapadDebugfsCfg),
+            ("debugfs status", Platform.Linux.Lenovo.LenovoSysfs.IdeapadDebugfsStatus),
+        })
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    string content = File.ReadAllText(path).TrimEnd();
+                    sb.AppendLine($"  {label}:");
+                    foreach (var line in content.Split('\n'))
+                        sb.AppendLine($"    {line}");
+                }
+            }
+            catch
+            {
+                sb.AppendLine($"  {label}: not readable (debugfs is root-only)");
             }
         }
 
@@ -510,6 +630,128 @@ public static class Diagnostics
         var initramfs = ProbeInitramfsForNvidia();
         if (initramfs != null)
             sb.AppendLine($"  In initramfs: {initramfs}");
+
+        sb.AppendLine();
+
+        AppendGpuSwitchingHealth(sb);
+    }
+
+    private static void AppendGpuSwitchingHealth(StringBuilder sb)
+    {
+        if (!Directory.Exists("/sys/module/nvidia"))
+            return;
+
+        sb.AppendLine("--- GPU switching health ---");
+
+        // nvidia_drm.modeset
+        var modeset = Platform.Linux.SysfsHelper.ReadAttribute(
+            "/sys/module/nvidia_drm/parameters/modeset");
+        if (modeset != null)
+        {
+            bool ok = modeset.Trim() == "Y";
+            sb.AppendLine($"  nvidia_drm.modeset: {modeset.Trim()}{(ok ? "" : "  (should be Y for compositor DRM uevent signaling)")}");
+        }
+
+        // NVreg_DynamicPowerManagement
+        var dynPm = Platform.Linux.SysfsHelper.ReadAttribute(
+            "/sys/module/nvidia/parameters/DynamicPowerManagement");
+        if (dynPm != null)
+        {
+            string val = dynPm.Trim();
+            bool ok = val == "0x02" || val == "2";
+            sb.AppendLine($"  NVreg_DynamicPowerManagement: {val}{(ok ? "" : "  (0x02 enables automatic D3cold for Eco)")}");
+        }
+
+        // DRM device mapping: which card/renderD belongs to nvidia
+        try
+        {
+            foreach (var pciDev in Directory.EnumerateDirectories("/sys/bus/pci/devices"))
+            {
+                string vendorPath = Path.Combine(pciDev, "vendor");
+                if (!File.Exists(vendorPath))
+                    continue;
+                if (!File.ReadAllText(vendorPath).Trim().StartsWith("0x10de", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                string drmDir = Path.Combine(pciDev, "drm");
+                if (!Directory.Exists(drmDir))
+                {
+                    sb.AppendLine($"  DRM devices: none (nvidia driver may lack KMS)");
+                    break;
+                }
+                var names = new List<string>();
+                foreach (var entry in Directory.EnumerateDirectories(drmDir))
+                {
+                    string n = Path.GetFileName(entry);
+                    if (n.StartsWith("card", StringComparison.Ordinal)
+                        || n.StartsWith("renderD", StringComparison.Ordinal))
+                        names.Add(n);
+                }
+                if (names.Count > 0)
+                    sb.AppendLine($"  nvidia DRM devices: {string.Join(", ", names)}");
+                break;
+            }
+        }
+        catch { }
+
+        // I2C adapters owned by nvidia
+        try
+        {
+            var i2cBuses = new List<string>();
+            foreach (var i2cDev in Directory.EnumerateDirectories("/sys/bus/i2c/devices"))
+            {
+                string namePath = Path.Combine(i2cDev, "name");
+                if (!File.Exists(namePath))
+                    continue;
+                string name = File.ReadAllText(namePath).Trim();
+                if (name.Contains("NVIDIA", StringComparison.Ordinal))
+                    i2cBuses.Add($"{Path.GetFileName(i2cDev)} ({name})");
+            }
+            if (i2cBuses.Count > 0)
+                sb.AppendLine($"  nvidia I2C adapters: {string.Join("; ", i2cBuses)}");
+        }
+        catch { }
+
+        // KWIN_DRM_DEVICES
+        string? kwinDrmDevices = Environment.GetEnvironmentVariable("KWIN_DRM_DEVICES");
+        if (!string.IsNullOrEmpty(kwinDrmDevices))
+        {
+            sb.AppendLine($"  KWIN_DRM_DEVICES: {kwinDrmDevices}");
+        }
+        else
+        {
+            try
+            {
+                string etcEnv = "/etc/environment";
+                if (File.Exists(etcEnv))
+                {
+                    foreach (var line in File.ReadLines(etcEnv))
+                    {
+                        if (line.TrimStart().StartsWith("KWIN_DRM_DEVICES=", StringComparison.Ordinal))
+                        {
+                            sb.AppendLine($"  KWIN_DRM_DEVICES (/etc/environment): {line.Trim()}");
+                            break;
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        // EGL vendor state
+        string eglActive = "/usr/share/glvnd/egl_vendor.d/10_nvidia.json";
+        string eglInactive = eglActive + "_inactive";
+        if (File.Exists(eglActive))
+            sb.AppendLine("  nvidia EGL vendor: active");
+        else if (File.Exists(eglInactive))
+            sb.AppendLine("  nvidia EGL vendor: hidden (Eco mode)");
+
+        // Vulkan ICD state
+        string vkActive = "/usr/share/vulkan/icd.d/nvidia_icd.json";
+        string vkInactive = vkActive + "_inactive";
+        if (File.Exists(vkActive))
+            sb.AppendLine("  nvidia Vulkan ICD: active");
+        else if (File.Exists(vkInactive))
+            sb.AppendLine("  nvidia Vulkan ICD: hidden (Eco mode)");
 
         sb.AppendLine();
     }
@@ -885,10 +1127,10 @@ public static class Diagnostics
         sb.AppendLine($"  custom bindings    : {bindingCount}");
 
         // iGPU metrics snapshot - what the auto-mode timer sees.
-        int? busy = Gpu.LinuxAmdGpuMetrics.GetIgpuBusyPercent();
-        float? power = Gpu.LinuxAmdGpuMetrics.GetIgpuPowerWatts();
-        int? temp = Gpu.LinuxAmdGpuMetrics.GetIgpuTempCelsius();
-        sb.AppendLine($"  iGPU available     : {Gpu.LinuxAmdGpuMetrics.IsAvailable}");
+        int? busy = Gpu.AMD.LinuxAmdGpuMetrics.GetIgpuBusyPercent();
+        float? power = Gpu.AMD.LinuxAmdGpuMetrics.GetIgpuPowerWatts();
+        int? temp = Gpu.AMD.LinuxAmdGpuMetrics.GetIgpuTempCelsius();
+        sb.AppendLine($"  iGPU available     : {Gpu.AMD.LinuxAmdGpuMetrics.IsAvailable}");
         sb.AppendLine($"  iGPU busy %        : {(busy.HasValue ? busy.ToString() : "(n/a)")}");
         sb.AppendLine($"  iGPU power W       : {(power.HasValue ? power.Value.ToString("0.0") : "(n/a)")}");
         sb.AppendLine($"  iGPU temp °C       : {(temp.HasValue ? temp.ToString() : "(n/a)")}");

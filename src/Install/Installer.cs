@@ -94,10 +94,19 @@ public static partial class Installer
     private const string PostVisudo = "visudo";
     private const string PostDesktopDb = "desktopdb";
     private const string PostIconCache = "iconcache";
+    private const string PostLenovoModprobe = "lenovomodprobe";
+
+    private static readonly string[] LenovoModules =
+        ["ideapad_laptop", "lenovo_wmi_gamezone", "lenovo_wmi_other", "lenovo_wmi_hotkey_utilities"];
 
     private const string BootService = "ghelper-gpu-boot.service";
     private const string HicolorDir = "/usr/share/icons/hicolor";
     private const string NvidiaVulkanIcd = "/usr/share/vulkan/icd.d/nvidia_icd.json";
+    private static readonly string[] NvidiaEglVendors = new[]
+    {
+        "/usr/share/glvnd/egl_vendor.d/10_nvidia.json",
+        "/usr/share/glvnd/egl_vendor.d/10_nvidia_wayland.json",
+    };
 
     private static ManagedFile[]? _manifest;
 
@@ -178,8 +187,25 @@ public static partial class Installer
                 Resource = "ghelper.desktop", Dest = autostart,
                 Mode = M644, RootRequired = false, PresenceOnly = true,
             },
+            new ManagedFile
+            {
+                // Lenovo only: ideapad-laptop does not always autoload even
+                // when ACPI VPC2004 is present (seen on LOQ 15AHP9 / Ubuntu),
+                // and the lenovo-wmi stack is needed for profiles + PPT.
+                Id = "lenovo_modules", NameKey = "sysfiles_name_lenovo_modules",
+                Generate = LenovoModulesContent,
+                Dest = "/etc/modules-load.d/ghelper-lenovo.conf",
+                Mode = M644, RootRequired = true, RootOwned = true,
+                Post = [PostLenovoModprobe],
+                AppliesWhen = Helpers.AppConfig.IsLenovoDevice,
+            },
         ];
     }
+
+    private static byte[] LenovoModulesContent() =>
+        System.Text.Encoding.UTF8.GetBytes(
+            "# Lenovo platform drivers required by G-Helper\n"
+            + string.Join('\n', LenovoModules) + "\n");
 
     /// <summary>
     /// sudoers rule byte-identical to the one install-local.sh writes (echo adds
@@ -196,7 +222,7 @@ public static partial class Installer
     /// boot service is a pure no-op, so it is treated as "not applicable": never
     /// flagged as missing, never auto-installed/enabled - but still shown (and
     /// removable) in the integrity panel. Uses a universal, Eco-resilient check.</summary>
-    private static bool BootGpuApplies() => Gpu.GpuModeController.HasDiscreteGpu();
+    private static bool BootGpuApplies() => Gpu.GPUModeControl.HasDiscreteGpu();
 
     // Status computation (no UI, no privilege)
     public static List<FileResult> ComputeStatus()
@@ -804,6 +830,13 @@ public static partial class Installer
             Run("update-desktop-database", "/usr/share/applications");
         if (post.Contains(PostIconCache))
             Run("gtk-update-icon-cache", "-f", "-t", HicolorDir);
+        if (post.Contains(PostLenovoModprobe))
+        {
+            // Best effort: load each module separately so one missing module
+            // (older kernel without lenovo-wmi) doesn't block the others.
+            foreach (var module in LenovoModules)
+                Run("modprobe", module);
+        }
         // PostVisudo is validated inline in WriteRoot.
     }
 
@@ -838,23 +871,30 @@ public static partial class Installer
             Run("gtk-update-icon-cache", "-f", "-t", HicolorDir);
     }
 
-    /// <summary>If GPU Eco mode left the NVIDIA Vulkan ICD hidden (nvidia_icd.json
-    /// renamed to .json_inactive), move it back so Vulkan apps see the dGPU again
+    /// <summary>If GPU Eco mode left the NVIDIA Vulkan ICD or EGL vendor hidden
+    /// (renamed to .json_inactive), move them back so apps see the dGPU again
     /// once G-Helper is removed. Best-effort.</summary>
     private static void RestoreVulkanIcd()
     {
+        RestoreOneIcd(NvidiaVulkanIcd);
+        foreach (var egl in NvidiaEglVendors)
+            RestoreOneIcd(egl);
+    }
+
+    private static void RestoreOneIcd(string path)
+    {
         try
         {
-            string inactive = NvidiaVulkanIcd + "_inactive";
-            if (File.Exists(inactive) && !File.Exists(NvidiaVulkanIcd))
+            string inactive = path + "_inactive";
+            if (File.Exists(inactive) && !File.Exists(path))
             {
-                File.Move(inactive, NvidiaVulkanIcd);
-                Console.WriteLine("restored NVIDIA Vulkan ICD");
+                File.Move(inactive, path);
+                Console.WriteLine($"restored {Path.GetFileName(path)}");
             }
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"ICD restore failed: {ex.Message}");
+            Console.Error.WriteLine($"ICD restore {path}: {ex.Message}");
         }
     }
 

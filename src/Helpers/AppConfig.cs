@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace GHelper.Linux.Helpers;
 
@@ -9,9 +10,13 @@ namespace GHelper.Linux.Helpers;
 /// We use Dictionary&lt;string, JsonElement&gt; instead of Dictionary&lt;string, object&gt;
 /// because AOT source generators cannot resolve polymorphic 'object' values at compile time.
 /// JsonElement is a self-describing value type that serializes/deserializes without reflection.
+/// Lenient read options (trailing commas, comments) so a hand-edited config
+/// doesn't lose all settings over a stray comma.
 /// </summary>
 [JsonSerializable(typeof(Dictionary<string, JsonElement>))]
-[JsonSourceGenerationOptions(WriteIndented = true)]
+[JsonSourceGenerationOptions(WriteIndented = true,
+    AllowTrailingCommas = true,
+    ReadCommentHandling = JsonCommentHandling.Skip)]
 internal partial class ConfigJsonContext : JsonSerializerContext { }
 
 /// <summary>
@@ -116,7 +121,8 @@ public static class AppConfig
             catch (Exception ex)
             {
                 Logger.WriteLine($"Broken config: {ex.Message}");
-                TryLoadBackup();
+                if (!TryRecoverConfig(ConfigFile))
+                    TryLoadBackup();
             }
         }
         else
@@ -318,6 +324,44 @@ public static class AppConfig
         };
     }
 
+    // Vendor detection (Linux: DMI sysfs)
+
+    private static string? _vendor;
+
+    /// <summary>DMI system vendor string (e.g. "ASUSTeK COMPUTER INC.", "LENOVO").</summary>
+    public static string GetDmiVendor()
+    {
+        if (_vendor != null)
+            return _vendor;
+
+        _vendor = Platform.Linux.SysfsHelper.ReadAttribute(
+            Path.Combine(Platform.Linux.SysfsHelper.DmiId, "sys_vendor")) ?? "";
+        return _vendor;
+    }
+
+    /// <summary>True on Lenovo hardware (DMI sys_vendor contains LENOVO, or
+    /// Motorola which Lenovo uses on some devices). Overridable with the
+    /// "vendor" config key set to "lenovo" or "asus".</summary>
+    public static bool IsLenovoDevice()
+    {
+        string? force = GetString("vendor");
+        if (force != null)
+        {
+            if (force.Equals("lenovo", StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (force.Equals("asus", StringComparison.OrdinalIgnoreCase))
+                return false;
+        }
+
+        string vendor = GetDmiVendor();
+        return vendor.Contains("LENOVO", StringComparison.OrdinalIgnoreCase)
+            || vendor.Contains("MOTOROLA", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>True when the ASUS platform backend should be used (default
+    /// for everything that is not a detected Lenovo device).</summary>
+    public static bool IsAsusDevice() => !IsLenovoDevice();
+
     // Model detection (Linux: DMI sysfs)
 
     public static string GetModel()
@@ -411,7 +455,6 @@ public static class AppConfig
     public static bool IsAMDiGPU() => ContainsModel("GV301RA") || ContainsModel("GV302XA") || ContainsModel("GZ302") || IsOnlyAIMAX() || IsAlly();
 
     public static bool IsForceSetGPUMode() => Is("gpu_mode_force_set") || (ContainsModel("503") && IsNotFalse("gpu_mode_force_set"));
-    public static bool IsNVPlatform() => Is("nv_platform");
     public static bool IsShutdownReset() => Is("shutdown_reset") || ContainsModel("FX507Z");
     public static bool IsStopAC() => IsAlly() || Is("stop_ac");
     public static bool IsChargeLimit6080() => ContainsModel("GU405") || ContainsModel("GU606") || ContainsModel("H760") || ContainsModel("GA403") || ContainsModel("GU605") || ContainsModel("GA605") || ContainsModel("GA503R") || (IsTUF() && !(ContainsModel("FX507Z") || ContainsModel("FA617") || ContainsModel("FA607")));
@@ -431,9 +474,16 @@ public static class AppConfig
 
     public static bool IsReapplyRyzen() => ContainsModel("G614F") || ContainsModel("G814F") || ContainsModel("G733P");
 
-    // FX506HCB (TUF F15 2021): if dgpu_disable=1 is the live state at shutdown,
-    // this BIOS fails to re-enumerate the dGPU on next cold boot → black screen
-    public static bool IsStandardModeFix() => ContainsModel("FX506HCB");
+    // FX506HC / FA808U: if dgpu_disable=1 is the live state at shutdown,
+    // these BIOSes fail to re-enumerate the dGPU on next cold boot
+    public static bool IsStandardModeFix() =>
+        Is("shutdown_gpu") || ((ContainsModel("FX506HC") || ContainsModel("FA808U")) && IsNotFalse("shutdown_gpu"));
+
+    public static bool IsManualModeRequired() =>
+        Is("manual_mode") || ContainsModel("G733");
+
+    public static bool IsKeystone() =>
+        ContainsModel("G531") || ContainsModel("G731") || ContainsModel("G532") || ContainsModel("G732") || ContainsModel("G533") || ContainsModel("G733");
 
     // Fan control
     public static bool IsFanRequired() => ContainsModel("GA402X") || ContainsModel("GU604") || ContainsModel("G513") || ContainsModel("G713R") || ContainsModel("G713P") || ContainsModel("GU605") || ContainsModel("GA605") || ContainsModel("G634J") || ContainsModel("G834J") || ContainsModel("G614J") || ContainsModel("G814J") || ContainsModel("FX507V") || ContainsModel("FX507ZV") || ContainsModel("FX608") || ContainsModel("FA608P") || ContainsModel("G614F") || ContainsModel("G614P") || ContainsModel("G614R") || ContainsModel("G733") || ContainsModel("H7606");
@@ -447,8 +497,9 @@ public static class AppConfig
     /// (G513 family). Selects the alternate 4-zone packet map in Aura.cs.</summary>
     public static bool IsStrix4ZoneFlipped() => ContainsModel("G513");
     public static bool IsNoDirectRGB() =>
-        ContainsModel("GA503") || ContainsModel("G533Q") || ContainsModel("GU502");
-    public static bool IsSlash() => ContainsModel("GA403") || ContainsModel("GU605") || ContainsModel("GA605") || ContainsModel("GU405") || ContainsModel("GU606") || ContainsModel("GX651");
+        ContainsModel("GA503") || ContainsModel("G533Q") || ContainsModel("GU502") || IsSlash();
+    public static bool IsSlash() => ContainsModel("GA403") || ContainsModel("GU605") || ContainsModel("GA605") || IsSlashLong();
+    public static bool IsSlashLong() => ContainsModel("GA405") || ContainsModel("GU405") || ContainsModel("GU606") || ContainsModel("GX651");
     public static bool IsSlashAura() => ContainsModel("GA605") || ContainsModel("GU605C") || ContainsModel("GA403W") || ContainsModel("GA403UM") || ContainsModel("GA403UP") || ContainsModel("GA403UH") || ContainsModel("GU405") || ContainsModel("GU606");
     public static bool IsAnimeMatrix() => ContainsModel("GA401") || ContainsModel("GA402") || ContainsModel("GU604V") || ContainsModel("G835") || ContainsModel("G815") || ContainsModel("G635") || ContainsModel("G615");
 
@@ -555,7 +606,6 @@ public static class AppConfig
         ContainsModel("X513") || ContainsModel("N7400") || ContainsModel("UX760") || ContainsModel("Q530VJ");
     public static bool IsNoOverdrive() => Is("no_overdrive");
     public static bool SwappedBrightness() => ContainsModel("FA506IEB") || ContainsModel("FA506IH") || ContainsModel("FA506IC") || ContainsModel("FA506II") || ContainsModel("FX506LU") || ContainsModel("FX506IC") || ContainsModel("FX506LH") || ContainsModel("FA506IV") || ContainsModel("FA706IC") || ContainsModel("FA706IH");
-    public static bool SaveDimming() => Is("save_dimming");
     public static bool IsForceMiniled() =>
         ContainsModel("G834JYR") || ContainsModel("G834JZR") || ContainsModel("G634JZR") ||
         ContainsModel("G835LW") || ContainsModel("G835LX") || ContainsModel("G635LW") ||
@@ -594,7 +644,7 @@ public static class AppConfig
         ContainsModel("M140") || ContainsModel("S550") || ContainsModel("K650") || ContainsModel("P540") || IsTUF();
 
     public static bool IsSleepReset() =>
-        ContainsModel("GU605MI") || ContainsModel("GU605MV");
+        Is("sleep_reset") || ContainsModel("GU605MI") || ContainsModel("GU605MV");
 
     // Helpers
 
@@ -621,6 +671,42 @@ public static class AppConfig
         Set("performance_mode", 0);
         // Force immediate write for initial config
         FlushConfig();
+    }
+
+    // Matches "key": value pairs where value is a string, number, bool or null.
+    // Used to salvage settings from a truncated/corrupted config file.
+    private static readonly Regex KeyValueRegex = new(
+        @"""((?:\\.|[^""\\])*)""\s*:\s*(""(?:\\.|[^""\\])*""|-?\d+(?:\.\d+)?|true|false|null)");
+
+    /// <summary>
+    /// Last-resort recovery for a corrupted config: extract all simple
+    /// key-value pairs via regex, rebuild a valid JSON object and parse that.
+    /// Returns false if nothing could be salvaged.
+    /// </summary>
+    private static bool TryRecoverConfig(string path)
+    {
+        if (!File.Exists(path))
+            return false;
+        try
+        {
+            var pairs = new Dictionary<string, string>();
+            foreach (Match m in KeyValueRegex.Matches(File.ReadAllText(path)))
+                pairs["\"" + m.Groups[1].Value + "\""] = m.Groups[2].Value;
+
+            if (pairs.Count == 0)
+                return false;
+
+            string rebuilt = "{" + string.Join(",", pairs.Select(p => p.Key + ":" + p.Value)) + "}";
+            _config = JsonSerializer.Deserialize(rebuilt, ConfigJsonContext.Default.DictionaryStringJsonElement)
+                ?? new Dictionary<string, JsonElement>();
+            Logger.WriteLine($"Recovered {pairs.Count} values from broken config {path}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine($"Config recovery failed {path}: {ex.Message}");
+            return false;
+        }
     }
 
     private static void TryLoadBackup()

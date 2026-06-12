@@ -6,6 +6,8 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
 using GHelper.Linux.Display;
 using GHelper.Linux.Gpu;
+using GHelper.Linux.Gpu.AMD;
+using GHelper.Linux.Gpu.NVidia;
 using GHelper.Linux.Helpers;
 using GHelper.Linux.I18n;
 using GHelper.Linux.Input;
@@ -20,7 +22,7 @@ namespace GHelper.Linux;
 public class App : Application
 {
     // Global service instances (mirrors G-Helper's Program.acpi pattern)
-    public static IAsusWmi? Wmi { get; private set; }
+    public static IHardwareControl? Wmi { get; private set; }
     public static IPowerManager? Power { get; private set; }
     public static ISystemIntegration? System { get; private set; }
     public static IInputHandler? Input { get; private set; }
@@ -31,7 +33,10 @@ public class App : Application
     public static IGpuControl? GpuControl { get; set; }
 
     // GPU mode switching controller (safety checks, driver detection, reboot scheduling)
-    public static GpuModeController? GpuModeCtrl { get; private set; }
+    public static GPUModeControl? GpuModeCtrl { get; private set; }
+
+    // AnimeMatrix / Slash LED controller
+    public static AnimeMatrix.AniMatrixControl? AnimeMatrix { get; private set; }
 
     // Business logic orchestrator
     public static ModeControl? Mode { get; private set; }
@@ -96,109 +101,6 @@ public class App : Application
 
     // Single-instance lock that prevents duplicate tray icons
     private static FileStream? _lockFile;
-
-    // Legacy event codes for non-configurable keys
-    private const int EventKbBrightnessUp = 196;   // Fn+F3
-    private const int EventKbBrightnessDown = 197;  // Fn+F2
-
-    /// <summary>
-    /// Available actions for configurable key bindings (app-internal only).
-    /// Keys = action ID stored in config, Values = display name for UI.
-    /// </summary>
-    public static readonly Dictionary<string, string> AvailableKeyActions = new()
-    {
-        { "none",              "None" },
-        { "ghelper",           "Toggle G-Helper" },
-        { "performance",       "Cycle Performance Mode" },
-        { "aura",              "Cycle Aura Mode" },
-        { "brightness_up",     "Keyboard Brightness Up" },
-        { "brightness_down",   "Keyboard Brightness Down" },
-        { "micmute",           "Toggle Microphone Mute" },
-        { "mute",              "Toggle Speaker Mute" },
-        { "screen_refresh",    "Cycle Screen Refresh Rate" },
-        { "overdrive",         "Toggle Panel Overdrive" },
-        { "miniled",           "Toggle MiniLED" },
-        { "camera",            "Toggle Camera" },
-        { "touchpad",          "Toggle Touchpad" },
-        // ROG Ally controller-mode toggle. Bind this to the M1/M2 buttons on
-        // the Ally chassis. Evdev codes for those buttons vary by kernel /
-        // BIOS revision and aren't standard XInput - Ally users will need to
-        // discover them with `evtest` and map via the existing key-binding UI.
-        { "ally_toggle_mode",  "Ally: Toggle Controller Mode" },
-        // Audio / DSP chain hotkey targets. Display names are prefixed
-        // "Audio: ..." so they cluster together at the bottom of the
-        // dropdown (Dictionary preserves insertion order in .NET 5+).
-        { "audio_toggle",   "Audio: Toggle Audio Helper" },
-        { "audio_rnnoise",  "Audio: Toggle Denoise (RNNoise)" },
-        { "audio_vocoder",  "Audio: Toggle Vocoder" },
-        { "audio_eq",       "Audio: Toggle Parametric EQ" },
-        { "audio_delay",    "Audio: Toggle Delay" },
-        { "audio_reverb",   "Audio: Toggle Reverb" },
-        { "audio_monitor",  "Audio: Toggle Monitor Playback" },
-    };
-
-    /// <summary>Default actions for each configurable key (matches Windows G-Helper).</summary>
-    private static readonly Dictionary<string, string> DefaultKeyActions = new()
-    {
-        { "m4",     "ghelper" },          // ROG/M5 key (laptop) / ROG button (Ally) → toggle window
-        { "fnf4",   "aura" },             // Fn+F4 → cycle aura mode (laptop only)
-        { "fnf5",   "performance" },      // Fn+F5 / M4 → cycle performance mode (laptop only)
-        // Ally hardware buttons (ExtraWindow remaps fnf4↔paddle, fnf5↔cc on Ally).
-        { "paddle", "ghelper" },          // Ally X back paddles → toggle window
-        { "cc",     "ally_toggle_mode" }, // Ally Cmd Center → cycle controller mode
-    };
-
-    /// <summary>Human-readable names for configurable keys (for UI labels).</summary>
-    public static readonly Dictionary<string, string> ConfigurableKeyNames = new()
-    {
-        { "m4",     "ROG / M5 Key" },
-        { "fnf4",   "Fn+F4 (Aura)" },
-        { "fnf5",   "Fn+F5 / M4 (Performance)" },
-        { "paddle", "Ally Back Paddles" },
-        { "cc",     "Ally Cmd Center" },
-    };
-
-    public static string GetKeyActionDisplayName(string actionId)
-    {
-        return actionId switch
-        {
-            "none" => Labels.Get("action_none"),
-            "ghelper" => Labels.Get("action_ghelper"),
-            "performance" => Labels.Get("action_performance"),
-            "aura" => Labels.Get("action_aura"),
-            "brightness_up" => Labels.Get("action_brightness_up"),
-            "brightness_down" => Labels.Get("action_brightness_down"),
-            "micmute" => Labels.Get("action_micmute"),
-            "mute" => Labels.Get("action_mute"),
-            "screen_refresh" => Labels.Get("action_screen_refresh"),
-            "overdrive" => Labels.Get("action_overdrive"),
-            "miniled" => Labels.Get("action_miniled"),
-            "camera" => Labels.Get("action_camera"),
-            "touchpad" => Labels.Get("action_touchpad"),
-            "ally_toggle_mode" => Labels.Get("action_ally_toggle_mode"),
-            "audio_toggle" => Labels.Get("action_audio_toggle"),
-            "audio_rnnoise" => Labels.Get("action_audio_rnnoise"),
-            "audio_vocoder" => Labels.Get("action_audio_vocoder"),
-            "audio_eq" => Labels.Get("action_audio_eq"),
-            "audio_delay" => Labels.Get("action_audio_delay"),
-            "audio_reverb" => Labels.Get("action_audio_reverb"),
-            "audio_monitor" => Labels.Get("action_audio_monitor"),
-            _ => actionId
-        };
-    }
-
-    public static string GetKeyDisplayName(string bindingName)
-    {
-        return bindingName switch
-        {
-            "m4" => Labels.Get("key_m4"),
-            "fnf4" => Labels.Get("key_fnf4"),
-            "fnf5" => Labels.Get("key_fnf5"),
-            "paddle" => Labels.Get("ally_extra_btn_paddle"),
-            "cc" => Labels.Get("ally_extra_btn_cc"),
-            _ => bindingName
-        };
-    }
 
     public override void Initialize()
     {
@@ -265,12 +167,10 @@ public class App : Application
             Mode?.SetPerformanceMode();
 
             // Re-apply saved battery charge limit on startup
-            int savedChargeLimit = AppConfig.Get("charge_limit");
-            if (savedChargeLimit > 0 && savedChargeLimit < 100)
-            {
-                Logger.WriteLine($"Startup: re-applying charge limit {savedChargeLimit}%");
-                Wmi?.SetBatteryChargeLimit(savedChargeLimit);
-            }
+            Battery.BatteryControl.AutoBattery(init: true);
+
+            // Init fan sensor defaults for model-specific RPM formatting
+            Fan.FanSensorControl.InitFanMax();
 
             // Warn if udev rules are not installed (sysfs writes will fail)
             if (!File.Exists("/etc/udev/rules.d/90-ghelper.rules"))
@@ -289,6 +189,13 @@ public class App : Application
                 MainWindow.InitAuraHardware();
                 USB.XGM.InitHardware();
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => MainWindowInstance?.RefreshKeyboard());
+            });
+
+            // Detect connected ASUS peripherals (mice) and register for hot-plug events.
+            Task.Run(() =>
+            {
+                Peripherals.PeripheralsProvider.DetectAllAsusMice();
+                Peripherals.PeripheralsProvider.RegisterForDeviceEvents();
             });
 
             // Ensure autostart .desktop file matches config preference and current binary path
@@ -310,6 +217,7 @@ public class App : Application
             if (Power != null)
             {
                 Power.PowerStateChanged += OnPowerStateChanged;
+                Power.SystemResumed += OnSystemResumed;
             }
 
             // Apply pending GPU mode from config (e.g., Eco scheduled for reboot)
@@ -400,6 +308,11 @@ public class App : Application
                 });
             }
 
+            // Lenovo internal-mic boost clamp (ALC287 distortion fix): applied
+            // at startup and after every resume while the option is on.
+            if (AppConfig.IsLenovoDevice() && AppConfig.Is("lenovo_mic_boost_fix"))
+                Task.Run(() => Platform.Linux.Lenovo.LenovoFeatures.ApplyMicBoostFix());
+
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 Install.Installer.CheckAndPromptAtStartup(MainWindowInstance));
 
@@ -416,7 +329,15 @@ public class App : Application
 
     private void InitializePlatform()
     {
-        Wmi = new LinuxAsusWmi();
+        if (Helpers.AppConfig.IsLenovoDevice())
+        {
+            Logger.WriteLine($"Vendor: Lenovo ({Helpers.AppConfig.GetDmiVendor()})");
+            Wmi = new Platform.Linux.Lenovo.LinuxLenovoWmi();
+        }
+        else
+        {
+            Wmi = new LinuxAsusWmi();
+        }
         Power = new LinuxPowerManager();
         System = new LinuxSystemIntegration();
         Input = new LinuxInputHandler();
@@ -439,10 +360,10 @@ public class App : Application
         // Create GPU mode switching controller
         if (Wmi != null && Power != null)
         {
-            GpuModeCtrl = new GpuModeController(Wmi, Power);
-            GpuModeController.OnLivePciTransition =
+            GpuModeCtrl = new GPUModeControl(Wmi, Power);
+            GPUModeControl.OnLivePciTransition =
                 Platform.Linux.LinuxAsusWmi.InvalidateGpuPresenceCache;
-            GpuModeController.OnReapplyGpuTuning =
+            GPUModeControl.OnReapplyGpuTuning =
                 () => Mode?.ReapplyGpuForCurrentMode();
         }
 
@@ -452,6 +373,15 @@ public class App : Application
         Ally = new Ally.AllyControl();
         Ally.Init();
 
+        // AnimeMatrix / Slash LED controller. No-op when no device is present.
+        AnimeMatrix = new AnimeMatrix.AniMatrixControl();
+
+        // NumberPad service (only starts when enabled in config).
+        GHelper.Linux.Input.NumberPad.InitIfEnabled();
+
+        // Status LED indicators on at start when auto_status_led is set.
+        Task.Run(Platform.Linux.StatusLed.Init);
+
         // Initialize GPU control (nvidia-smi / amdgpu sysfs for temp/load)
         InitializeGpuControl();
 
@@ -460,7 +390,8 @@ public class App : Application
         Logger.WriteLine($"BIOS: {System.GetBiosVersion()}");
 
         // Log which sysfs backend each attribute resolved to (legacy vs firmware-attributes)
-        SysfsHelper.LogResolvedAttributes();
+        if (Helpers.AppConfig.IsAsusDevice())
+            SysfsHelper.LogResolvedAttributes();
 
         // Log detected features
         LogFeatureDetection();
@@ -563,270 +494,37 @@ public class App : Application
         if (Input == null)
             return;
 
-        Input.HotkeyPressed += OnHotkeyPressed;
-        Input.KeyBindingPressed += OnKeyBindingPressed;
+        Input.HotkeyPressed += GHelper.Linux.Input.InputDispatcher.DispatchHotkey;
+        Input.KeyBindingPressed += GHelper.Linux.Input.InputDispatcher.DispatchKeyBinding;
         Input.StartListening();
+
+        // Firmware-driven profile changes (Lenovo Fn+Q): adopt the new mode in
+        // the app instead of fighting the firmware.
+        if (Wmi != null)
+            Wmi.PlatformProfileChanged += OnPlatformProfileChanged;
     }
 
-    /// <summary>
-    /// Marshal an action to the UI thread and invoke it on the running App
-    /// instance. Shared dispatch helper for the FnLockRemapper bridge entry
-    /// points; the remapper fires from a background thread and event
-    /// handlers may touch UI state.
-    /// </summary>
-    private static void PostToApp(Action<App> action) =>
+    private static void OnPlatformProfileChanged(string profile)
+    {
+        int mode = profile switch
+        {
+            "performance" or "balanced-performance" or "max-power" => 1,
+            "low-power" or "quiet" => 2,
+            _ => 0
+        };
+
+        if (GHelper.Linux.Mode.Modes.GetBase(GHelper.Linux.Mode.Modes.GetCurrent()) == mode)
+            return;
+
+        GHelper.Linux.Mode.Modes.SetCurrent(mode);
+        Logger.WriteLine($"Adopted external platform_profile '{profile}' as mode {mode}");
+
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            if (Current is App app)
-                action(app);
+            MainWindowInstance?.RefreshPerformanceMode();
+            System?.ShowNotification(Labels.Get("performance"),
+                GHelper.Linux.Mode.Modes.GetName(mode), "preferences-system-performance");
         });
-
-    /// <summary>Handle non-configurable hotkey events (brightness, etc.).</summary>
-    private void OnHotkeyPressed(int eventCode) => DispatchHotkey(eventCode);
-
-    /// <summary>
-    /// Re-entry point for the FnLockRemapper bridge. When fn-lock has
-    /// exclusively grabbed the device that would normally deliver brightness
-    /// hotkeys to LinuxAsusWmi, the remapper recognises the scancode and
-    /// calls this so the same action fires.
-    /// </summary>
-    public static void RaiseHotkeyFromFnLock(int eventCode) =>
-        PostToApp(app => app.DispatchHotkey(eventCode));
-
-    private void DispatchHotkey(int eventCode)
-    {
-        Logger.WriteLine($"Hotkey event: {eventCode}");
-
-        switch (eventCode)
-        {
-            case EventKbBrightnessUp:
-                CycleKeyboardBrightness(up: true);
-                break;
-
-            case EventKbBrightnessDown:
-                CycleKeyboardBrightness(up: false);
-                break;
-        }
-    }
-
-    /// <summary>
-    /// Handle configurable key binding events.
-    /// Reads the assigned action from config, falls back to default.
-    /// </summary>
-    private void OnKeyBindingPressed(string bindingName) => DispatchKeyBinding(bindingName);
-
-    /// <summary>
-    /// Re-entry point for the FnLockRemapper bridge. Same purpose as
-    /// <see cref="RaiseHotkeyFromFnLock"/> but for the configurable
-    /// m4/fnf4/fnf5 bindings.
-    /// </summary>
-    public static void RaiseKeyBindingFromFnLock(string bindingName) =>
-        PostToApp(app => app.DispatchKeyBinding(bindingName));
-
-    /// <summary>
-    /// Re-entry point for the FnLockRemapper when an F-key is mapped to an
-    /// action target (e.g. F4 → "aura"). Bypasses the binding-name lookup
-    /// (m4/fnf4/fnf5) and dispatches the action directly via
-    /// <see cref="ExecuteKeyAction"/>.
-    /// </summary>
-    public static void RaiseActionFromFnLock(string action) =>
-        PostToApp(app => app.ExecuteKeyAction(action));
-
-    private void DispatchKeyBinding(string bindingName)
-    {
-        // Read configured action, fall back to default
-        string? action = AppConfig.GetString(bindingName);
-        if (string.IsNullOrEmpty(action) || !AvailableKeyActions.ContainsKey(action))
-        {
-            DefaultKeyActions.TryGetValue(bindingName, out action);
-            action ??= "none";
-        }
-
-        Logger.WriteLine($"Key binding: {bindingName} → action={action}");
-        ExecuteKeyAction(action);
-    }
-
-    /// <summary>Get the current action for a configurable key binding.</summary>
-    public static string GetKeyAction(string bindingName)
-    {
-        string? action = AppConfig.GetString(bindingName);
-        if (string.IsNullOrEmpty(action) || !AvailableKeyActions.ContainsKey(action))
-        {
-            DefaultKeyActions.TryGetValue(bindingName, out action);
-            action ??= "none";
-        }
-        return action;
-    }
-
-    /// <summary>Execute a key action by its action ID.</summary>
-    private void ExecuteKeyAction(string action)
-    {
-        switch (action)
-        {
-            case "none":
-                break;
-
-            case "ghelper":
-                Avalonia.Threading.Dispatcher.UIThread.Post(() => ToggleMainWindow());
-                break;
-
-            case "performance":
-                Mode?.CyclePerformanceMode();
-                UpdateTrayIcon();
-                // Refresh main window if visible
-                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                    MainWindowInstance?.RefreshPerformanceMode());
-                break;
-
-            case "aura":
-                string modeName = Aura.CycleAuraMode();
-                System?.ShowNotification(Labels.Get("aura"), modeName, "preferences-desktop-color");
-                // Refresh main window keyboard section if visible
-                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                    MainWindowInstance?.RefreshKeyboard());
-                break;
-
-            case "brightness_up":
-                CycleKeyboardBrightness(up: true);
-                break;
-
-            case "brightness_down":
-                CycleKeyboardBrightness(up: false);
-                break;
-
-            case "micmute":
-                Audio?.ToggleMicMute();
-                bool micMuted = Audio?.IsMicMuted() ?? false;
-                System?.ShowNotification(Labels.Get("microphone"),
-                    micMuted ? Labels.Get("muted") : Labels.Get("unmuted"),
-                    micMuted ? "microphone-sensitivity-muted" : "microphone-sensitivity-high");
-                break;
-
-            case "mute":
-                Audio?.ToggleSpeakerMute();
-                bool spkMuted = Audio?.IsSpeakerMuted() ?? false;
-                System?.ShowNotification(Labels.Get("speaker"),
-                    spkMuted ? Labels.Get("muted") : Labels.Get("unmuted"),
-                    spkMuted ? "audio-volume-muted" : "audio-volume-high");
-                break;
-
-            case "screen_refresh":
-                CycleScreenRefreshRate();
-                break;
-
-            case "overdrive":
-                bool currentOd = Wmi?.GetPanelOverdrive() ?? false;
-                Wmi?.SetPanelOverdrive(!currentOd);
-                System?.ShowNotification(Labels.Get("panel_overdrive"),
-                    !currentOd ? Labels.Get("enabled") : Labels.Get("disabled"),
-                    "preferences-desktop-display");
-                break;
-
-            case "miniled":
-                int currentMiniLed = Wmi?.GetMiniLedMode() ?? 0;
-                int nextMiniLed = currentMiniLed == 0 ? 1 : 0;
-                Wmi?.SetMiniLedMode(nextMiniLed);
-                System?.ShowNotification(Labels.Get("mini_led"),
-                    nextMiniLed == 1 ? Labels.Get("enabled") : Labels.Get("disabled"),
-                    "preferences-desktop-display");
-                break;
-
-            case "camera":
-                bool camOn = LinuxSystemIntegration.IsCameraEnabled();
-                LinuxSystemIntegration.SetCameraEnabled(!camOn);
-                System?.ShowNotification(Labels.Get("camera"),
-                    !camOn ? Labels.Get("enabled") : Labels.Get("disabled"),
-                    !camOn ? "camera-on" : "camera-off");
-                break;
-
-            case "ally_toggle_mode":
-                Ally?.ToggleModeHotkey();
-                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                    MainWindowInstance?.RefreshAllyPanel());
-                break;
-
-            case "touchpad":
-                bool? tpOn = LinuxSystemIntegration.IsTouchpadEnabled();
-                if (tpOn.HasValue)
-                {
-                    LinuxSystemIntegration.SetTouchpadEnabled(!tpOn.Value);
-                    System?.ShowNotification(Labels.Get("touchpad"),
-                        !tpOn.Value ? Labels.Get("enabled") : Labels.Get("disabled"),
-                        !tpOn.Value ? "input-touchpad-on" : "input-touchpad-off");
-                }
-                break;
-
-            case "audio_toggle":
-                {
-                    bool on = AudioHelper.Instance.ToggleMaster();
-                    System?.ShowNotification(Labels.Get("microphone"),
-                        on ? Labels.Get("enabled") : Labels.Get("disabled"),
-                        on ? "microphone-sensitivity-high" : "microphone-sensitivity-muted");
-                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                        MainWindowInstance?.RefreshAudioToggle());
-                    break;
-                }
-
-            case "audio_rnnoise":
-                NotifyAudioToggle(AudioHelper.Instance.ToggleRnnoise(), "Denoise");
-                break;
-            case "audio_vocoder":
-                NotifyAudioToggle(AudioHelper.Instance.ToggleVocoder(), "Vocoder");
-                break;
-            case "audio_eq":
-                NotifyAudioToggle(AudioHelper.Instance.ToggleEq(), "EQ");
-                break;
-            case "audio_delay":
-                NotifyAudioToggle(AudioHelper.Instance.ToggleDelay(), "Delay");
-                break;
-            case "audio_reverb":
-                NotifyAudioToggle(AudioHelper.Instance.ToggleReverb(), "Reverb");
-                break;
-            case "audio_monitor":
-                NotifyAudioToggle(AudioHelper.Instance.ToggleMonitor(), "Monitor");
-                break;
-        }
-    }
-
-    private void NotifyAudioToggle(bool on, string effectName)
-    {
-        System?.ShowNotification($"Audio: {effectName}",
-            on ? Labels.Get("enabled") : Labels.Get("disabled"),
-            on ? "audio-x-generic" : "audio-volume-muted");
-    }
-
-    private void CycleScreenRefreshRate()
-    {
-        var display = Display;
-        if (display == null)
-            return;
-
-        // Hotkey cycle disables auto mode (manual override)
-        AppConfig.Set("screen_auto", 0);
-
-        var rates = display.GetAvailableRefreshRates();
-        if (rates.Count < 2)
-            return;
-
-        int current = display.GetRefreshRate();
-        rates.Sort();
-
-        // Find next rate (cycle: 60 → 120 → 165 → 60...)
-        int nextRate = rates[0];
-        for (int i = 0; i < rates.Count; i++)
-        {
-            if (rates[i] > current)
-            {
-                nextRate = rates[i];
-                break;
-            }
-        }
-
-        display.SetRefreshRate(nextRate);
-        System?.ShowNotification(Labels.Get("display"), Labels.Format("refresh_rate_format", nextRate), "video-display");
-
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            MainWindowInstance?.RefreshScreenPublic());
     }
 
     /// <summary>
@@ -866,41 +564,6 @@ public class App : Application
             MainWindowInstance?.RefreshScreenPublic());
     }
 
-    private void CycleKeyboardBrightness(bool up)
-    {
-        int next;
-        if (Wmi is Platform.Linux.LinuxAsusWmi lwmi && lwmi.HasKbdBrightnessHwChanged)
-        {
-            // Kernel already changed brightness in sysfs - just read the new value
-            next = lwmi.GetKeyboardBrightness();
-            if (next < 0)
-                next = 0;
-        }
-        else
-        {
-            // Kernel doesn't handle it, we must increment and write
-            int current = Wmi?.GetKeyboardBrightness() ?? 0;
-            next = up ? Math.Min(current + 1, 3) : Math.Max(current - 1, 0);
-            Wmi?.SetKeyboardBrightness(next);
-        }
-        // Persist under AC- or battery-specific key so future AC/DC transitions restore the right level.
-        Helpers.AppConfig.Set(USB.Aura.GetBrightnessConfigKey(), next);
-        string level = next switch
-        {
-            0 => Labels.Get("kbd_off"),
-            1 => Labels.Get("kbd_low"),
-            2 => Labels.Get("kbd_medium"),
-            3 => Labels.Get("kbd_high"),
-            _ => Labels.Format("kbd_level", next)
-        };
-        System?.ShowNotification(Labels.Get("keyboard"), level, "keyboard-brightness");
-
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-        {
-            MainWindowInstance?.RefreshKeyboard();
-            MainWindowInstance?.RefreshExtraKeyboardBrightness();
-        });
-    }
 
     private void SetupTrayIcon(IClassicDesktopStyleApplicationLifetime desktop)
     {
@@ -1031,7 +694,7 @@ public class App : Application
         menu.Add(new NativeMenuItemSeparator());
 
         // GPU modes - show if GPU Eco is available (sysfs or raw WMI debugfs).
-        // All writes run in Task.Run via GpuModeController
+        // All writes run in Task.Run via GPUModeControl
         // (dgpu_disable writes can block in the kernel for 30-60 seconds)
         if (Wmi?.IsGpuEcoAvailable() == true)
         {
@@ -1128,9 +791,9 @@ public class App : Application
         return menu;
     }
 
-    private void ToggleMainWindow()
+    public static void ToggleMainWindow()
     {
-        if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+        if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
             return;
 
         // Snapshot: Close() modifies the Windows collection during iteration
@@ -1163,7 +826,7 @@ public class App : Application
     }
 
     /// <summary>
-    /// Tray menu GPU mode switch - runs GpuModeController on background thread.
+    /// Tray menu GPU mode switch - runs GPUModeControl on background thread.
     /// Tray menu cannot show dialogs, so DriverBlocking → auto-schedule for reboot.
     /// </summary>
     private static void TrayGpuModeSwitch(GpuMode target)
@@ -1301,6 +964,36 @@ public class App : Application
         catch (Exception ex) { Logger.WriteLine($"XGM.InitLight on power change failed: {ex.Message}"); }
 
         OptimalBrightness.OnPowerStateChanged();
+
+        AnimeMatrix?.SetBatteryAuto();
+    }
+
+    /// <summary>
+    /// Handle wake from suspend. Firmware on some models resets the battery
+    /// charge limit during suspend, so re-apply the saved value.
+    /// </summary>
+    private void OnSystemResumed()
+    {
+        try
+        {
+            Battery.BatteryControl.AutoBattery();
+            AnimeMatrix?.SetDevice(true);
+
+            if (AppConfig.IsLenovoDevice())
+            {
+                // ALSA mixer state can revert across suspend - re-clamp.
+                if (AppConfig.Is("lenovo_mic_boost_fix"))
+                    Task.Run(() => Platform.Linux.Lenovo.LenovoFeatures.ApplyMicBoostFix());
+
+                // The ITE RGB controller loses its state on suspend.
+                if (USB.LenovoRgb.IsAvailable())
+                    Task.Run(() => USB.LenovoRgb.Apply());
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine("Settings re-apply on resume failed", ex);
+        }
     }
 
     // Unix signal handlers for clean shutdown on SIGTERM/SIGINT (logout/reboot)
@@ -1378,6 +1071,9 @@ public class App : Application
         { FnLock?.Stop(); }
         catch { }
         try
+        { GHelper.Linux.Input.NumberPad.Stop(); }
+        catch { }
+        try
         { Input?.Dispose(); }
         catch { }
         try
@@ -1403,6 +1099,9 @@ public class App : Application
         Power?.StopPowerMonitoring();
         UI.Views.ExtraWindow.StopClamshellInhibit();
         FnLock?.Stop();
+        AnimeMatrix?.Dispose();
+        GHelper.Linux.Input.NumberPad.Stop();
+        Platform.Linux.StatusLed.Shutdown();
         Input?.Dispose();
         Wmi?.Dispose();
 

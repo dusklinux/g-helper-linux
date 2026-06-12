@@ -408,6 +408,8 @@ public static class Slovenian
 
         ["other_header"] = "Drugo",
         ["boot_sound"] = "Zvok ob zagonu",
+        ["deep_sleep"] = "Način spanja",
+        ["deep_sleep_tooltip"] = "Kako prenosnik spi. s2idle = programsko pripravljenost: takojšnje prebujanje, a baterija se lahko med spanjem opazno prazni. deep = polno mirovanje S3: prebujanje traja trenutek dlje, praznjenje je minimalno. Uveljavi se takoj in obnovi ob vsakem zagonu.",
         ["window_topmost"] = "Okno vedno na vrhu",
         ["bw_tray_icon"] = "Črno-bela ikona v vrstici",
         ["clamshell_mode"] = "Način clamshell (onemogoči spanje ob zaprtju pokrova)",
@@ -478,6 +480,10 @@ public static class Slovenian
         ["profile_silent_label"] = "Tihi profil",
         ["profile_balanced_label"] = "Uravnotežen profil",
         ["profile_turbo_label"] = "Turbo profil",
+        ["epp_silent_label"] = "EPP Tihi",
+        ["epp_balanced_label"] = "EPP Uravnotezen",
+        ["epp_turbo_label"] = "EPP Turbo",
+        ["epp_tooltip"] = "Razmerje med energijo in zmogljivostjo CPU (energy_performance_preference). power varcuje z baterijo, performance izboljsa odzivnost. Uveljavi se na vseh jedrih ob aktivaciji nacina.",
         ["battery_health_format"] = "Zdravje baterije: {0} %",
         ["battery_health_unknown"] = "Zdravje baterije: --%",
         ["power_draw_discharge"] = "Poraba: {0} mW (praznjenje)",
@@ -919,5 +925,6 @@ public static class Slovenian
         ["sysfiles_name_desktop"] = "Vnos v meniju aplikacij",
         ["sysfiles_name_icon"] = "Ikona aplikacije",
         ["sysfiles_name_autostart"] = "Vnos samodejnega zagona",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo moduli jedra (modules-load.d)",
     };
 }

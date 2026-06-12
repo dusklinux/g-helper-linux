@@ -1,0 +1,84 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:GHelper.Linux.UI.Controls"
+        x:Class="GHelper.Linux.UI.Views.MatrixWindow"
+        Title="AnimeMatrix"
+        Width="500"
+        SizeToContent="Height"
+        MinHeight="300"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False"
+        Background="#1C1C1C"
+        Icon="avares://ghelper/UI/Assets/standard.ico">
+
+    <StackPanel Margin="16" Spacing="12">
+
+        <!-- Preview area -->
+        <Border Background="#0a0a1a" CornerRadius="8" Height="200" ClipToBounds="True">
+            <Image x:Name="previewImage" Stretch="Uniform"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <TextBlock x:Name="labelImageInfo" Classes="label-dim" FontSize="11"
+                   Text="" HorizontalAlignment="Center" />
+
+        <!-- Image controls -->
+        <Border Classes="panel">
+            <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                  RowSpacing="8" ColumnSpacing="12">
+
+                <TextBlock Grid.Row="0" Grid.Column="0" x:Name="labelZoom"
+                           Text="Zoom" Classes="label-dim" VerticalAlignment="Center" />
+                <Slider Grid.Row="0" Grid.Column="1" x:Name="trackZoom"
+                        Minimum="10" Maximum="200" TickFrequency="10"
+                        IsSnapToTickEnabled="True" Value="100"
+                        ValueChanged="TrackZoom_ValueChanged" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" x:Name="labelContrast"
+                           Text="Contrast" Classes="label-dim" VerticalAlignment="Center" />
+                <Slider Grid.Row="1" Grid.Column="1" x:Name="trackContrast"
+                        Minimum="10" Maximum="200" TickFrequency="10"
+                        IsSnapToTickEnabled="True" Value="100"
+                        ValueChanged="TrackContrast_ValueChanged" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" x:Name="labelGamma"
+                           Text="Gamma" Classes="label-dim" VerticalAlignment="Center" />
+                <Slider Grid.Row="2" Grid.Column="1" x:Name="trackGamma"
+                        Minimum="-100" Maximum="100" TickFrequency="10"
+                        IsSnapToTickEnabled="True" Value="0"
+                        ValueChanged="TrackGamma_ValueChanged" />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" x:Name="labelScaling"
+                           Text="Scaling" Classes="label-dim" VerticalAlignment="Center" />
+                <ComboBox Grid.Row="3" Grid.Column="1" x:Name="comboScaling"
+                          SelectedIndex="0" MinWidth="180"
+                          SelectionChanged="ComboScaling_Changed">
+                    <ComboBoxItem Content="Default" />
+                    <ComboBoxItem Content="Low" />
+                    <ComboBoxItem Content="High" />
+                    <ComboBoxItem Content="Bilinear" />
+                    <ComboBoxItem Content="Bicubic" />
+                    <ComboBoxItem Content="Nearest" />
+                </ComboBox>
+
+                <TextBlock Grid.Row="4" Grid.Column="0" x:Name="labelRotation"
+                           Text="Rotation" Classes="label-dim" VerticalAlignment="Center" />
+                <ComboBox Grid.Row="4" Grid.Column="1" x:Name="comboRotation"
+                          SelectedIndex="0" MinWidth="180"
+                          SelectionChanged="ComboRotation_Changed">
+                    <ComboBoxItem Content="Straight" />
+                    <ComboBoxItem Content="Diagonal" />
+                </ComboBox>
+
+            </Grid>
+        </Border>
+
+        <!-- Buttons -->
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <Button x:Name="buttonPicture" Content="Picture / GIF"
+                    Click="ButtonPicture_Click" />
+            <Button x:Name="buttonReset" Content="Reset"
+                    Click="ButtonReset_Click" />
+        </StackPanel>
+
+    </StackPanel>
+</Window>

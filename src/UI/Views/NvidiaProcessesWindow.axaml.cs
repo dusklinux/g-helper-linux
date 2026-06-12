@@ -5,7 +5,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
-using GHelper.Linux.Gpu;
+using GHelper.Linux.Gpu.NVidia;
 using GHelper.Linux.Helpers;
 using GHelper.Linux.I18n;
 
@@ -59,12 +59,17 @@ public partial class NvidiaProcessesWindow : Window
         var libOnly = new List<NvidiaHolder>();
         foreach (var h in holders)
         {
-            if (h.FdCount > 0)
+            if (h.BlocksUnload)
                 active.Add(h);
             else if (h.LibsMapped > 0)
                 libOnly.Add(h);
         }
-        active.Sort((a, b) => b.FdCount != a.FdCount ? b.FdCount - a.FdCount : a.Pid - b.Pid);
+        active.Sort((a, b) =>
+        {
+            int aTotal = a.FdCount + a.DriFdCount + a.I2cFdCount;
+            int bTotal = b.FdCount + b.DriFdCount + b.I2cFdCount;
+            return bTotal != aTotal ? bTotal - aTotal : a.Pid - b.Pid;
+        });
         libOnly.Sort((a, b) => a.Pid - b.Pid);
 
         if (active.Count > 0)
@@ -125,7 +130,7 @@ public partial class NvidiaProcessesWindow : Window
 
     private Control BuildRow(NvidiaHolder holder)
     {
-        bool isLibOnly = holder.FdCount == 0 && holder.LibsMapped > 0;
+        bool isLibOnly = !holder.BlocksUnload && holder.LibsMapped > 0;
 
         var border = new Border
         {
@@ -153,11 +158,25 @@ public partial class NvidiaProcessesWindow : Window
             FontSize = 13,
         };
 
+        string detailText;
+        if (isLibOnly)
+        {
+            detailText = Labels.Format("gpu_process_row_libs", holder.User);
+        }
+        else
+        {
+            int total = holder.FdCount + holder.DriFdCount + holder.I2cFdCount;
+            string suffix = "";
+            if (holder.DriFdCount > 0)
+                suffix += $" +{holder.DriFdCount} DRI";
+            if (holder.I2cFdCount > 0)
+                suffix += $" +{holder.I2cFdCount} I2C";
+            detailText = Labels.Format("gpu_process_row_detail", holder.User, total) + suffix;
+        }
+
         var secondaryText = new TextBlock
         {
-            Text = isLibOnly
-                ? Labels.Format("gpu_process_row_libs", holder.User)
-                : Labels.Format("gpu_process_row_detail", holder.User, holder.FdCount),
+            Text = detailText,
             Classes = { "label-dim" },
             FontSize = 11,
         };

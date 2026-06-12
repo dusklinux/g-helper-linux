@@ -21,6 +21,16 @@ public class LinuxSystemIntegration : ISystemIntegration
 
     public string GetModelName()
     {
+        // Lenovo encodes the machine type in product_name (e.g. "83DX"); the
+        // human-readable name lives in product_family (e.g. "LOQ 15AHP9").
+        if (Helpers.AppConfig.IsLenovoDevice())
+        {
+            string? family = SysfsHelper.ReadAttribute(Path.Combine(SysfsHelper.DmiId, "product_family"));
+            string? name = SysfsHelper.ReadAttribute(Path.Combine(SysfsHelper.DmiId, "product_name"));
+            if (!string.IsNullOrWhiteSpace(family))
+                return string.IsNullOrWhiteSpace(name) ? family : $"{family} ({name})";
+        }
+
         return SysfsHelper.ReadAttribute(Path.Combine(SysfsHelper.DmiId, "product_name"))
             ?? Labels.Get("unknown_asus");
     }
@@ -267,8 +277,11 @@ public class LinuxSystemIntegration : ISystemIntegration
         }
     }
 
-    public bool IsAsusWmiLoaded()
+    public bool IsPlatformDriverLoaded()
     {
+        if (Helpers.AppConfig.IsLenovoDevice())
+            return Lenovo.LenovoDetection.PlatformDriver().loaded;
+
         // Check if asus-nb-wmi module is loaded
         var modules = SysfsHelper.RunCommand("lsmod", "");
         if (modules != null && modules.Contains("asus_nb_wmi"))

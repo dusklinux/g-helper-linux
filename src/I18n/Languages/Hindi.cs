@@ -408,6 +408,8 @@ public static class Hindi
 
         ["other_header"] = "अन्य",
         ["boot_sound"] = "बूट ध्वनि",
+        ["deep_sleep"] = "सस्पेंड मोड",
+        ["deep_sleep_tooltip"] = "लैपटॉप कैसे सोता है। s2idle = सॉफ़्टवेयर स्टैंडबाय: तुरंत जागता है, लेकिन नींद के दौरान बैटरी काफ़ी खर्च हो सकती है। deep = पूर्ण S3 सस्पेंड: जागने में थोड़ा अधिक समय लगता है, खपत न्यूनतम होती है। तुरंत लागू होता है और हर बूट पर बहाल होता है।",
         ["window_topmost"] = "विंडो हमेशा शीर्ष पर",
         ["bw_tray_icon"] = "श्वेत-श्याम ट्रे आइकन",
         ["clamshell_mode"] = "Clamshell मोड (ढक्कन बंद होने पर स्लीप अक्षम करें)",
@@ -478,6 +480,10 @@ public static class Hindi
         ["profile_silent_label"] = "साइलेंट प्रोफ़ाइल",
         ["profile_balanced_label"] = "संतुलित प्रोफ़ाइल",
         ["profile_turbo_label"] = "टर्बो प्रोफ़ाइल",
+        ["epp_silent_label"] = "साइलेंट EPP",
+        ["epp_balanced_label"] = "बैलेंस्ड EPP",
+        ["epp_turbo_label"] = "टर्बो EPP",
+        ["epp_tooltip"] = "CPU ऊर्जा बनाम प्रदर्शन संतुलन (energy_performance_preference)। power बैटरी को, performance प्रतिक्रिया को प्राथमिकता देता है। मोड सक्रिय होने पर सभी कोर पर लागू होता है।",
         ["battery_health_format"] = "बैटरी स्वास्थ्य: {0} %",
         ["battery_health_unknown"] = "बैटरी स्वास्थ्य: --%",
         ["power_draw_discharge"] = "पावर खपत: {0} mW (डिस्चार्ज)",
@@ -919,5 +925,6 @@ public static class Hindi
         ["sysfiles_name_desktop"] = "अनुप्रयोग मेनू प्रविष्टि",
         ["sysfiles_name_icon"] = "अनुप्रयोग आइकन",
         ["sysfiles_name_autostart"] = "ऑटोस्टार्ट प्रविष्टि",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo कर्नेल मॉड्यूल (modules-load.d)",
     };
 }

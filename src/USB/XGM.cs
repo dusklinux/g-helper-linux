@@ -316,9 +316,9 @@ public static class XGM
 
             // If the dock is enabled at startup, the dGPU is already on the
             // PCIe bus - probe for the RX 6850M XT and remember it. See
-            // Gpu/LinuxAmdDgpuDetect.RefreshXgmSpecialFlag for details.
+            // Gpu/AMD/LinuxAmdDgpuDetect.RefreshXgmSpecialFlag for details.
             try
-            { Gpu.LinuxAmdDgpuDetect.RefreshXgmSpecialFlag(); }
+            { Gpu.AMD.LinuxAmdDgpuDetect.RefreshXgmSpecialFlag(); }
             catch (Exception ex) { Helpers.Logger.WriteLine($"XGM RX6850M probe: {ex.Message}"); }
         }
         catch (Exception ex)

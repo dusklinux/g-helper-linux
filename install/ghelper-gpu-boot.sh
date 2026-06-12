@@ -340,6 +340,32 @@ dgpu_foreign_driver() {
     return 1
 }
 
+# Re-apply suspend variant. The kernel resets /sys/power/mem_sleep to the
+# firmware default on every boot, so the user's choice (written by ghelper
+# to /etc/ghelper/mem-sleep) must be restored here. Runs before the GPU
+# logic and its early exits - the two are independent.
+apply_mem_sleep() {
+    local state="${ROOT}/etc/ghelper/mem-sleep"
+    local sys="${ROOT}/sys/power/mem_sleep"
+    [[ -f "$state" && -f "$sys" ]] || return 0
+
+    local v
+    v="$(tr -d '[:space:]' < "$state")"
+    [[ "$v" =~ ^[a-z0-9]+$ ]] || { log "mem_sleep: invalid value in $state"; return 0; }
+
+    # Only write variants the kernel actually offers.
+    if grep -qw "$v" "$sys" 2>/dev/null; then
+        if echo "$v" > "$sys" 2>/dev/null; then
+            log "mem_sleep restored: $v"
+        else
+            log "mem_sleep: write of '$v' failed"
+        fi
+    else
+        log "mem_sleep: '$v' not offered by kernel, skipping"
+    fi
+}
+apply_mem_sleep
+
 # Resolve hardware paths.
 dgpu_path=$(resolve_sysfs_path "dgpu_disable")
 mux_path=$(resolve_sysfs_path "gpu_mux_mode")

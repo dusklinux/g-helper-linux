@@ -408,6 +408,8 @@ public static class Nepali
 
         ["other_header"] = "अन्य",
         ["boot_sound"] = "बुट ध्वनि",
+        ["deep_sleep"] = "निलम्बन मोड",
+        ["deep_sleep_tooltip"] = "ल्यापटप कसरी सुत्छ। s2idle = सफ्टवेयर स्ट्यान्डबाई: तुरुन्तै ब्युँझिन्छ, तर निद्रामा ब्याट्री उल्लेखनीय रूपमा खर्च हुन सक्छ। deep = पूर्ण S3 निलम्बन: ब्युँझिन अलि बढी समय लाग्छ, खर्च न्यून हुन्छ। तुरुन्तै लागू हुन्छ र हरेक बुटमा पुनर्स्थापित हुन्छ।",
         ["window_topmost"] = "विन्डो सधैं माथि",
         ["bw_tray_icon"] = "श्वेतश्याम ट्रे आइकन",
         ["clamshell_mode"] = "Clamshell मोड (ढक्कन बन्द हुँदा निद्रा अक्षम)",
@@ -478,6 +480,10 @@ public static class Nepali
         ["profile_silent_label"] = "मौन प्रोफाइल",
         ["profile_balanced_label"] = "सन्तुलित प्रोफाइल",
         ["profile_turbo_label"] = "टर्बो प्रोफाइल",
+        ["epp_silent_label"] = "साइलेन्ट EPP",
+        ["epp_balanced_label"] = "सन्तुलित EPP",
+        ["epp_turbo_label"] = "टर्बो EPP",
+        ["epp_tooltip"] = "CPU ऊर्जा र प्रदर्शन सन्तुलन (energy_performance_preference)। power ले ब्याट्रीलाई, performance ले प्रतिक्रियालाई प्राथमिकता दिन्छ। मोड सक्रिय हुँदा सबै कोरमा लागू हुन्छ।",
         ["battery_health_format"] = "ब्याट्री स्वास्थ्य: {0} %",
         ["battery_health_unknown"] = "ब्याट्री स्वास्थ्य: --%",
         ["power_draw_discharge"] = "पावर खपत: {0} mW (डिस्चार्ज)",
@@ -919,5 +925,6 @@ public static class Nepali
         ["sysfiles_name_desktop"] = "अनुप्रयोग मेनु प्रविष्टि",
         ["sysfiles_name_icon"] = "अनुप्रयोग आइकन",
         ["sysfiles_name_autostart"] = "स्वतः-सुरु प्रविष्टि",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo कर्नेल मोड्युलहरू (modules-load.d)",
     };
 }

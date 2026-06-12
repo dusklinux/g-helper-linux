@@ -316,6 +316,8 @@ public static class Dutch
 
         ["other_header"] = "Overig",
         ["boot_sound"] = "Opstartgeluid",
+        ["deep_sleep"] = "Slaapstand-modus",
+        ["deep_sleep_tooltip"] = "Hoe de laptop slaapt. s2idle = software-standby: direct ontwaken, maar de accu kan tijdens de slaap merkbaar leeglopen. deep = volledige S3-slaapstand: ontwaken duurt iets langer, verbruik is minimaal. Direct toegepast en bij elke start hersteld.",
         ["window_topmost"] = "Venster altijd bovenaan",
         ["bw_tray_icon"] = "Z/W-systeemvakpictogram",
         ["clamshell_mode"] = "Clamshell-modus (niet in slaapstand bij sluiten deksel)",
@@ -342,6 +344,10 @@ public static class Dutch
         ["profile_silent_label"] = "Stil-profiel",
         ["profile_balanced_label"] = "Gebalanceerd-profiel",
         ["profile_turbo_label"] = "Turbo-profiel",
+        ["epp_silent_label"] = "Stille EPP",
+        ["epp_balanced_label"] = "Gebalanceerde EPP",
+        ["epp_turbo_label"] = "Turbo EPP",
+        ["epp_tooltip"] = "CPU-afweging tussen energie en prestaties (energy_performance_preference). power geeft accuduur voorrang, performance geeft reactiesnelheid voorrang. Toegepast op alle kernen bij activeren van de modus.",
         ["battery_health_format"] = "Accugezondheid: {0}%",
         ["battery_health_unknown"] = "Accugezondheid: --%",
         ["power_draw_discharge"] = "Stroomverbruik: {0} mW (ontladen)",
@@ -864,5 +870,6 @@ public static class Dutch
         ["sysfiles_name_desktop"] = "Toepassingsmenu-item",
         ["sysfiles_name_icon"] = "Toepassingspictogram",
         ["sysfiles_name_autostart"] = "Autostart-item",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo-kernelmodules (modules-load.d)",
     };
 }

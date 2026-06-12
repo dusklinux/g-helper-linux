@@ -316,6 +316,8 @@ public static class German
 
         ["other_header"] = "Sonstiges",
         ["boot_sound"] = "Startsound",
+        ["deep_sleep"] = "Standby-Modus",
+        ["deep_sleep_tooltip"] = "Wie das Notebook schläft. s2idle = Software-Standby: sofortiges Aufwachen, aber der Akku kann sich im Schlaf spürbar entladen. deep = echtes S3-Suspend: Aufwachen dauert etwas länger, Entladung ist minimal. Wird sofort angewendet und bei jedem Start wiederhergestellt.",
         ["window_topmost"] = "Fenster immer im Vordergrund",
         ["bw_tray_icon"] = "S/W-Tray-Symbol",
         ["clamshell_mode"] = "Clamshell-Modus (kein Schlaf bei geschlossenem Deckel)",
@@ -342,6 +344,10 @@ public static class German
         ["profile_silent_label"] = "Silent-Profil",
         ["profile_balanced_label"] = "Balanced-Profil",
         ["profile_turbo_label"] = "Turbo-Profil",
+        ["epp_silent_label"] = "Silent-EPP",
+        ["epp_balanced_label"] = "Ausgewogen-EPP",
+        ["epp_turbo_label"] = "Turbo-EPP",
+        ["epp_tooltip"] = "CPU-Abwaegung zwischen Energie und Leistung (energy_performance_preference). power bevorzugt Akkulaufzeit, performance bevorzugt Reaktionsfreude. Wird beim Aktivieren des Modus auf alle CPU-Kerne angewendet.",
         ["battery_health_format"] = "Akkuzustand: {0}%",
         ["battery_health_unknown"] = "Akkuzustand: --%",
         ["power_draw_discharge"] = "Leistungsaufnahme: {0} mW (Entladung)",
@@ -864,5 +870,6 @@ public static class German
         ["sysfiles_name_desktop"] = "Anwendungsmenü-Eintrag",
         ["sysfiles_name_icon"] = "Anwendungssymbol",
         ["sysfiles_name_autostart"] = "Autostart-Eintrag",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo-Kernelmodule (modules-load.d)",
     };
 }

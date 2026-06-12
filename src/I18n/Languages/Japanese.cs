@@ -319,6 +319,8 @@ public static class Japanese
 
         ["other_header"] = "その他",
         ["boot_sound"] = "起動音",
+        ["deep_sleep"] = "サスペンドモード",
+        ["deep_sleep_tooltip"] = "ノートPCのスリープ方式。s2idle = ソフトウェアスタンバイ: 即時復帰だがスリープ中にバッテリーが目に見えて消耗することがある。deep = 完全な S3 サスペンド: 復帰はやや遅いが消耗は最小限。即座に適用され、起動のたびに復元される。",
         ["window_topmost"] = "ウィンドウを常に最前面に表示",
         ["bw_tray_icon"] = "白黒トレイアイコン",
         ["clamshell_mode"] = "クラムシェルモード（蓋を閉じてもスリープしない）",
@@ -345,6 +347,10 @@ public static class Japanese
         ["profile_silent_label"] = "サイレントプロファイル",
         ["profile_balanced_label"] = "バランスプロファイル",
         ["profile_turbo_label"] = "ターボプロファイル",
+        ["epp_silent_label"] = "サイレント EPP",
+        ["epp_balanced_label"] = "バランス EPP",
+        ["epp_turbo_label"] = "ターボ EPP",
+        ["epp_tooltip"] = "CPU の省電力と性能のバランス (energy_performance_preference)。power はバッテリー優先、performance は応答性優先。モード適用時に全コアへ反映されます。",
         ["battery_health_format"] = "バッテリー健康状態: {0}%",
         ["battery_health_unknown"] = "バッテリー健康状態: --%",
         ["power_draw_discharge"] = "消費電力: {0} mW (放電中)",
@@ -867,5 +873,6 @@ public static class Japanese
         ["sysfiles_name_desktop"] = "アプリケーションメニュー項目",
         ["sysfiles_name_icon"] = "アプリケーションアイコン",
         ["sysfiles_name_autostart"] = "自動起動項目",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo カーネルモジュール (modules-load.d)",
     };
 }

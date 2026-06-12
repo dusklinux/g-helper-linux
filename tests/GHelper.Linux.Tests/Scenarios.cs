@@ -1,4 +1,4 @@
-// Comprehensive scenario coverage for GpuModeController.
+// Comprehensive scenario coverage for GPUModeControl.
 //
 // Matrix:
 //   PCI backend × raw_wmi flag × initial hardware state × button pressed
@@ -1080,7 +1080,7 @@ public static class Scenarios
         => Scenario(nameof(Regression_LivePciTransitionCallback_InvalidatesCache), sb =>
         {
             // The live Eco→Standard transition rescans /sys/bus/pci and
-            // brings the dGPU back. GpuModeController fires
+            // brings the dGPU back. GPUModeControl fires
             // OnLivePciTransition which production wires to
             // LinuxAsusWmi.InvalidateGpuPresenceCache. This scenario
             // asserts the callback contract is honoured end-to-end so the
@@ -1092,7 +1092,7 @@ public static class Scenarios
 
             // Wire the callback the way App.axaml.cs does in production
             // and fire it after simulating the rescan effect.
-            GpuModeController.OnLivePciTransition = LinuxAsusWmi.InvalidateGpuPresenceCache;
+            GPUModeControl.OnLivePciTransition = LinuxAsusWmi.InvalidateGpuPresenceCache;
             try
             {
                 Directory.CreateDirectory(Path.Combine(sb.TempRoot, "sys", "bus", "pci", "devices", "0000:01:00.0"));
@@ -1103,14 +1103,14 @@ public static class Scenarios
                 Assert(!LinuxAsusWmi.HasDiscreteNvidiaGpu(),
                     "before callback fires: cache still says no-dGPU");
 
-                GpuModeController.OnLivePciTransition?.Invoke();
+                GPUModeControl.OnLivePciTransition?.Invoke();
 
                 Assert(LinuxAsusWmi.HasDiscreteNvidiaGpu(),
                     "after callback fires: probe re-scans and sees the dGPU");
             }
             finally
             {
-                GpuModeController.OnLivePciTransition = null;
+                GPUModeControl.OnLivePciTransition = null;
             }
         });
 }

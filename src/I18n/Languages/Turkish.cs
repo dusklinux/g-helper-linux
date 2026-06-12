@@ -316,6 +316,8 @@ public static class Turkish
 
         ["other_header"] = "Diğer",
         ["boot_sound"] = "Açılış Sesi",
+        ["deep_sleep"] = "Uyku modu",
+        ["deep_sleep_tooltip"] = "Dizüstünün nasıl uyuduğu. s2idle = yazılım beklemesi: anında uyanma, ancak pil uyku sırasında belirgin şekilde boşalabilir. deep = tam S3 askıya alma: uyanma biraz daha uzun sürer, boşalma minimumdur. Hemen uygulanır ve her açılışta geri yüklenir.",
         ["window_topmost"] = "Pencere Her Zaman Üstte",
         ["bw_tray_icon"] = "Siyah-Beyaz Tepsi Simgesi",
         ["clamshell_mode"] = "Kapaklı Mod (kapak kapatıldığında uykuyu devre dışı bırak)",
@@ -342,6 +344,10 @@ public static class Turkish
         ["profile_silent_label"] = "Sessiz profili",
         ["profile_balanced_label"] = "Dengeli profili",
         ["profile_turbo_label"] = "Turbo profili",
+        ["epp_silent_label"] = "Sessiz EPP",
+        ["epp_balanced_label"] = "Dengeli EPP",
+        ["epp_turbo_label"] = "Turbo EPP",
+        ["epp_tooltip"] = "CPU enerji/performans dengesi (energy_performance_preference). power pil omrunu, performance tepkiselligi onceler. Mod etkinlestirildiginde tum cekirdeklere uygulanir.",
         ["battery_health_format"] = "Batarya sağlığı: {0}%",
         ["battery_health_unknown"] = "Batarya sağlığı: --%",
         ["power_draw_discharge"] = "Güç tüketimi: {0} mW (deşarj)",
@@ -864,5 +870,6 @@ public static class Turkish
         ["sysfiles_name_desktop"] = "Uygulama menüsü girişi",
         ["sysfiles_name_icon"] = "Uygulama simgesi",
         ["sysfiles_name_autostart"] = "Otomatik başlatma girişi",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo çekirdek modülleri (modules-load.d)",
     };
 }

@@ -202,3 +202,82 @@ SUBSYSTEM=="cpu", KERNEL=="cpu0", ACTION=="add|change", \
 # ── CPU online/offline (core toggling) ──
 SUBSYSTEM=="cpu", ACTION=="add", \
   RUN+="/bin/sh -c 'for f in /sys/devices/system/cpu/cpu*/online; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
+
+# ── CPU energy_performance_preference (per-mode EPP) ──
+# cpufreq policy dirs appear after the cpu add event on some kernels, so also
+# trigger on cpu0 change (fired by `udevadm trigger` during install).
+SUBSYSTEM=="cpu", KERNEL=="cpu0", ACTION=="add|change", \
+  RUN+="/bin/sh -c 'for f in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
+
+# ── NumberPad (ASUS illuminated touchpad) ──
+# The in-app NumberPad driver needs:
+#   * /dev/i2c-*  - to send the LED-control packet to the touchpad
+#                   (requires the i2c-dev kernel module)
+#   * /dev/uinput - to create the virtual keyboard that emits KEY_KP* codes
+KERNEL=="uinput", OPTIONS+="static_node=uinput", \
+  RUN+="/bin/chmod 0666 /dev/uinput"
+
+SUBSYSTEM=="i2c-dev", \
+  RUN+="/bin/chmod 0666 /dev/%k"
+
+# ── Lenovo (mainline kernel: ideapad-laptop + lenovo-wmi-*) ──
+# ideapad-laptop platform device (ACPI VPC2004): performance fallback,
+# battery conservation, fn-lock, always-on USB, camera
+ACTION=="add|change", SUBSYSTEM=="platform", DRIVER=="ideapad_acpi", \
+  RUN+="/bin/sh -c 'for f in fan_mode conservation_mode fn_lock usb_charging camera_power touchpad; do [ -f $sys$devpath/$$f ] && chmod 0666 $sys$devpath/$$f; done'"
+
+# platform_profile + CPU boost on Lenovo - same trigger pattern as the
+# asus-nb-wmi rule above, bound to ideapad_acpi which all consumer Lenovo
+# laptops (IdeaPad/Legion/LOQ/Yoga) expose
+SUBSYSTEM=="platform", DRIVER=="ideapad_acpi", \
+  RUN+="/bin/sh -c '[ -f /sys/firmware/acpi/platform_profile ] && chmod 0666 /sys/firmware/acpi/platform_profile'"
+
+SUBSYSTEM=="platform", DRIVER=="ideapad_acpi", \
+  RUN+="/bin/sh -c '[ -f /sys/devices/system/cpu/intel_pstate/no_turbo ] && chmod 0666 /sys/devices/system/cpu/intel_pstate/no_turbo; [ -f /sys/devices/system/cpu/cpufreq/boost ] && chmod 0666 /sys/devices/system/cpu/cpufreq/boost'"
+
+# lenovo-wmi-gamezone provides platform_profile on modern Legion/LOQ;
+# module event as fallback trigger when ideapad binds before the profile
+# provider registers
+ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="lenovo_wmi_gamezone", \
+  RUN+="/bin/sh -c 'sleep 1; [ -f /sys/firmware/acpi/platform_profile ] && chmod 0666 /sys/firmware/acpi/platform_profile'"
+
+# Lenovo keyboard backlight LED (platform::kbd_backlight)
+SUBSYSTEM=="leds", KERNEL=="platform::kbd_backlight*", \
+  RUN+="/bin/sh -c 'chmod 0666 /sys/class/leds/%k/brightness 2>/dev/null'"
+
+# lenovo-wmi-other firmware-attributes (PPT power limit tunables)
+ACTION=="add|change", SUBSYSTEM=="firmware-attributes", KERNEL=="lenovo-wmi-other*", \
+  RUN+="/bin/sh -c 'for f in $sys$devpath/attributes/*/current_value; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
+
+# Second chance on module load - attribute files can appear after the
+# subsystem event (same race as asus_armoury above)
+ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="lenovo_wmi_other", \
+  RUN+="/bin/sh -c 'sleep 1; for f in /sys/class/firmware-attributes/lenovo-wmi-other*/attributes/*/current_value; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
+
+# ideapad battery extension (charge_types: Standard / Fast / Long_Life)
+SUBSYSTEM=="power_supply", ATTR{type}=="Battery", \
+  RUN+="/bin/sh -c '[ -f $sys$devpath/charge_types ] && chmod 0666 $sys$devpath/charge_types'"
+
+# lenovo_wmi_other hwmon: manual fan target RPM (kernel 7.0+).
+# fanN_target is RW (0 = auto); min/max/div stay read-only.
+SUBSYSTEM=="hwmon", ATTR{name}=="lenovo_wmi_other", \
+  RUN+="/bin/sh -c 'for f in $sys$devpath/fan*_target; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
+
+# Second chance on module load - hwmon channels can appear after the
+# subsystem event (same race pattern as the firmware-attributes rules)
+ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="lenovo_wmi_other", \
+  RUN+="/bin/sh -c 'sleep 1; for d in /sys/class/hwmon/hwmon*; do grep -q lenovo_wmi_other \"$$d/name\" 2>/dev/null && chmod 0666 \"$$d\"/fan*_target 2>/dev/null; done'"
+
+# Lenovo 4-zone / Spectrum RGB keyboards: ITE USB HID (VID 0x048D).
+# Same access pattern as the ASUS 0b05 rule above.
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="048d", MODE="0666"
+
+# Lenovo extra-button input devices (Novo button, refresh-rate key, camera
+# lens cover switch) - the app's evdev reader needs read access.
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="Ideapad extra buttons", MODE="0666"
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="Lenovo WMI Camera Button", MODE="0666"
+
+# Lenovo status LEDs the app may drive (fnlock sync; micmute/mute via
+# lenovo-wmi-hotkey-utilities, kernel 6.14+)
+SUBSYSTEM=="leds", KERNEL=="platform::fnlock|platform::micmute|platform::mute", \
+  RUN+="/bin/sh -c 'chmod 0666 /sys/class/leds/%k/brightness 2>/dev/null'"

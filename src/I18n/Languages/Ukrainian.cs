@@ -316,6 +316,8 @@ public static class Ukrainian
 
         ["other_header"] = "Інше",
         ["boot_sound"] = "Звук завантаження",
+        ["deep_sleep"] = "Режим сну",
+        ["deep_sleep_tooltip"] = "Як ноутбук засинає. s2idle = програмний сон: миттєве пробудження, але батарея може помітно розряджатися уві сні. deep = повний S3-сон: пробудження трохи довше, розряд мінімальний. Застосовується одразу і відновлюється при кожному завантаженні.",
         ["window_topmost"] = "Вікно завжди зверху",
         ["bw_tray_icon"] = "Чорно-біла іконка в треї",
         ["clamshell_mode"] = "Режим закритої кришки (вимкнути сон при закритті)",
@@ -342,6 +344,10 @@ public static class Ukrainian
         ["profile_silent_label"] = "Профіль Тихий",
         ["profile_balanced_label"] = "Профіль Збалансований",
         ["profile_turbo_label"] = "Профіль Турбо",
+        ["epp_silent_label"] = "EPP Тихий",
+        ["epp_balanced_label"] = "EPP Збалансований",
+        ["epp_turbo_label"] = "EPP Турбо",
+        ["epp_tooltip"] = "Баланс енергії та продуктивності CPU (energy_performance_preference). power економить батарею, performance підвищує чутливість. Застосовується до всіх ядер при активації режиму.",
         ["battery_health_format"] = "Здоров'я батареї: {0}%",
         ["battery_health_unknown"] = "Здоров'я батареї: --%",
         ["power_draw_discharge"] = "Споживання: {0} мВт (розрядка)",
@@ -864,5 +870,6 @@ public static class Ukrainian
         ["sysfiles_name_desktop"] = "Пункт меню програм",
         ["sysfiles_name_icon"] = "Значок програми",
         ["sysfiles_name_autostart"] = "Запис автозапуску",
+        ["sysfiles_name_lenovo_modules"] = "Модулі ядра Lenovo (modules-load.d)",
     };
 }

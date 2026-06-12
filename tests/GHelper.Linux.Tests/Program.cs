@@ -1,8 +1,8 @@
 // Test runner entry point.
 //
-// We set GHELPER_TEST_ROOT before touching any GpuModeController code so
+// We set GHELPER_TEST_ROOT before touching any GPUModeControl code so
 // the static path constants resolve under the sandbox. The variable is
-// captured at static-ctor time of GpuModeController and cannot be changed
+// captured at static-ctor time of GPUModeControl and cannot be changed
 // thereafter, which is fine because every scenario shares the same root
 // and the Sandbox helper wipes the relevant subdirs between tests.
 
@@ -18,7 +18,7 @@ public static class Program
         Directory.CreateDirectory(testRoot);
 
         Console.WriteLine("═══════════════════════════════════════════════════════");
-        Console.WriteLine(" GpuModeController scenario tests");
+        Console.WriteLine(" GPUModeControl scenario tests");
         Console.WriteLine($" Sandbox: {testRoot}");
         Console.WriteLine("═══════════════════════════════════════════════════════");
 

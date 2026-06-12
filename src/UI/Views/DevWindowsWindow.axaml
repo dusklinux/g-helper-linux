@@ -1,0 +1,11 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="GHelper.Linux.UI.Views.DevWindowsWindow"
+        Title="Dev Windows"
+        Width="260" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+    <ScrollViewer MaxHeight="700">
+        <StackPanel x:Name="panelButtons" Margin="10" Spacing="4" />
+    </ScrollViewer>
+</Window>

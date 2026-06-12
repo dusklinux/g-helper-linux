@@ -408,6 +408,8 @@ public static class Malay
 
         ["other_header"] = "Lain-lain",
         ["boot_sound"] = "Bunyi but",
+        ["deep_sleep"] = "Mod tidur",
+        ["deep_sleep_tooltip"] = "Cara komputer riba tidur. s2idle = sedia perisian: bangun serta-merta, tetapi bateri boleh susut ketara semasa tidur. deep = penggantungan S3 penuh: bangun mengambil masa sedikit lebih lama, susutan minimum. Digunakan serta-merta dan dipulihkan pada setiap but.",
         ["window_topmost"] = "Tetingkap sentiasa di atas",
         ["bw_tray_icon"] = "Ikon dulang H&P",
         ["clamshell_mode"] = "Mod clamshell (lumpuhkan tidur apabila penutup ditutup)",
@@ -478,6 +480,10 @@ public static class Malay
         ["profile_silent_label"] = "Profil senyap",
         ["profile_balanced_label"] = "Profil seimbang",
         ["profile_turbo_label"] = "Profil turbo",
+        ["epp_silent_label"] = "EPP Senyap",
+        ["epp_balanced_label"] = "EPP Seimbang",
+        ["epp_turbo_label"] = "EPP Turbo",
+        ["epp_tooltip"] = "Imbangan tenaga vs prestasi CPU (energy_performance_preference). power mengutamakan bateri, performance mengutamakan tindak balas. Digunakan pada semua teras apabila mod diaktifkan.",
         ["battery_health_format"] = "Kesihatan bateri: {0} %",
         ["battery_health_unknown"] = "Kesihatan bateri: --%",
         ["power_draw_discharge"] = "Penggunaan kuasa: {0} mW (menyahcas)",
@@ -919,5 +925,6 @@ public static class Malay
         ["sysfiles_name_desktop"] = "Entri menu aplikasi",
         ["sysfiles_name_icon"] = "Ikon aplikasi",
         ["sysfiles_name_autostart"] = "Entri automula",
+        ["sysfiles_name_lenovo_modules"] = "Modul kernel Lenovo (modules-load.d)",
     };
 }

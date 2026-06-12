@@ -316,6 +316,8 @@ public static class Vietnamese
 
         ["other_header"] = "Khác",
         ["boot_sound"] = "Âm thanh khởi động",
+        ["deep_sleep"] = "Chế độ ngủ",
+        ["deep_sleep_tooltip"] = "Cách máy ngủ. s2idle = chờ bằng phần mềm: thức dậy tức thì nhưng pin có thể hao đáng kể khi ngủ. deep = ngưng S3 hoàn toàn: thức dậy lâu hơn một chút, hao pin tối thiểu. Áp dụng ngay và được khôi phục mỗi lần khởi động.",
         ["window_topmost"] = "Cửa sổ luôn ở trên",
         ["bw_tray_icon"] = "Biểu tượng khay đen trắng",
         ["clamshell_mode"] = "Chế độ gập máy (tắt ngủ khi gập nắp)",
@@ -342,6 +344,10 @@ public static class Vietnamese
         ["profile_silent_label"] = "Hồ sơ Yên tĩnh",
         ["profile_balanced_label"] = "Hồ sơ Cân bằng",
         ["profile_turbo_label"] = "Hồ sơ Turbo",
+        ["epp_silent_label"] = "EPP Im lang",
+        ["epp_balanced_label"] = "EPP Can bang",
+        ["epp_turbo_label"] = "EPP Turbo",
+        ["epp_tooltip"] = "Can bang nang luong va hieu nang CPU (energy_performance_preference). power uu tien pin, performance uu tien do phan hoi. Ap dung cho moi nhan CPU khi kich hoat che do.",
         ["battery_health_format"] = "Tình trạng pin: {0}%",
         ["battery_health_unknown"] = "Tình trạng pin: --%",
         ["power_draw_discharge"] = "Tiêu thụ: {0} mW (xả)",
@@ -864,5 +870,6 @@ public static class Vietnamese
         ["sysfiles_name_desktop"] = "Mục menu ứng dụng",
         ["sysfiles_name_icon"] = "Biểu tượng ứng dụng",
         ["sysfiles_name_autostart"] = "Mục tự khởi động",
+        ["sysfiles_name_lenovo_modules"] = "Mô-đun nhân Lenovo (modules-load.d)",
     };
 }

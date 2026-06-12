@@ -408,6 +408,8 @@ public static class Slovak
 
         ["other_header"] = "Ostatné",
         ["boot_sound"] = "Zvuk pri štarte",
+        ["deep_sleep"] = "Režim spánku",
+        ["deep_sleep_tooltip"] = "Ako notebook spí. s2idle = softvérový spánok: okamžité prebudenie, ale batéria sa môže počas spánku citeľne vybíjať. deep = plné uspanie S3: prebudenie trvá o chvíľu dlhšie, vybíjanie je minimálne. Použije sa ihneď a obnoví sa pri každom spustení.",
         ["window_topmost"] = "Okno vždy navrchu",
         ["bw_tray_icon"] = "Čiernobiela ikona v paneli",
         ["clamshell_mode"] = "Režim clamshell (zakázať spánok pri zatvorení veka)",
@@ -478,6 +480,10 @@ public static class Slovak
         ["profile_silent_label"] = "Tichý profil",
         ["profile_balanced_label"] = "Vyvážený profil",
         ["profile_turbo_label"] = "Turbo profil",
+        ["epp_silent_label"] = "EPP Tichy",
+        ["epp_balanced_label"] = "EPP Vyvazeny",
+        ["epp_turbo_label"] = "EPP Turbo",
+        ["epp_tooltip"] = "Pomer energie a vykonu CPU (energy_performance_preference). power setri bateriu, performance zlepsuje odozvu. Pouzije sa na vsetky jadra pri aktivacii rezimu.",
         ["battery_health_format"] = "Zdravie batérie: {0} %",
         ["battery_health_unknown"] = "Zdravie batérie: --%",
         ["power_draw_discharge"] = "Odber napájania: {0} mW (vybíjanie)",
@@ -919,5 +925,6 @@ public static class Slovak
         ["sysfiles_name_desktop"] = "Položka ponuky aplikácií",
         ["sysfiles_name_icon"] = "Ikona aplikácie",
         ["sysfiles_name_autostart"] = "Položka automatického spustenia",
+        ["sysfiles_name_lenovo_modules"] = "Moduly jadra Lenovo (modules-load.d)",
     };
 }

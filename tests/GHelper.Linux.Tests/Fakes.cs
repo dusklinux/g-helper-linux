@@ -1,5 +1,5 @@
-// Minimal in-memory implementations of IAsusWmi and IPowerManager for
-// the GpuModeController scenario tests. Only methods the controller
+// Minimal in-memory implementations of IHardwareControl and IPowerManager for
+// the GPUModeControl scenario tests. Only methods the controller
 // actually calls are wired up; the rest throw NotImplementedException
 // so accidental usage in a test surfaces loudly.
 
@@ -7,7 +7,7 @@ using GHelper.Linux.Platform;
 
 namespace GHelper.Linux.Tests;
 
-public sealed class FakeAsusWmi : IAsusWmi
+public sealed class FakeAsusWmi : IHardwareControl
 {
     // Mutable state the scenario can read and assert on.
     public bool EcoEnabled;            // true ⇒ dgpu_disable=1
@@ -58,7 +58,7 @@ public sealed class FakeAsusWmi : IAsusWmi
     public bool IsFeatureSupported(string feature)
     {
         Calls.Add(("IsFeatureSupported", feature));
-        // The two feature checks that matter to GpuModeController paths
+        // The two feature checks that matter to GPUModeControl paths
         if (feature == "dgpu_disable") return DgpuDisableSupported;
         if (feature == "gpu_mux_mode") return MuxModeSupported;
         return false;
@@ -70,6 +70,9 @@ public sealed class FakeAsusWmi : IAsusWmi
 
     public event Action<int>? WmiEvent;
     public event Action<string>? KeyBindingEvent;
+    public event Action<string>? PlatformProfileChanged { add { } remove { } }
+
+    public bool HasKbdBrightnessHwChanged => false;
 
     // Everything below is irrelevant for these tests - left as throwing
     // stubs so a regression that suddenly calls them is visible.
@@ -122,6 +125,7 @@ public sealed class FakePowerManager : IPowerManager
     public int GetBatteryDrainRate() => 0;
     public int GetBatteryHealth() => 100;
     public event Action<bool>? PowerStateChanged;
+    public event Action? SystemResumed;
     public void StartPowerMonitoring() { }
     public void StopPowerMonitoring() { }
     public void TriggerPowerStateChanged(bool onAc) => PowerStateChanged?.Invoke(onAc);

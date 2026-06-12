@@ -1,0 +1,13 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="GHelper.Linux.UI.Views.DevPanelsWindow"
+        Title="Dev Panels"
+        Width="340" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+    <StackPanel Margin="10" Spacing="2">
+        <TextBlock Text="Force-show hardware-gated panels on unsupported machines. Each entry names the window the panel appears in."
+                   TextWrapping="Wrap" FontSize="11" Opacity="0.7" Margin="0,0,0,6" />
+        <StackPanel x:Name="panelToggles" Spacing="2" />
+    </StackPanel>
+</Window>

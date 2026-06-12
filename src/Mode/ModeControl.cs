@@ -34,10 +34,10 @@ public class ModeControl
 
     // Power limit bounds (matches Windows G-Helper AsusACPI constructor)
 
-    private const int MinTotal = 5;
+    internal const int MinTotal = 5;
     private const int MinGpuBoost = 5;
 
-    private static int GetMaxTotal()
+    internal static int GetMaxTotal()
     {
         if (Helpers.AppConfig.IsAdvantageEdition())
             return 250;
@@ -132,6 +132,12 @@ public class ModeControl
         };
         App.Power?.SetPlatformProfile(profile);
 
+        // Apply per-mode EPP override if set. Done after platform_profile
+        // because changing the profile can reset EPP on amd/intel pstate.
+        string? epp = Helpers.AppConfig.GetString($"epp_{baseMode}");
+        if (epp != null && Platform.Linux.CpuEpp.IsSupported())
+            Platform.Linux.CpuEpp.SetAll(epp);
+
         // 3. Verify: on some kernels, throttle_thermal_policy and platform_profile
         // are coupled - writing platform_profile may reset throttle_thermal_policy.
         // Read back and re-apply if needed.
@@ -188,6 +194,7 @@ public class ModeControl
 
             // Phase 1: fan curves first (sets FANM=4 for PPT acceptance)
             AutoFans(mode);
+            Fan.FanHysteresis.ApplyForCurrentMode();
             await Task.Delay(100);
 
             // Phase 2: power limits, undervolt, boost, ASPM
@@ -527,7 +534,7 @@ public class ModeControl
         if (wmi == null)
             return;
 
-        var nvCtl = App.GpuControl as Platform.Linux.LinuxNvidiaGpuControl;
+        var nvCtl = App.GpuControl as Gpu.NVidia.LinuxNvidiaGpuControl;
 
         if (!Helpers.AppConfig.IsMode("auto_apply_gpu"))
         {
@@ -594,7 +601,7 @@ public class ModeControl
 
     /// <summary>Return the dGPU to stock: default boost/temp/TGP, default power
     /// limit, unlocked GPU + VRAM clocks, zero clock offsets.</summary>
-    private static void ResetGpuTuning(Platform.IAsusWmi wmi, Platform.Linux.LinuxNvidiaGpuControl? nv)
+    private static void ResetGpuTuning(Platform.IHardwareControl wmi, Gpu.NVidia.LinuxNvidiaGpuControl? nv)
     {
         WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.NvDynamicBoost);
         WriteFwAttrDefault(wmi, Platform.Linux.AsusAttributes.NvTempTarget);
@@ -610,7 +617,7 @@ public class ModeControl
         }
     }
 
-    private static void WriteFwAttrDefault(Platform.IAsusWmi wmi, Platform.Linux.AttrDef attr)
+    private static void WriteFwAttrDefault(Platform.IHardwareControl wmi, Platform.Linux.AttrDef attr)
     {
         if (!wmi.IsFeatureSupported(attr))
             return;
@@ -738,7 +745,7 @@ public class ModeControl
     /// Logs all current values and warns if any expected value doesn't match.
     /// This helps diagnose dual-backend issues and permission problems.
     /// </summary>
-    private static void VerifyPptLimits(Platform.IAsusWmi wmi, int expectedPl1, int expectedPl2, int expectedFppt, int expectedApuPlat)
+    private static void VerifyPptLimits(Platform.IHardwareControl wmi, int expectedPl1, int expectedPl2, int expectedFppt, int expectedApuPlat)
     {
         try
         {

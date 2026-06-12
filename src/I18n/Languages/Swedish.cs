@@ -319,6 +319,8 @@ public static class Swedish
 
         ["other_header"] = "Övrigt",
         ["boot_sound"] = "Uppstartsljud",
+        ["deep_sleep"] = "Viloläge",
+        ["deep_sleep_tooltip"] = "Hur datorn sover. s2idle = mjukvaru-standby: omedelbar väckning, men batteriet kan laddas ur märkbart under vila. deep = fullt S3-vänteläge: väckning tar en stund längre, urladdningen är minimal. Tillämpas direkt och återställs vid varje start.",
         ["window_topmost"] = "Fönster alltid överst",
         ["bw_tray_icon"] = "Svartvit systemfältsikon",
         ["clamshell_mode"] = "Clamshell-läge (inaktivera viloläge vid stängning av lock)",
@@ -345,6 +347,10 @@ public static class Swedish
         ["profile_silent_label"] = "Tyst profil",
         ["profile_balanced_label"] = "Balanserad profil",
         ["profile_turbo_label"] = "Turbo-profil",
+        ["epp_silent_label"] = "Tyst EPP",
+        ["epp_balanced_label"] = "Balanserad EPP",
+        ["epp_turbo_label"] = "Turbo EPP",
+        ["epp_tooltip"] = "CPU-avvagning mellan energi och prestanda (energy_performance_preference). power prioriterar batteritid, performance prioriterar respons. Tillampas paa alla karnor nar laget aktiveras.",
         ["battery_health_format"] = "Batterihälsa: {0}%",
         ["battery_health_unknown"] = "Batterihälsa: --%",
         ["power_draw_discharge"] = "Strömförbrukning: {0} mW (urladdning)",
@@ -867,5 +873,6 @@ public static class Swedish
         ["sysfiles_name_desktop"] = "Programmenypost",
         ["sysfiles_name_icon"] = "Programikon",
         ["sysfiles_name_autostart"] = "Autostartpost",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo-kärnmoduler (modules-load.d)",
     };
 }

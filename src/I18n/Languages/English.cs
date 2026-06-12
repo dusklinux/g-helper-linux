@@ -411,6 +411,8 @@ public static class English
 
         ["other_header"] = "Other",
         ["boot_sound"] = "Boot Sound",
+        ["deep_sleep"] = "Suspend mode",
+        ["deep_sleep_tooltip"] = "How the laptop sleeps. s2idle = software standby: instant wake, but battery can drain noticeably while sleeping. deep = full S3 suspend: wake takes a moment longer, drain is minimal. Applied immediately and restored on every boot.",
         ["window_topmost"] = "Window Always on Top",
         ["bw_tray_icon"] = "B&W Tray Icon",
         ["clamshell_mode"] = "Clamshell Mode (disable sleep on lid close)",
@@ -481,6 +483,10 @@ public static class English
         ["profile_silent_label"] = "Silent profile",
         ["profile_balanced_label"] = "Balanced profile",
         ["profile_turbo_label"] = "Turbo profile",
+        ["epp_silent_label"] = "Silent EPP",
+        ["epp_balanced_label"] = "Balanced EPP",
+        ["epp_turbo_label"] = "Turbo EPP",
+        ["epp_tooltip"] = "CPU energy vs performance bias (energy_performance_preference). power favors battery life, performance favors responsiveness. Applied to all CPU cores when the mode is activated.",
         ["battery_health_format"] = "Battery health: {0}%",
         ["battery_health_unknown"] = "Battery health: --%",
         ["power_draw_discharge"] = "Power draw: {0} mW (discharging)",
@@ -922,5 +928,6 @@ public static class English
         ["sysfiles_name_desktop"] = "Application menu entry",
         ["sysfiles_name_icon"] = "Application icon",
         ["sysfiles_name_autostart"] = "Autostart entry",
+        ["sysfiles_name_lenovo_modules"] = "Lenovo kernel modules (modules-load.d)",
     };
 }
