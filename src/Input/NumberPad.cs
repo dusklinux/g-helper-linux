@@ -58,9 +58,10 @@ public static class NumberPad
     private const ushort ABS_MT_POSITION_X = 0x35;
     private const ushort ABS_MT_POSITION_Y = 0x36;
 
-    // Top-right corner activation zone: rightmost 15% x topmost 15%.
+    // Top-right corner activation zone. Some printed NumLK markers sit below
+    // the top 15% of the evdev range, so keep the vertical band forgiving.
     private const double CornerXMinFrac = 0.85;
-    private const double CornerYMaxFrac = 0.15;
+    private const double CornerYMaxFrac = 0.20;
     private const long HoldDurationMs = 1000;
     private const int PollTimeoutMs = 500;
 
@@ -112,6 +113,11 @@ public static class NumberPad
             return new ProbeResult { Status = ProbeStatus.I2cUnavailable, Detail = DevUinput, TouchpadName = target.Name };
         if (EvdevInterop.access(DevUinput, EvdevInterop.W_OK) != 0)
             return new ProbeResult { Status = ProbeStatus.PermissionDenied, Detail = DevUinput, TouchpadName = target.Name };
+
+        if (!File.Exists(target.EventPath))
+            return new ProbeResult { Status = ProbeStatus.I2cUnavailable, Detail = target.EventPath, TouchpadName = target.Name };
+        if (EvdevInterop.access(target.EventPath, EvdevInterop.R_OK | EvdevInterop.W_OK) != 0)
+            return new ProbeResult { Status = ProbeStatus.PermissionDenied, Detail = target.EventPath, TouchpadName = target.Name };
 
         return new ProbeResult { Status = ProbeStatus.Ok, TouchpadName = target.Name };
     }

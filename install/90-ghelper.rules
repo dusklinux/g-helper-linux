@@ -214,11 +214,16 @@ SUBSYSTEM=="cpu", KERNEL=="cpu0", ACTION=="add|change", \
 #   * /dev/i2c-*  - to send the LED-control packet to the touchpad
 #                   (requires the i2c-dev kernel module)
 #   * /dev/uinput - to create the virtual keyboard that emits KEY_KP* codes
-KERNEL=="uinput", OPTIONS+="static_node=uinput", \
-  RUN+="/bin/chmod 0666 /dev/uinput"
+KERNEL=="uinput", OPTIONS+="static_node=uinput", MODE="0666"
 
-SUBSYSTEM=="i2c-dev", \
-  RUN+="/bin/chmod 0666 /dev/%k"
+SUBSYSTEM=="i2c-dev", MODE="0666"
+
+# The touchpad evdev node is opened read/write so the driver can grab it
+# while the illuminated NumberPad is active.
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="ASUE* Touchpad", MODE="0666"
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="ASUP* Touchpad", MODE="0666"
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="ASUF* Touchpad", MODE="0666"
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="ELAN* Touchpad", MODE="0666"
 
 # ── Lenovo (mainline kernel: ideapad-laptop + lenovo-wmi-*) ──
 # ideapad-laptop platform device (ACPI VPC2004): performance fallback,
