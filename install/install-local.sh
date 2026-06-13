@@ -250,6 +250,7 @@ if [[ "$MODE" == "uninstall" ]]; then
     _safe_remove "/usr/local/bin/ghelper"                 "symlink"
     _safe_remove "$UDEV_DEST"                             "udev rules"
     _safe_remove "/etc/tmpfiles.d/90-ghelper.conf"        "tmpfiles config"
+    _safe_remove "/etc/modules-load.d/ghelper-numberpad.conf" "NumberPad modules-load config"
     _safe_remove "/etc/systemd/system/ghelper-gpu-boot.service" "GPU boot systemd unit"
     _safe_remove "/usr/local/lib/ghelper"                 "ghelper lib directory"
     _safe_remove "/etc/sudoers.d/ghelper-gpu"             "sudoers rule"
@@ -478,6 +479,22 @@ _inject "udev rules → $UDEV_DEST"
 
 udevadm control --reload-rules
 _info "udev daemon reloaded"
+
+if modprobe uinput 2>/dev/null; then
+    _info "kernel module loaded → uinput"
+else
+    _warn "could not load kernel module → uinput (NumberPad virtual keyboard may be unavailable)"
+fi
+
+if modprobe i2c-dev 2>/dev/null; then
+    _info "kernel module loaded → i2c-dev"
+else
+    _warn "could not load kernel module → i2c-dev (NumberPad LED control may be unavailable)"
+fi
+
+mkdir -p /etc/modules-load.d
+printf "uinput\ni2c-dev\n" > /etc/modules-load.d/ghelper-numberpad.conf
+_info "modules-load config → /etc/modules-load.d/ghelper-numberpad.conf"
 
 udevadm trigger
 _info "udev trigger fired — re-applying all RUN commands"
