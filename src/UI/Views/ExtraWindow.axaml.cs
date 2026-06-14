@@ -1,8 +1,10 @@
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Threading;
 using GHelper.Linux.Display;
 using GHelper.Linux.Gpu;
 using GHelper.Linux.I18n;
@@ -267,6 +269,13 @@ public partial class ExtraWindow : Window
         labelFnLockTeaser.Text = Labels.Get("fnlock_header");
         labelFnLockTeaserSub.Text = Labels.Get("fnlock_teaser_sub");
         labelFnLockDetails.Text = Labels.Get("details");
+
+        // Peripherals
+        headerPeripherals.Text = Labels.Get("peripherals_header");
+        checkDisableLogitech.Content = Labels.Get("peripherals_disable_logitech");
+        labelDisableLogitechHint.Text = Labels.Get("peripherals_disable_logitech_hint");
+        checkDisableAsusPeripherals.Content = Labels.Get("peripherals_disable_asus");
+        labelDisableAsusPeripheralsHint.Text = Labels.Get("peripherals_disable_asus_hint");
 
         // Advanced
         headerAdvanced.Text = Labels.Get("advanced_header");
@@ -980,7 +989,10 @@ public partial class ExtraWindow : Window
         if (_suppressEvents)
             return;
         bool enabled = checkOverdrive.IsChecked ?? false;
-        App.Wmi?.SetPanelOverdrive(enabled);
+        bool ok = App.Wmi?.SetPanelOverdrive(enabled) ?? false;
+        Helpers.AppConfig.Set("panel_od", enabled ? 1 : 0);
+        if (!ok)
+            Helpers.Logger.WriteLine("Panel overdrive: write rejected by firmware");
     }
 
     private void SliderGamma_ValueChanged(object? sender,
@@ -1071,6 +1083,9 @@ public partial class ExtraWindow : Window
 
         RefreshDeepSleep();
         RefreshStatusLed();
+
+        checkDisableLogitech.IsChecked = Peripherals.PeripheralsProvider.LogitechDisabled;
+        checkDisableAsusPeripherals.IsChecked = Peripherals.PeripheralsProvider.AsusPeripheralsDisabled;
 
         // NumberPad button: visible when the touchpad hardware exists, even
         // with missing permissions (the window shows the actionable hints).
@@ -1623,9 +1638,6 @@ public partial class ExtraWindow : Window
             return;
         bool on = checkKeepBacklight.IsChecked ?? false;
         Helpers.AppConfig.Set("kb_keep_on", on ? 1 : 0);
-        // Apply immediately: re-light to the configured level when enabling.
-        if (on)
-            USB.Aura.ApplyConfiguredBrightness("KeepOn");
     }
 
     /// <summary>Start a systemd-inhibit process that prevents lid-close suspend.</summary>
@@ -2081,10 +2093,53 @@ public partial class ExtraWindow : Window
             return;
         bool enabled = checkScreenAuto.IsChecked ?? false;
         Helpers.AppConfig.Set("screen_auto", enabled ? 1 : 0);
-        Helpers.Logger.WriteLine($"Screen auto refresh → {enabled}");
+        Helpers.Logger.WriteLine($"Screen auto refresh -> {enabled}");
         if (enabled)
             (App.Current as App)?.AutoScreen();
         App.MainWindowInstance?.RefreshScreenPublic();
+    }
+
+    private void CheckDisableLogitech_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool enabled = checkDisableLogitech.IsChecked ?? false;
+        RunPeripheralsConfigChange(checkDisableLogitech, "Logitech", enabled,
+            () => Peripherals.PeripheralsProvider.LogitechDisabled = enabled);
+    }
+
+    private void CheckDisableAsusPeripherals_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool enabled = checkDisableAsusPeripherals.IsChecked ?? false;
+        RunPeripheralsConfigChange(checkDisableAsusPeripherals, "ASUS", enabled,
+            () => Peripherals.PeripheralsProvider.AsusPeripheralsDisabled = enabled);
+    }
+
+    /// <summary>Runs the config change on a background thread so the UI
+    /// stays responsive. Toggle is disabled during the operation.</summary>
+    private static void RunPeripheralsConfigChange(
+        CheckBox toggle, string vendor, bool enabled, System.Action applyFlag)
+    {
+        toggle.IsEnabled = false;
+        Task.Run(() =>
+        {
+            try
+            {
+                applyFlag();
+                Helpers.Logger.WriteLine($"Peripherals: {vendor} disabled = {enabled}");
+                Peripherals.PeripheralsProvider.NotifyConfigChanged();
+            }
+            catch (System.Exception ex)
+            {
+                Helpers.Logger.WriteLine($"Peripherals: NotifyConfigChanged failed: {ex.Message}");
+            }
+            finally
+            {
+                Dispatcher.UIThread.Post(() => toggle.IsEnabled = true);
+            }
+        });
     }
 
     // PERSISTENT ECO

@@ -14,6 +14,10 @@ public class LinuxPowerManager : IPowerManager
 
     public event Action<bool>? PowerStateChanged;
     public event Action? SystemResumed;
+    public event Action? MonitorSlept;
+    public event Action? MonitorWoke;
+
+    private bool? _lastDpmsOn;
 
     // Poll interval for the power monitor loop. A wall-clock gap much larger
     // than this between iterations means the system was suspended.
@@ -77,6 +81,22 @@ public class LinuxPowerManager : IPowerManager
                 if (_lastAcState.HasValue && currentAc != _lastAcState.Value)
                     PowerStateChanged?.Invoke(currentAc);
                 _lastAcState = currentAc;
+
+                bool? currentDpms = ReadDpmsAnyOn();
+                if (currentDpms.HasValue)
+                {
+                    if (_lastDpmsOn == true && !currentDpms.Value)
+                    {
+                        Helpers.Logger.WriteLine("Monitor sleep (DPMS On -> Off)");
+                        MonitorSlept?.Invoke();
+                    }
+                    else if (_lastDpmsOn == false && currentDpms.Value)
+                    {
+                        Helpers.Logger.WriteLine("Monitor wake (DPMS Off -> On)");
+                        MonitorWoke?.Invoke();
+                    }
+                    _lastDpmsOn = currentDpms;
+                }
             }
             catch (Exception ex)
             {
@@ -125,6 +145,11 @@ public class LinuxPowerManager : IPowerManager
 
     public void SetPlatformProfile(string profile)
     {
+        // Mode switch: reset the PPT custom-profile circuit-breaker so the
+        // next SetPptLimit call retries switching to "custom".
+        if (Helpers.AppConfig.IsLenovoDevice())
+            Lenovo.LinuxLenovoWmi.ResetCustomSwitchBreaker();
+
         // /sys/firmware/acpi/platform_profile accepts a subset of: "low-power", "balanced", "performance", "quiet"
         // Available profiles vary by firmware - read platform_profile_choices first
         if (SysfsHelper.Exists(SysfsHelper.PlatformProfile))
@@ -234,19 +259,96 @@ public class LinuxPowerManager : IPowerManager
 
     private bool _aspmWritable = true; // Assume writable until proven otherwise
 
-    public void SetAspmPolicy(string policy)
+    public async Task SetAspmPolicy(string policy)
     {
         if (!_aspmWritable)
             return; // Kernel blocks writes on some systems (built-in module)
 
-        if (SysfsHelper.Exists(SysfsHelper.PcieAspm))
+        if (!SysfsHelper.Exists(SysfsHelper.PcieAspm))
+            return;
+
+        // Pre-flight: when leaving powersave, wake NVMe devices first to prevent
+        // D3cold->D0 resume failures that can panic.
+        string current = GetAspmPolicy();
+        bool leavingDeepSave = current is "powersave" or "powersupersave"
+                            && policy is not "powersave" and not "powersupersave";
+
+        if (leavingDeepSave && !await WakeNvmeDevicesAsync())
         {
-            if (!SysfsHelper.WriteAttribute(SysfsHelper.PcieAspm, policy))
-            {
-                _aspmWritable = false;
-                Helpers.Logger.WriteLine("ASPM policy is read-only on this kernel - use boot param pcie_aspm.policy=... instead");
-            }
+            Helpers.Logger.WriteLine(
+                "ASPM: NVMe device(s) stuck in deep sleep - skipping ASPM transition "
+                + "to avoid potential data loss. Consider adding "
+                + "nvme_core.default_ps_max_latency_us=0 to kernel boot params.");
+            return;
         }
+
+        if (!SysfsHelper.WriteAttribute(SysfsHelper.PcieAspm, policy))
+        {
+            _aspmWritable = false;
+            Helpers.Logger.WriteLine("ASPM policy is read-only on this kernel - use boot param pcie_aspm.policy=... instead");
+        }
+    }
+
+    /// <summary>
+    /// Wake all NVMe devices from deep PCIe power states (D3cold/D3hot) before
+    /// an ASPM transition. Returns true when all devices are in D0 (safe to
+    /// proceed), false if any device is stuck and the ASPM change should be aborted.
+    /// </summary>
+    private async Task<bool> WakeNvmeDevicesAsync()
+    {
+        const string nvmeClass = "/sys/class/nvme";
+        if (!Directory.Exists(nvmeClass))
+            return true; // No NVMe devices = nothing to worry about
+
+        foreach (var nvmeDir in Directory.GetDirectories(nvmeClass))
+        {
+            var pciDevDir = Path.Combine(nvmeDir, "device");
+            var powerStatePath = Path.Combine(pciDevDir, "power_state");
+            var state = SysfsHelper.ReadAttribute(powerStatePath);
+
+            if (state == null || state == "D0")
+                continue; // Already awake or path unreadable
+
+            var name = Path.GetFileName(nvmeDir);
+            Helpers.Logger.WriteLine($"ASPM pre-flight: {name} in {state}, waking...");
+
+            // Trigger runtime resume by reading a controller attribute
+            SysfsHelper.ReadAttribute(Path.Combine(nvmeDir, "serial"));
+
+            // Poll for D0 (up to 500ms)
+            bool woke = false;
+            for (int i = 0; i < 10; i++)
+            {
+                await Task.Delay(50);
+                state = SysfsHelper.ReadAttribute(powerStatePath);
+                if (state == "D0")
+                { woke = true; break; }
+            }
+
+            if (!woke)
+            {
+                // Last resort: temporarily disable d3cold and wait
+                var d3coldPath = Path.Combine(pciDevDir, "d3cold_allowed");
+                SysfsHelper.WriteAttribute(d3coldPath, "0");
+                await Task.Delay(200);
+                state = SysfsHelper.ReadAttribute(powerStatePath);
+                woke = state == "D0";
+                // Restore d3cold_allowed once awake (don't permanently disable it)
+                if (woke)
+                    SysfsHelper.WriteAttribute(d3coldPath, "1");
+            }
+
+            if (!woke)
+            {
+                Helpers.Logger.WriteLine($"ASPM pre-flight: {name} STUCK in {state} "
+                    + "- aborting ASPM change");
+                return false;
+            }
+
+            Helpers.Logger.WriteLine($"ASPM pre-flight: {name} woke to D0");
+        }
+
+        return true;
     }
 
     public string GetAspmPolicy()
@@ -315,5 +417,46 @@ public class LinuxPowerManager : IPowerManager
         if (fullCharge < 0 || designCapacity <= 0)
             return -1;
         return (int)(fullCharge * 100.0 / designCapacity);
+    }
+
+    /// <summary>
+    /// Returns true if any connected DRM output is in DPMS On, false if all are Off,
+    /// null when the DPMS attributes are unreadable (no DRM exposed).
+    /// </summary>
+    private static bool? ReadDpmsAnyOn()
+    {
+        const string drmRoot = "/sys/class/drm";
+        if (!Directory.Exists(drmRoot))
+            return null;
+
+        bool sawAny = false;
+        bool anyOn = false;
+        try
+        {
+            foreach (string dir in Directory.EnumerateDirectories(drmRoot))
+            {
+                string dpmsPath = Path.Combine(dir, "dpms");
+                string statusPath = Path.Combine(dir, "status");
+                if (!File.Exists(dpmsPath) || !File.Exists(statusPath))
+                    continue;
+
+                string status = (SysfsHelper.ReadAttribute(statusPath) ?? "").Trim();
+                if (status != "connected")
+                    continue;
+
+                sawAny = true;
+                string state = (SysfsHelper.ReadAttribute(dpmsPath) ?? "").Trim();
+                if (state == "On")
+                {
+                    anyOn = true;
+                    break;
+                }
+            }
+        }
+        catch
+        {
+            return null;
+        }
+        return sawAny ? anyOn : null;
     }
 }

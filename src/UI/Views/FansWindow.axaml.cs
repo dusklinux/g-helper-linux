@@ -58,6 +58,7 @@ public partial class FansWindow : Window
             InitModeCombo();
             LoadFanCurves();
             LoadPowerLimits();
+            LoadRyzenPower();
             LoadUV();
             LoadAdvanced();
             LoadGpuTuning();
@@ -265,6 +266,7 @@ public partial class FansWindow : Window
                 InitModeCombo();
                 LoadFanCurves();
                 LoadPowerLimits();
+                LoadRyzenPower();
                 LoadUV();
                 LoadAdvanced();
                 LoadGpuTuning();
@@ -1381,6 +1383,91 @@ public partial class FansWindow : Window
                 return true;
         }
         return false;
+    }
+
+    // AMD Ryzen SMU power/temp/clock sliders
+
+    private record RyzenSliderDef(string Param, Slider Slider, TextBlock Label, Grid Row, string Unit, float Divisor);
+
+    private RyzenSliderDef[]? _ryzenSliders;
+
+    private RyzenSliderDef[] BuildRyzenSliderMap() =>
+    [
+        new("stapm-limit", sliderRyzenStapm, labelRyzenStapm, rowRyzenStapm, "W", 1000),
+        new("fast-limit", sliderRyzenFast, labelRyzenFast, rowRyzenFast, "W", 1000),
+        new("slow-limit", sliderRyzenSlow, labelRyzenSlow, rowRyzenSlow, "W", 1000),
+        new("apu-slow-limit", sliderRyzenApuSlow, labelRyzenApuSlow, rowRyzenApuSlow, "W", 1000),
+        new("stapm-time", sliderRyzenStapmTime, labelRyzenStapmTime, rowRyzenStapmTime, "s", 1),
+        new("slow-time", sliderRyzenSlowTime, labelRyzenSlowTime, rowRyzenSlowTime, "s", 1),
+        new("tctl-temp", sliderRyzenTctl, labelRyzenTctl, rowRyzenTctl, "\u00b0C", 1),
+        new("apu-skin-temp", sliderRyzenApuSkin, labelRyzenApuSkin, rowRyzenApuSkin, "\u00b0C", 1),
+        new("dgpu-skin-temp", sliderRyzenDgpuSkin, labelRyzenDgpuSkin, rowRyzenDgpuSkin, "\u00b0C", 1),
+        new("vrm-current", sliderRyzenVrm, labelRyzenVrm, rowRyzenVrm, "A", 1000),
+        new("vrmsoc-current", sliderRyzenVrmSoc, labelRyzenVrmSoc, rowRyzenVrmSoc, "A", 1000),
+        new("vrmmax-current", sliderRyzenVrmMax, labelRyzenVrmMax, rowRyzenVrmMax, "A", 1000),
+        new("vrmsocmax-current", sliderRyzenVrmSocMax, labelRyzenVrmSocMax, rowRyzenVrmSocMax, "A", 1000),
+        new("max-gfxclk", sliderRyzenMaxGfx, labelRyzenMaxGfx, rowRyzenMaxGfx, "MHz", 1),
+        new("min-gfxclk", sliderRyzenMinGfx, labelRyzenMinGfx, rowRyzenMinGfx, "MHz", 1),
+    ];
+
+    private void LoadRyzenPower()
+    {
+        if (!Platform.Linux.RyzenPower.Available)
+        {
+            panelRyzenPower.IsVisible = false;
+            return;
+        }
+
+        _ryzenSliders = BuildRyzenSliderMap();
+        var info = Platform.Linux.RyzenPower.ReadInfo();
+        bool anyVisible = false;
+
+        foreach (var s in _ryzenSliders)
+        {
+            bool supported = Platform.Linux.RyzenPower.IsSupported(s.Param);
+            s.Row.IsVisible = supported;
+            if (!supported)
+                continue;
+            anyVisible = true;
+
+            // Seed from PM table if available, else use slider default.
+            if (info != null && info.TryGetValue(s.Param, out float raw))
+            {
+                float display = raw / s.Divisor;
+                s.Slider.Value = Math.Clamp(display, s.Slider.Minimum, s.Slider.Maximum);
+            }
+            UpdateRyzenLabel(s);
+        }
+
+        panelRyzenPower.IsVisible = anyVisible;
+    }
+
+    private void UpdateRyzenLabel(RyzenSliderDef s)
+    {
+        int v = (int)s.Slider.Value;
+        s.Label.Text = $"{v}{s.Unit}";
+    }
+
+    private void SliderRyzenPower_ValueChanged(object? sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_ryzenSliders == null)
+            return;
+        foreach (var s in _ryzenSliders)
+            if (sender == s.Slider)
+            { UpdateRyzenLabel(s); break; }
+    }
+
+    private void ButtonRyzenApply_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_ryzenSliders == null)
+            return;
+        foreach (var s in _ryzenSliders)
+        {
+            if (!s.Row.IsVisible)
+                continue;
+            int raw = (int)(s.Slider.Value * s.Divisor);
+            Platform.Linux.RyzenPower.Set(s.Param, raw);
+        }
     }
 
     // Ryzen Curve Optimizer undervolt (mirrors Windows Fans.cs: trackUV / checkApplyUV)

@@ -232,10 +232,11 @@ public class ModeControl
 
             // ASPM - on by default. No UI (kernel writes often blocked by
             // built-in pcie_aspm config). Auto-derived: powersave for Silent,
-            // default elsewhere.
-            if (Helpers.AppConfig.IsAutoASPM())
+            // default elsewhere. When leaving powersave, NVMe devices are woken
+            // first to prevent D3cold resume failures.
+            if (Helpers.AppConfig.IsAutoASPM() && App.Power != null)
             {
-                App.Power?.SetAspmPolicy(baseMode == 2 ? "powersave" : "default");
+                await App.Power.SetAspmPolicy(baseMode == 2 ? "powersave" : "default");
             }
 
             await Task.Delay(100); // Let EC settle after power/ASPM changes

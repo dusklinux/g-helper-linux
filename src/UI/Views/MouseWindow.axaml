@@ -18,13 +18,13 @@
             <Border Classes="panel">
                 <StackPanel>
                     <Border Classes="panel-header" Margin="0,0,0,8">
-                        <TextBlock Classes="header" Text="Device" />
+                        <TextBlock Classes="header" x:Name="lblHeaderDevice" Text="Device" />
                     </Border>
 
                     <TextBlock x:Name="labelDevice" Classes="value" Text="No ASUS mouse detected" />
 
                     <Grid x:Name="rowBattery" ColumnDefinitions="130,*" Margin="0,6,0,0">
-                        <TextBlock Grid.Column="0" Classes="label-dim" Text="Battery" />
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblBattery" Text="Battery" />
                         <TextBlock Grid.Column="1" x:Name="labelBattery" Classes="value" Text="--" />
                     </Grid>
                 </StackPanel>
@@ -34,11 +34,11 @@
             <Border x:Name="panelDpi" Classes="panel">
                 <StackPanel>
                     <Border Classes="panel-header" Margin="0,0,0,8">
-                        <TextBlock Classes="header" Text="DPI" />
+                        <TextBlock Classes="header" x:Name="lblHeaderDpi" Text="DPI" />
                     </Border>
 
                     <Grid ColumnDefinitions="130,*" Margin="0,4">
-                        <TextBlock Grid.Column="0" Classes="label-dim" Text="Active Profile"
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblActiveProfile" Text="Active Profile"
                                    VerticalAlignment="Center" />
                         <ComboBox Grid.Column="1" x:Name="comboDpiProfile"
                                   HorizontalAlignment="Stretch"
@@ -46,7 +46,7 @@
                     </Grid>
 
                     <Grid ColumnDefinitions="130,*,60" Margin="0,4">
-                        <TextBlock Grid.Column="0" Classes="label-dim" Text="DPI"
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblDpi" Text="DPI"
                                    VerticalAlignment="Center" />
                         <Slider Grid.Column="1" x:Name="sliderDpi"
                                 Minimum="100" Maximum="36000" Value="800"
@@ -55,6 +55,11 @@
                         <TextBlock Grid.Column="2" x:Name="labelDpiValue" Classes="value" Text="800"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
+
+                    <Grid x:Name="rowSensitivitySwitch" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblSensitivitySwitch" Text="Sensitivity Switching" VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkSensitivitySwitch" IsCheckedChanged="CheckSensitivitySwitch_Changed" />
+                    </Grid>
                 </StackPanel>
             </Border>
 
@@ -62,11 +67,11 @@
             <Border x:Name="panelPerformance" Classes="panel">
                 <StackPanel>
                     <Border Classes="panel-header" Margin="0,0,0,8">
-                        <TextBlock Classes="header" Text="Performance" />
+                        <TextBlock Classes="header" x:Name="lblHeaderPerformance" Text="Performance" />
                     </Border>
 
                     <Grid ColumnDefinitions="130,*" Margin="0,4">
-                        <TextBlock Grid.Column="0" Classes="label-dim" Text="Polling Rate"
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblPollingRate" Text="Polling Rate"
                                    VerticalAlignment="Center" />
                         <ComboBox Grid.Column="1" x:Name="comboPollingRate"
                                   HorizontalAlignment="Stretch"
@@ -74,14 +79,14 @@
                     </Grid>
 
                     <Grid x:Name="rowAngleSnapping" ColumnDefinitions="130,*" Margin="0,4">
-                        <TextBlock Grid.Column="0" Classes="label-dim" Text="Angle Snapping"
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblAngleSnapping" Text="Angle Snapping"
                                    VerticalAlignment="Center" />
                         <CheckBox Grid.Column="1" x:Name="checkAngleSnapping"
                                   IsCheckedChanged="CheckAngleSnapping_Changed" />
                     </Grid>
 
                     <Grid x:Name="rowDebounce" ColumnDefinitions="130,*" Margin="0,4">
-                        <TextBlock Grid.Column="0" Classes="label-dim" Text="Button Debounce"
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblDebounce" Text="Button Debounce"
                                    VerticalAlignment="Center" />
                         <ComboBox Grid.Column="1" x:Name="comboDebounce"
                                   HorizontalAlignment="Stretch"
@@ -89,11 +94,32 @@
                     </Grid>
 
                     <Grid x:Name="rowLiftOff" ColumnDefinitions="130,*" Margin="0,4">
-                        <TextBlock Grid.Column="0" Classes="label-dim" Text="Lift-Off Distance"
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblLiftOff" Text="Lift-Off Distance"
                                    VerticalAlignment="Center" />
                         <ComboBox Grid.Column="1" x:Name="comboLiftOff"
                                   HorizontalAlignment="Stretch"
                                   SelectionChanged="ComboLiftOff_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowOnboardProfiles" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblOnboardProfiles" Text="Onboard Profiles"
+                                   VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkOnboardProfiles"
+                                  IsCheckedChanged="CheckOnboardProfiles_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowHaptic" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblHaptic" Text="Haptic Feedback"
+                                   VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboHaptic"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ComboHaptic_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowHapticWaveform" ColumnDefinitions="130,*,Auto" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblHapticWaveform" Text="Haptic Waveform" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboHapticWaveform" HorizontalAlignment="Stretch" SelectionChanged="ComboHapticWaveform_Changed" />
+                        <Button Grid.Column="2" x:Name="buttonHapticPlay" Classes="ghelper" Content="Play" Margin="8,0,0,0" Click="ButtonHapticPlay_Click" />
                     </Grid>
                 </StackPanel>
             </Border>
@@ -102,11 +128,11 @@
             <Border x:Name="panelEnergy" Classes="panel">
                 <StackPanel>
                     <Border Classes="panel-header" Margin="0,0,0,8">
-                        <TextBlock Classes="header" Text="Energy" />
+                        <TextBlock Classes="header" x:Name="lblHeaderEnergy" Text="Energy" />
                     </Border>
 
                     <Grid x:Name="rowPowerOff" ColumnDefinitions="130,*" Margin="0,4">
-                        <TextBlock Grid.Column="0" Classes="label-dim" Text="Auto Power Off"
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblPowerOff" Text="Auto Power Off"
                                    VerticalAlignment="Center" />
                         <ComboBox Grid.Column="1" x:Name="comboPowerOff"
                                   HorizontalAlignment="Stretch"
@@ -114,7 +140,7 @@
                     </Grid>
 
                     <Grid x:Name="rowLowBattery" ColumnDefinitions="130,*,60" Margin="0,4">
-                        <TextBlock Grid.Column="0" Classes="label-dim" Text="Low Battery Warning"
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblLowBattery" Text="Low Battery Warning"
                                    TextWrapping="Wrap" VerticalAlignment="Center" />
                         <Slider Grid.Column="1" x:Name="sliderLowBattery"
                                 Minimum="0" Maximum="50" Value="25"
@@ -123,6 +149,333 @@
                         <TextBlock Grid.Column="2" x:Name="labelLowBattery" Classes="value" Text="25%"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
+
+                    <Grid x:Name="rowSleepTimeout" ColumnDefinitions="130,*,60" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblSleepTimeout" Text="Sleep Timeout" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderSleepTimeout"
+                                Minimum="0" Maximum="3600" Value="0"
+                                TickFrequency="30" IsSnapToTickEnabled="True"
+                                ValueChanged="SliderSleepTimeout_Changed" />
+                        <TextBlock Grid.Column="2" x:Name="labelSleepTimeout" Classes="value" Text="0"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Scroll & Wheel (Logitech) -->
+            <Border x:Name="panelScroll" Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock Classes="header" x:Name="lblHeaderScroll" Text="Scroll &amp; Wheel" />
+                    </Border>
+
+                    <Grid x:Name="rowSmartShift" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblSmartShift" Text="SmartShift"
+                                   VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboSmartShift"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ComboSmartShift_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowSmartShiftThreshold" ColumnDefinitions="130,*,60" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblRatchetSpeed" Text="Ratchet Speed"
+                                   VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderSmartShiftThreshold"
+                                Minimum="1" Maximum="50" Value="10"
+                                TickFrequency="1" IsSnapToTickEnabled="True"
+                                ValueChanged="SliderSmartShiftThreshold_Changed" />
+                        <TextBlock Grid.Column="2" x:Name="labelSmartShiftThreshold" Classes="value" Text="10"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid x:Name="rowHiResScroll" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblHiResScroll" Text="Hi-Res Scroll"
+                                   VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkHiResScroll"
+                                   IsCheckedChanged="CheckHiResScroll_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowHiResInvert" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblHiResInvert" Text="Invert Scroll"
+                                   VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkHiResInvert"
+                                   IsCheckedChanged="CheckHiResInvert_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowHiResDivert" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblHiResDivert" Text="Divert Scroll"
+                                   VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkHiResDivert"
+                                   IsCheckedChanged="CheckHiResDivert_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowCrownSmooth" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblCrownSmooth" Text="Crown Smooth"
+                                   VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkCrownSmooth"
+                                   IsCheckedChanged="CheckCrownSmooth_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowCrownDivert" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblCrownDivert" Text="Divert Crown"
+                                   VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkCrownDivert"
+                                   IsCheckedChanged="CheckCrownDivert_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowThumbInvert" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblThumbInvert" Text="Invert Thumb Wheel"
+                                   VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkThumbInvert"
+                                   IsCheckedChanged="CheckThumbInvert_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowThumbDivert" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblThumbDivert" Text="Divert Thumb Wheel"
+                                   VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkThumbDivert"
+                                   IsCheckedChanged="CheckThumbDivert_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowPointerSpeed" ColumnDefinitions="130,*,60" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblPointerSpeed" Text="Pointer Speed"
+                                   VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderPointerSpeed"
+                                Minimum="46" Maximum="511" Value="256"
+                                TickFrequency="1" IsSnapToTickEnabled="True"
+                                ValueChanged="SliderPointerSpeed_Changed" />
+                        <TextBlock Grid.Column="2" x:Name="labelPointerSpeed" Classes="value" Text="1.0x"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid x:Name="rowLowresMode" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblLowresMode" Text="Low-Res Mode" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboLowresMode" HorizontalAlignment="Stretch" SelectionChanged="ComboLowresMode_Changed" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Connection (Logitech) -->
+            <Border x:Name="panelConnection" Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock Classes="header" x:Name="lblHeaderConnection" Text="Connection" />
+                    </Border>
+
+                    <Grid x:Name="rowChangeHost" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblChangeHost" Text="Active Host"
+                                   VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboChangeHost"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ComboChangeHost_Changed" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Buttons (Logitech) -->
+            <Border x:Name="panelButtons" Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock Classes="header" x:Name="lblHeaderButtons" Text="Buttons" />
+                    </Border>
+                    <StackPanel x:Name="stackButtons" Spacing="4" />
+                </StackPanel>
+            </Border>
+
+            <!-- Gestures (Logitech) -->
+            <Border x:Name="panelGestures" Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock Classes="header" x:Name="lblHeaderGestures" Text="Gestures" />
+                    </Border>
+                    <StackPanel x:Name="stackGestures" Spacing="2" />
+
+                    <TextBlock x:Name="lblGestureDiversion" Classes="label-dim" Text="Diversion" Margin="0,8,0,4" />
+                    <StackPanel x:Name="stackGestureDiverts" Spacing="2" />
+
+                    <TextBlock x:Name="lblGestureParams" Classes="label-dim" Text="Gesture Parameters" Margin="0,8,0,4" />
+                    <StackPanel x:Name="stackGestureParams" Spacing="2" />
+                </StackPanel>
+            </Border>
+
+            <!-- Force Sensing Buttons (Logitech) -->
+            <Border x:Name="panelForceSensing" Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock Classes="header" x:Name="lblForceSensing" Text="Force Sensing Buttons" />
+                    </Border>
+                    <StackPanel x:Name="stackForceSensing" Spacing="2" />
+                </StackPanel>
+            </Border>
+
+            <!-- Analog Button Tuning (Logitech) -->
+            <Border x:Name="panelAnalogButtons" Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock Classes="header" x:Name="lblAnalogButtons" Text="Analog Button Tuning" />
+                    </Border>
+                    <StackPanel x:Name="stackAnalogButtons" Spacing="2" />
+                </StackPanel>
+            </Border>
+
+            <!-- Keyboard (Logitech) -->
+            <Border x:Name="panelKeyboard" Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock Classes="header" x:Name="lblKeyboard" Text="Keyboard" />
+                    </Border>
+
+                    <Grid x:Name="rowFnInversion" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblFnInversion" Text="FN Swap" VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkFnInversion" IsCheckedChanged="CheckFnInversion_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowOsPlatform" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblOsPlatform" Text="OS Platform" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboOsPlatform" HorizontalAlignment="Stretch" SelectionChanged="ComboOsPlatform_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowGKey" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblGKey" Text="Divert G-Keys" VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkGKey" IsCheckedChanged="CheckGKey_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowMKey" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblMKey" Text="M-Key LEDs" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderMKey" Minimum="0" Maximum="7" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="SliderMKey_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowMrKey" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblMrKey" Text="MR-Key LED" VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkMrKey" IsCheckedChanged="CheckMrKey_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowDisableKeys" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblDisableKeys" Text="Disable Keys" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" x:Name="labelDisableKeys" Classes="value" Text="-" />
+                    </Grid>
+
+                    <Grid x:Name="rowBacklightDelayHandsIn" ColumnDefinitions="130,*,60" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblBacklightDelayHandsIn" Text="Delay (Hands In)" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderBacklightDelayHandsIn" Minimum="0" Maximum="600" Value="0" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="SliderBacklightDelayHandsIn_Changed" />
+                        <TextBlock Grid.Column="2" x:Name="labelBacklightDelayHandsIn" Classes="value" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid x:Name="rowBacklightDelayHandsOut" ColumnDefinitions="130,*,60" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblBacklightDelayHandsOut" Text="Delay (Hands Out)" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderBacklightDelayHandsOut" Minimum="0" Maximum="600" Value="0" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="SliderBacklightDelayHandsOut_Changed" />
+                        <TextBlock Grid.Column="2" x:Name="labelBacklightDelayHandsOut" Classes="value" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid x:Name="rowBacklightDelayPowered" ColumnDefinitions="130,*,60" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblBacklightDelayPowered" Text="Delay (Powered)" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderBacklightDelayPowered" Minimum="0" Maximum="600" Value="0" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="SliderBacklightDelayPowered_Changed" />
+                        <TextBlock Grid.Column="2" x:Name="labelBacklightDelayPowered" Classes="value" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid x:Name="rowHandDetection" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblHandDetection" Text="Hand Detection" VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkHandDetection" IsCheckedChanged="CheckHandDetection_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowSideScrolling" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblSideScrolling" Text="Side Scrolling" VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkSideScrolling" IsCheckedChanged="CheckSideScrolling_Changed" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Headset (Logitech) -->
+            <Border x:Name="panelHeadset" Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock Classes="header" x:Name="lblHeadset" Text="Headset" />
+                    </Border>
+
+                    <Grid x:Name="rowSidetone" ColumnDefinitions="130,*,60" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblSidetone" Text="Sidetone" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderSidetone" Minimum="0" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="SliderSidetone_Changed" />
+                        <TextBlock Grid.Column="2" x:Name="labelSidetoneValue" Classes="value" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid x:Name="rowMicGain" ColumnDefinitions="130,*,60" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblMicGain" Text="Mic Gain" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderMicGain" Minimum="0" Maximum="100" Value="50" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="SliderMicGain_Changed" />
+                        <TextBlock Grid.Column="2" x:Name="labelMicGainValue" Classes="value" Text="50" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid x:Name="rowMicMute" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblMicMute" Text="Mic Mute" VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkMicMute" IsCheckedChanged="CheckMicMute_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowMicSnr" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblMicSnr" Text="Mic SNR" VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkMicSnr" IsCheckedChanged="CheckMicSnr_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowAiNoise" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblAiNoise" Text="AI Noise Reduction" VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkAiNoise" IsCheckedChanged="CheckAiNoise_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowAiNoiseLevel" ColumnDefinitions="130,*,60" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblAiNoiseLevel" Text="AI Noise Level" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderAiNoiseLevel" Minimum="0" Maximum="100" Value="50" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="SliderAiNoiseLevel_Changed" />
+                        <TextBlock Grid.Column="2" x:Name="labelAiNoiseLevel" Classes="value" Text="50" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid x:Name="rowDoNotDisturb" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblDoNotDisturb" Text="Do Not Disturb" VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkDoNotDisturb" IsCheckedChanged="CheckDoNotDisturb_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowEcoMode" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblEcoMode" Text="Eco Mode" VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkEcoMode" IsCheckedChanged="CheckEcoMode_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowAudioMix" ColumnDefinitions="130,*,60" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblAudioMix" Text="Audio Mix" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderAudioMix" Minimum="0" Maximum="100" Value="50" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="SliderAudioMix_Changed" />
+                        <TextBlock Grid.Column="2" x:Name="labelAudioMix" Classes="value" Text="50" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid x:Name="rowHeadsetEq" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblHeadsetEq" Text="Equalizer" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboHeadsetEq" HorizontalAlignment="Stretch" SelectionChanged="ComboHeadsetEq_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowEqPreset" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblEqPreset" Text="EQ Preset" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboEqPreset" HorizontalAlignment="Stretch" SelectionChanged="ComboEqPreset_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowAdvancedEq" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblAdvancedEq" Text="Advanced EQ" VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkAdvancedEq" IsCheckedChanged="CheckAdvancedEq_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowAutoSleep" ColumnDefinitions="130,*,60" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblAutoSleep" Text="Auto Sleep" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderAutoSleep" Minimum="0" Maximum="60" Value="15" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="SliderAutoSleep_Changed" />
+                        <TextBlock Grid.Column="2" x:Name="labelAutoSleep" Classes="value" Text="15" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid x:Name="rowPowerMgmt" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblPowerMgmt" Text="Power Management" VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkPowerMgmt" IsCheckedChanged="CheckPowerMgmt_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowOnboardEffect" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblOnboardEffect" Text="Onboard Effect" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboOnboardEffect" HorizontalAlignment="Stretch" SelectionChanged="ComboOnboardEffect_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowPerZoneLighting" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblPerZoneLighting" Text="Per-Zone Lighting" VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" x:Name="checkPerZoneLighting" IsCheckedChanged="CheckPerZoneLighting_Changed" />
+                    </Grid>
                 </StackPanel>
             </Border>
 
@@ -130,11 +483,11 @@
             <Border x:Name="panelLighting" Classes="panel">
                 <StackPanel>
                     <Border Classes="panel-header" Margin="0,0,0,8">
-                        <TextBlock Classes="header" Text="Lighting" />
+                        <TextBlock Classes="header" x:Name="lblHeaderLighting" Text="Lighting" />
                     </Border>
 
                     <Grid x:Name="rowZone" ColumnDefinitions="130,*" Margin="0,4">
-                        <TextBlock Grid.Column="0" Classes="label-dim" Text="Zone"
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblZone" Text="Zone"
                                    VerticalAlignment="Center" />
                         <ComboBox Grid.Column="1" x:Name="comboLightingZone"
                                   HorizontalAlignment="Stretch"
@@ -142,7 +495,7 @@
                     </Grid>
 
                     <Grid ColumnDefinitions="130,*" Margin="0,4">
-                        <TextBlock Grid.Column="0" Classes="label-dim" Text="Mode"
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblMode" Text="Mode"
                                    VerticalAlignment="Center" />
                         <ComboBox Grid.Column="1" x:Name="comboLightingMode"
                                   HorizontalAlignment="Stretch"
@@ -150,7 +503,7 @@
                     </Grid>
 
                     <Grid ColumnDefinitions="130,*,60" Margin="0,4">
-                        <TextBlock Grid.Column="0" Classes="label-dim" Text="Brightness"
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblBrightness" Text="Brightness"
                                    VerticalAlignment="Center" />
                         <Slider Grid.Column="1" x:Name="sliderBrightness"
                                 Minimum="0" Maximum="100" Value="100"
@@ -161,7 +514,7 @@
                     </Grid>
 
                     <Grid ColumnDefinitions="130,Auto,Auto" Margin="0,4">
-                        <TextBlock Grid.Column="0" Classes="label-dim" Text="Color"
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblColor" Text="Color"
                                    VerticalAlignment="Center" />
                         <Border Grid.Column="1" x:Name="borderColor"
                                 Width="40" Height="24" CornerRadius="4"
@@ -169,6 +522,21 @@
                         <Button Grid.Column="2" x:Name="buttonColor" Classes="ghelper"
                                 Content="Pick Color" Margin="8,0,0,0"
                                 Click="ButtonColor_Click" />
+                    </Grid>
+
+                    <Grid x:Name="rowIdleEffect" ColumnDefinitions="130,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblIdleEffect" Text="Idle Effect" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboIdleEffect" HorizontalAlignment="Stretch" SelectionChanged="ComboIdleEffect_Changed" />
+                    </Grid>
+
+                    <Grid x:Name="rowIdleTimeout" ColumnDefinitions="130,*,60" Margin="0,4">
+                        <TextBlock Grid.Column="0" Classes="label-dim" x:Name="lblIdleTimeout" Text="Idle Timeout" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" x:Name="sliderIdleTimeout"
+                                Minimum="0" Maximum="3600" Value="0"
+                                TickFrequency="30" IsSnapToTickEnabled="True"
+                                ValueChanged="SliderIdleTimeout_Changed" />
+                        <TextBlock Grid.Column="2" x:Name="labelIdleTimeout" Classes="value" Text="0"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
                 </StackPanel>
             </Border>

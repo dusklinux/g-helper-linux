@@ -219,6 +219,7 @@ public class FanSensorControl
         _measuredMax = new int[FanCount];
 
         _calibrationTimer?.Stop();
+        _calibrationTimer?.Dispose();
         _calibrationTimer = new System.Timers.Timer(1000) { AutoReset = true };
         _calibrationTimer.Elapsed += (_, _) => CalibrationTick(wmi);
         _calibrationTimer.Start();

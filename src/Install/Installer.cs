@@ -94,10 +94,17 @@ public static partial class Installer
     private const string PostVisudo = "visudo";
     private const string PostDesktopDb = "desktopdb";
     private const string PostIconCache = "iconcache";
-    private const string PostLenovoModprobe = "lenovomodprobe";
+    private const string PostModprobe = "modprobe";
 
+    // Modules loaded unconditionally (NumberPad uinput + I2C LED control)
+    private static readonly string[] CommonModules = ["uinput", "i2c-dev"];
+
+    // Lenovo-only modules (ideapad-laptop + WMI stack for profiles/PPT)
     private static readonly string[] LenovoModules =
         ["ideapad_laptop", "lenovo_wmi_gamezone", "lenovo_wmi_other", "lenovo_wmi_hotkey_utilities"];
+
+    // Legacy modules-load.d path superseded by the unified ghelper.conf
+    private const string LegacyModulesLoadPath = "/etc/modules-load.d/ghelper-lenovo.conf";
 
     private const string BootService = "ghelper-gpu-boot.service";
     private const string HicolorDir = "/usr/share/icons/hicolor";
@@ -189,23 +196,28 @@ public static partial class Installer
             },
             new ManagedFile
             {
-                // Lenovo only: ideapad-laptop does not always autoload even
-                // when ACPI VPC2004 is present (seen on LOQ 15AHP9 / Ubuntu),
-                // and the lenovo-wmi stack is needed for profiles + PPT.
-                Id = "lenovo_modules", NameKey = "sysfiles_name_lenovo_modules",
-                Generate = LenovoModulesContent,
-                Dest = "/etc/modules-load.d/ghelper-lenovo.conf",
+                // Unified modules-load.d config for all vendors.
+                // Always includes uinput + i2c-dev (NumberPad virtual keyboard
+                // and LED control). On Lenovo, also includes ideapad-laptop and
+                // the lenovo-wmi stack for profiles + PPT.
+                Id = "kernel_modules", NameKey = "sysfiles_name_kernel_modules",
+                Generate = KernelModulesContent,
+                Dest = "/etc/modules-load.d/ghelper.conf",
                 Mode = M644, RootRequired = true, RootOwned = true,
-                Post = [PostLenovoModprobe],
-                AppliesWhen = Helpers.AppConfig.IsLenovoDevice,
+                Post = [PostModprobe],
             },
         ];
     }
 
-    private static byte[] LenovoModulesContent() =>
-        System.Text.Encoding.UTF8.GetBytes(
-            "# Lenovo platform drivers required by G-Helper\n"
-            + string.Join('\n', LenovoModules) + "\n");
+    private static byte[] KernelModulesContent()
+    {
+        var modules = new List<string>(CommonModules);
+        if (Helpers.AppConfig.IsLenovoDevice())
+            modules.AddRange(LenovoModules);
+        return System.Text.Encoding.UTF8.GetBytes(
+            "# Kernel modules required by G-Helper\n"
+            + string.Join('\n', modules) + "\n");
+    }
 
     /// <summary>
     /// sudoers rule byte-identical to the one install-local.sh writes (echo adds
@@ -235,6 +247,12 @@ public static partial class Installer
 
     public static FileState ComputeState(ManagedFile f)
     {
+        // NixOS: files live at Nix-provided locations (PATH, system profile,
+        // declarative udev/sudoers/modules) instead of the FHS paths. Verify
+        // those instead of the hardcoded Dest so the panel reflects reality.
+        if (Platform.Linux.NixOS.IsNixOS)
+            return ComputeStateNixOS(f);
+
         // Capability-gated files (e.g. the GPU boot service on iGPU-only hardware)
         // are not relevant here: report Ok when present (so it can still be
         // Removed) or NotApplicable when absent - never Missing/Outdated, so it is
@@ -308,6 +326,90 @@ public static partial class Installer
     }
 
     /// <summary>
+    /// Verify a managed file against its Nix-provided location. On NixOS the
+    /// nixos/ module + package supply these via PATH, the system profile, and
+    /// declarative udev/sudoers/kernel-modules - not the FHS Dest paths. Each
+    /// dependency is checked where Nix actually puts it so the integrity panel
+    /// shows it as working (Ok) rather than missing or "not applicable".
+    /// </summary>
+    private static FileState ComputeStateNixOS(ManagedFile f)
+    {
+        switch (f.Id)
+        {
+            case "gpu_helper":
+                return Platform.Linux.NixOS.ResolveGpuHelper() != null
+                    ? FileState.Ok : FileState.Missing;
+
+            case "gpu_block_helper":
+                return Platform.Linux.NixOS.ResolveGpuBlockHelper() != null
+                    ? FileState.Ok : FileState.Missing;
+
+            case "udev_rules":
+                // Module ships these via services.udev.packages (symlink into
+                // /etc/udev/rules.d from the read-only store).
+                return File.Exists(Platform.Linux.NixOS.UdevRulePath)
+                    ? FileState.Ok : FileState.Missing;
+
+            case "sudoers":
+                return ProbeSudoers();
+
+            case "kernel_modules":
+                return Platform.Linux.NixOS.KernelModulesLoaded()
+                    ? FileState.Ok : FileState.Missing;
+
+            case "desktop":
+                return Platform.Linux.NixOS.DesktopFilePath() != null
+                    ? FileState.Ok : FileState.Missing;
+
+            case "icon":
+                return Platform.Linux.NixOS.IconFilePath() != null
+                    ? FileState.Ok : FileState.Missing;
+
+            case "autostart":
+                // User-writable (~/.config/autostart); the app manages it itself.
+                if (!AppConfig.IsNotFalse("autostart"))
+                    return FileState.Ok;
+                return File.Exists(f.Dest) ? FileState.Ok : FileState.Missing;
+
+            case "gpu_boot_script":
+            case "gpu_boot_service":
+                // Optional early-boot GPU service (module option, dGPU only).
+                if (!f.Applies())
+                    return FileState.NotApplicable;
+                return File.Exists($"/etc/systemd/system/{BootService}")
+                    || File.Exists($"/etc/systemd/system/multi-user.target.wants/{BootService}")
+                    ? FileState.Ok : FileState.NotApplicable;
+
+            default:
+                return FileState.NotApplicable;
+        }
+    }
+
+    /// <summary>
+    /// The location to show for a managed file in the integrity panel. On
+    /// NixOS the files live at Nix-provided paths (PATH, system profile) or
+    /// are declarative (no file), so the hardcoded FHS Dest would be
+    /// misleading. Returns the real path, or a short label for declarative
+    /// items. Non-NixOS callers use f.Dest directly.
+    /// </summary>
+    private static string DisplayPathNixOS(ManagedFile f) => f.Id switch
+    {
+        "gpu_helper" => Platform.Linux.NixOS.ResolveGpuHelper() ?? f.Dest,
+        "gpu_block_helper" => Platform.Linux.NixOS.ResolveGpuBlockHelper() ?? f.Dest,
+        "desktop" => Platform.Linux.NixOS.DesktopFilePath() ?? f.Dest,
+        "icon" => Platform.Linux.NixOS.IconFilePath() ?? f.Dest,
+        "udev_rules" => f.Dest,   // real (store symlink into /etc)
+        "autostart" => f.Dest,   // real (user dir)
+        "sudoers" => "security.sudo.extraRules (declarative)",
+        "kernel_modules" => "boot.kernelModules (uinput, i2c-dev)",
+        "gpu_boot_script" or "gpu_boot_service" =>
+            File.Exists($"/etc/systemd/system/{BootService}")
+                ? $"/etc/systemd/system/{BootService}"
+                : "module: services.ghelper.gpuBootService",
+        _ => f.Dest,
+    };
+
+    /// <summary>
     /// Verify the passwordless sudoers rule by inspecting the effective sudo
     /// policy rather than reading the root-only file. Runs <c>sudo -n -l</c>
     /// (no command argument), which prints every rule that applies to the user,
@@ -370,8 +472,20 @@ public static partial class Installer
             return FileState.Unknown;
         }
 
-        bool gpuHelper = HasNopasswd(listing, "/opt/ghelper/gpu-helper");
-        bool blockHelper = HasNopasswd(listing, "/usr/local/lib/ghelper/gpu-block-helper.sh");
+        string gpuHelperPath = "/opt/ghelper/gpu-helper";
+        string blockHelperPath = "/usr/local/lib/ghelper/gpu-block-helper.sh";
+
+        // NixOS: the sudoers rule references the nix store paths. The resolvers
+        // already return the store path (symlink followed), which is what the
+        // app invokes and what the NOPASSWD rule grants - match against those.
+        if (Platform.Linux.NixOS.IsNixOS)
+        {
+            gpuHelperPath = Platform.Linux.NixOS.ResolveGpuHelper() ?? gpuHelperPath;
+            blockHelperPath = Platform.Linux.NixOS.ResolveGpuBlockHelper() ?? blockHelperPath;
+        }
+
+        bool gpuHelper = HasNopasswd(listing, gpuHelperPath);
+        bool blockHelper = HasNopasswd(listing, blockHelperPath);
         return gpuHelper && blockHelper ? FileState.Ok : FileState.Missing;
     }
 
@@ -770,6 +884,9 @@ public static partial class Installer
             }
         }
 
+        // Clean up legacy modules-load.d file superseded by ghelper.conf
+        TryDelete(LegacyModulesLoadPath);
+
         RestoreVulkanIcd();
         RunRemovePostActions(post);
         return failures == 0 ? 0 : 2;
@@ -783,7 +900,14 @@ public static partial class Installer
         {
             var dir = Path.GetDirectoryName(f.Dest);
             if (!string.IsNullOrEmpty(dir))
+            {
                 Directory.CreateDirectory(dir);
+                if (f.RootOwned)
+                {
+                    Run("chown", "root:root", dir);
+                    Run("chmod", "755", dir);
+                }
+            }
 
             File.WriteAllBytes(tmp, data);
             File.SetUnixFileMode(tmp, f.Mode);
@@ -830,13 +954,19 @@ public static partial class Installer
             Run("update-desktop-database", "/usr/share/applications");
         if (post.Contains(PostIconCache))
             Run("gtk-update-icon-cache", "-f", "-t", HicolorDir);
-        if (post.Contains(PostLenovoModprobe))
+        if (post.Contains(PostModprobe))
         {
             // Best effort: load each module separately so one missing module
             // (older kernel without lenovo-wmi) doesn't block the others.
-            foreach (var module in LenovoModules)
+            foreach (var module in CommonModules)
                 Run("modprobe", module);
+            if (Helpers.AppConfig.IsLenovoDevice())
+                foreach (var module in LenovoModules)
+                    Run("modprobe", module);
         }
+
+        // Clean up legacy modules-load.d file superseded by ghelper.conf
+        TryDelete(LegacyModulesLoadPath);
         // PostVisudo is validated inline in WriteRoot.
     }
 
@@ -987,6 +1117,17 @@ public static partial class Installer
         {
             var status = ComputeStatus();
             LogStatus(status);
+
+            // NixOS: dependencies are provided declaratively by the nixos/
+            // module + package (verified above). /etc is read-only so the
+            // pkexec self-install can't run - skip the prompt. The Updates
+            // window integrity panel still shows real per-file status.
+            if (Platform.Linux.NixOS.SkipSelfInstall)
+            {
+                Logger.WriteLine("Installer: NixOS - integration provided by module, skipping prompt");
+                _startupGate.TrySetResult(true);
+                return;
+            }
 
             // User opted out of the startup check (Extra settings or the popup's
             // own "Don't show this again" box - both write sysfiles_skip_startup).
@@ -1238,7 +1379,7 @@ public static partial class Installer
         if (showPath)
             info.Children.Add(new TextBlock
             {
-                Text = r.File.Dest,
+                Text = Platform.Linux.NixOS.IsNixOS ? DisplayPathNixOS(r.File) : r.File.Dest,
                 FontSize = 10,
                 Foreground = new SolidColorBrush(Color.Parse("#888888")),
                 FontFamily = new FontFamily("monospace"),
@@ -1307,7 +1448,9 @@ public static partial class Installer
         // Per-row Remove button: only for healthy (OK) rows, and only when the
         // panel provided a remove handler. Shares column 3 with Repair - the two
         // are mutually exclusive (a row is either a problem or OK).
-        if (onRemove != null && r.State == FileState.Ok)
+        // NixOS: files are module-managed (declarative); per-file removal can't
+        // work (read-only /etc, or only deletes a non-existent FHS path), so hide.
+        if (onRemove != null && r.State == FileState.Ok && !Platform.Linux.NixOS.IsNixOS)
         {
             var remove = new Button
             {

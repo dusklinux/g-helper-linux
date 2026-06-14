@@ -321,6 +321,19 @@ public static class SysfsHelper
         }
     }
 
+    /// <summary>Read a sysfs attribute without logging on failure (for
+    /// root-only files where permission-denied is expected).</summary>
+    public static string? ReadAttributeSilent(string path)
+    {
+        try
+        {
+            if (!File.Exists(path))
+                return null;
+            return File.ReadAllText(path).Trim();
+        }
+        catch { return null; }
+    }
+
     /// <summary>
     /// Read the asus-armoury <c>possible_values</c> companion file for a
     /// given attribute. Returns null when the attr isn't present, returns
@@ -637,7 +650,21 @@ public static class SysfsHelper
 
     public static readonly string SudoPath = ResolveSudoPath();
 
-    public const string GpuHelperPath = "/opt/ghelper/gpu-helper";
+    public static readonly string GpuHelperPath = ResolveGpuHelperPath();
+
+    private static string ResolveGpuHelperPath()
+    {
+        // NixOS: module puts a Nix-native gpu-helper on PATH
+        var nixPath = NixOS.ResolveGpuHelper();
+        if (nixPath != null)
+            return nixPath;
+
+        foreach (var p in new[] { "/opt/ghelper/gpu-helper", "/usr/local/lib/ghelper/gpu-helper" })
+            if (System.IO.File.Exists(p))
+                return p;
+
+        return "/opt/ghelper/gpu-helper";
+    }
 
     private static string ResolveSudoPath()
     {

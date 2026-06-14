@@ -47,6 +47,36 @@ public class LinuxNvidiaGpuControl : IGpuControl
 
     public string? GetGpuName() => _gpuName;
 
+    /// <summary>
+    /// Fast GPU temp read via gpu-helper nvml-temp (~5ms, no nvidia-smi fork).
+    /// Returns the temperature in Celsius or -1 on failure.
+    /// Usable as a static fallback from both ASUS and Lenovo WMI backends.
+    /// </summary>
+    public static int GetTempViaNvml()
+    {
+        if (GpuQueryGate.IsPaused)
+            return -1;
+        if (!Directory.Exists("/sys/module/nvidia"))
+            return -1;
+        if (!NvidiaProcessScanner.EnsureHelper())
+            return -1;
+        try
+        {
+            string? output = SysfsHelper.RunSudoOrPkexec(
+                SysfsHelper.GpuHelperPath, new[] { "nvml-temp" });
+            if (string.IsNullOrWhiteSpace(output))
+                return -1;
+            foreach (var token in output.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (token.StartsWith("temp=", StringComparison.Ordinal) &&
+                    int.TryParse(token.AsSpan(5), out int t) && t > 0)
+                    return t;
+            }
+        }
+        catch { }
+        return -1;
+    }
+
     // Temperature
 
     public int? GetCurrentTemp()
@@ -181,6 +211,9 @@ public class LinuxNvidiaGpuControl : IGpuControl
 
         if (def < 0 || min < 0 || max < 0)
             return null;
+        // Any card reporting a default over 1000W has no real power management.
+        if (def > 1000)
+            return null;
         return ((int)Math.Round(def), (int)Math.Round(min), (int)Math.Round(max), (int)Math.Round(enf));
     }
 
@@ -201,12 +234,16 @@ public class LinuxNvidiaGpuControl : IGpuControl
 
         if (powerW != null)
         {
-            cmdCount++;
-            var r = SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "smi", "-pl", powerW.Value.ToString() });
-            if (r != null)
-                okCount++;
-            else
-                Helpers.Logger.WriteLine($"NVIDIA: nvidia-smi -pl {powerW.Value} FAILED");
+            var caps = GetCapabilities();
+            if (caps.PowerLimit)
+            {
+                cmdCount++;
+                var r = SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "smi", "-pl", powerW.Value.ToString() });
+                if (r != null)
+                    okCount++;
+                else
+                    Helpers.Logger.WriteLine($"NVIDIA: nvidia-smi -pl {powerW.Value} FAILED");
+            }
         }
         if (clockLockMhz > 0)
         {
@@ -327,7 +364,11 @@ public class LinuxNvidiaGpuControl : IGpuControl
         int? MemOffset,
         bool LockGpu,
         bool LockMem,
-        bool PowerMgmt);
+        bool PowerMgmt,
+        int? TempShutdown,
+        int? TempSlowdown,
+        string? Vbios,
+        int? MemBusWidth);
 
     /// <summary>Per-tunable hardware support, so the UI only shows what the card
     /// can actually do.</summary>
@@ -357,9 +398,10 @@ public class LinuxNvidiaGpuControl : IGpuControl
         if (string.IsNullOrWhiteSpace(output))
             return null;
 
-        string? driver = null;
+        string? driver = null, vbios = null;
         (int min, int max)? coreRange = null, memRange = null;
         int? coreOff = null, memOff = null;
+        int? tempShutdown = null, tempSlowdown = null, memBusWidth = null;
         bool lockGpu = false, lockMem = false, powerMgmt = false;
         foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
@@ -396,9 +438,25 @@ public class LinuxNvidiaGpuControl : IGpuControl
                 case "power-mgmt":
                     powerMgmt = val == "1";
                     break;
+                case "temp-shutdown":
+                    if (int.TryParse(val, out var ts))
+                        tempShutdown = ts;
+                    break;
+                case "temp-slowdown":
+                    if (int.TryParse(val, out var td))
+                        tempSlowdown = td;
+                    break;
+                case "vbios":
+                    vbios = val;
+                    break;
+                case "mem-bus-width":
+                    if (int.TryParse(val, out var mbw))
+                        memBusWidth = mbw;
+                    break;
             }
         }
-        var info = new NvmlInfo(driver, coreRange, memRange, coreOff, memOff, lockGpu, lockMem, powerMgmt);
+        var info = new NvmlInfo(driver, coreRange, memRange, coreOff, memOff,
+            lockGpu, lockMem, powerMgmt, tempShutdown, tempSlowdown, vbios, memBusWidth);
         _nvmlCache = info;
         _nvmlCacheAt = DateTime.UtcNow;
         return info;

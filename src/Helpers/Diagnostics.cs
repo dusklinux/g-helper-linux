@@ -567,7 +567,8 @@ public static class Diagnostics
         sb.AppendLine($"  Modules loaded: {string.Join(", ", modules)}");
 
         // KMS state (1 = nvidia DRM KMS active, required for Wayland).
-        var modeset = Platform.Linux.SysfsHelper.ReadAttribute("/sys/module/nvidia_drm/parameters/modeset");
+        // The parameter file is 0400 (root-only) on some kernels.
+        var modeset = Platform.Linux.SysfsHelper.ReadAttributeSilent("/sys/module/nvidia_drm/parameters/modeset");
         if (modeset != null)
             sb.AppendLine($"  nvidia_drm.modeset: {modeset}");
 
@@ -631,9 +632,151 @@ public static class Diagnostics
         if (initramfs != null)
             sb.AppendLine($"  In initramfs: {initramfs}");
 
+        // NVML telemetry via gpu-helper (fast, no nvidia-smi fork)
+        AppendNvmlDiagnostics(sb);
+
         sb.AppendLine();
 
         AppendGpuSwitchingHealth(sb);
+    }
+
+    private static void AppendNvmlDiagnostics(StringBuilder sb)
+    {
+        if (!Gpu.NVidia.NvidiaProcessScanner.EnsureHelper())
+            return;
+
+        // nvml-info: static device capabilities
+        var info = Platform.Linux.SysfsHelper.RunSudoOrPkexec(
+            Platform.Linux.SysfsHelper.GpuHelperPath, new[] { "nvml-info" });
+        if (!string.IsNullOrWhiteSpace(info))
+        {
+            sb.AppendLine("  NVML info:");
+            foreach (var line in info.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                sb.AppendLine($"    {line.Trim()}");
+        }
+
+        // nvml-temp: live telemetry snapshot
+        var live = Platform.Linux.SysfsHelper.RunSudoOrPkexec(
+            Platform.Linux.SysfsHelper.GpuHelperPath, new[] { "nvml-temp" });
+        if (!string.IsNullOrWhiteSpace(live))
+            sb.AppendLine($"  NVML live: {live.Trim()}");
+    }
+
+    /// <summary>True if any /etc/modprobe.d/*.conf line satisfies the predicate.</summary>
+    private static bool ModprobeConfMatch(Func<string, bool> pred)
+    {
+        try
+        {
+            const string modprobeDir = "/etc/modprobe.d";
+            if (!Directory.Exists(modprobeDir))
+                return false;
+            foreach (var conf in Directory.EnumerateFiles(modprobeDir, "*.conf"))
+                foreach (var line in File.ReadAllLines(conf))
+                    if (pred(line))
+                        return true;
+        }
+        catch { }
+        return false;
+    }
+
+    private static void AppendSwitchHazards(StringBuilder sb)
+    {
+        var hazards = new List<string>();
+        try
+        {
+            // nvidia_wmi_ec_backlight force=1: param is 0444 (world-readable);
+            // grep modprobe.d as backstop when the module is blocked/not loaded.
+            var nvForce = Platform.Linux.SysfsHelper.ReadAttributeSilent(
+                "/sys/module/nvidia_wmi_ec_backlight/parameters/force");
+            bool nvidiaForce = (nvForce != null && nvForce.Trim() == "Y")
+                || ModprobeConfMatch(l => l.Contains("nvidia_wmi_ec_backlight")
+                    && l.Contains("force") && l.Contains("=1"));
+            if (nvidiaForce)
+                hazards.Add("nvidia_wmi_ec_backlight force=1 (EC/WMI brightness calls block during dGPU teardown; remove from /etc/modprobe.d)");
+
+            // i915 enable_dpcd_backlight 1/2/3: sysfs param is 0400 (root-only),
+            // so scan modprobe.d + /proc/cmdline. -1 (per-VBT default) / 0 = off.
+            bool DpcdValue(string v) => v is "1" or "2" or "3";
+            bool i915Dpcd = ModprobeConfMatch(line =>
+            {
+                int ix = line.IndexOf("enable_dpcd_backlight", StringComparison.Ordinal);
+                if (ix < 0)
+                    return false;
+                int eq = line.IndexOf('=', ix);
+                if (eq < 0)
+                    return false;
+                int sp = line.IndexOfAny(new[] { ' ', '\t' }, eq);
+                string v = (sp < 0 ? line.Substring(eq + 1) : line.Substring(eq + 1, sp - eq - 1)).Trim();
+                return DpcdValue(v);
+            });
+            string? acpiBacklight = null;
+            var cmdline = Platform.Linux.SysfsHelper.ReadAttributeSilent("/proc/cmdline");
+            if (cmdline != null)
+            {
+                foreach (var token in cmdline.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (!i915Dpcd && token.StartsWith("i915.enable_dpcd_backlight=", StringComparison.Ordinal)
+                        && DpcdValue(token.Substring("i915.enable_dpcd_backlight=".Length)))
+                        i915Dpcd = true;
+                    // acpi_backlight=nvidia_wmi_ec|vendor forces a blocking
+                    // EC/firmware backlight (video_detect.c cmdline override).
+                    if (token.StartsWith("acpi_backlight=", StringComparison.Ordinal))
+                    {
+                        string v = token.Substring("acpi_backlight=".Length);
+                        if (v is "nvidia_wmi_ec" or "vendor")
+                            acpiBacklight = v;
+                    }
+                }
+            }
+            if (i915Dpcd)
+                hazards.Add("i915 enable_dpcd_backlight (1/2/3) (DP-AUX backlight stalls i915 modeset on dGPU removal; remove from /etc/modprobe.d or cmdline)");
+            if (acpiBacklight != null)
+                hazards.Add($"acpi_backlight={acpiBacklight} on kernel cmdline (forces blocking EC/firmware backlight; same stall class)");
+
+            // --- driver-conflict class ---
+
+            // nouveau loaded alongside proprietary nvidia: the release/rescan
+            // logic targets the nvidia driver; nouveau binding the dGPU breaks it.
+            if (Directory.Exists("/sys/module/nouveau"))
+                hazards.Add("nouveau is loaded alongside nvidia (driver conflict; blacklist nouveau)");
+
+            // dGPU bound to vfio-pci (passthrough): unbind/rmmod logic expects
+            // nvidia/amdgpu, not vfio-pci.
+            try
+            {
+                foreach (var pciDev in Directory.EnumerateDirectories("/sys/bus/pci/devices"))
+                {
+                    var vendorPath = Path.Combine(pciDev, "vendor");
+                    var classPath = Path.Combine(pciDev, "class");
+                    if (!File.Exists(vendorPath) || !File.Exists(classPath))
+                        continue;
+                    string vendor = File.ReadAllText(vendorPath).Trim();
+                    if (vendor != "0x10de" && vendor != "0x1002")
+                        continue;
+                    string klass = File.ReadAllText(classPath).Trim();
+                    if (!klass.StartsWith("0x0300") && !klass.StartsWith("0x0302"))
+                        continue; // VGA / 3D controller only
+                    var driverLink = Path.Combine(pciDev, "driver");
+                    if (!Directory.Exists(driverLink))
+                        continue;
+                    string drv = Path.GetFileName(new DirectoryInfo(driverLink).ResolveLinkTarget(true)?.FullName ?? "");
+                    if (drv == "vfio-pci")
+                    {
+                        hazards.Add($"dGPU {Path.GetFileName(pciDev)} is bound to vfio-pci (passthrough; GPU switch expects nvidia/amdgpu)");
+                        break;
+                    }
+                }
+            }
+            catch { }
+        }
+        catch { }
+
+        if (hazards.Count > 0)
+        {
+            sb.AppendLine("  WARNING: config that can break/stall live GPU switching:");
+            foreach (var h in hazards)
+                sb.AppendLine($"    - {h}");
+        }
     }
 
     private static void AppendGpuSwitchingHealth(StringBuilder sb)
@@ -643,8 +786,8 @@ public static class Diagnostics
 
         sb.AppendLine("--- GPU switching health ---");
 
-        // nvidia_drm.modeset
-        var modeset = Platform.Linux.SysfsHelper.ReadAttribute(
+        // nvidia_drm.modeset (0400 root-only on some kernels)
+        var modeset = Platform.Linux.SysfsHelper.ReadAttributeSilent(
             "/sys/module/nvidia_drm/parameters/modeset");
         if (modeset != null)
         {
@@ -661,6 +804,8 @@ public static class Diagnostics
             bool ok = val == "0x02" || val == "2";
             sb.AppendLine($"  NVreg_DynamicPowerManagement: {val}{(ok ? "" : "  (0x02 enables automatic D3cold for Eco)")}");
         }
+
+        AppendSwitchHazards(sb);
 
         // DRM device mapping: which card/renderD belongs to nvidia
         try
@@ -1537,6 +1682,30 @@ public static class Diagnostics
         var aspm = Platform.Linux.SysfsHelper.ReadAttribute("/sys/module/pcie_aspm/parameters/policy");
         if (aspm != null)
             sb.AppendLine($"  ASPM policy: {aspm}");
+
+        // NVMe power state visibility when ASPM powersave is active.
+        // D3cold + powersave ASPM is a known cause of NVMe resume failures / kernel panics.
+        bool aspmDeep = aspm != null && (aspm.Contains("[powersave]") || aspm.Contains("[powersupersave]"));
+        const string nvmeClass = "/sys/class/nvme";
+        if (Directory.Exists(nvmeClass))
+        {
+            foreach (var nvmeDir in Directory.GetDirectories(nvmeClass))
+            {
+                var state = Platform.Linux.SysfsHelper.ReadAttribute(
+                    Path.Combine(nvmeDir, "device", "power_state"));
+                var d3cold = Platform.Linux.SysfsHelper.ReadAttribute(
+                    Path.Combine(nvmeDir, "device", "d3cold_allowed"));
+                var nvmeName = Path.GetFileName(nvmeDir);
+                sb.AppendLine($"  {nvmeName}: power_state={state ?? "?"} d3cold_allowed={d3cold ?? "?"}");
+            }
+
+            if (aspmDeep)
+            {
+                sb.AppendLine("  NOTE: ASPM powersave + NVMe d3cold can cause resume failures.");
+                sb.AppendLine("        If you experience freezes/panics on power mode changes,");
+                sb.AppendLine("        add nvme_core.default_ps_max_latency_us=0 to boot params.");
+            }
+        }
 
         sb.AppendLine();
     }

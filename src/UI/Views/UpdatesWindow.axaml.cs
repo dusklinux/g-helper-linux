@@ -89,6 +89,10 @@ public partial class UpdatesWindow : Window
         buttonSysFilesRecheck.Content = Labels.Get("sysfiles_recheck");
         buttonSysFilesFix.Content = Labels.Get("sysfiles_fix");
         buttonSysFilesUninstall.Content = Labels.Get("sysfiles_uninstall");
+        // NixOS: removal is declarative (services.ghelper.enable = false +
+        // rebuild, or install-local.sh --uninstall); the in-app uninstall
+        // can't remove module-managed files, so hide it.
+        buttonSysFilesUninstall.IsVisible = !Platform.Linux.NixOS.IsNixOS;
     }
 
     private void ButtonRefresh_Click(object? sender, RoutedEventArgs e)
@@ -499,7 +503,8 @@ public partial class UpdatesWindow : Window
 
                     var btnUpdate = new Button
                     {
-                        Content = Labels.Get("download_install"),
+                        Content = Platform.Linux.NixOS.IsNixOS
+                            ? Labels.Get("update_nixos_button") : Labels.Get("download_install"),
                         MinWidth = 130,
                         Foreground = ColorWhite,
                     };
@@ -563,6 +568,15 @@ public partial class UpdatesWindow : Window
 
     internal static async Task DownloadAndInstallUpdate(string downloadUrl, Button btn)
     {
+        // NixOS: the binary is in the read-only /nix/store and can't be
+        // replaced in place; a generic binary wouldn't run anyway. Updating
+        // goes through nixos-rebuild instead - see RunNixOSUpdate.
+        if (Platform.Linux.NixOS.IsNixOS)
+        {
+            await RunNixOSUpdate(btn);
+            return;
+        }
+
         try
         {
             using var http = new HttpClient();
@@ -678,6 +692,50 @@ public partial class UpdatesWindow : Window
         catch (Exception ex)
         {
             Helpers.Logger.WriteLine($"Self-update download failed: {ex.Message}");
+            Dispatcher.UIThread.Post(() =>
+            {
+                btn.Content = Labels.Get("download_failed");
+                btn.IsEnabled = true;
+            });
+        }
+    }
+
+    /// <summary>
+    /// NixOS update: download the installer and re-run its NixOS branch via
+    /// pkexec. That fetches the latest release binary, re-stages
+    /// /etc/nixos/ghelper, and runs nixos-rebuild switch. The in-place
+    /// binary-replace path cannot work on the read-only /nix/store.
+    /// </summary>
+    private static async Task RunNixOSUpdate(Button btn)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            btn.IsEnabled = false;
+            btn.Content = Labels.Get("update_nixos_running");
+        });
+
+        var (ok, log) = await Platform.Linux.NixOS.RunModuleUpdate(
+            $"https://raw.githubusercontent.com/{GitHubRepo}/master/install/install.sh",
+            "G-Helper-Linux/" + Helpers.AppConfig.AppVersion);
+
+        if (ok)
+        {
+            Helpers.Logger.WriteLine("NixOS update: nixos-rebuild succeeded");
+            Dispatcher.UIThread.Post(() =>
+            {
+                btn.Content = Labels.Get("restart_to_apply");
+                btn.IsEnabled = true;
+                btn.Click += (_, _) =>
+                {
+                    // Relaunch via the stable profile symlink (repointed by the rebuild).
+                    Process.Start(new ProcessStartInfo(Platform.Linux.NixOS.LauncherPath) { UseShellExecute = false });
+                    Environment.Exit(0);
+                };
+            });
+        }
+        else
+        {
+            Helpers.Logger.WriteLine($"NixOS update failed: {log}");
             Dispatcher.UIThread.Post(() =>
             {
                 btn.Content = Labels.Get("download_failed");
@@ -1301,7 +1359,8 @@ public partial class UpdatesWindow : Window
 
         var btnUpdate = new Button
         {
-            Content = Labels.Get("update_now"),
+            Content = Platform.Linux.NixOS.IsNixOS
+                ? Labels.Get("update_nixos_button") : Labels.Get("update_now"),
             MinWidth = 130,
             Padding = new Avalonia.Thickness(14, 8),
             Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),

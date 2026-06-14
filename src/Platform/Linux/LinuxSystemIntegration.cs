@@ -112,6 +112,11 @@ public class LinuxSystemIntegration : ISystemIntegration
     /// </summary>
     internal static string ResolveLauncherExec()
     {
+        // NixOS: store paths change on rebuild, use stable PATH name
+        var nixExec = NixOS.StableLauncherExec();
+        if (nixExec != null)
+            return nixExec;
+
         var appImagePath = Environment.GetEnvironmentVariable("APPIMAGE");
         if (!string.IsNullOrEmpty(appImagePath) && File.Exists(appImagePath))
         {

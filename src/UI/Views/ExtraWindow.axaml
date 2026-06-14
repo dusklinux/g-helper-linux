@@ -720,6 +720,31 @@
                 </StackPanel>
             </Border>
 
+            <!-- PERIPHERALS -->
+            <Border Classes="panel">
+                <StackPanel>
+                    <Border Classes="panel-header" Margin="0,0,0,8">
+                        <TextBlock x:Name="headerPeripherals" Classes="header" Text="Peripherals" />
+                    </Border>
+
+                    <CheckBox x:Name="checkDisableLogitech"
+                              Content="Disable Logitech mouse/keyboard support"
+                              Margin="0,4"
+                              IsCheckedChanged="CheckDisableLogitech_Changed" />
+                    <TextBlock x:Name="labelDisableLogitechHint" Classes="label-dim" FontSize="11"
+                               Text="Stops HID++ scans and hides Logitech device panels. Requires app restart."
+                               TextWrapping="Wrap" Margin="22,0,0,4" />
+
+                    <CheckBox x:Name="checkDisableAsusPeripherals"
+                              Content="Disable ASUS mouse/keyboard support"
+                              Margin="0,4"
+                              IsCheckedChanged="CheckDisableAsusPeripherals_Changed" />
+                    <TextBlock x:Name="labelDisableAsusPeripheralsHint" Classes="label-dim" FontSize="11"
+                               Text="Stops ASUS USB peripheral scans and hides their device panels. Requires app restart."
+                               TextWrapping="Wrap" Margin="22,0,0,4" />
+                </StackPanel>
+            </Border>
+
             <!-- ADVANCED -->
             <Border Classes="panel">
                 <StackPanel>

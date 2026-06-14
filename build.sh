@@ -9,7 +9,43 @@ SRC_DIR="$SCRIPT_DIR/src"
 DIST_DIR="$SCRIPT_DIR/dist"
 PUBLISH_DIR="$SRC_DIR/bin/Release/net10.0/linux-x64/publish"
 
+USE_AOT=1
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --no-aot|--fast|-f)
+            USE_AOT=0
+            ;;
+        -h|--help)
+            cat <<EOF
+Usage: $0 [--no-aot|--fast|-f]
+
+Modes:
+  (default)            Full Native AOT build. Single 16MB compressed binary
+                       in dist/ghelper. Takes ~2 min.
+  --no-aot, --fast,-f  Fast iteration build. Skips AOT/trimming/UPX. dist/
+                       becomes a folder (~80MB) containing ghelper + DLLs.
+                       Incremental rebuilds (~5-10s after first run).
+
+Other flags:
+  -h, --help           Show this message.
+EOF
+            exit 0
+            ;;
+        *)
+            echo "Unknown flag: $1" >&2
+            echo "Run '$0 --help' for usage." >&2
+            exit 2
+            ;;
+    esac
+    shift
+done
+
 echo "=== G-Helper Linux Build ==="
+if (( USE_AOT )); then
+    echo "    Mode: Native AOT"
+else
+    echo "    Mode: Fast (no AOT, no trim, no UPX)"
+fi
 echo ""
 
 # Check .NET SDK
@@ -113,7 +149,15 @@ if command -v cc &>/dev/null; then
     echo "Building gpu-helper..."
     (
         cd "$GPU_HELPER_DIR"
-        cc -O2 -Wall -o gpu-helper gpu-helper.c -ldl
+        HELPER_SRCS="process_ops.c nvidia_ops.c pci_ops.c \
+                     wmi_ops.c msr_ops.c lenovo_ops.c ryzen_ops.c"
+        RYZEN_SRCS="ryzen/api.c ryzen/cpuid.c ryzen/nb_smu_ops.c \
+                    ryzen/osdep_linux.c ryzen/osdep_linux_mem.c \
+                    ryzen/osdep_linux_smu_kernel_module.c"
+        cc -O2 -Wall -Wno-unused-result \
+           -D_LIBRYZENADJ_INTERNAL -DNDEBUG -I ryzen \
+           -o gpu-helper gpu-helper.c $HELPER_SRCS $RYZEN_SRCS \
+           -ldl -lpci
         strip gpu-helper
     )
     if [[ -f "$GPU_HELPER_DIR/gpu-helper" ]]; then
@@ -127,10 +171,15 @@ else
     echo "NOTE: cc not found, skipping gpu-helper build."
 fi
 
-# Clean previous build artifacts
+# Clean previous build artifacts. Skipped in fast mode so MSBuild's
+# up-to-date check can shortcut unchanged work on repeat runs.
 echo ""
-echo "[1/4] Cleaning previous build..."
-rm -rf "$SRC_DIR/bin/Release" 2>/dev/null || true
+if (( USE_AOT )); then
+    echo "[1/4] Cleaning previous build..."
+    rm -rf "$SRC_DIR/bin/Release" 2>/dev/null || true
+else
+    echo "[1/4] Skipping clean (fast mode, incremental build)"
+fi
 
 # Restore packages
 echo "[2/4] Restoring packages..."
@@ -164,9 +213,20 @@ if [[ -n "$AUDIO_HELPER_BIN" && -f "$AUDIO_HELPER_BIN" ]]; then
     echo "  Embedded ghelper-audio: $(du -sh "$EMBED_DIR/ghelper-audio" | cut -f1)"
 fi
 
-# Publish as native AOT
-echo "[3/4] Compiling native AOT binary (this may take a minute)..."
-dotnet publish "$SRC_DIR" -c Release --no-restore 2>&1 | grep -v "^.*error : Deleting file" || true
+# Publish
+if (( USE_AOT )); then
+    echo "[3/4] Compiling native AOT binary (this may take a minute)..."
+    dotnet publish "$SRC_DIR" -c Release --no-restore 2>&1 \
+        | grep -v "^.*error : Deleting file" || true
+else
+    echo "[3/4] Compiling (fast mode, no AOT)..."
+    dotnet publish "$SRC_DIR" -c Release --no-restore \
+        -p:PublishAot=false \
+        -p:PublishTrimmed=false \
+        -p:StripSymbols=false \
+        --self-contained true -r linux-x64 2>&1 \
+        | grep -v "^.*error : Deleting file" || true
+fi
 
 # Verify the binary was produced
 if [[ ! -f "$PUBLISH_DIR/ghelper" ]]; then
@@ -181,17 +241,25 @@ echo "[4/4] Copying to dist/..."
 rm -rf "$DIST_DIR"
 mkdir -p "$DIST_DIR"
 
-cp "$PUBLISH_DIR/ghelper" "$DIST_DIR/"
+if (( USE_AOT )); then
+    cp "$PUBLISH_DIR/ghelper" "$DIST_DIR/"
+else
+    cp -r "$PUBLISH_DIR/." "$DIST_DIR/"
+fi
 chmod +x "$DIST_DIR/ghelper"
 
-# UPX compression on main binary (native .so are embedded, UPX compresses everything)
-if command -v upx &>/dev/null; then
-    echo "[5/5] Compressing with UPX..."
-    upx --best --lzma "$DIST_DIR/ghelper" 2>&1 | tail -1 || true
+# UPX compression (AOT mode only — pointless on a folder of DLLs).
+if (( USE_AOT )); then
+    if command -v upx &>/dev/null; then
+        echo "[5/5] Compressing with UPX..."
+        upx --best --lzma "$DIST_DIR/ghelper" 2>&1 | tail -1 || true
+    else
+        echo ""
+        echo "NOTE: upx not found — binary will not be compressed."
+        echo "  Install with: sudo apt install upx-ucl"
+    fi
 else
-    echo ""
-    echo "NOTE: upx not found — binary will not be compressed."
-    echo "  Install with: sudo apt install upx-ucl"
+    echo "[5/5] Skipping UPX (fast mode)"
 fi
 
 # Clean wlr-randr build artifacts from vendor dir (binary is embedded in ghelper)
@@ -218,6 +286,11 @@ FILE_COUNT=$(ls -1 "$DIST_DIR" | wc -l)
 
 echo ""
 echo "=== Build Complete ==="
+if (( USE_AOT )); then
+    echo "  Mode:    Native AOT (single binary)"
+else
+    echo "  Mode:    Fast (no AOT, folder output)"
+fi
 echo "  Binary:  $BINARY_SIZE  (ghelper)"
 echo "  Total:   $TOTAL_SIZE  ($FILE_COUNT files)"
 echo "  Output:  $DIST_DIR/"

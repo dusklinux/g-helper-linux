@@ -66,11 +66,20 @@ public partial class MainWindow : Window
         _refreshTimer.Tick += (_, _) =>
         {
             RefreshSensorData();
-            // Refresh battery every ~60s (30 ticks × 2s)
-            if (++_batteryRefreshCounter >= 30)
+            // Every ~20s: refresh battery, prune dead peripherals, re-scan.
+            if (++_batteryRefreshCounter >= 10)
             {
                 _batteryRefreshCounter = 0;
                 RefreshBattery();
+                Task.Run(() =>
+                {
+                    Peripherals.PeripheralsProvider.RefreshBatteryForAllDevices();
+                    // Re-scan for BT devices (HidSharp misses BT hidraw).
+                    try
+                    { Peripherals.PeripheralsProvider.DetectAllMice(); }
+                    catch { }
+                    Avalonia.Threading.Dispatcher.UIThread.Post(VisualizePeripherals);
+                });
             }
             PollXgmIfChanged();
         };
@@ -158,48 +167,49 @@ public partial class MainWindow : Window
         buttonDevPanels.IsVisible = devMode;
     }
 
-    // Peripherals (ASUS mice)
+    // Peripherals (ASUS + Logitech mice)
 
-    /// <summary>One button per connected mouse (up to 3, like Windows G-Helper).
-    /// Text only: display name plus battery state. Hidden when no mouse is
-    /// connected, unless the show_mouse_dev toggle forces a placeholder.</summary>
+    /// <summary>One button per connected mouse (up to 3). Text only:
+    /// display name plus battery state. The whole panel is hidden when
+    /// no mouse is connected so the main window stays compact.</summary>
     public void VisualizePeripherals()
     {
         var mice = Peripherals.PeripheralsProvider.ConnectedMice;
         var buttons = new[] { buttonPeripheral1, buttonPeripheral2, buttonPeripheral3 };
         var labels = new[] { labelPeripheral1, labelPeripheral2, labelPeripheral3 };
 
-        if (mice.Count == 0)
+        bool shouldShow = mice.Count > 0;
+        bool changed = panelPeripherals.IsVisible != shouldShow;
+        panelPeripherals.IsVisible = shouldShow;
+
+        if (shouldShow)
         {
-            bool devPlaceholder = Helpers.AppConfig.Is("show_mouse_dev");
-            panelPeripherals.IsVisible = devPlaceholder;
-            if (devPlaceholder)
+            for (int i = 0; i < buttons.Length; i++)
             {
-                labels[0].Text = "No ASUS mouse detected (dev)";
-                buttons[0].IsVisible = true;
-                buttons[1].IsVisible = false;
-                buttons[2].IsVisible = false;
+                if (i >= mice.Count)
+                {
+                    buttons[i].IsVisible = false;
+                    continue;
+                }
+
+                var mouse = mice[i];
+                string text = mouse.GetDisplayName();
+                if (mouse.IsDeviceReady && mouse.HasBattery() && mouse.Battery >= 0)
+                    text += mouse.Charging ? $"  {mouse.Battery}% +" : $"  {mouse.Battery}%";
+
+                labels[i].Text = text;
+                buttons[i].IsVisible = true;
             }
-            return;
         }
 
-        panelPeripherals.IsVisible = true;
-
-        for (int i = 0; i < buttons.Length; i++)
+        if (changed && _layoutReady)
         {
-            if (i >= mice.Count)
-            {
-                buttons[i].IsVisible = false;
-                continue;
-            }
-
-            var mouse = mice[i];
-            string text = mouse.GetDisplayName();
-            if (mouse.IsDeviceReady && mouse.HasBattery() && mouse.Battery >= 0)
-                text += mouse.Charging ? $"  {mouse.Battery}% +" : $"  {mouse.Battery}%";
-
-            labels[i].Text = text;
-            buttons[i].IsVisible = true;
+            Height = double.NaN;
+            SizeToContent = SizeToContent.Manual;
+            SizeToContent = SizeToContent.Height;
+            Dispatcher.UIThread.Post(
+                () => WindowPositioner.BottomRight(this),
+                DispatcherPriority.Loaded);
         }
     }
 
@@ -292,11 +302,13 @@ public partial class MainWindow : Window
         buttonColor2.SetValue(Avalonia.Controls.ToolTip.TipProperty, Labels.Get("color_secondary"));
 
         labelKeyboard.Text = Labels.Get("keyboard_header");
+        labelPeripherals.Text = Labels.Get("peripherals_header");
         checkStartup.Content = Labels.Get("run_on_startup");
 
         // Audio panel localisation.
         labelAudio.Text = Labels.Get("audio_header_microphone");
-        labelAudioConfigure.Text = Labels.Get("audio_configure_chain");
+        Avalonia.Controls.ToolTip.SetTip(buttonAudio,
+            Labels.Get("audio_configure_chain"));
         Avalonia.Controls.ToolTip.SetTip(buttonAudioToggle,
             Labels.Get("audio_toggle_tooltip"));
 
@@ -839,6 +851,9 @@ public partial class MainWindow : Window
     private void ShowDriverBlockingDialog(GpuMode target)
     {
         bool dgpuSoleDisplay = (App.Wmi?.GetGpuMuxMode() ?? -1) == 0;
+        // X11: Xorg holds nvidia_drm for PRIME offload, rmmod always fails
+        bool x11Session = !Display.DisplayBackendFactory.IsWaylandSession();
+        bool canSwitchNow = !dgpuSoleDisplay && !x11Session;
 
         var dialog = new Window
         {
@@ -998,7 +1013,7 @@ public partial class MainWindow : Window
 
         Button? btnSwitchNow = null;
         TextBlock? switchNowWarning = null;
-        if (!dgpuSoleDisplay)
+        if (canSwitchNow)
         {
             btnSwitchNow = MakeDialogButton(Labels.Get("gpu_driver_switch_now"), "#A82A2A", "#FFFFFF", bold: true);
             btnSwitchNow.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
@@ -1444,6 +1459,14 @@ public partial class MainWindow : Window
             }
             Helpers.Logger.WriteLine($"Lenovo RGB keyboard found ({USB.LenovoRgb.Kind}) - initializing RGB controls");
             USB.LenovoRgb.Init();
+            // Init() runs Apply(); IsAvailable() now reflects whether the
+            // firmware accepted the write. False on SKUs that detect but
+            // reject SetFeature.
+            if (!USB.LenovoRgb.IsAvailable())
+            {
+                Helpers.Logger.WriteLine("Lenovo RGB apply failed - RGB controls hidden");
+                return false;
+            }
             return true;
         }
 
@@ -1789,9 +1812,20 @@ public partial class MainWindow : Window
         if (wmi == null)
             return;
 
+        // Cycle 0..max then wrap. Driver-reported max prevents overshoot on
+        // Lenovo on/off (1) and tristate (2) backlights.
+        int max = Math.Max(1, wmi.KbdMaxBrightness);
         int current = wmi.GetKeyboardBrightness();
-        int next = (current + 1) % 4; // Cycle 0→1→2→3→0
-        wmi.SetKeyboardBrightness(next);
+        if (current < 0)
+            current = 0;
+        int next = (current + 1) % (max + 1);
+
+        // HID command + sysfs write (no-op HID on Lenovo, sysfs still works).
+        USB.Aura.ApplyBrightness(next, "Toggle");
+
+        // Persist so keep-on timer and AC/DC transitions use the new value.
+        Helpers.AppConfig.Set(USB.Aura.GetBrightnessConfigKey(), next);
+
         RefreshKeyboard();
     }
 
@@ -1869,7 +1903,7 @@ public partial class MainWindow : Window
         // For models that only accept 60/80/100, snap slider to valid values
         if (Helpers.AppConfig.IsChargeLimit6080())
         {
-            sliderBattery.TickFrequency = 20;
+            sliderBattery.TickFrequency = 5;
             sliderBattery.IsSnapToTickEnabled = true;
         }
 

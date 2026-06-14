@@ -240,10 +240,12 @@ public static class Aura
         set => _rearMode = GetRearModes().ContainsKey(value) ? value : AuraMode.AuraStatic;
     }
 
-    /// <summary>Whether the current mode supports a second color (Breathe + Gradient, non-ACPI).</summary>
+    /// <summary>Whether the current mode supports a second color (Breathe + Gradient).
+    /// Allowed on non-ACPI devices, or ACPI devices that use DynamicLighting only.</summary>
     public static bool HasSecondColor()
     {
-        return (_mode == AuraMode.AuraBreathe || _mode == AuraMode.Gradient) && !_isACPI;
+        return (_mode == AuraMode.AuraBreathe || _mode == AuraMode.Gradient)
+            && (!_isACPI || AppConfig.IsDynamicLightingOnly());
     }
 
     /// <summary>Whether the current mode uses Color1 at all. Rainbow/ColorCycle don't,
@@ -620,14 +622,21 @@ public static class Aura
             // Persist for diagnostics + future fast-path read on resume.
             AppConfig.Set("backlight_type", typeByte);
 
+            // Old Strix/Scar report feat1==0; assume logo+lightbar. (#5590)
+            if (feat1 == 0 && AppConfig.IsStrix())
+                feat1 = FEAT1_LOGO | FEAT1_LIGHTBAR;
+
             HasLogo = (feat1 & FEAT1_LOGO) != 0 || AppConfig.IsZ13();
             HasLightbar = (feat1 & FEAT1_LIGHTBAR) != 0;
-            HasRearglow = (feat1 & FEAT1_REARGLOW) != 0 || AppConfig.IsZ13();
+            // VCUT bit = rearglow on old Scar. (#5590)
+            HasRearglow = (feat1 & (FEAT1_REARGLOW | FEAT1_VCUT)) != 0 || AppConfig.IsZ13();
 
             // FEAT2 ONE_ZONE_RED_EFFECT means white-only keyboard (single-zone
             // red firmware effect mapped to white). Force-flip the mutable static
             // so GetModes / AuraMessage / UI all read the live value.
-            if ((feat2 & FEAT2_ONE_ZONE_RED_EFFECT) != 0)
+            // Guard on typeByte != 0 to avoid false positives from devices that
+            // report no backlight type but still set the feature bit.
+            if (typeByte != 0x00 && (feat2 & FEAT2_ONE_ZONE_RED_EFFECT) != 0)
                 isWhite = true;
 
             Logger.WriteLine(
@@ -684,9 +693,11 @@ public static class Aura
         if (brightness == 0)
             _backlight = false;
 
-        // All keyboards accept brightness via INPUT_ID (0x5A). The legacy
-        // AURA_ID (0x5D) path was a leftover from older firmware behaviour.
-        AsusHid.WriteInput(new byte[] { AsusHid.INPUT_ID, 0xBA, 0xC5, 0xC4, (byte)brightness }, log);
+        // Ally needs the AURA_ID feature report so RGB turns off at 0%. (#5591)
+        if (AppConfig.IsAlly())
+            AsusHid.SetFeatureAura(new byte[] { AsusHid.AURA_ID, 0xBA, 0xC5, 0xC4, (byte)brightness });
+        else
+            AsusHid.WriteInput(new byte[] { AsusHid.INPUT_ID, 0xBA, 0xC5, 0xC4, (byte)brightness }, log);
 
         App.Wmi?.SetKeyboardBrightness(brightness);
 
@@ -1139,11 +1150,8 @@ public static class Aura
 
         if (AppConfig.IsNoDirectRGB())
         {
-            AsusHid.Write(new List<byte[]>
-            {
-                AuraMessage(AuraMode.AuraStatic, r, g, b, r, g, b, 0xEB),
-                MESSAGE_SET
-            }, null, AsusHid.MAIN_AURA_PIDS);
+            AsusHid.SetFeatureAura(AuraMessage(AuraMode.AuraStatic, r, g, b, r, g, b, 0xEB));
+            AsusHid.SetFeatureAura(MESSAGE_SET);
             return;
         }
 
@@ -1215,7 +1223,7 @@ public static class Aura
         {
             _initDirect = false;
             // SetFeature handshake instead of output write
-            AsusHid.SetFeatureAura(new byte[] { AsusHid.AURA_ID, 0xBC });
+            AsusHid.SetFeatureAura(new byte[] { AsusHid.AURA_ID, 0xBC, 1 });
             Thread.Sleep(50);
         }
 
@@ -1330,6 +1338,11 @@ public static class Aura
     /// </summary>
     public static bool IsAvailable()
     {
+        // ASUS AURA is only relevant on ASUS hardware. Lenovo devices
+        // use the LenovoRgb backend instead.
+        if (Helpers.AppConfig.IsLenovoDevice())
+            return false;
+
         if (AsusHid.IsAvailable())
             return true;
 

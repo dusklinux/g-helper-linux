@@ -23,8 +23,10 @@ public interface IPowerManager
     /// Empty array = sysfs not exposed at all.</summary>
     string[] GetPlatformProfileChoices();
 
-    /// <summary>Set PCIe ASPM policy. "default", "performance", "powersave", "powersupersave"</summary>
-    void SetAspmPolicy(string policy);
+    /// <summary>Set PCIe ASPM policy. "default", "performance", "powersave", "powersupersave".
+    /// When transitioning away from powersave, NVMe devices are woken first to prevent
+    /// D3cold resume failures that can kill the root filesystem.</summary>
+    Task SetAspmPolicy(string policy);
 
     /// <summary>Get current ASPM policy.</summary>
     string GetAspmPolicy();
@@ -52,6 +54,18 @@ public interface IPowerManager
     /// the battery charge limit on resume, so subscribers re-apply settings.
     /// </summary>
     event Action? SystemResumed;
+
+    /// <summary>
+    /// Fired when all connected displays transition from DPMS On to Off.
+    /// DEs typically kill keyboard backlight at this point.
+    /// </summary>
+    event Action? MonitorSlept;
+
+    /// <summary>
+    /// Fired when the display returns from DPMS Off to On (monitor auto-off then back).
+    /// Distinct from SystemResumed because it does not involve a kernel suspend.
+    /// </summary>
+    event Action? MonitorWoke;
 
     /// <summary>Start monitoring power state changes (polls AC adapter status).</summary>
     void StartPowerMonitoring();

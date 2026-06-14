@@ -381,10 +381,15 @@ public static class AsusHid
     }
 
     /// <summary>
-    /// Check if any AURA HID device is available (USB or I2C-HID).
+    /// Check if any ASUS AURA HID device is available (USB or I2C-HID).
+    /// Returns false on Lenovo hardware where VID 0x0B05 devices are
+    /// ITE keyboard controllers, not AURA endpoints.
     /// </summary>
     public static bool IsAvailable()
     {
+        if (Helpers.AppConfig.IsLenovoDevice())
+            return false;
+
         try
         {
             // Check USB-HID via HidSharp

@@ -149,8 +149,8 @@ public class AsusMouseDPI
     }
 }
 
-/// <summary>Base class for ASUS mouse peripherals. Uses HID transport from Device and implements IPeripheral.</summary>
-public abstract class AsusMouse : AsusDevice, IPeripheral
+/// <summary>Base class for ASUS mouse peripherals. Uses HID transport from Device and implements IMousePeripheral.</summary>
+public abstract class AsusMouse : AsusDevice, IMousePeripheral
 {
     // Export header
     private static readonly byte[] ExportMagic = "GMP1"u8.ToArray();
@@ -244,6 +244,68 @@ public abstract class AsusMouse : AsusDevice, IPeripheral
     public virtual bool HasAcceleration() => false;
     public virtual bool HasMotionSync() => false;
     public virtual bool HasZoneMode() => false;
+    public bool HasSmartShift() => false;
+    public bool HasHiResScroll() => false;
+    public bool HasThumbWheel() => false;
+    public bool HasHaptic() => false;
+    public bool HasForceSensing() => false;
+    public bool HasAnalogButtons() => false;
+    public bool SmartShiftRatchet { get; set; }
+    public int SmartShiftThreshold { get; set; }
+    public bool HiResScrollEnabled { get; set; }
+    public bool HiResScrollInvert { get; set; }
+    public bool HiResScrollDivert { get; set; }
+    public bool ThumbWheelDivert { get; set; }
+    public bool ThumbWheelInvert { get; set; }
+    public void WriteSmartShift() { }
+    public void WriteHiResScroll() { }
+    public void WriteThumbWheel() { }
+    public void WriteHaptic() { }
+    public bool HapticEnabled { get; set; }
+    public int HapticLevel { get; set; }
+    public bool HasPointerSpeed() => false;
+    public int PointerSpeed { get; set; }
+    public void WritePointerSpeed() { }
+    public bool HasChangeHost() => false;
+    public int HostCount { get; set; } = 1;
+    public int CurrentHost { get; set; }
+    public void WriteChangeHost() { }
+    public bool HasCrown() => false;
+    public bool CrownSmooth { get; set; }
+    public bool CrownDivert { get; set; }
+    public void WriteCrown() { }
+    public bool HasOnboardProfiles() => false;
+    public bool OnboardProfileEnabled { get; set; }
+    public void WriteOnboardMode() { }
+    public bool HasSensitivitySwitch() => false;
+    public bool HasIdleEffect() => false;
+    public bool HasIdleTimeout() => false;
+    public bool HasSleepTimeout() => false;
+    public bool HasHapticWaveform() => false;
+    public bool HasBacklightDelay() => false;
+    public bool HasHandDetection() => false;
+    public bool HasSideScrolling() => false;
+    public bool HasLowresMode() => false;
+    public bool SensitivitySwitch { get; set; }
+    public int IdleEffectIndex { get; set; }
+    public int IdleTimeoutSeconds { get; set; }
+    public int SleepTimeoutSeconds { get; set; }
+    public int HapticWaveformIndex { get; set; }
+    public int BacklightDelayHandsIn { get; set; }
+    public int BacklightDelayHandsOut { get; set; }
+    public int BacklightDelayPowered { get; set; }
+    public bool HandDetection { get; set; }
+    public bool SideScrolling { get; set; }
+    public int LowresModeIndex { get; set; }
+    public void WriteSensitivitySwitch() { }
+    public void WriteIdleEffect() { }
+    public void WriteIdleTimeout() { }
+    public void WriteSleepTimeout() { }
+    public void PlayHapticWaveform() { }
+    public void WriteBacklightDelays() { }
+    public void WriteHandDetection() { }
+    public void WriteSideScrolling() { }
+    public void WriteLowresMode() { }
 
     public virtual LightingMode[] SupportedLightingModes() =>
         [LightingMode.Static, LightingMode.Breathing, LightingMode.ColorCycle, LightingMode.Rainbow, LightingMode.React];

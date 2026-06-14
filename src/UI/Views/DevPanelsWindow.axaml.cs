@@ -26,8 +26,6 @@ public partial class DevPanelsWindow : Window
             () => App.MainWindowInstance?.RefreshKeyboard()),
         new("XG Mobile button", "Main window", "show_xgm_dev",
             () => App.MainWindowInstance?.RefreshAllyPanel()),
-        new("Mouse buttons", "Main window", "show_mouse_dev",
-            () => App.MainWindowInstance?.VisualizePeripherals()),
         new("Suspend mode combo", "Extra Settings (reopen)", "show_deep_sleep_dev", null),
         new("EPP combos", "Extra Settings (reopen)", "show_epp_dev", null),
         new("NumberPad button", "Extra Settings (reopen)", "show_numberpad_dev", null),
