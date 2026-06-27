@@ -33,5 +33,10 @@ namespace GHelper.Linux
     internal static class App
     {
         public static IHardwareControl? Wmi => null;
+
+        // LinuxNvidiaGpuControl.HandleResetRequired() fires a desktop toast via
+        // App.System?.ShowNotification(). Tests don't surface notifications, so
+        // null keeps the null-conditional call a no-op.
+        public static ISystemIntegration? System => null;
     }
 }

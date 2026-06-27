@@ -90,7 +90,7 @@ public sealed class FakeAsusWmi : IHardwareControl
     public int GetBatteryChargeLimit() => 100;
     public bool SetBatteryChargeLimit(int percent) => true;
     public bool GetPanelOverdrive() => false;
-    public void SetPanelOverdrive(bool enabled) { }
+    public bool SetPanelOverdrive(bool enabled) => true;
     public int GetMiniLedMode() => 0;
     public void SetMiniLedMode(int mode) { }
     public int GetScreenAutoBrightness() => -1;
@@ -100,6 +100,7 @@ public sealed class FakeAsusWmi : IHardwareControl
     public Platform.Linux.AttrRange? GetAttributeRange(Platform.Linux.AttrDef attr) => null;
     public int GetKeyboardBrightness() => 0;
     public void SetKeyboardBrightness(int level) { }
+    public int KbdMaxBrightness => 3;
     public void EnsureManualFanMode() { }
     public void SetKeyboardRgb(byte r, byte g, byte b) { }
     public void SubscribeEvents() { }
@@ -119,14 +120,18 @@ public sealed class FakePowerManager : IPowerManager
     public void SetPlatformProfile(string profile) { }
     public string GetPlatformProfile() => "balanced";
     public string[] GetPlatformProfileChoices() => Array.Empty<string>();
-    public void SetAspmPolicy(string policy) { }
+    public Task SetAspmPolicy(string policy) => Task.CompletedTask;
     public string GetAspmPolicy() => "default";
     public int GetBatteryPercentage() => 100;
     public int GetBatteryDrainRate() => 0;
     public int GetBatteryHealth() => 100;
     public event Action<bool>? PowerStateChanged;
     public event Action? SystemResumed;
+    public event Action? MonitorSlept;
+    public event Action? MonitorWoke;
     public void StartPowerMonitoring() { }
     public void StopPowerMonitoring() { }
     public void TriggerPowerStateChanged(bool onAc) => PowerStateChanged?.Invoke(onAc);
+    public void TriggerMonitorSlept() => MonitorSlept?.Invoke();
+    public void TriggerMonitorWoke() => MonitorWoke?.Invoke();
 }

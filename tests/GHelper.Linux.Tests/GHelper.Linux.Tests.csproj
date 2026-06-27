@@ -44,11 +44,21 @@
     <Compile Include="../../src/Gpu/GPUModeControl.cs" />
     <Compile Include="../../src/Gpu/NVidia/GpuQueryGate.cs" />
     <Compile Include="../../src/Gpu/NVidia/NvidiaProcessScanner.cs" />
+    <!-- LinuxAsusWmi/Lenovo backends call LinuxNvidiaGpuControl.GetTempViaNvml()
+         as an NVML temp fallback (v1.0.84); pull in the class + its interface. -->
+    <Compile Include="../../src/Gpu/NVidia/LinuxNvidiaGpuControl.cs" />
+    <Compile Include="../../src/Platform/IGpuControl.cs" />
+    <Compile Include="../../src/Platform/ISystemIntegration.cs" />
     <Compile Include="../../src/Platform/IHardwareControl.cs" />
     <Compile Include="../../src/Platform/IPowerManager.cs" />
     <Compile Include="../../src/Platform/Linux/Asus/AsusAttributes.cs" />
     <Compile Include="../../src/Platform/Linux/Asus/AsusAttributeRange.cs" />
     <Compile Include="../../src/Platform/Linux/SysfsHelper.cs" />
+    <!-- v1.0.84: SysfsHelper/GPUModeControl resolve gpu-helper via NixOS, and
+         LinuxAsusWmi routes PPT through RyzenPower. Both are self-contained
+         static helpers (depend only on SysfsHelper). -->
+    <Compile Include="../../src/Platform/Linux/NixOS.cs" />
+    <Compile Include="../../src/Platform/Linux/RyzenPower.cs" />
     <!-- LinuxAsusWmi + AsusWmiDebugfs: needed by the direct unit tests for
          the GPU-panel visibility logic (IsGpuEcoAvailable, CanToggleGpuBackend,
          IsPciBackendUsable, InvalidateGpuPresenceCache). The class also has a
@@ -59,6 +69,9 @@
     <Compile Include="../../src/Helpers/AppConfig.cs" />
     <Compile Include="../../src/Helpers/Logger.cs" />
     <Compile Include="../../src/Helpers/MemoryHelper.cs" />
+    <!-- LinuxNvidiaGpuControl calls Labels.Get(); Labels dispatches to every
+         language table. Self-contained string dictionaries (no UI deps). -->
+    <Compile Include="../../src/I18n/**/*.cs" />
   </ItemGroup>
 
 </Project>
