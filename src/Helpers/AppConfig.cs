@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -218,6 +219,68 @@ public static class AppConfig
             _config.Remove(name);
         }
         ScheduleWrite();
+    }
+
+    /// <summary>Store a dictionary as a JSON sub-object. AOT-safe (no reflection).</summary>
+    public static void SetObject(string name, Dictionary<string, object> value)
+    {
+        using var ms = new System.IO.MemoryStream();
+        using (var w = new System.Text.Json.Utf8JsonWriter(ms))
+        {
+            w.WriteStartObject();
+            foreach (var kv in value)
+            {
+                w.WritePropertyName(kv.Key);
+                switch (kv.Value)
+                {
+                    case int i:
+                        w.WriteNumberValue(i);
+                        break;
+                    case bool b:
+                        w.WriteBooleanValue(b);
+                        break;
+                    case string s:
+                        w.WriteStringValue(s);
+                        break;
+                    case List<int> li:
+                        w.WriteStartArray();
+                        foreach (int v in li)
+                            w.WriteNumberValue(v);
+                        w.WriteEndArray();
+                        break;
+                    case List<string> ls:
+                        w.WriteStartArray();
+                        foreach (string v in ls)
+                            w.WriteStringValue(v);
+                        w.WriteEndArray();
+                        break;
+                    default:
+                        w.WriteNullValue();
+                        break;
+                }
+            }
+            w.WriteEndObject();
+        }
+        string json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        lock (_lock)
+        {
+            _config[name] = JsonDocument.Parse(json).RootElement.Clone();
+        }
+        ScheduleWrite();
+    }
+
+    /// <summary>Read a JSON sub-object. Returns null if the key is missing or not an object.</summary>
+    public static Dictionary<string, object>? GetObject(string name)
+    {
+        lock (_lock)
+        {
+            if (!_config.TryGetValue(name, out var je) || je.ValueKind != JsonValueKind.Object)
+                return null;
+            var dict = new Dictionary<string, object>();
+            foreach (var prop in je.EnumerateObject())
+                dict[prop.Name] = prop.Value.Clone();
+            return dict;
+        }
     }
 
     // Mode-aware Get/Set (per performance mode)

@@ -47,6 +47,38 @@ public class LinuxNvidiaGpuControl : IGpuControl
 
     public string? GetGpuName() => _gpuName;
 
+    /// <summary>
+    /// Fast GPU temp read via gpu-helper nvml-temp (~5ms, no nvidia-smi fork).
+    /// Returns the temperature in Celsius or -1 on failure.
+    /// Usable as a static fallback from both ASUS and Lenovo WMI backends.
+    /// </summary>
+    public static int GetTempViaNvml()
+    {
+        if (GpuQueryGate.IsPaused)
+            return -1;
+        if (!Directory.Exists("/sys/module/nvidia"))
+            return -1;
+        if (IsDgpuSuspended())
+            return -1;
+        if (!NvidiaProcessScanner.EnsureHelper())
+            return -1;
+        try
+        {
+            string? output = SysfsHelper.RunSudoOrPkexec(
+                SysfsHelper.GpuHelperPath, new[] { "nvml-temp" });
+            if (string.IsNullOrWhiteSpace(output))
+                return -1;
+            foreach (var token in output.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (token.StartsWith("temp=", StringComparison.Ordinal) &&
+                    int.TryParse(token.AsSpan(5), out int t) && t > 0)
+                    return t;
+            }
+        }
+        catch { }
+        return -1;
+    }
+
     // Temperature
 
     public int? GetCurrentTemp()
@@ -181,6 +213,9 @@ public class LinuxNvidiaGpuControl : IGpuControl
 
         if (def < 0 || min < 0 || max < 0)
             return null;
+        // Any card reporting a default over 1000W has no real power management.
+        if (def > 1000)
+            return null;
         return ((int)Math.Round(def), (int)Math.Round(min), (int)Math.Round(max), (int)Math.Round(enf));
     }
 
@@ -201,12 +236,16 @@ public class LinuxNvidiaGpuControl : IGpuControl
 
         if (powerW != null)
         {
-            cmdCount++;
-            var r = SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "smi", "-pl", powerW.Value.ToString() });
-            if (r != null)
-                okCount++;
-            else
-                Helpers.Logger.WriteLine($"NVIDIA: nvidia-smi -pl {powerW.Value} FAILED");
+            var caps = GetCapabilities();
+            if (caps.PowerLimit)
+            {
+                cmdCount++;
+                var r = SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "smi", "-pl", powerW.Value.ToString() });
+                if (r != null)
+                    okCount++;
+                else
+                    Helpers.Logger.WriteLine($"NVIDIA: nvidia-smi -pl {powerW.Value} FAILED");
+            }
         }
         if (clockLockMhz > 0)
         {
@@ -327,7 +366,11 @@ public class LinuxNvidiaGpuControl : IGpuControl
         int? MemOffset,
         bool LockGpu,
         bool LockMem,
-        bool PowerMgmt);
+        bool PowerMgmt,
+        int? TempShutdown,
+        int? TempSlowdown,
+        string? Vbios,
+        int? MemBusWidth);
 
     /// <summary>Per-tunable hardware support, so the UI only shows what the card
     /// can actually do.</summary>
@@ -350,6 +393,10 @@ public class LinuxNvidiaGpuControl : IGpuControl
             return null;
         if (_nvmlCache != null && (DateTime.UtcNow - _nvmlCacheAt) < NvmlCacheTtl)
             return _nvmlCache;
+        // Don't wake a runtime-suspended dGPU to refresh NVML info; serve the
+        // last cache (applied offsets/ranges stay valid across suspend) or null.
+        if (IsDgpuSuspended())
+            return _nvmlCache;
         if (!NvidiaProcessScanner.EnsureHelper())
             return null;
 
@@ -357,9 +404,10 @@ public class LinuxNvidiaGpuControl : IGpuControl
         if (string.IsNullOrWhiteSpace(output))
             return null;
 
-        string? driver = null;
+        string? driver = null, vbios = null;
         (int min, int max)? coreRange = null, memRange = null;
         int? coreOff = null, memOff = null;
+        int? tempShutdown = null, tempSlowdown = null, memBusWidth = null;
         bool lockGpu = false, lockMem = false, powerMgmt = false;
         foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
@@ -396,9 +444,25 @@ public class LinuxNvidiaGpuControl : IGpuControl
                 case "power-mgmt":
                     powerMgmt = val == "1";
                     break;
+                case "temp-shutdown":
+                    if (int.TryParse(val, out var ts))
+                        tempShutdown = ts;
+                    break;
+                case "temp-slowdown":
+                    if (int.TryParse(val, out var td))
+                        tempSlowdown = td;
+                    break;
+                case "vbios":
+                    vbios = val;
+                    break;
+                case "mem-bus-width":
+                    if (int.TryParse(val, out var mbw))
+                        memBusWidth = mbw;
+                    break;
             }
         }
-        var info = new NvmlInfo(driver, coreRange, memRange, coreOff, memOff, lockGpu, lockMem, powerMgmt);
+        var info = new NvmlInfo(driver, coreRange, memRange, coreOff, memOff,
+            lockGpu, lockMem, powerMgmt, tempShutdown, tempSlowdown, vbios, memBusWidth);
         _nvmlCache = info;
         _nvmlCacheAt = DateTime.UtcNow;
         return info;
@@ -651,11 +715,55 @@ public class LinuxNvidiaGpuControl : IGpuControl
     private const int SmiFailThreshold = 2;
     private static readonly TimeSpan SmiCooldown = TimeSpan.FromSeconds(15);
 
+    // dGPU runtime-PM guard. A runtime-suspended (D3cold) dGPU is healthy but
+    // powered down. Reading power/runtime_status is passive, but any nvidia-smi
+    // or NVML query resumes it from D3cold and defeats Optimus power saving - so
+    // telemetry reads short-circuit while it is suspended. The PCI path is
+    // stable, so it is cached once found; if absent (e.g. booted in Eco) we
+    // re-scan slowly so it appears after a later switch to Standard.
+    private static string? _rtStatusPath;
+    private static DateTime _rtRescanUtc;
+
+    /// <summary>True when the discrete NVIDIA GPU is runtime-suspended (D3cold).
+    /// Passive sysfs read; callers use it to avoid waking the dGPU for telemetry.</summary>
+    public static bool IsDgpuSuspended()
+    {
+        if (_rtStatusPath == null && DateTime.UtcNow >= _rtRescanUtc)
+        {
+            _rtRescanUtc = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+            try
+            {
+                foreach (var dev in Directory.EnumerateDirectories("/sys/bus/pci/devices"))
+                {
+                    string cls = SysfsHelper.ReadAttribute(Path.Combine(dev, "class")) ?? "";
+                    if (!cls.StartsWith("0x0300", StringComparison.Ordinal)
+                        && !cls.StartsWith("0x0302", StringComparison.Ordinal))
+                        continue;
+                    if (SysfsHelper.ReadInt(Path.Combine(dev, "boot_vga"), 0) == 1)
+                        continue; // iGPU
+                    if ((SysfsHelper.ReadAttribute(Path.Combine(dev, "vendor")) ?? "")
+                        .StartsWith("0x10de", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _rtStatusPath = Path.Combine(dev, "power/runtime_status");
+                        break;
+                    }
+                }
+            }
+            catch { }
+        }
+        return _rtStatusPath != null
+            && SysfsHelper.ReadAttribute(_rtStatusPath) == "suspended";
+    }
+
     private static string? RunNvidiaSmi(string query, string format = "")
     {
         // Proactive gate: GPU mode switches pause telemetry so we never spawn
         // an nvidia-smi that turns into a driver holder mid-unbind.
         if (GpuQueryGate.IsPaused)
+            return null;
+
+        // Never wake a runtime-suspended dGPU just to read telemetry.
+        if (IsDgpuSuspended())
             return null;
 
         if (DateTime.UtcNow < _smiCooldownUntilUtc)

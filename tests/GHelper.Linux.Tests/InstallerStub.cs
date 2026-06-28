@@ -33,5 +33,8 @@ namespace GHelper.Linux
     internal static class App
     {
         public static IHardwareControl? Wmi => null;
+
+        // LinuxNvidiaGpuControl uses App.System?.ShowNotification(); null = no-op.
+        public static ISystemIntegration? System => null;
     }
 }

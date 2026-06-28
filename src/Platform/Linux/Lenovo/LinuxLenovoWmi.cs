@@ -312,7 +312,7 @@ public class LinuxLenovoWmi : IHardwareControl
 
     public bool GetPanelOverdrive() => false;
 
-    public void SetPanelOverdrive(bool enabled) { }
+    public bool SetPanelOverdrive(bool enabled) => false;
 
     public int GetMiniLedMode() => -1;
 
@@ -332,6 +332,58 @@ public class LinuxLenovoWmi : IHardwareControl
         _ => attribute,
     };
 
+    // Circuit-breaker: stop retrying after the first failure this session.
+    // Reset when the user triggers a new mode switch (SetThrottleThermalPolicy).
+    private static bool _customSwitchFailed;
+
+    /// <summary>Reset the custom-profile circuit-breaker so the next PPT write
+    /// retries the switch. Called on mode changes.</summary>
+    public static void ResetCustomSwitchBreaker() => _customSwitchFailed = false;
+
+    /// <summary>Switch platform_profile to "custom" (God mode) for PPT writes.
+    /// Prefers the per-device class path (kernel 6.12+) which bypasses the
+    /// legacy aggregation layer's unconditional EINVAL on "custom".</summary>
+    private static bool SwitchToCustomProfile(string currentProfile)
+    {
+        if (_customSwitchFailed)
+            return false;
+
+        if (!LenovoDetection.HasCustomProfile())
+        {
+            Helpers.Logger.WriteLine(
+                "LinuxLenovoWmi: PPT requires platform_profile=custom which this firmware lacks - skipping");
+            _customSwitchFailed = true;
+            return false;
+        }
+
+        Helpers.Logger.WriteLine(
+            $"LinuxLenovoWmi: PPT requested - switching platform_profile {currentProfile} -> custom (God mode)");
+
+        // Try per-device class path first (works on kernel 6.12+ where the
+        // legacy /sys/firmware/acpi/platform_profile rejects "custom").
+        var gzPath = LenovoSysfs.GamezoneProfilePath();
+        if (gzPath != null)
+        {
+            if (SysfsHelper.WriteAttribute(gzPath, "custom"))
+            {
+                Thread.Sleep(100);
+                return true;
+            }
+            Helpers.Logger.WriteLine("LinuxLenovoWmi: gamezone class path write failed, trying legacy path");
+        }
+
+        // Fallback: legacy aggregated path (works on older kernels).
+        if (SysfsHelper.WriteAttribute(SysfsHelper.PlatformProfile, "custom"))
+        {
+            Thread.Sleep(100);
+            return true;
+        }
+
+        Helpers.Logger.WriteLine("LinuxLenovoWmi: switch to custom failed on all paths - circuit-breaker tripped");
+        _customSwitchFailed = true;
+        return false;
+    }
+
     public void SetPptLimit(string attribute, int watts)
     {
         var path = LenovoSysfs.FirmwareAttrCurrentValue(MapPptAttribute(attribute));
@@ -342,21 +394,8 @@ public class LinuxLenovoWmi : IHardwareControl
         var profile = SysfsHelper.ReadAttribute(SysfsHelper.PlatformProfile);
         if (profile != null && profile != "custom")
         {
-            if (!LenovoDetection.HasCustomProfile())
-            {
-                Helpers.Logger.WriteLine(
-                    $"LinuxLenovoWmi: PPT '{attribute}' requires platform_profile=custom which this firmware lacks - skipping");
+            if (!SwitchToCustomProfile(profile))
                 return;
-            }
-
-            Helpers.Logger.WriteLine(
-                $"LinuxLenovoWmi: PPT '{attribute}' requested - switching platform_profile {profile} -> custom (God mode)");
-            if (!SysfsHelper.WriteAttribute(SysfsHelper.PlatformProfile, "custom"))
-            {
-                Helpers.Logger.WriteLine("LinuxLenovoWmi: switch to custom failed - skipping PPT write");
-                return;
-            }
-            Thread.Sleep(100); // let gamezone settle before the fw-attr write
         }
 
         SysfsHelper.WriteInt(path, watts);
@@ -387,12 +426,14 @@ public class LinuxLenovoWmi : IHardwareControl
         return new AttrRange(min, max, step <= 0 ? 1 : step, def);
     }
 
-    // Keyboard backlight. ideapad LEDs are on/off (max 1) or tristate
-    // off/low/high (max 2); the app contract is 0-3, so writes are clamped.
+    // Keyboard backlight. ideapad LEDs report max 1 (on/off) or 2 (tristate);
+    // writes are clamped so callers can cycle 0..max safely.
 
     public bool HasKbdBrightnessHwChanged { get; } =
         LenovoSysfs.KbdBacklightLed() is string led
         && File.Exists(Path.Combine(led, "brightness_hw_changed"));
+
+    public int KbdMaxBrightness => _kbdMaxBrightness;
 
     public int GetKeyboardBrightness()
     {
@@ -599,9 +640,7 @@ public class LinuxLenovoWmi : IHardwareControl
         {
             "throttle_thermal_policy" =>
                 LenovoDetection.HasPlatformProfile() || LenovoDetection.HasFanMode(),
-            "ppt_pl1_spl" or "ppt_pl2_sppt" or "ppt_fppt" or "ppt_pl3_fppt" =>
-                LenovoSysfs.FirmwareAttrCurrentValue(MapPptAttribute(feature)) != null,
-            _ => false
+            _ => LenovoSysfs.FirmwareAttrCurrentValue(MapPptAttribute(feature)) != null,
         };
     }
 
@@ -631,7 +670,12 @@ public class LinuxLenovoWmi : IHardwareControl
 
     private int GetGpuTemp()
     {
-        var nvidiaHwmon = SysfsHelper.FindHwmonByName("nvidia");
+        // Skip every NVIDIA read while the dGPU is runtime-suspended: probing it
+        // (hwmon/NVML/nvidia-smi) wakes it from D3cold. Fall through to the
+        // APU/amdgpu sensor instead.
+        bool nvSuspended = Gpu.NVidia.LinuxNvidiaGpuControl.IsDgpuSuspended();
+
+        var nvidiaHwmon = nvSuspended ? null : SysfsHelper.FindHwmonByName("nvidia");
         if (nvidiaHwmon != null)
         {
             int temp = SysfsHelper.ReadInt(Path.Combine(nvidiaHwmon, "temp1_input"), -1);
@@ -645,6 +689,24 @@ public class LinuxLenovoWmi : IHardwareControl
             int temp = SysfsHelper.ReadInt(Path.Combine(amdHwmon, "temp1_input"), -1);
             if (temp > 0)
                 return temp / 1000;
+        }
+
+        // Fallback: NVML via gpu-helper (~5ms, no nvidia-smi fork)
+        int nvmlTemp = Gpu.NVidia.LinuxNvidiaGpuControl.GetTempViaNvml();
+        if (nvmlTemp > 0)
+            return nvmlTemp;
+
+        // Last resort: nvidia-smi fork (~200ms)
+        if (!nvSuspended && Directory.Exists("/sys/module/nvidia"))
+        {
+            try
+            {
+                var output = SysfsHelper.RunCommand("nvidia-smi",
+                    "--query-gpu=temperature.gpu --format=csv,noheader,nounits");
+                if (!string.IsNullOrWhiteSpace(output) && int.TryParse(output.Trim(), out int smiTemp) && smiTemp > 0)
+                    return smiTemp;
+            }
+            catch { }
         }
 
         return -1;

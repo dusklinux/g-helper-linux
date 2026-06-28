@@ -91,6 +91,9 @@ public static class LenovoRgb
     private static readonly List<string> _candidatePaths = new();
     private static string? _workingPath;
 
+    private static bool _applyTested;
+    private static bool _applyOk;
+
     // User state (persisted by the UI through AppConfig)
 
     public static LenovoRgbMode Mode = LenovoRgbMode.Static;
@@ -113,7 +116,9 @@ public static class LenovoRgb
         if (!Helpers.AppConfig.IsLenovoDevice())
             return false;
         Scan();
-        return _kind != LenovoRgbKind.None;
+        if (_kind == LenovoRgbKind.None)
+            return false;
+        return !_applyTested || _applyOk;
     }
 
     /// <summary>Modes for the UI combo (int id -> label).</summary>
@@ -287,12 +292,15 @@ public static class LenovoRgb
     /// <summary>Apply the current Mode/Speed/Brightness/colors to the keyboard.</summary>
     public static bool Apply()
     {
-        return Kind switch
+        bool ok = Kind switch
         {
             LenovoRgbKind.FourZone => ApplyFourZone(),
             LenovoRgbKind.Spectrum => ApplySpectrum(),
             _ => false,
         };
+        _applyTested = true;
+        _applyOk = ok;
+        return ok;
     }
 
     /// <summary>Turn the backlight off (all-zero 4-zone packet / brightness 0).</summary>

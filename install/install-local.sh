@@ -205,6 +205,127 @@ fi
 REAL_USER=$(logname 2>/dev/null || echo "${SUDO_USER:-}")
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  NixOS BRANCH (declarative: stage module + binary, edit configuration.nix,
+#  nixos-rebuild). NixOS /etc is read-only store symlinks, so the imperative
+#  flow below cannot run here.
+# ══════════════════════════════════════════════════════════════════════════════
+
+GH_NIX_ROOT="/etc/nixos/ghelper"
+GH_NIX_WRAPPER="/etc/nixos/ghelper.nix"
+GH_NIX_CONF="/etc/nixos/configuration.nix"
+
+# Inject `[ /etc/nixos/ghelper.nix ] ++ ` after the first `imports =` in
+# configuration.nix. Returns 0 if injected/already present, 1 if no imports list.
+_gh_nix_inject() {
+    if grep -q '/etc/nixos/ghelper.nix' "$GH_NIX_CONF"; then
+        return 0
+    fi
+    grep -qE '^[[:space:]]*imports[[:space:]]*=' "$GH_NIX_CONF" || return 1
+    sed -i '0,/imports[[:space:]]*=/s|imports[[:space:]]*=|imports =\n    [ /etc/nixos/ghelper.nix ] ++|' "$GH_NIX_CONF"
+}
+
+# Print the manual snippet when auto-edit is not possible.
+_gh_nix_guidance() {
+    echo ""
+    _warn "Could not auto-edit $GH_NIX_CONF (no recognizable 'imports = [ ... ]')."
+    echo "  ${DIM}Add this to your NixOS configuration, then 'nixos-rebuild switch':${RESET}"
+    echo "  ${CYAN}imports = [ $GH_NIX_WRAPPER ];${RESET}"
+    echo "  ${DIM}(${GH_NIX_WRAPPER} and ${GH_NIX_ROOT}/ were staged for you.)${RESET}"
+}
+
+# Write the owned wrapper module that imports our module + enables the service.
+_gh_nix_write_wrapper() {
+    cat > "$GH_NIX_WRAPPER" <<EOF
+# Managed by g-helper install script. Safe to delete (also remove the
+# matching '[ /etc/nixos/ghelper.nix ] ++' from configuration.nix).
+{ ... }:
+{
+  imports = [ ${GH_NIX_ROOT}/nixos/module.nix ];
+  services.ghelper.enable = true;
+}
+EOF
+}
+
+_gh_nixos_rebuild() {
+    # Eval-gate first so a bad edit never reaches activation.
+    _info "Validating configuration (nixos-rebuild dry-build)..."
+    if ! nixos-rebuild dry-build 2>&1 | tail -3; then
+        return 1
+    fi
+    _info "Applying (nixos-rebuild switch)..."
+    nixos-rebuild switch 2>&1 | tail -5
+}
+
+if [[ -f /etc/NIXOS ]]; then
+    _step 1 "NixOS DETECTED - DECLARATIVE DEPLOYMENT"
+
+    if [[ "$MODE" == "uninstall" ]]; then
+        if [[ -f "$GH_NIX_CONF" ]]; then
+            cp "$GH_NIX_CONF" "${GH_NIX_CONF}.bak-ghelper-$(date +%s)"
+            sed -i 's|\[ /etc/nixos/ghelper.nix \] ++ ||; s|\[ /etc/nixos/ghelper.nix \] ++||' "$GH_NIX_CONF"
+            _remove "configuration.nix import"
+        fi
+        _safe_remove "$GH_NIX_WRAPPER" "ghelper.nix wrapper"
+        _safe_remove "$GH_NIX_ROOT"    "staged module + binary"
+        _info "Rebuilding without ghelper..."
+        nixos-rebuild switch 2>&1 | tail -5
+        echo ""
+        _info "${GREEN}Uninstalled from NixOS.${RESET} ${DIM}User config preserved.${RESET}"
+        exit 0
+    fi
+
+    # Install: require the local build
+    if [[ ! -f "$DIST_DIR/ghelper" ]]; then
+        _fail "Missing $DIST_DIR/ghelper - run ./build.sh first"
+        exit 1
+    fi
+
+    _info "Staging module + binary under ${GH_NIX_ROOT}/"
+    rm -rf "$GH_NIX_ROOT"
+    mkdir -p "$GH_NIX_ROOT/nixos" "$GH_NIX_ROOT/dist" \
+             "$GH_NIX_ROOT/vendor/gpu-helper" "$GH_NIX_ROOT/install"
+    install -m644 "$PROJECT_DIR/nixos/module.nix"  "$GH_NIX_ROOT/nixos/module.nix"
+    install -m644 "$PROJECT_DIR/nixos/package.nix" "$GH_NIX_ROOT/nixos/package.nix"
+    install -m755 "$DIST_DIR/ghelper"              "$GH_NIX_ROOT/dist/ghelper"
+    # Folder (non-AOT) build: bring the .NET DLLs alongside the host.
+    if [[ -f "$DIST_DIR/ghelper.dll" ]]; then
+        cp -r "$DIST_DIR/." "$GH_NIX_ROOT/dist/"
+    fi
+    install -m644 "$PROJECT_DIR/vendor/gpu-helper/gpu-helper.c" "$GH_NIX_ROOT/vendor/gpu-helper/gpu-helper.c"
+    for f in 90-ghelper.rules gpu-block-helper.sh ghelper-gpu-boot.sh ghelper.desktop ghelper.png; do
+        install -m644 "$SCRIPT_DIR/$f" "$GH_NIX_ROOT/install/$f"
+    done
+
+    _gh_nix_write_wrapper
+    _inject "wrapper → $GH_NIX_WRAPPER"
+
+    if [[ ! -f "$GH_NIX_CONF" ]]; then
+        _gh_nix_guidance
+        exit 0
+    fi
+
+    cp "$GH_NIX_CONF" "${GH_NIX_CONF}.bak-ghelper-$(date +%s)"
+    if ! _gh_nix_inject; then
+        _gh_nix_guidance
+        exit 0
+    fi
+    _inject "import → $GH_NIX_CONF"
+
+    if _gh_nixos_rebuild; then
+        echo ""
+        _info "${GREEN}G-Helper deployed on NixOS.${RESET} Launch with: ${BOLD}ghelper${RESET}"
+        exit 0
+    else
+        # Roll back the edit; staged files are harmless to leave.
+        local_bak=$(ls -t "${GH_NIX_CONF}".bak-ghelper-* 2>/dev/null | head -1)
+        [[ -n "$local_bak" ]] && cp "$local_bak" "$GH_NIX_CONF"
+        _fail "nixos-rebuild failed - configuration.nix restored from backup"
+        _gh_nix_guidance
+        exit 1
+    fi
+fi
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  UNINSTALL MODE
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -249,8 +370,8 @@ if [[ "$MODE" == "uninstall" ]]; then
     _safe_remove "$INSTALL_DIR"                          "install directory ($INSTALL_DIR)"
     _safe_remove "/usr/local/bin/ghelper"                 "symlink"
     _safe_remove "$UDEV_DEST"                             "udev rules"
-    _safe_remove "/etc/tmpfiles.d/90-ghelper.conf"        "tmpfiles config"
-    _safe_remove "/etc/modules-load.d/ghelper-numberpad.conf" "NumberPad modules-load config"
+    _safe_remove "/etc/modules-load.d/ghelper.conf"       "modules-load config"
+    _safe_remove "/etc/modules-load.d/ghelper-lenovo.conf"    "modules-load config (legacy)"
     _safe_remove "/etc/systemd/system/ghelper-gpu-boot.service" "GPU boot systemd unit"
     _safe_remove "/usr/local/lib/ghelper"                 "ghelper lib directory"
     _safe_remove "/etc/sudoers.d/ghelper-gpu"             "sudoers rule"
@@ -362,9 +483,11 @@ if [[ "$MODE" == "install" ]]; then
     fi
 
     # Fix ownership so the real user can run ghelper without root
+    chown root:root "$INSTALL_DIR"
+    chmod 755 "$INSTALL_DIR"
     if [[ -n "$REAL_USER" ]]; then
-        chown -R "$REAL_USER:$REAL_USER" "$INSTALL_DIR"
-        _info "ownership → ${BOLD}$REAL_USER:$REAL_USER${RESET} on $INSTALL_DIR/"
+        chown "$REAL_USER:$REAL_USER" "$INSTALL_DIR/ghelper"
+        _info "ownership → ${BOLD}root:root${RESET} on $INSTALL_DIR/, ${BOLD}$REAL_USER${RESET} on ghelper"
     fi
 else
     _info "${DIM}AppImage mode — skipping binary installation${RESET}"
@@ -492,22 +615,14 @@ else
     _warn "could not load kernel module → i2c-dev (NumberPad LED control may be unavailable)"
 fi
 
-mkdir -p /etc/modules-load.d
-printf "uinput\ni2c-dev\n" > /etc/modules-load.d/ghelper-numberpad.conf
-_info "modules-load config → /etc/modules-load.d/ghelper-numberpad.conf"
-
 udevadm trigger
 _info "udev trigger fired — re-applying all RUN commands"
 
-# ── Remove stale tmpfiles.d config from previous versions ──
-# The 90-ghelper.conf tmpfiles config was redundant with udev rules and
-# risked kernel deadlocks if 'w' directives were ever added. Removed in v2.
-TMPFILES_STALE="/etc/tmpfiles.d/90-ghelper.conf"
-if [[ -f "$TMPFILES_STALE" ]]; then
-    rm -f "$TMPFILES_STALE"
-    _info "removed stale tmpfiles config → $TMPFILES_STALE"
-else
-    _info "${DIM}no stale tmpfiles config found (good)${RESET}"
+# Keyboard remapper needs the input group to grab the integrated keyboard.
+if [[ -n "${SUDO_USER:-}" ]] && ! id -nG "$SUDO_USER" | tr ' ' '\n' | grep -qx input; then
+    usermod -aG input "$SUDO_USER" \
+        && _inject "added $SUDO_USER to 'input' group (keyboard remapper)" \
+        || _warn "could not add $SUDO_USER to input group"
 fi
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -667,7 +782,6 @@ if [[ "$MODE" == "appimage" ]]; then
     echo "${YELLOW}${BOLD}  ╠════════════════════════════════════════════════════════════════╣${RESET}"
     echo "${YELLOW}${BOLD}  ║                                                                ║${RESET}"
     echo "${YELLOW}${BOLD}  ║${RESET}  ${CYAN}0xF0${RESET}  udev      → $UDEV_DEST"
-    echo "${YELLOW}${BOLD}  ║${RESET}  ${CYAN}0xF1${RESET}  cleanup   → removed stale tmpfiles (if any)"
     echo "${YELLOW}${BOLD}  ║                                                                ║${RESET}"
     echo "${YELLOW}${BOLD}  ╠════════════════════════════════════════════════════════════════╣${RESET}"
     echo "${YELLOW}${BOLD}  ║                                                                ║${RESET}"

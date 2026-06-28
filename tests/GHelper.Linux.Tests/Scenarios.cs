@@ -22,7 +22,7 @@ public static class Scenarios
     public static void RunAll()
     {
         Console.WriteLine("\n PCI backend ");
-        Pci_FromStandard_ClickEco_WritesBlocks_AndSchedulesReboot();
+        Pci_FromStandard_ClickEco_WritesBlocks_AndAppliesLive();
         Pci_FromEco_ClickEco_AlreadySet_NoOp();
         Pci_FromEco_ClickStandard_AppliesLive();
         Pci_FromStandard_ClickStandard_AlreadySet();
@@ -84,7 +84,7 @@ public static class Scenarios
         Pci_LiveStandard_HelperFailure_FallsBackToReboot();
         Pci_MuxLatched_ClickEco_EcoBlocked();
         Pci_MuxLiveZero_ClickEco_EcoBlocked();
-        Pci_FromStandard_ClickEco_StillRequiresReboot();
+        Pci_FromStandard_ClickEco_DriverActive_ShowsDialog();
 
         Console.WriteLine("\n GPU panel visibility (LinuxAsusWmi direct, no dgpu_disable firmware) ");
         IsPciBackendUsable_PciDisabled_ReturnsFalse();
@@ -144,7 +144,7 @@ public static class Scenarios
                 // Expectation matrix for PCI:
                 // - Eco hw + click Eco → AlreadySet
                 // - Eco hw + click Std/Ult/Opt → Applied (live recovery)
-                // - Std hw + click Eco → RebootRequired (write blocks)
+                // - Std hw + click Eco → Applied (live, driver idle)
                 // - Std hw + click Std/Opt/Ult → AlreadySet
                 bool wantEco = (button == GpuMode.Eco);
                 if (hw == HwState.Eco && wantEco)
@@ -152,7 +152,7 @@ public static class Scenarios
                 else if (hw == HwState.Eco && !wantEco)
                     AssertEqual(GpuSwitchResult.Applied, result, "Eco→Std/Ult/Opt live Applied");
                 else if (hw == HwState.Standard && wantEco)
-                    AssertEqual(GpuSwitchResult.RebootRequired, result, "Std→Eco RebootRequired");
+                    AssertEqual(GpuSwitchResult.Applied, result, "Std→Eco live Applied");
                 else
                     AssertEqual(GpuSwitchResult.AlreadySet, result, "Std→Std/Ult/Opt AlreadySet");
             });
@@ -402,19 +402,20 @@ public static class Scenarios
             Assert(!sb.ModprobePresent(), "no block artifacts written");
         });
 
-    static void Pci_FromStandard_ClickEco_StillRequiresReboot()
-        => Scenario(nameof(Pci_FromStandard_ClickEco_StillRequiresReboot), sb =>
+    static void Pci_FromStandard_ClickEco_DriverActive_ShowsDialog()
+        => Scenario(nameof(Pci_FromStandard_ClickEco_DriverActive_ShowsDialog), sb =>
         {
-            // Standard → Eco direction stays reboot-required even after the
-            // live Eco→Standard work, because rmmod would fail against Xorg.
+            // dGPU driver loaded: live Eco is unsafe, so the UI gets the Switch
+            // Now / After Reboot dialog (DriverBlocking) - no artifacts yet.
             AppConfig.Set("gpu_backend", "pci");
             sb.Wmi.MuxMode = 1; sb.Wmi.EcoEnabled = false;
+            sb.WriteFakeNvidiaModule();
 
             var result = sb.Controller.RequestModeSwitch(GpuMode.Eco);
 
-            AssertEqual(GpuSwitchResult.RebootRequired, result, "into-Eco still deferred");
-            Assert(sb.ModprobePresent(), "blocks written for next boot");
-            AssertEqual("eco", sb.TriggerContent(), "trigger=eco");
+            AssertEqual(GpuSwitchResult.DriverBlocking, result, "driver active → dialog");
+            Assert(!sb.ModprobePresent(), "no blocks written yet");
+            Assert(!sb.TriggerPresent(), "no trigger written yet");
         });
 
     static void Regression_PciSwitchBackToStandard_LiveRemovesBlocks()
@@ -438,15 +439,17 @@ public static class Scenarios
     // PCI backend
     // 
 
-    static void Pci_FromStandard_ClickEco_WritesBlocks_AndSchedulesReboot()
-        => Scenario(nameof(Pci_FromStandard_ClickEco_WritesBlocks_AndSchedulesReboot), sb =>
+    static void Pci_FromStandard_ClickEco_WritesBlocks_AndAppliesLive()
+        => Scenario(nameof(Pci_FromStandard_ClickEco_WritesBlocks_AndAppliesLive), sb =>
         {
             AppConfig.Set("gpu_backend", "pci");
             sb.Wmi.MuxMode = 1; sb.Wmi.EcoEnabled = false;
 
             var result = sb.Controller.RequestModeSwitch(GpuMode.Eco);
 
-            AssertEqual(GpuSwitchResult.RebootRequired, result, "result");
+            // Driver idle, MUX hybrid: live Eco. Blocks + trigger still written
+            // (boot-script fallback) before the live PCI remove.
+            AssertEqual(GpuSwitchResult.Applied, result, "result");
             Assert(sb.ModprobePresent(), "modprobe block written");
             Assert(sb.UdevPresent(), "udev rule written");
             AssertEqual("eco", sb.TriggerContent(), "trigger content");

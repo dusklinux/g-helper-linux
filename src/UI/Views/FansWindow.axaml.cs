@@ -58,6 +58,7 @@ public partial class FansWindow : Window
             InitModeCombo();
             LoadFanCurves();
             LoadPowerLimits();
+            LoadRyzenPower();
             LoadUV();
             LoadAdvanced();
             LoadGpuTuning();
@@ -265,6 +266,7 @@ public partial class FansWindow : Window
                 InitModeCombo();
                 LoadFanCurves();
                 LoadPowerLimits();
+                LoadRyzenPower();
                 LoadUV();
                 LoadAdvanced();
                 LoadGpuTuning();
@@ -408,6 +410,7 @@ public partial class FansWindow : Window
             LoadNvTgpRow(wmi);
             LoadGpuBoostRow(wmi);
             LoadGpuTempRow(wmi);
+            BuildTunableRows(panelGpuAdvanced, _gpuExtraDefs, wmi);
 
             if (!nvAvail)
             {
@@ -426,9 +429,12 @@ public partial class FansWindow : Window
 
             // Only show tuning rows the card actually supports.
             var caps = nv.GetCapabilities();
-            // Dynamic Boost arbitrates GPU power on this platform, so nvidia-smi
-            // -pl is overridden - hide the (ineffective) power row when present.
-            bool dynamicBoost = wmi?.IsFeatureSupported(Platform.Linux.AsusAttributes.NvDynamicBoost) == true;
+            // Firmware TGP (ASUS dynamic boost or Lenovo cTGP/PPAB) arbitrates GPU
+            // power, so nvidia-smi -pl is overridden - hide the (ineffective) row.
+            bool dynamicBoost = wmi != null && (
+                wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvDynamicBoost)
+                || wmi.IsFeatureSupported(Platform.Linux.LenovoAttributes.GpuNvPpab)
+                || wmi.IsFeatureSupported(Platform.Linux.LenovoAttributes.GpuNvCtgp));
 
             var maxClocks = nv.GetMaxClocks();
             if (maxClocks != null)
@@ -497,6 +503,150 @@ public partial class FansWindow : Window
         finally { _updatingGpu = false; }
     }
 
+    // Resolved GPU TGP attributes (ASUS nv_* or Lenovo gpu_nv_*), picked per hardware.
+    private Platform.Linux.AttrDef? _attrNvTgp;
+    private Platform.Linux.AttrDef? _attrGpuBoost;
+    private Platform.Linux.AttrDef? _attrGpuTemp;
+
+    /// <summary>First candidate attribute the active backend reports as supported.</summary>
+    private static Platform.Linux.AttrDef? PickAttr(
+        Platform.IHardwareControl? wmi, params Platform.Linux.AttrDef[] candidates)
+    {
+        if (wmi == null)
+            return null;
+        foreach (var a in candidates)
+            if (wmi.IsFeatureSupported(a))
+                return a;
+        return null;
+    }
+
+    // Generic firmware-attribute tunable rows (Lenovo CPU/GPU extras), built in
+    // code and gated by IsFeatureSupported + range. Technical labels (not i18n).
+    private readonly List<(Platform.Linux.AttrDef Attr, Slider Slider, TextBlock Value, string Unit, string ConfigKey)> _advTunables = new();
+    private System.Timers.Timer? _advDebounce;
+    private bool _buildingTunables;
+
+    private static readonly (Platform.Linux.AttrDef Attr, string Label, string Unit)[] _cpuExtraDefs =
+    {
+        (Platform.Linux.LenovoAttributes.PptApuSpl, "APU SPL", "W"),
+        (Platform.Linux.LenovoAttributes.PptPl4Ipl, "Peak (PL4)", "W"),
+        (Platform.Linux.LenovoAttributes.PptTau, "Tau", "s"),
+        (Platform.Linux.LenovoAttributes.PptCpuCl, "CPU Cross-Load", "W"),
+        (Platform.Linux.LenovoAttributes.PptPl1SplCl, "PL1 (CL)", "W"),
+        (Platform.Linux.LenovoAttributes.PptPl2SpptCl, "PL2 (CL)", "W"),
+        (Platform.Linux.LenovoAttributes.PptPl3FpptCl, "FPPT (CL)", "W"),
+        (Platform.Linux.LenovoAttributes.PptPl4IplCl, "PL4 (CL)", "W"),
+    };
+
+    private static readonly (Platform.Linux.AttrDef Attr, string Label, string Unit)[] _gpuExtraDefs =
+    {
+        (Platform.Linux.LenovoAttributes.DgpuBoostClk, "Boost Clock", " MHz"),
+        (Platform.Linux.LenovoAttributes.GpuNvCpuBoost, "CPU Boost", "W"),
+        (Platform.Linux.LenovoAttributes.GpuNvAcOffset, "AC Offset", "W"),
+        (Platform.Linux.LenovoAttributes.GpuNvBpl, "Battery Limit", "W"),
+    };
+
+    /// <summary>Build gated slider rows for a set of firmware-attribute tunables.</summary>
+    private void BuildTunableRows(StackPanel panel,
+        (Platform.Linux.AttrDef Attr, string Label, string Unit)[] defs,
+        Platform.IHardwareControl? wmi)
+    {
+        // Drop previously built rows (keep the header at index 0) and their state.
+        for (int i = panel.Children.Count - 1; i >= 1; i--)
+            panel.Children.RemoveAt(i);
+        _advTunables.RemoveAll(t =>
+        {
+            foreach (var d in defs)
+                if (d.Attr.LegacyName == t.Attr.LegacyName)
+                    return true;
+            return false;
+        });
+
+        if (wmi == null)
+        { panel.IsVisible = false; return; }
+
+        _buildingTunables = true;
+        bool any = false;
+        foreach (var (attr, label, unit) in defs)
+        {
+            if (!wmi.IsFeatureSupported(attr))
+                continue;
+            var range = wmi.GetAttributeRange(attr);
+            if (range == null)
+                continue;
+            int cur = wmi.GetPptLimit(attr);
+            if (cur < 0)
+                cur = range.Default >= 0 ? range.Default : range.Min;
+            cur = Math.Clamp(cur, range.Min, range.Max);
+
+            var grid = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("100,*,55"),
+                Margin = new Avalonia.Thickness(0, 4, 0, 0),
+            };
+            var lbl = new TextBlock { Text = label, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+            lbl.Classes.Add("label-dim");
+            var slider = new Slider
+            {
+                Minimum = range.Min,
+                Maximum = range.Max,
+                TickFrequency = Math.Max(1, range.Step),
+                Value = cur,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            };
+            var val = new TextBlock { Text = $"{cur}{unit}", VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+            val.Classes.Add("value");
+            Grid.SetColumn(lbl, 0);
+            Grid.SetColumn(slider, 1);
+            Grid.SetColumn(val, 2);
+            grid.Children.Add(lbl);
+            grid.Children.Add(slider);
+            grid.Children.Add(val);
+
+            string u = unit;
+            var vLabel = val;
+            slider.ValueChanged += (_, e) =>
+            {
+                if (_buildingTunables)
+                    return;
+                vLabel.Text = $"{(int)e.NewValue}{u}";
+                ScheduleAdvWrite();
+            };
+            panel.Children.Add(grid);
+            _advTunables.Add((attr, slider, val, unit, "limit_" + attr.LegacyName));
+            any = true;
+        }
+        _buildingTunables = false;
+        panel.IsVisible = any;
+    }
+
+    /// <summary>Debounce advanced-tunable writes (300ms after last drag).</summary>
+    private void ScheduleAdvWrite()
+    {
+        _advDebounce?.Stop();
+        _advDebounce ??= new System.Timers.Timer(300) { AutoReset = false };
+        _advDebounce.Elapsed -= AdvDebounce_Elapsed;
+        _advDebounce.Elapsed += AdvDebounce_Elapsed;
+        _advDebounce.Start();
+    }
+
+    private void AdvDebounce_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            var wmi = App.Wmi;
+            if (wmi == null)
+                return;
+            wmi.EnsureManualFanMode();
+            foreach (var t in _advTunables)
+            {
+                int v = (int)t.Slider.Value;
+                wmi.SetPptLimit(t.Attr, v);
+                Helpers.AppConfig.SetMode(t.ConfigKey, v);
+            }
+        });
+    }
+
     private void LoadNvBaseTgpRow(Platform.IHardwareControl? wmi)
     {
         if (wmi == null
@@ -521,16 +671,18 @@ public partial class FansWindow : Window
 
     private void LoadNvTgpRow(Platform.IHardwareControl? wmi)
     {
-        if (wmi == null
-            || !wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvTgp))
+        // ASUS nv_tgp or Lenovo gpu_nv_ctgp (configurable TGP).
+        _attrNvTgp = PickAttr(wmi, Platform.Linux.AsusAttributes.NvTgp,
+            Platform.Linux.LenovoAttributes.GpuNvCtgp);
+        if (_attrNvTgp == null)
         {
             rowNvTgp.IsVisible = false;
             return;
         }
-        var range = wmi.GetAttributeRange(Platform.Linux.AsusAttributes.NvTgp);
+        var range = wmi!.GetAttributeRange(_attrNvTgp);
         if (range == null)
         { rowNvTgp.IsVisible = false; return; }
-        int cur = wmi.GetPptLimit(Platform.Linux.AsusAttributes.NvTgp);
+        int cur = wmi.GetPptLimit(_attrNvTgp);
         if (cur < 0)
             cur = range.Default;
         sliderNvTgp.Minimum = range.Min;
@@ -543,16 +695,18 @@ public partial class FansWindow : Window
 
     private void LoadGpuBoostRow(Platform.IHardwareControl? wmi)
     {
-        if (wmi == null
-            || !wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvDynamicBoost))
+        // ASUS nv_dynamic_boost or Lenovo gpu_nv_ppab (PPAB / dynamic boost).
+        _attrGpuBoost = PickAttr(wmi, Platform.Linux.AsusAttributes.NvDynamicBoost,
+            Platform.Linux.LenovoAttributes.GpuNvPpab);
+        if (_attrGpuBoost == null)
         {
             rowGpuBoost.IsVisible = false;
             return;
         }
-        var range = wmi.GetAttributeRange(Platform.Linux.AsusAttributes.NvDynamicBoost);
+        var range = wmi!.GetAttributeRange(_attrGpuBoost);
         int min = range?.Min >= 0 ? range.Min : 5;
         int max = range?.Max >= 0 ? range.Max : 25;
-        int cur = wmi.GetPptLimit(Platform.Linux.AsusAttributes.NvDynamicBoost);
+        int cur = wmi.GetPptLimit(_attrGpuBoost);
         if (cur < 0)
             cur = Helpers.AppConfig.GetMode("gpu_boost", min);
         sliderGpuBoost.Minimum = min;
@@ -565,16 +719,18 @@ public partial class FansWindow : Window
 
     private void LoadGpuTempRow(Platform.IHardwareControl? wmi)
     {
-        if (wmi == null
-            || !wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.NvTempTarget))
+        // ASUS nv_temp_target or Lenovo gpu_temp (GPU temperature target).
+        _attrGpuTemp = PickAttr(wmi, Platform.Linux.AsusAttributes.NvTempTarget,
+            Platform.Linux.LenovoAttributes.GpuTemp);
+        if (_attrGpuTemp == null)
         {
             rowGpuTemp.IsVisible = false;
             return;
         }
-        var range = wmi.GetAttributeRange(Platform.Linux.AsusAttributes.NvTempTarget);
+        var range = wmi!.GetAttributeRange(_attrGpuTemp);
         int min = range?.Min >= 0 ? range.Min : 75;
         int max = range?.Max >= 0 ? range.Max : 87;
-        int cur = wmi.GetPptLimit(Platform.Linux.AsusAttributes.NvTempTarget);
+        int cur = wmi.GetPptLimit(_attrGpuTemp);
         if (cur < 0)
             cur = Helpers.AppConfig.GetMode("gpu_temp", max);
         sliderGpuTemp.Minimum = min;
@@ -1093,6 +1249,9 @@ public partial class FansWindow : Window
 
         _updatingPLSliders = false;
         checkApplyPower.IsChecked = Helpers.AppConfig.IsMode("auto_apply_power");
+
+        // Lenovo extra CPU power tunables (APU/IPL/Tau/cross-loading).
+        BuildTunableRows(panelLenovoCpuPpt, _cpuExtraDefs, wmi);
     }
 
     private void SliderPL1_ValueChanged(object? sender,
@@ -1383,6 +1542,91 @@ public partial class FansWindow : Window
         return false;
     }
 
+    // AMD Ryzen SMU power/temp/clock sliders
+
+    private record RyzenSliderDef(string Param, Slider Slider, TextBlock Label, Grid Row, string Unit, float Divisor);
+
+    private RyzenSliderDef[]? _ryzenSliders;
+
+    private RyzenSliderDef[] BuildRyzenSliderMap() =>
+    [
+        new("stapm-limit", sliderRyzenStapm, labelRyzenStapm, rowRyzenStapm, "W", 1000),
+        new("fast-limit", sliderRyzenFast, labelRyzenFast, rowRyzenFast, "W", 1000),
+        new("slow-limit", sliderRyzenSlow, labelRyzenSlow, rowRyzenSlow, "W", 1000),
+        new("apu-slow-limit", sliderRyzenApuSlow, labelRyzenApuSlow, rowRyzenApuSlow, "W", 1000),
+        new("stapm-time", sliderRyzenStapmTime, labelRyzenStapmTime, rowRyzenStapmTime, "s", 1),
+        new("slow-time", sliderRyzenSlowTime, labelRyzenSlowTime, rowRyzenSlowTime, "s", 1),
+        new("tctl-temp", sliderRyzenTctl, labelRyzenTctl, rowRyzenTctl, "\u00b0C", 1),
+        new("apu-skin-temp", sliderRyzenApuSkin, labelRyzenApuSkin, rowRyzenApuSkin, "\u00b0C", 1),
+        new("dgpu-skin-temp", sliderRyzenDgpuSkin, labelRyzenDgpuSkin, rowRyzenDgpuSkin, "\u00b0C", 1),
+        new("vrm-current", sliderRyzenVrm, labelRyzenVrm, rowRyzenVrm, "A", 1000),
+        new("vrmsoc-current", sliderRyzenVrmSoc, labelRyzenVrmSoc, rowRyzenVrmSoc, "A", 1000),
+        new("vrmmax-current", sliderRyzenVrmMax, labelRyzenVrmMax, rowRyzenVrmMax, "A", 1000),
+        new("vrmsocmax-current", sliderRyzenVrmSocMax, labelRyzenVrmSocMax, rowRyzenVrmSocMax, "A", 1000),
+        new("max-gfxclk", sliderRyzenMaxGfx, labelRyzenMaxGfx, rowRyzenMaxGfx, "MHz", 1),
+        new("min-gfxclk", sliderRyzenMinGfx, labelRyzenMinGfx, rowRyzenMinGfx, "MHz", 1),
+    ];
+
+    private void LoadRyzenPower()
+    {
+        if (!Platform.Linux.RyzenPower.Available)
+        {
+            panelRyzenPower.IsVisible = false;
+            return;
+        }
+
+        _ryzenSliders = BuildRyzenSliderMap();
+        var info = Platform.Linux.RyzenPower.ReadInfo();
+        bool anyVisible = false;
+
+        foreach (var s in _ryzenSliders)
+        {
+            bool supported = Platform.Linux.RyzenPower.IsSupported(s.Param);
+            s.Row.IsVisible = supported;
+            if (!supported)
+                continue;
+            anyVisible = true;
+
+            // Seed from PM table if available, else use slider default.
+            if (info != null && info.TryGetValue(s.Param, out float raw))
+            {
+                float display = raw / s.Divisor;
+                s.Slider.Value = Math.Clamp(display, s.Slider.Minimum, s.Slider.Maximum);
+            }
+            UpdateRyzenLabel(s);
+        }
+
+        panelRyzenPower.IsVisible = anyVisible;
+    }
+
+    private void UpdateRyzenLabel(RyzenSliderDef s)
+    {
+        int v = (int)s.Slider.Value;
+        s.Label.Text = $"{v}{s.Unit}";
+    }
+
+    private void SliderRyzenPower_ValueChanged(object? sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_ryzenSliders == null)
+            return;
+        foreach (var s in _ryzenSliders)
+            if (sender == s.Slider)
+            { UpdateRyzenLabel(s); break; }
+    }
+
+    private void ButtonRyzenApply_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_ryzenSliders == null)
+            return;
+        foreach (var s in _ryzenSliders)
+        {
+            if (!s.Row.IsVisible)
+                continue;
+            int raw = (int)(s.Slider.Value * s.Divisor);
+            Platform.Linux.RyzenPower.Set(s.Param, raw);
+        }
+    }
+
     // Ryzen Curve Optimizer undervolt (mirrors Windows Fans.cs: trackUV / checkApplyUV)
 
     private void LoadUV()
@@ -1660,12 +1904,12 @@ public partial class FansWindow : Window
 
                     if (baseTgp != null)
                         wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvBaseTgp, baseTgp.Value);
-                    if (maxTgp != null)
-                        wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvTgp, maxTgp.Value);
-                    if (boost != null)
-                        wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvDynamicBoost, boost.Value);
-                    if (temp != null)
-                        wmi.SetPptLimit(Platform.Linux.AsusAttributes.NvTempTarget, temp.Value);
+                    if (maxTgp != null && _attrNvTgp != null)
+                        wmi.SetPptLimit(_attrNvTgp, maxTgp.Value);
+                    if (boost != null && _attrGpuBoost != null)
+                        wmi.SetPptLimit(_attrGpuBoost, boost.Value);
+                    if (temp != null && _attrGpuTemp != null)
+                        wmi.SetPptLimit(_attrGpuTemp, temp.Value);
                 }
                 if (nv != null && nv.IsAvailable())
                 {

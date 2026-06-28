@@ -305,6 +305,32 @@ public class GPUModeControl
             Logger.WriteLine("GPUModeControl: TryReleaseAndSwitch - attempting driver release");
             LogHoldersSnapshot("pre-release");
 
+            // PCI backend: no firmware dgpu_disable. After driver release,
+            // write block files + PCI-remove dGPU functions from the bus.
+            if (AppConfig.IsPciGpuBackend())
+            {
+                // MUX=0 (live/latched) → dGPU drives the panel; removing it blanks it.
+                if (WouldCreateImpossibleState(GpuMode.Eco))
+                    return GpuSwitchResult.EcoBlocked;
+
+                bool pciReleased = TryReleaseGpuDriver();
+                if (!pciReleased)
+                {
+                    Logger.WriteLine("GPUModeControl: PCI TryRelease - driver release failed, deferring to reboot");
+                    SaveModeToConfig(GpuMode.Eco);
+                    WriteDriverBlock(GpuMode.Eco);
+                    return GpuSwitchResult.Deferred;
+                }
+
+                WriteDriverBlock(GpuMode.Eco);
+                PciRemoveDgpuFunctions();
+                OnLivePciTransition?.Invoke();
+                ApplyVulkanIcd(dgpuAvailable: false);
+                SaveModeToConfig(GpuMode.Eco);
+                Logger.WriteLine("GPUModeControl: PCI Eco applied live (rmmod + PCI remove)");
+                return GpuSwitchResult.Applied;
+            }
+
             bool physicallyUltimate = _wmi.GetGpuMuxMode() == 0;
             if (physicallyUltimate)
                 Logger.WriteLine("GPUModeControl: MUX=0 (Ultimate) - skipping live release, deferring Eco to reboot");
@@ -1179,14 +1205,33 @@ public class GPUModeControl
             }
         }
 
-        // Live Eco → Standard transition. Removing the persistent blocks +
-        // reloading udev + rescanning PCI brings the dGPU back online
-        // without a reboot, mirroring the asus-wmi SetGpuEco(false) live
-        // path. Only Eco→Standard can be live; going INTO Eco still
-        // requires a reboot because rmmod nvidia would fail while Xorg
-        // holds the GPU. On any failure (sudo cancelled, sysfs read-only)
-        // we fall through to the deferred reboot path below so the user
-        // can still get out of Eco eventually.
+        // Standard → Eco: if driver is loaded, return DriverBlocking so the
+        // UI shows the Switch Now / After Reboot dialog. If driver is idle,
+        // write blocks + PCI-remove the dGPU immediately.
+        if (wantEco && !ecoBlocksPresent)
+        {
+            // MUX=0 (live or latched) → removing the dGPU blanks the display.
+            // Lenovo has no MUX (reads -1) so this never blocks there.
+            if (WouldCreateImpossibleState(GpuMode.Eco))
+                return GpuSwitchResult.EcoBlocked;
+
+            if (IsDgpuDriverActive())
+            {
+                Logger.WriteLine("GPUModeControl: PCI backend - dGPU driver active, showing dialog");
+                SaveModeToConfig(GpuMode.Eco);
+                return GpuSwitchResult.DriverBlocking;
+            }
+
+            SaveModeToConfig(GpuMode.Eco);
+            WriteDriverBlock(GpuMode.Eco);
+            PciRemoveDgpuFunctions();
+            ApplyVulkanIcd(dgpuAvailable: false);
+            Logger.WriteLine("GPUModeControl: PCI backend - live Eco applied (driver was not loaded)");
+            return GpuSwitchResult.Applied;
+        }
+
+        // Eco → Standard: remove blocks, reload udev, rescan PCI bus,
+        // modprobe the driver. On failure, fall through to deferred reboot.
         if (wantStandard && ecoBlocksPresent)
         {
             var live = TryLiveRemovePciBlocks();
@@ -2071,7 +2116,9 @@ public class GPUModeControl
         {
             if (attempt > 0)
             {
-                Logger.WriteLine($"GPUModeControl: unload attempt {attempt + 1}/{MaxUnloadAttempts} - re-purging holders");
+                Logger.WriteLine($"GPUModeControl: unload attempt {attempt + 1}/{MaxUnloadAttempts} - re-signaling DRM + re-purging holders");
+                if (!string.IsNullOrEmpty(dgpuBdf))
+                    TrySignalDrmRemove(dgpuBdf!);
                 NvidiaProcessScanner.InvalidateScanCache();
                 NvidiaProcessScanner.KillAllHolders(force: true, out _, out _);
                 Thread.Sleep(300);
@@ -2275,6 +2322,12 @@ public class GPUModeControl
     /// </summary>
     private static void ApplyVulkanIcd(bool dgpuAvailable)
     {
+        // NixOS: ICD/EGL vendor files live under /run/opengl-driver (read-only
+        // store), not /usr/share. The FHS paths don't exist and can't be
+        // renamed, so this is a no-op there.
+        if (NixOS.IsNixOS)
+            return;
+
         string verb = dgpuAvailable ? "show" : "hide";
         if (File.Exists(NvidiaVulkanIcd) || File.Exists(NvidiaVulkanIcd + "_inactive"))
             SysfsHelper.RunSudoOrPkexec(
@@ -2372,25 +2425,31 @@ public class GPUModeControl
     /// </summary>
     private static void TrySignalDrmRemove(string dgpuBdf)
     {
-        try
+        const int passes = 2;
+        for (int i = 0; i < passes; i++)
         {
-            var result = SysfsHelper.RunSudoOrPkexec(
-                SysfsHelper.GpuHelperPath,
-                new[] { "drm-notify-remove", dgpuBdf },
-                sudoTimeoutMs: 5000, pkexecTimeoutMs: 30000);
-            if (!string.IsNullOrWhiteSpace(result))
+            try
             {
-                Logger.WriteLine($"GPUModeControl: DRM uevent signaled: {result.Trim()}");
-                Thread.Sleep(500); // compositor needs time to release the device
+                var result = SysfsHelper.RunSudoOrPkexec(
+                    SysfsHelper.GpuHelperPath,
+                    new[] { "drm-notify-remove", dgpuBdf },
+                    sudoTimeoutMs: 5000, pkexecTimeoutMs: 30000);
+                if (!string.IsNullOrWhiteSpace(result))
+                {
+                    Logger.WriteLine($"GPUModeControl: DRM uevent signaled (pass {i + 1}/{passes}): {result.Trim()}");
+                    Thread.Sleep(500); // compositor needs time to release the device
+                }
+                else
+                {
+                    Logger.WriteLine($"GPUModeControl: DRM uevent signal pass {i + 1}/{passes} returned empty (no card entries or refused)");
+                    break; // nothing to signal / refused - a retry won't change that
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Logger.WriteLine("GPUModeControl: DRM uevent signal returned empty (no card entries or refused)");
+                Logger.WriteLine($"GPUModeControl: DRM uevent signal failed (non-fatal): {ex.Message}");
+                break;
             }
-        }
-        catch (Exception ex)
-        {
-            Logger.WriteLine($"GPUModeControl: DRM uevent signal failed (non-fatal): {ex.Message}");
         }
     }
 
@@ -2778,6 +2837,15 @@ public class GPUModeControl
             return _cachedHelperPath;
         _helperPathScanned = true;
 
+        // NixOS: module puts gpu-block-helper.sh on PATH
+        var nixPath = Platform.Linux.NixOS.ResolveGpuBlockHelper();
+        if (nixPath != null)
+        {
+            _cachedHelperPath = nixPath;
+            Logger.WriteLine($"GPUModeControl: GPU block helper found at {nixPath} (NixOS)");
+            return nixPath;
+        }
+
         foreach (var path in HelperSearchPaths)
         {
             if (File.Exists(path))
@@ -2961,6 +3029,30 @@ public class GPUModeControl
         {
             Logger.WriteLine($"TryLiveRemovePciBlocks failed: {ex.Message}");
             return GpuSwitchResult.Failed;
+        }
+    }
+
+    /// <summary>
+    /// Remove all dGPU PCI functions from the bus. Reduces power draw on
+    /// systems without firmware dgpu_disable. The udev rule prevents
+    /// re-enumeration on rescan; live-standard reverses this.
+    /// </summary>
+    private void PciRemoveDgpuFunctions()
+    {
+        var dev = FindDgpuPciDevice();
+        if (dev == null)
+        {
+            Logger.WriteLine("GPUModeControl: PciRemoveDgpuFunctions - no dGPU on bus");
+            return;
+        }
+
+        ResolveDgpuSlot();
+        ResolveDgpuBridge();
+
+        foreach (var node in EnumerateDgpuDeviceNodes(dev.Value.bdf))
+        {
+            Logger.WriteLine($"GPUModeControl: PCI-removing {node}");
+            RunPciRemove(node);
         }
     }
 

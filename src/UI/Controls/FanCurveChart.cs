@@ -294,6 +294,13 @@ public class FanCurveChart : Control
         }
         else
         {
+            // Keep the curve monotonic non-decreasing.
+            int lo = FanMin, hi = FanMax;
+            if (_dragIndex > 0)
+                lo = data[8 + _dragIndex - 1];
+            if (_dragIndex < PointCount - 1)
+                hi = data[8 + _dragIndex + 1];
+            fan = Math.Clamp(fan, lo, hi);
             data[8 + _dragIndex] = (byte)fan;
         }
 

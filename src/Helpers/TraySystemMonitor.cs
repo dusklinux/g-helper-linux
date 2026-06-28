@@ -216,25 +216,6 @@ public static class TraySystemMonitor
     /// </summary>
     private static void Tick()
     {
-        if (AppConfig.Is("kb_keep_on"))
-        {
-            try
-            {
-                bool onAc = App.Power?.IsOnAcPower() ?? true;
-                int intended = onAc ? AppConfig.Get("keyboard_brightness_ac", -1) : AppConfig.Get("keyboard_brightness", -1);
-                if (intended < 0)
-                    intended = AppConfig.Get("keyboard_brightness", -1);
-                if (intended < 0)
-                    intended = 3; // never configured - assume "on"
-                if (intended > 0)
-                {
-                    int cur = App.Wmi?.GetKeyboardBrightness() ?? -1;
-                    if (cur >= 0 && cur < intended)
-                        App.Wmi?.SetKeyboardBrightness(intended);
-                }
-            }
-            catch { }
-        }
 
         int cpuTemp = -1;
         int gpuTemp = -1;

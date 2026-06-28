@@ -44,11 +44,18 @@
     <Compile Include="../../src/Gpu/GPUModeControl.cs" />
     <Compile Include="../../src/Gpu/NVidia/GpuQueryGate.cs" />
     <Compile Include="../../src/Gpu/NVidia/NvidiaProcessScanner.cs" />
+    <!-- LinuxNvidiaGpuControl.GetTempViaNvml() NVML temp fallback + its interface -->
+    <Compile Include="../../src/Gpu/NVidia/LinuxNvidiaGpuControl.cs" />
+    <Compile Include="../../src/Platform/IGpuControl.cs" />
+    <Compile Include="../../src/Platform/ISystemIntegration.cs" />
     <Compile Include="../../src/Platform/IHardwareControl.cs" />
     <Compile Include="../../src/Platform/IPowerManager.cs" />
     <Compile Include="../../src/Platform/Linux/Asus/AsusAttributes.cs" />
     <Compile Include="../../src/Platform/Linux/Asus/AsusAttributeRange.cs" />
     <Compile Include="../../src/Platform/Linux/SysfsHelper.cs" />
+    <!-- NixOS (gpu-helper resolve) + RyzenPower (PPT); SysfsHelper-only helpers -->
+    <Compile Include="../../src/Platform/Linux/NixOS.cs" />
+    <Compile Include="../../src/Platform/Linux/RyzenPower.cs" />
     <!-- LinuxAsusWmi + AsusWmiDebugfs: needed by the direct unit tests for
          the GPU-panel visibility logic (IsGpuEcoAvailable, CanToggleGpuBackend,
          IsPciBackendUsable, InvalidateGpuPresenceCache). The class also has a
@@ -59,6 +66,8 @@
     <Compile Include="../../src/Helpers/AppConfig.cs" />
     <Compile Include="../../src/Helpers/Logger.cs" />
     <Compile Include="../../src/Helpers/MemoryHelper.cs" />
+    <!-- Labels.Get() in LinuxNvidiaGpuControl; pulls all language tables -->
+    <Compile Include="../../src/I18n/**/*.cs" />
   </ItemGroup>
 
 </Project>

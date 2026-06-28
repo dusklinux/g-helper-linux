@@ -8,6 +8,108 @@
 
 ### Changed
 
+## v1.0.84 (2026-06-28)
+
+### Added (Logitech peripherals)
+
+- Logitech mouse / keyboard / headset support via HID++ 2.0 (USB,
+  Bluetooth, Unifying / Bolt receivers). New `Peripherals/Logitech/` stack
+  behind a shared `IMousePeripheral` abstraction used by ASUS and Logitech.
+- ~25 models: G PRO / G PRO Wireless / G PRO X Superlight, G305, G402,
+  G403, G502 (Hero / Legacy / X), G604, G703, G900, G903, MX Master /
+  MX Master 3, MX Anywhere 3, MX Ergo, MX Vertical, MX Revolution, M500S,
+  MX518, plus gaming keyboards and headsets.
+- Mouse window: per-device capability sections - DPI, polling rate,
+  performance, energy / sleep, scroll & wheel (Hi-Res, SmartShift, ratchet,
+  thumb wheel, crown), host switching, buttons, gestures, onboard profiles,
+  lighting (effects / zones), keyboard (G-keys / M-key LEDs), headset
+  (sidetone, mic gain / mute, EQ).
+- Settings persisted per device, re-applied on connect, resume, monitor wake.
+- Background Bluetooth reconnect polling with stale-handle pruning (HidSharp
+  misses BT hidraw events).
+- New ASUS model: Strix Impact II Moonlight White.
+
+### Added (AMD Ryzen)
+
+- AMD Ryzen SMU tuning via bundled ryzenadj (new gpu-helper `ryzen-*`
+  subcommands, direct SMU mailbox). Fans window Ryzen panel: STAPM / fast /
+  slow / APU-slow limits, STAPM & slow time, Tctl / APU-skin / dGPU-skin
+  temp limits, VRM current limits, and min / max GFX clock.
+- ASUS PPT writes route through the SMU when asus-wmi sysfs is a no-op,
+  falling back to sysfs.
+
+### Added (NixOS)
+
+- Declarative flake, module, and package under `nixos/`. Installer stages
+  the module + binary, injects the import into `configuration.nix`, and runs
+  `nixos-rebuild`. In-app "Update & Rebuild" goes through `nixos-rebuild
+  switch` (binary lives in the read-only store). Integrity panel verifies
+  Nix store locations, not FHS paths; in-app uninstall hidden.
+- Module options: `services.ghelper.enable`, `user`, `gpuEcoAtBoot` (Eco at
+  boot), `gpuBootService` (early-boot GPU-mode service).
+
+### Added (GPU)
+
+- PCI backend live Eco switch: `rmmod` + PCI-remove dGPU functions on
+  systems without firmware `dgpu_disable` (no reboot). Shows the Switch Now
+  / After Reboot dialog when the driver is active.
+- NVML telemetry via gpu-helper: fast GPU temp (~5 ms, no nvidia-smi fork),
+  used as a fallback by the ASUS and Lenovo backends.
+- Diagnostics: GPU switch hazard detection (`nvidia_wmi_ec_backlight
+  force=1`, `i915 enable_dpcd_backlight`, `acpi_backlight=nvidia_wmi_ec|
+  vendor`, nouveau alongside nvidia, dGPU on vfio-pci). Adds NVML info/live,
+  VBIOS, mem bus width, temp shutdown/slowdown thresholds, NVMe power-state +
+  ASPM deep-save warnings.
+
+### Added (general)
+
+- "Keep keyboard backlight always on": re-lights the keyboard when the
+  monitor blanks (DPMS) on desktops that kill it.
+- Panel overdrive persisted and restored on resume, auto-screen, and hotkey.
+- Extra window: Peripherals section to disable Logitech or ASUS support
+  (skips scans, hides panels; needs restart).
+- `build.sh --no-aot` / `--fast`: folder build with ~5-10 s incremental
+  rebuilds instead of full AOT.
+- udev rules: AMD GPU power/clock nodes (`pp_od_clk_voltage`,
+  `power_dpm_force_performance_level`, `pp_dpm_sclk/mclk`,
+  `pp_power_profile_mode`, `power1_cap`), Logitech HID++ access (USB 046d +
+  Bluetooth), backlight class-path chmod fallback.
+- Installer adds the user to the `input` group for the keyboard remapper.
+
+### Fixed
+
+- Old Strix / Scar: restore missing logo / lightbar / rearglow lighting
+  zones.
+- ROG Ally: keyboard RGB now turns off at 0% brightness in gamepad mode.
+- Aura: second color (Breathe / Gradient) now works on DynamicLighting
+  keyboards.
+- Aura: fix static color on keyboards without direct-RGB support.
+- ASPM: prevent NVMe-related freezes and kernel panics when switching power
+  modes.
+- Lenovo: PPT power limits (God mode) now apply on kernel 6.12+.
+- Panel overdrive: reflect whether the firmware actually applied the change.
+- ASUS AURA no longer probed on Lenovo hardware.
+- Lenovo: hide RGB controls when the firmware rejects RGB writes.
+- Keyboard brightness toggle works on Lenovo on/off and tristate backlights,
+  and remembers the level.
+- Fan curve editor: points stay non-decreasing while dragging.
+- Fix a fan calibration timer leak.
+- Battery limit slider snaps correctly on 60/80/100-only models.
+
+### Changed
+
+- Main window peripheral panel auto-resizes when devices connect / disconnect.
+- Main window audio: "Configure chain" moved from a label to a button +
+  tooltip.
+- GPU "Switch Now" offered only on Wayland; on X11 Xorg holds `nvidia_drm`
+  so `rmmod` always fails (hidden).
+- gpu-helper split into modular units (process / nvidia / pci / wmi / msr /
+  lenovo / ryzen ops) plus bundled ryzenadj.
+- Unified `modules-load.d/ghelper.conf` (uinput + i2c-dev always; +
+  ideapad-laptop / lenovo-wmi on Lenovo), replacing the Lenovo-only file.
+- Bumped LiveChartsCore (dev-570 -> dev-798) and Svg.Skia (12.0.0.11 ->
+  12.0.0.12).
+
 ## v1.0.83 (2026-06-12)
 
 ### Added (Lenovo)

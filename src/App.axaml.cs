@@ -172,8 +172,10 @@ public class App : Application
             // Init fan sensor defaults for model-specific RPM formatting
             Fan.FanSensorControl.InitFanMax();
 
-            // Warn if udev rules are not installed (sysfs writes will fail)
-            if (!File.Exists("/etc/udev/rules.d/90-ghelper.rules"))
+            // Warn if udev rules are not installed (sysfs writes will fail).
+            // NixOS: the module provides udev rules via services.udev.packages.
+            if (!Platform.Linux.NixOS.SkipUdevWarning
+                && !File.Exists("/etc/udev/rules.d/90-ghelper.rules"))
             {
                 Logger.WriteLine("WARNING: udev rules not installed - sysfs writes will fail. Run install.sh for full functionality.");
                 System?.ShowNotification(Labels.Get("setup_required"),
@@ -194,9 +196,30 @@ public class App : Application
             // Detect connected ASUS peripherals (mice) and register for hot-plug events.
             Task.Run(() =>
             {
-                Peripherals.PeripheralsProvider.DetectAllAsusMice();
+                Peripherals.PeripheralsProvider.DetectAllMice();
                 Peripherals.PeripheralsProvider.RegisterForDeviceEvents();
             });
+
+            // Poll for BT mouse reconnect even when the window is hidden.
+            // HidSharp misses BT hidraw events, so periodic rescan is needed.
+            _peripheralPollTimer = new System.Threading.Timer(_ =>
+            {
+                if (Interlocked.CompareExchange(ref _peripheralPollRunning, 1, 0) != 0)
+                    return;
+                try
+                {
+                    Peripherals.PeripheralsProvider.RefreshBatteryForAllDevices();
+                    Peripherals.PeripheralsProvider.DetectAllMice();
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteLine($"Peripheral poll failed: {ex.Message}");
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref _peripheralPollRunning, 0);
+                }
+            }, null, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20));
 
             // Ensure autostart .desktop file matches config preference and current binary path
             bool autostart = AppConfig.IsNotFalse("autostart");
@@ -218,6 +241,8 @@ public class App : Application
             {
                 Power.PowerStateChanged += OnPowerStateChanged;
                 Power.SystemResumed += OnSystemResumed;
+                Power.MonitorSlept += OnMonitorSlept;
+                Power.MonitorWoke += OnMonitorWoke;
             }
 
             // Apply pending GPU mode from config (e.g., Eco scheduled for reboot)
@@ -535,7 +560,13 @@ public class App : Application
     public void AutoScreen()
     {
         if (!AppConfig.Is("screen_auto"))
+        {
+            // Restore saved overdrive state even when auto-screen is off.
+            int saved = AppConfig.Get("panel_od", -1);
+            if (saved >= 0)
+                Wmi?.SetPanelOverdrive(saved == 1);
             return;
+        }
 
         var display = Display;
         if (display == null)
@@ -549,14 +580,16 @@ public class App : Application
             int maxHz = rates.Count > 0 ? rates[0] : 120;
             display.SetRefreshRate(maxHz);
             Wmi?.SetPanelOverdrive(true);
-            Logger.WriteLine($"AutoScreen: AC power → {maxHz}Hz + overdrive ON");
+            AppConfig.Set("panel_od", 1);
+            Logger.WriteLine($"AutoScreen: AC power -> {maxHz}Hz + overdrive ON");
             System?.ShowNotification(Labels.Get("display"), Labels.Format("auto_screen_ac", maxHz), "video-display");
         }
         else
         {
             display.SetRefreshRate(60);
             Wmi?.SetPanelOverdrive(false);
-            Logger.WriteLine("AutoScreen: Battery → 60Hz + overdrive OFF");
+            AppConfig.Set("panel_od", 0);
+            Logger.WriteLine("AutoScreen: Battery -> 60Hz + overdrive OFF");
             System?.ShowNotification(Labels.Get("display"), Labels.Get("auto_screen_battery"), "video-display");
         }
 
@@ -969,8 +1002,8 @@ public class App : Application
     }
 
     /// <summary>
-    /// Handle wake from suspend. Firmware on some models resets the battery
-    /// charge limit during suspend, so re-apply the saved value.
+    /// Re-apply settings after system suspend resume. Some firmware resets
+    /// the battery charge limit and some HID device modes drop across suspend.
     /// </summary>
     private void OnSystemResumed()
     {
@@ -979,20 +1012,118 @@ public class App : Application
             Battery.BatteryControl.AutoBattery();
             AnimeMatrix?.SetDevice(true);
 
+            // Restore panel overdrive from saved config.
+            int savedOd = AppConfig.Get("panel_od", -1);
+            if (savedOd >= 0)
+                Wmi?.SetPanelOverdrive(savedOd == 1);
+
+            // Restore keyboard brightness (firmware may reset on suspend).
+            try
+            { USB.Aura.ApplyConfiguredBrightness("Resume"); }
+            catch { }
+
             if (AppConfig.IsLenovoDevice())
             {
-                // ALSA mixer state can revert across suspend - re-clamp.
                 if (AppConfig.Is("lenovo_mic_boost_fix"))
                     Task.Run(() => Platform.Linux.Lenovo.LenovoFeatures.ApplyMicBoostFix());
 
-                // The ITE RGB controller loses its state on suspend.
                 if (USB.LenovoRgb.IsAvailable())
                     Task.Run(() => USB.LenovoRgb.Apply());
             }
+
+            ReapplyMousePeripheralState();
         }
         catch (Exception ex)
         {
             Logger.WriteLine("Settings re-apply on resume failed", ex);
+        }
+    }
+
+    /// <summary>
+    /// <summary>
+    /// When the monitor turns off (DPMS Off), the DE typically kills the
+    /// keyboard backlight. If "keep backlight on" is enabled, re-light it.
+    /// </summary>
+    private void OnMonitorSlept()
+    {
+        if (!Helpers.AppConfig.Is("kb_keep_on"))
+            return;
+        try
+        {
+            bool onAc = Power?.IsOnAcPower() ?? true;
+            int level = onAc
+                ? Helpers.AppConfig.Get("keyboard_brightness_ac", -1)
+                : Helpers.AppConfig.Get("keyboard_brightness", -1);
+            if (level < 0)
+                level = Helpers.AppConfig.Get("keyboard_brightness", -1);
+            if (level < 0)
+                level = Wmi?.KbdMaxBrightness ?? 3;
+            if (level > 0)
+            {
+                Wmi?.SetKeyboardBrightness(level);
+                Logger.WriteLine($"KeepOn: re-lit keyboard to {level} after DPMS Off");
+            }
+        }
+        catch (Exception ex) { Logger.WriteLine("KeepOn: re-light on DPMS Off failed", ex); }
+    }
+
+    /// Re-apply mouse Hi-Res Scroll state when the display returns from DPMS Off.
+    /// The HID++ flags survive normal idle, but firmware on some Logitech
+    /// receivers drops the bits when the host stops polling for several minutes.
+    /// </summary>
+    private void OnMonitorWoke()
+    {
+        try
+        { ReapplyMousePeripheralState(); }
+        catch (Exception ex) { Logger.WriteLine("Mouse re-apply on monitor wake failed", ex); }
+
+        // Re-light keyboard on wake too, in case the DE didn't restore it.
+        if (Helpers.AppConfig.Is("kb_keep_on"))
+        {
+            try
+            {
+                bool onAc = Power?.IsOnAcPower() ?? true;
+                int level = onAc
+                    ? Helpers.AppConfig.Get("keyboard_brightness_ac", -1)
+                    : Helpers.AppConfig.Get("keyboard_brightness", -1);
+                if (level < 0)
+                    level = Helpers.AppConfig.Get("keyboard_brightness", -1);
+                if (level < 0)
+                    level = Wmi?.KbdMaxBrightness ?? 3;
+                if (level > 0)
+                {
+                    Wmi?.SetKeyboardBrightness(level);
+                    Logger.WriteLine($"KeepOn: re-lit keyboard to {level} after DPMS On");
+                }
+            }
+            catch (Exception ex) { Logger.WriteLine("KeepOn: re-light on DPMS On failed", ex); }
+        }
+    }
+
+    /// <summary>
+    /// Re-apply saved settings to every connected mouse. For Logitech devices
+    /// this restores all persisted settings (DPI, scroll, lighting, etc.)
+    private System.Threading.Timer? _peripheralPollTimer;
+    private int _peripheralPollRunning;
+
+    /// from config. For other mice, re-applies Hi-Res Scroll flags only.
+    /// Idempotent - safe to call on resume, monitor wake, or reconnect.
+    /// </summary>
+    private static void ReapplyMousePeripheralState()
+    {
+        foreach (var mouse in Peripherals.PeripheralsProvider.ConnectedMice.ToArray())
+        {
+            try
+            {
+                if (mouse is Peripherals.Logitech.LogitechMouse logi)
+                    logi.ApplySavedSettings();
+                else if (mouse.HasHiResScroll())
+                    mouse.WriteHiResScroll();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine($"Mouse re-apply failed for {mouse.GetDisplayName()}: {ex.Message}");
+            }
         }
     }
 
@@ -1065,6 +1196,9 @@ public class App : Application
         { Power?.StopPowerMonitoring(); }
         catch { }
         try
+        { _peripheralPollTimer?.Dispose(); }
+        catch { }
+        try
         { UI.Views.ExtraWindow.StopClamshellInhibit(); }
         catch { }
         try
@@ -1097,6 +1231,7 @@ public class App : Application
 
         // Cleanup
         Power?.StopPowerMonitoring();
+        _peripheralPollTimer?.Dispose();
         UI.Views.ExtraWindow.StopClamshellInhibit();
         FnLock?.Stop();
         AnimeMatrix?.Dispose();

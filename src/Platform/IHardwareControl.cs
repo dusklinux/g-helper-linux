@@ -94,8 +94,8 @@ public interface IHardwareControl : IDisposable
     /// <summary>Get panel overdrive state.</summary>
     bool GetPanelOverdrive();
 
-    /// <summary>Set panel overdrive.</summary>
-    void SetPanelOverdrive(bool enabled);
+    /// <summary>Set panel overdrive. Returns true if the write took effect.</summary>
+    bool SetPanelOverdrive(bool enabled);
 
     /// <summary>Get MiniLED mode.</summary>
     int GetMiniLedMode();
@@ -127,11 +127,15 @@ public interface IHardwareControl : IDisposable
     /// reads back the new value instead of cycling it.</summary>
     bool HasKbdBrightnessHwChanged { get; }
 
-    /// <summary>Get keyboard backlight brightness (0-3).</summary>
+    /// <summary>Get keyboard backlight brightness (0..<see cref="KbdMaxBrightness"/>).</summary>
     int GetKeyboardBrightness();
 
-    /// <summary>Set keyboard backlight brightness (0-3).</summary>
+    /// <summary>Set keyboard backlight brightness (0..<see cref="KbdMaxBrightness"/>).</summary>
     void SetKeyboardBrightness(int level);
+
+    /// <summary>Highest valid step for the backlight (inclusive). ASUS=3,
+    /// Lenovo IdeaPad LEDs report 1 (on/off) or 2 (tristate).</summary>
+    int KbdMaxBrightness { get; }
 
     /// <summary>Set TUF keyboard RGB color.</summary>
     void SetKeyboardRgb(byte r, byte g, byte b);

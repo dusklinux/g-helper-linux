@@ -259,6 +259,7 @@ public static class InputDispatcher
             case "overdrive":
                 bool currentOd = App.Wmi?.GetPanelOverdrive() ?? false;
                 App.Wmi?.SetPanelOverdrive(!currentOd);
+                AppConfig.Set("panel_od", !currentOd ? 1 : 0);
                 App.System?.ShowNotification(Labels.Get("panel_overdrive"),
                     !currentOd ? Labels.Get("enabled") : Labels.Get("disabled"),
                     "preferences-desktop-display");

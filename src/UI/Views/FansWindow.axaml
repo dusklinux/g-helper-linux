@@ -97,11 +97,153 @@
                                           Content="Auto-apply power limits on mode change"
                                           ToolTip.Tip=""
                                           Margin="0,8,0,0"
-                                          IsCheckedChanged="CheckApplyPower_Changed" />
+                                           IsCheckedChanged="CheckApplyPower_Changed" />
+
+                                <!-- Lenovo extra CPU power tunables (built in code) -->
+                                <StackPanel x:Name="panelLenovoCpuPpt" Margin="0,16,0,0" IsVisible="False">
+                                    <TextBlock x:Name="headerLenovoCpuPpt" Classes="header" Text="Extra Power Limits" Margin="0,0,0,4" />
+                                </StackPanel>
 
                                 <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
                                     <Button x:Name="buttonCpuReset" Classes="ghelper"
                                             Content="Reset" Click="ButtonCpuReset_Click" />
+                                </StackPanel>
+
+                                <!-- AMD Ryzen SMU Power/Temp (visible when RyzenPower is available) -->
+                                <StackPanel x:Name="panelRyzenPower" Margin="0,16,0,0" IsVisible="False">
+                                    <TextBlock x:Name="headerRyzenPower" Classes="header" Text="AMD SMU Power" Margin="0,0,0,8" />
+
+                                    <Grid x:Name="rowRyzenStapm" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="STAPM" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenStapm"
+                                                Minimum="5" Maximum="300" TickFrequency="1"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenStapm" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <Grid x:Name="rowRyzenFast" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="Fast (PPT)" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenFast"
+                                                Minimum="5" Maximum="300" TickFrequency="1"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenFast" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <Grid x:Name="rowRyzenSlow" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="Slow (PPT)" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenSlow"
+                                                Minimum="5" Maximum="300" TickFrequency="1"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenSlow" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <Grid x:Name="rowRyzenApuSlow" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="APU Slow" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenApuSlow"
+                                                Minimum="5" Maximum="300" TickFrequency="1"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenApuSlow" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <Grid x:Name="rowRyzenStapmTime" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="STAPM Time" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenStapmTime"
+                                                Minimum="2" Maximum="1024" TickFrequency="1"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenStapmTime" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <Grid x:Name="rowRyzenSlowTime" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="Slow Time" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenSlowTime"
+                                                Minimum="2" Maximum="1024" TickFrequency="1"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenSlowTime" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+
+                                    <TextBlock Classes="header" Text="Temperature Limits" Margin="0,12,0,8" />
+                                    <Grid x:Name="rowRyzenTctl" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="Tctl" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenTctl"
+                                                Minimum="60" Maximum="105" TickFrequency="1"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenTctl" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <Grid x:Name="rowRyzenApuSkin" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="APU Skin" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenApuSkin"
+                                                Minimum="10" Maximum="105" TickFrequency="1"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenApuSkin" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <Grid x:Name="rowRyzenDgpuSkin" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="dGPU Skin" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenDgpuSkin"
+                                                Minimum="10" Maximum="105" TickFrequency="1"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenDgpuSkin" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+
+                                    <TextBlock Classes="header" Text="Current Limits" Margin="0,12,0,8" />
+                                    <Grid x:Name="rowRyzenVrm" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="TDC VDD" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenVrm"
+                                                Minimum="8" Maximum="900" TickFrequency="1"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenVrm" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <Grid x:Name="rowRyzenVrmSoc" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="TDC SoC" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenVrmSoc"
+                                                Minimum="8" Maximum="900" TickFrequency="1"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenVrmSoc" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <Grid x:Name="rowRyzenVrmMax" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="EDC VDD" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenVrmMax"
+                                                Minimum="8" Maximum="900" TickFrequency="1"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenVrmMax" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <Grid x:Name="rowRyzenVrmSocMax" ColumnDefinitions="100,*,45" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="EDC SoC" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenVrmSocMax"
+                                                Minimum="8" Maximum="900" TickFrequency="1"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenVrmSocMax" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+
+                                    <TextBlock Classes="header" Text="iGPU Clocks" Margin="0,12,0,8" />
+                                    <Grid x:Name="rowRyzenMaxGfx" ColumnDefinitions="100,*,55" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="Max GFX" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenMaxGfx"
+                                                Minimum="200" Maximum="3400" TickFrequency="25"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenMaxGfx" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <Grid x:Name="rowRyzenMinGfx" ColumnDefinitions="100,*,55" Margin="0,4" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="Min GFX" Classes="label-dim" VerticalAlignment="Center" />
+                                        <Slider Grid.Column="1" x:Name="sliderRyzenMinGfx"
+                                                Minimum="200" Maximum="3400" TickFrequency="25"
+                                                ValueChanged="SliderRyzenPower_ValueChanged" />
+                                        <TextBlock Grid.Column="2" x:Name="labelRyzenMinGfx" Classes="value"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+
+                                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                                        <Button x:Name="buttonRyzenApply" Classes="ghelper"
+                                                Content="Apply" Click="ButtonRyzenApply_Click" />
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <StackPanel x:Name="panelUV" Margin="0,16,0,0">
@@ -313,6 +455,11 @@
                                 <TextBlock x:Name="labelGpuHint" Classes="label-dim" FontSize="10"
                                            TextWrapping="Wrap" Margin="0,8,0,0"
                                            Text="" />
+
+                                <!-- Lenovo advanced GPU OC tunables (built in code) -->
+                                <StackPanel x:Name="panelGpuAdvanced" Margin="0,8,0,0" IsVisible="False">
+                                    <TextBlock x:Name="headerGpuAdvanced" Classes="header" Text="Advanced GPU" Margin="0,4,0,4" />
+                                </StackPanel>
 
                                 <TextBlock x:Name="headerGpuLive" Classes="header" Text="GPU Status"
                                            Margin="0,12,0,4" IsVisible="False" />

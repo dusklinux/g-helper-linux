@@ -229,6 +229,47 @@ public static class LenovoSysfs
     public const string IdeapadDebugfsCfg = "/sys/kernel/debug/ideapad/cfg";
     public const string IdeapadDebugfsStatus = "/sys/kernel/debug/ideapad/status";
 
+    //  per-device platform-profile class interface (kernel 6.12+) 
+    // The legacy /sys/firmware/acpi/platform_profile aggregates all providers
+    // and unconditionally rejects writes of "custom" (EINVAL). The per-device
+    // class node bypasses that restriction.
+
+    private const string PlatformProfileClass = "/sys/class/platform-profile";
+
+    private static string? _gamezoneProfilePath;
+    private static bool _gamezoneProfileResolved;
+
+    /// <summary>Per-device profile sysfs path for the gamezone provider, or null.
+    /// Writing "custom" here succeeds even though the legacy aggregated path rejects it.</summary>
+    public static string? GamezoneProfilePath()
+    {
+        if (_gamezoneProfileResolved)
+            return _gamezoneProfilePath;
+        _gamezoneProfileResolved = true;
+
+        try
+        {
+            if (!Directory.Exists(PlatformProfileClass))
+                return null;
+
+            foreach (var dir in Directory.GetDirectories(PlatformProfileClass, "platform-profile-*"))
+            {
+                string namePath = Path.Combine(dir, "name");
+                if (!File.Exists(namePath))
+                    continue;
+                string name = File.ReadAllText(namePath).Trim();
+                if (name == "lenovo-wmi-gamezone")
+                {
+                    string profile = Path.Combine(dir, "profile");
+                    if (File.Exists(profile))
+                        return _gamezoneProfilePath = profile;
+                }
+            }
+        }
+        catch { }
+        return null;
+    }
+
     //  Flip to Start UEFI variable (FBSWIF) 
     // 4-byte payload: byte0 = enabled, rest reserved. efivarfs prepends a
     // 4-byte LE attributes word (0x7 = NV+BS+RT), so the file is 8 bytes.

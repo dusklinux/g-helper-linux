@@ -922,11 +922,20 @@ public class LinuxAsusWmi : IHardwareControl
         return SysfsHelper.ReadInt(path, 0) == 1;
     }
 
-    public void SetPanelOverdrive(bool enabled)
+    public bool SetPanelOverdrive(bool enabled)
     {
         var path = SysfsHelper.ResolveAttrPath(AsusAttributes.PanelOd, SysfsHelper.AsusWmiPlatform);
-        if (path != null)
-            SysfsHelper.WriteInt(path, enabled ? 1 : 0);
+        if (path == null)
+            return false;
+        SysfsHelper.WriteInt(path, enabled ? 1 : 0);
+        // Readback: the kernel returns -EIO if the EC rejected the write.
+        int actual = SysfsHelper.ReadInt(path, -1);
+        if (actual < 0 || (actual == 1) != enabled)
+        {
+            Helpers.Logger.WriteLine($"Panel overdrive: write {(enabled ? 1 : 0)} readback {actual} - mismatch");
+            return false;
+        }
+        return true;
     }
 
     public int GetMiniLedMode()
@@ -967,10 +976,16 @@ public class LinuxAsusWmi : IHardwareControl
 
     public void SetPptLimit(string attribute, int watts)
     {
-        // PPT attributes: ppt_pl1_spl, ppt_pl2_sppt, ppt_fppt, ppt_apu_sppt, etc.
-        //
         if (_lastWrittenInt.TryGetValue(attribute, out int prev) && prev == watts)
             return;
+
+        // AMD: asus-wmi PPT sysfs is a no-op on some boards. Route through
+        // the SMU directly when available, fall back to sysfs otherwise.
+        if (RyzenPower.TrySetPpt(attribute, watts))
+        {
+            _lastWrittenInt[attribute] = watts;
+            return;
+        }
 
         // On dual-backend kernels (asus-nb-wmi + asus-armoury), we cannot predict which
         // backend is functional for any given attribute. Write to ALL available paths
@@ -1016,6 +1031,9 @@ public class LinuxAsusWmi : IHardwareControl
     /// </summary>
     public bool HasKbdBrightnessHwChanged { get; } =
         File.Exists(Path.Combine(SysfsHelper.Leds, "asus::kbd_backlight", "brightness_hw_changed"));
+
+    /// <summary>Off + low/medium/high.</summary>
+    public int KbdMaxBrightness => 3;
 
     public int GetKeyboardBrightness()
     {
@@ -1128,8 +1146,13 @@ public class LinuxAsusWmi : IHardwareControl
 
     private int GetGpuTemp()
     {
+        // Skip every NVIDIA read while the dGPU is runtime-suspended: probing it
+        // (hwmon/NVML/nvidia-smi) wakes it from D3cold. Fall through to the
+        // APU/amdgpu sensor instead.
+        bool nvSuspended = Gpu.NVidia.LinuxNvidiaGpuControl.IsDgpuSuspended();
+
         // Try NVIDIA hwmon (cached lookup, no repeated filesystem scan)
-        var nvidiaHwmon = SysfsHelper.FindHwmonByName("nvidia");
+        var nvidiaHwmon = nvSuspended ? null : SysfsHelper.FindHwmonByName("nvidia");
         if (nvidiaHwmon != null)
         {
             int temp = SysfsHelper.ReadInt(Path.Combine(nvidiaHwmon, "temp1_input"), -1);
@@ -1146,8 +1169,13 @@ public class LinuxAsusWmi : IHardwareControl
                 return temp / 1000;
         }
 
-        // Fallback: try nvidia-smi (only if NVIDIA driver is loaded)
-        if (Directory.Exists("/sys/module/nvidia"))
+        // Fallback: NVML via gpu-helper (~5ms, no nvidia-smi fork)
+        int nvmlTemp = Gpu.NVidia.LinuxNvidiaGpuControl.GetTempViaNvml();
+        if (nvmlTemp > 0)
+            return nvmlTemp;
+
+        // Last resort: nvidia-smi fork (~200ms)
+        if (!nvSuspended && Directory.Exists("/sys/module/nvidia"))
         {
             try
             {
@@ -1155,7 +1183,7 @@ public class LinuxAsusWmi : IHardwareControl
                 if (!string.IsNullOrWhiteSpace(output) && int.TryParse(output.Trim(), out int smiTemp) && smiTemp > 0)
                     return smiTemp;
             }
-            catch { /* nvidia-smi not available */ }
+            catch { }
         }
 
         return -1;

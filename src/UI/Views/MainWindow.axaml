@@ -340,40 +340,33 @@
                  body button below opens the dedicated G-Helper Audio window
                  for fine-grained per-effect control. -->
             <Border x:Name="panelAudio" Classes="panel">
-                <StackPanel>
-                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="2,0,2,8">
-                        <TextBlock Grid.Column="0" Text="&#x1F399;"
-                                   FontSize="16"
-                                   VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <TextBlock Grid.Column="1" x:Name="labelAudio" Classes="header"
-                                   Text="Microphone"
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="2,0,2,0">
+                    <TextBlock Grid.Column="0" Text="&#x1F399;"
+                               FontSize="16"
+                               VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBlock Grid.Column="1" x:Name="labelAudio" Classes="header"
+                               Text="Microphone"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="2" x:Name="buttonAudio" Classes="ghelper"
+                            Click="ButtonAudio_Click"
+                            Height="26" Width="32" Padding="0"
+                            HorizontalAlignment="Center" HorizontalContentAlignment="Center"
+                            Margin="0,0,6,0" VerticalAlignment="Center">
+                        <ctrl:Icon IconName="equalizer" Width="14" Height="14"
                                    VerticalAlignment="Center" />
-                        <Button Grid.Column="2" x:Name="buttonAudioToggle" Classes="ghelper"
-                                Click="ButtonAudioToggle_Click"
-                                Height="26" Padding="10,0"
-                                MinWidth="78"
-                                VerticalAlignment="Center">
-                            <TextBlock x:Name="labelAudioToggle"
-                                       Text="Off"
-                                       HorizontalAlignment="Center"
-                                       FontSize="13" FontWeight="SemiBold"
-                                       VerticalAlignment="Center" />
-                        </Button>
-                    </Grid>
-
-                    <Button x:Name="buttonAudio" Classes="ghelper"
-                            Margin="0,0" Click="ButtonAudio_Click"
-                            HorizontalAlignment="Stretch"
-                            Height="36">
-                        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                            <ctrl:Icon IconName="equalizer" Width="16" Height="16"
-                                       VerticalAlignment="Center" />
-                            <TextBlock x:Name="labelAudioConfigure"
-                                       Text="Configure chain..." FontSize="11"
-                                       VerticalAlignment="Center" />
-                        </StackPanel>
                     </Button>
-                </StackPanel>
+                    <Button Grid.Column="3" x:Name="buttonAudioToggle" Classes="ghelper"
+                            Click="ButtonAudioToggle_Click"
+                            Height="26" Padding="10,0"
+                            MinWidth="78"
+                            VerticalAlignment="Center">
+                        <TextBlock x:Name="labelAudioToggle"
+                                   Text="Off"
+                                   HorizontalAlignment="Center"
+                                   FontSize="13" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
+                    </Button>
+                </Grid>
             </Border>
             <Border x:Name="panelAnimeMatrix" Classes="panel" IsVisible="False">
                 <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="2,0,2,0">
@@ -460,29 +453,39 @@
                 </StackPanel>
             </Border>
 
-            <!-- PERIPHERALS (ASUS mice, shown when connected) -->
+            <!-- PERIPHERALS (ASUS + Logitech mice, shown when connected).
+                 Header sits inline with the device buttons; buttons wrap to
+                 a new line when they no longer fit beside the header. -->
             <Border x:Name="panelPeripherals" Classes="panel" IsVisible="False">
-                <StackPanel>
-                    <TextBlock x:Name="labelPeripherals" Classes="header" Text="Peripherals"
-                               Margin="0,0,0,6" />
-                    <UniformGrid Rows="1" Columns="3">
+                <Grid ColumnDefinitions="Auto,*">
+                    <TextBlock Grid.Column="0" x:Name="labelPeripherals" Classes="header"
+                               Text="Peripherals"
+                               VerticalAlignment="Center" Margin="0,0,10,0" />
+                    <WrapPanel Grid.Column="1" Orientation="Horizontal"
+                               HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Button x:Name="buttonPeripheral1" Classes="ghelper" IsVisible="False"
-                                Margin="0,0,3,0" Height="32" Click="ButtonPeripheral_Click">
-                            <TextBlock x:Name="labelPeripheral1" Text="" HorizontalAlignment="Center"
-                                       FontSize="11" TextTrimming="CharacterEllipsis" />
+                                HorizontalAlignment="Left" Margin="4,2,0,2" Padding="10,0" Height="26"
+                                Click="ButtonPeripheral_Click">
+                            <TextBlock x:Name="labelPeripheral1" Text=""
+                                       FontSize="11" TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" />
                         </Button>
                         <Button x:Name="buttonPeripheral2" Classes="ghelper" IsVisible="False"
-                                Margin="3,0" Height="32" Click="ButtonPeripheral_Click">
-                            <TextBlock x:Name="labelPeripheral2" Text="" HorizontalAlignment="Center"
-                                       FontSize="11" TextTrimming="CharacterEllipsis" />
+                                HorizontalAlignment="Left" Margin="4,2,0,2" Padding="10,0" Height="26"
+                                Click="ButtonPeripheral_Click">
+                            <TextBlock x:Name="labelPeripheral2" Text=""
+                                       FontSize="11" TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" />
                         </Button>
                         <Button x:Name="buttonPeripheral3" Classes="ghelper" IsVisible="False"
-                                Margin="3,0,0,0" Height="32" Click="ButtonPeripheral_Click">
-                            <TextBlock x:Name="labelPeripheral3" Text="" HorizontalAlignment="Center"
-                                       FontSize="11" TextTrimming="CharacterEllipsis" />
+                                HorizontalAlignment="Left" Margin="4,2,0,2" Padding="10,0" Height="26"
+                                Click="ButtonPeripheral_Click">
+                            <TextBlock x:Name="labelPeripheral3" Text=""
+                                       FontSize="11" TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" />
                         </Button>
-                    </UniformGrid>
-                </StackPanel>
+                    </WrapPanel>
+                </Grid>
             </Border>
 
             <!-- FOOTER -->
