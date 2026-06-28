@@ -58,6 +58,8 @@ public class LinuxNvidiaGpuControl : IGpuControl
             return -1;
         if (!Directory.Exists("/sys/module/nvidia"))
             return -1;
+        if (IsDgpuSuspended())
+            return -1;
         if (!NvidiaProcessScanner.EnsureHelper())
             return -1;
         try
@@ -391,6 +393,10 @@ public class LinuxNvidiaGpuControl : IGpuControl
             return null;
         if (_nvmlCache != null && (DateTime.UtcNow - _nvmlCacheAt) < NvmlCacheTtl)
             return _nvmlCache;
+        // Don't wake a runtime-suspended dGPU to refresh NVML info; serve the
+        // last cache (applied offsets/ranges stay valid across suspend) or null.
+        if (IsDgpuSuspended())
+            return _nvmlCache;
         if (!NvidiaProcessScanner.EnsureHelper())
             return null;
 
@@ -709,11 +715,55 @@ public class LinuxNvidiaGpuControl : IGpuControl
     private const int SmiFailThreshold = 2;
     private static readonly TimeSpan SmiCooldown = TimeSpan.FromSeconds(15);
 
+    // dGPU runtime-PM guard. A runtime-suspended (D3cold) dGPU is healthy but
+    // powered down. Reading power/runtime_status is passive, but any nvidia-smi
+    // or NVML query resumes it from D3cold and defeats Optimus power saving - so
+    // telemetry reads short-circuit while it is suspended. The PCI path is
+    // stable, so it is cached once found; if absent (e.g. booted in Eco) we
+    // re-scan slowly so it appears after a later switch to Standard.
+    private static string? _rtStatusPath;
+    private static DateTime _rtRescanUtc;
+
+    /// <summary>True when the discrete NVIDIA GPU is runtime-suspended (D3cold).
+    /// Passive sysfs read; callers use it to avoid waking the dGPU for telemetry.</summary>
+    public static bool IsDgpuSuspended()
+    {
+        if (_rtStatusPath == null && DateTime.UtcNow >= _rtRescanUtc)
+        {
+            _rtRescanUtc = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+            try
+            {
+                foreach (var dev in Directory.EnumerateDirectories("/sys/bus/pci/devices"))
+                {
+                    string cls = SysfsHelper.ReadAttribute(Path.Combine(dev, "class")) ?? "";
+                    if (!cls.StartsWith("0x0300", StringComparison.Ordinal)
+                        && !cls.StartsWith("0x0302", StringComparison.Ordinal))
+                        continue;
+                    if (SysfsHelper.ReadInt(Path.Combine(dev, "boot_vga"), 0) == 1)
+                        continue; // iGPU
+                    if ((SysfsHelper.ReadAttribute(Path.Combine(dev, "vendor")) ?? "")
+                        .StartsWith("0x10de", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _rtStatusPath = Path.Combine(dev, "power/runtime_status");
+                        break;
+                    }
+                }
+            }
+            catch { }
+        }
+        return _rtStatusPath != null
+            && SysfsHelper.ReadAttribute(_rtStatusPath) == "suspended";
+    }
+
     private static string? RunNvidiaSmi(string query, string format = "")
     {
         // Proactive gate: GPU mode switches pause telemetry so we never spawn
         // an nvidia-smi that turns into a driver holder mid-unbind.
         if (GpuQueryGate.IsPaused)
+            return null;
+
+        // Never wake a runtime-suspended dGPU just to read telemetry.
+        if (IsDgpuSuspended())
             return null;
 
         if (DateTime.UtcNow < _smiCooldownUntilUtc)

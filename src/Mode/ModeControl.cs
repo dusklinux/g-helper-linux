@@ -259,6 +259,23 @@ public class ModeControl
             try
             { ModeApplied?.Invoke(mode); }
             catch (Exception ex) { Helpers.Logger.WriteLine("ModeApplied handler threw", ex); }
+
+            // 8. Lenovo firmware dims the keyboard backlight when entering the
+            //    quiet/low-power profile. Restore the configured level once the
+            //    EC has settled so Silent doesn't leave the keyboard dark.
+            if (baseMode == 2 && Helpers.AppConfig.IsLenovoDevice()
+                && (App.Wmi?.GetKeyboardBrightness() ?? -1) >= 0)
+            {
+                await Task.Delay(700);
+                int kbd = Helpers.AppConfig.Get(USB.Aura.GetBrightnessConfigKey(), -1);
+                if (kbd < 0)
+                    kbd = Helpers.AppConfig.Get("keyboard_brightness", -1);
+                if (kbd > 0)
+                {
+                    App.Wmi?.SetKeyboardBrightness(kbd);
+                    Helpers.Logger.WriteLine($"Lenovo: re-asserted kbd backlight={kbd} after low-power");
+                }
+            }
         });
 
         if (notify)

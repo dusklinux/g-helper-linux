@@ -114,6 +114,10 @@ public static class Diagnostics
         var kernel = Platform.Linux.SysfsHelper.RunCommand("uname", "-r") ?? "?";
         sb.AppendLine($"Kernel: {kernel}");
 
+        // Secure Boot / kernel lockdown: blocks unsigned modules + direct SMU/MSR
+        // access, which silently removes Ryzen power tuning and similar features.
+        AppendSecureBootState(sb);
+
         // OS release
         try
         {
@@ -138,6 +142,36 @@ public static class Diagnostics
         sb.AppendLine($"Desktop: {desktop} ({session})");
 
         sb.AppendLine();
+    }
+
+    /// <summary>Report Secure Boot / kernel-lockdown state. When lockdown is
+    /// active, unsigned modules (ryzen_smu) and direct SMU/MSR access are blocked,
+    /// which silently removes Ryzen power tuning and similar low-level features.</summary>
+    private static void AppendSecureBootState(StringBuilder sb)
+    {
+        // /sys/kernel/security/lockdown: "none [integrity] confidentiality" -
+        // the active token is the bracketed one. Absent if the LSM isn't built.
+        string? raw = Platform.Linux.SysfsHelper.ReadAttribute("/sys/kernel/security/lockdown");
+        if (string.IsNullOrEmpty(raw))
+        {
+            sb.AppendLine("Secure Boot: unknown (lockdown LSM not exposed)");
+            return;
+        }
+
+        int a = raw.IndexOf('['), b = raw.IndexOf(']');
+        string active = (a >= 0 && b > a) ? raw.Substring(a + 1, b - a - 1) : raw.Trim();
+
+        if (active == "none")
+        {
+            sb.AppendLine("Secure Boot / lockdown: off");
+            return;
+        }
+
+        sb.AppendLine($"Secure Boot / lockdown: ACTIVE ({active})");
+        sb.AppendLine("  WARNING: kernel lockdown blocks unsigned modules and direct SMU/MSR");
+        sb.AppendLine("           access - Ryzen power tuning (ryzen_smu / curve optimizer /");
+        sb.AppendLine("           STAPM / APU limits) and similar features are unavailable.");
+        sb.AppendLine("           Disable Secure Boot in BIOS to restore.");
     }
 
     private static void AppendModelFlags(StringBuilder sb)

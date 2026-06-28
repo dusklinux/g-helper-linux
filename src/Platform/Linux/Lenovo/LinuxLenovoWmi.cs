@@ -670,7 +670,12 @@ public class LinuxLenovoWmi : IHardwareControl
 
     private int GetGpuTemp()
     {
-        var nvidiaHwmon = SysfsHelper.FindHwmonByName("nvidia");
+        // Skip every NVIDIA read while the dGPU is runtime-suspended: probing it
+        // (hwmon/NVML/nvidia-smi) wakes it from D3cold. Fall through to the
+        // APU/amdgpu sensor instead.
+        bool nvSuspended = Gpu.NVidia.LinuxNvidiaGpuControl.IsDgpuSuspended();
+
+        var nvidiaHwmon = nvSuspended ? null : SysfsHelper.FindHwmonByName("nvidia");
         if (nvidiaHwmon != null)
         {
             int temp = SysfsHelper.ReadInt(Path.Combine(nvidiaHwmon, "temp1_input"), -1);
@@ -692,7 +697,7 @@ public class LinuxLenovoWmi : IHardwareControl
             return nvmlTemp;
 
         // Last resort: nvidia-smi fork (~200ms)
-        if (Directory.Exists("/sys/module/nvidia"))
+        if (!nvSuspended && Directory.Exists("/sys/module/nvidia"))
         {
             try
             {
