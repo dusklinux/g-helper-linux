@@ -640,9 +640,7 @@ public class LinuxLenovoWmi : IHardwareControl
         {
             "throttle_thermal_policy" =>
                 LenovoDetection.HasPlatformProfile() || LenovoDetection.HasFanMode(),
-            "ppt_pl1_spl" or "ppt_pl2_sppt" or "ppt_fppt" or "ppt_pl3_fppt" =>
-                LenovoSysfs.FirmwareAttrCurrentValue(MapPptAttribute(feature)) != null,
-            _ => false
+            _ => LenovoSysfs.FirmwareAttrCurrentValue(MapPptAttribute(feature)) != null,
         };
     }
 

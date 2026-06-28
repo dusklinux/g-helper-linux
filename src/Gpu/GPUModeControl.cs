@@ -309,6 +309,10 @@ public class GPUModeControl
             // write block files + PCI-remove dGPU functions from the bus.
             if (AppConfig.IsPciGpuBackend())
             {
+                // MUX=0 (live/latched) → dGPU drives the panel; removing it blanks it.
+                if (WouldCreateImpossibleState(GpuMode.Eco))
+                    return GpuSwitchResult.EcoBlocked;
+
                 bool pciReleased = TryReleaseGpuDriver();
                 if (!pciReleased)
                 {
@@ -1206,6 +1210,11 @@ public class GPUModeControl
         // write blocks + PCI-remove the dGPU immediately.
         if (wantEco && !ecoBlocksPresent)
         {
+            // MUX=0 (live or latched) → removing the dGPU blanks the display.
+            // Lenovo has no MUX (reads -1) so this never blocks there.
+            if (WouldCreateImpossibleState(GpuMode.Eco))
+                return GpuSwitchResult.EcoBlocked;
+
             if (IsDgpuDriverActive())
             {
                 Logger.WriteLine("GPUModeControl: PCI backend - dGPU driver active, showing dialog");

@@ -322,6 +322,10 @@
                               Margin="0,4"
                               IsCheckedChanged="CheckBootSound_Changed" />
 
+                    <CheckBox x:Name="checkMcuPowersave" Content="MCU Power Saving (USB autosuspend)"
+                              Margin="0,4" IsVisible="False"
+                              IsCheckedChanged="CheckMcuPowersave_Changed" />
+
                     <CheckBox x:Name="checkStatusLed" Content="LED status indicators"
                               Margin="0,4" IsVisible="False"
                               IsCheckedChanged="CheckStatusLed_Changed" />

@@ -1013,6 +1013,13 @@ public partial class ExtraWindow : Window
         int bootSound = Helpers.AppConfig.Get("boot_sound", 0);
         checkBootSound.IsChecked = bootSound == 1;
 
+        // MCU power saving (asus-armoury bool; ASUS only). Live firmware state.
+        bool mcuSupported = App.Wmi?.IsFeatureSupported(Platform.Linux.AsusAttributes.McuPowersave) == true;
+        checkMcuPowersave.IsVisible = mcuSupported;
+        if (mcuSupported)
+            checkMcuPowersave.IsChecked =
+                (App.Wmi?.GetPptLimit(Platform.Linux.AsusAttributes.McuPowersave) ?? 0) == 1;
+
         // Window always on top
         checkTopmost.IsChecked = Helpers.AppConfig.Is("topmost");
         if (Helpers.AppConfig.Is("topmost"))
@@ -1399,6 +1406,24 @@ public partial class ExtraWindow : Window
         }
 
         Helpers.Logger.WriteLine($"Boot sound → {val}");
+    }
+
+    private void CheckMcuPowersave_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        int val = (checkMcuPowersave.IsChecked ?? false) ? 1 : 0;
+        try
+        {
+            var path = Platform.Linux.SysfsHelper.ResolveAttrPath(Platform.Linux.AsusAttributes.McuPowersave);
+            if (path != null)
+                Platform.Linux.SysfsHelper.WriteAttribute(path, val.ToString());
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"MCU powersave write failed: {ex.Message}");
+        }
+        Helpers.Logger.WriteLine($"MCU powersave -> {val}");
     }
 
     private void CheckFahrenheit_Changed(object? sender, RoutedEventArgs e)

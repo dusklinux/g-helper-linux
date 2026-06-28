@@ -124,6 +124,15 @@ public static class AsusAttributes
     public static readonly AttrDef BootSound = new("boot_sound",
         description: "Boot sound");
 
+    public static readonly AttrDef McuPowersave = new("mcu_powersave",
+        description: "MCU power saving (USB autosuspend)");
+
+    public static readonly AttrDef PanelHdMode = new("panel_hd_mode",
+        description: "Panel HD mode");
+
+    public static readonly AttrDef ChargeMode = new("charge_mode",
+        description: "Charge mode (read-only)");
+
     // All known attributes (for diagnostics enumeration)
 
     public static readonly AttrDef[] All =
@@ -133,7 +142,7 @@ public static class AsusAttributes
         NvDynamicBoost, NvTempTarget, NvBaseTgp, NvTgp,
         DgpuDisable, GpuMuxMode, EgpuEnable, EgpuConnected, ApuMem,
         PanelOd, MiniLedMode, ScreenAutoBrightness,
-        BootSound,
+        BootSound, McuPowersave, PanelHdMode, ChargeMode,
     };
 
     // Lookup cache: legacy name → AttrDef (built once on first use)
