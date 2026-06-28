@@ -164,7 +164,9 @@ if command -v cc &>/dev/null; then
         GPU_HELPER_BIN="$GPU_HELPER_DIR/gpu-helper"
         echo "  gpu-helper built: $(du -sh "$GPU_HELPER_BIN" | cut -f1)"
     else
-        echo "WARNING: gpu-helper build failed (privileged GPU operations unavailable)"
+        echo "ERROR: gpu-helper build failed (privileged GPU operations unavailable)"
+        echo "  Check: 'cc' is installed and libpci-dev is present (apt: libpci-dev)"
+        exit 1
     fi
 else
     echo ""
@@ -178,7 +180,8 @@ if (( USE_AOT )); then
     echo "[1/4] Cleaning previous build..."
     rm -rf "$SRC_DIR/bin/Release" 2>/dev/null || true
 else
-    echo "[1/4] Skipping clean (fast mode, incremental build)"
+    echo "[1/4] Cleaning (fast mode) to force MSBuild condition re-evaluation..."
+    rm -rf "$SRC_DIR/bin/Release" "$SRC_DIR/obj/Release" 2>/dev/null || true
 fi
 
 # Restore packages
