@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Text.Json;
 using Avalonia.Controls;
@@ -67,7 +68,6 @@ public partial class UpdatesWindow : Window
         {
             LoadUpdates();
             RefreshSystemFiles();
-            ApplySysFilesExpanded();
         };
     }
 
@@ -105,6 +105,12 @@ public partial class UpdatesWindow : Window
         try
         {
             Installer.PopulateIntegrityPanel(panelSystemFiles, OnRepairOneAsync, OnRemoveOneAsync, OnShowDiffAsync);
+            _sysFilesExpanded = Installer.ComputeStatus().Any(r =>
+                r.State != Installer.FileState.Ok &&
+                r.State != Installer.FileState.Unknown &&
+                r.State != Installer.FileState.NotApplicable &&
+                r.State != Installer.FileState.Unavailable);
+            ApplySysFilesExpanded();
         }
         catch (Exception ex)
         {
