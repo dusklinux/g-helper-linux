@@ -46,6 +46,11 @@
                             <StackPanel>
                                 <TextBlock x:Name="headerPowerLimits" Classes="header" Text="Power Limits" Margin="0,0,0,8" />
 
+                                <!-- Handheld TDP quick presets (hhd-style), built in code.
+                                     One tap sets PL1/PL2/fPPT together via the sliders. -->
+                                <StackPanel x:Name="panelTdpPresets" Orientation="Horizontal"
+                                            Spacing="6" Margin="0,0,0,8" IsVisible="False" />
+
                                 <Grid ColumnDefinitions="100,*,35" Margin="0,4">
                                     <TextBlock Grid.Column="0" x:Name="labelPL1Label" Text="CPU PL1 (SPL)"
                                                Classes="label-dim" VerticalAlignment="Center" />

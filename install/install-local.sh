@@ -283,7 +283,7 @@ if [[ -f /etc/NIXOS ]]; then
     _info "Staging module + binary under ${GH_NIX_ROOT}/"
     rm -rf "$GH_NIX_ROOT"
     mkdir -p "$GH_NIX_ROOT/nixos" "$GH_NIX_ROOT/dist" \
-             "$GH_NIX_ROOT/vendor/gpu-helper" "$GH_NIX_ROOT/install"
+             "$GH_NIX_ROOT/vendor/gpu-helper/ryzen" "$GH_NIX_ROOT/install"
     install -m644 "$PROJECT_DIR/nixos/module.nix"  "$GH_NIX_ROOT/nixos/module.nix"
     install -m644 "$PROJECT_DIR/nixos/package.nix" "$GH_NIX_ROOT/nixos/package.nix"
     install -m755 "$DIST_DIR/ghelper"              "$GH_NIX_ROOT/dist/ghelper"
@@ -291,7 +291,11 @@ if [[ -f /etc/NIXOS ]]; then
     if [[ -f "$DIST_DIR/ghelper.dll" ]]; then
         cp -r "$DIST_DIR/." "$GH_NIX_ROOT/dist/"
     fi
-    install -m644 "$PROJECT_DIR/vendor/gpu-helper/gpu-helper.c" "$GH_NIX_ROOT/vendor/gpu-helper/gpu-helper.c"
+    # Full gpu-helper source tree; package.nix compiles all of it.
+    install -m644 "$PROJECT_DIR"/vendor/gpu-helper/*.c "$PROJECT_DIR"/vendor/gpu-helper/*.h \
+        "$GH_NIX_ROOT/vendor/gpu-helper/"
+    install -m644 "$PROJECT_DIR"/vendor/gpu-helper/ryzen/*.c "$PROJECT_DIR"/vendor/gpu-helper/ryzen/*.h \
+        "$GH_NIX_ROOT/vendor/gpu-helper/ryzen/"
     for f in 90-ghelper.rules gpu-block-helper.sh ghelper-gpu-boot.sh ghelper.desktop ghelper.png; do
         install -m644 "$SCRIPT_DIR/$f" "$GH_NIX_ROOT/install/$f"
     done

@@ -13,7 +13,7 @@ namespace GHelper.Linux.UI.Views;
 /// Pure wave-based formation spawning, 4 enemy types, boss every 5 waves,
 /// 6 power-ups, high score persistence. All Canvas rectangles, no image assets.
 /// </summary>
-public partial class ArcadeWindow : Window
+public partial class ArcadeWindow : Window, Input.IGamepadInput
 {
     // Constants
     const double CW = 480, CH = 640;
@@ -110,10 +110,40 @@ public partial class ArcadeWindow : Window
         _gameTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
         _gameTimer.Tick += (_, _) => GameTick();
         InitStars();
-        Loaded += (_, _) => { gameCanvas.Focus(); _gameTimer.Start(); };
-        Closing += (_, _) => _gameTimer.Stop();
+        Loaded += (_, _) => { gameCanvas.Focus(); _gameTimer.Start(); Input.GamepadNav.Capture(this); };
+        Closing += (_, _) => { _gameTimer.Stop(); Input.GamepadNav.ReleaseCapture(this); };
         KeyDown += OnKeyDown;
         KeyUp += OnKeyUp;
+    }
+
+    // Gamepad (from GamepadNav capture while open). A: fire / start; B: quit.
+    public void GamepadDirection(int x, int y)
+    {
+        _keyLeft = x < 0;
+        _keyRight = x > 0;
+        _keyUp = y < 0;
+        _keyDown = y > 0;
+    }
+
+    public void GamepadButton(Input.GamepadInputButton button, bool pressed)
+    {
+        switch (button)
+        {
+            case Input.GamepadInputButton.South:
+                _keyShoot = pressed;
+                if (pressed && _state != GameState.Playing)
+                    StartGame();
+                break;
+            case Input.GamepadInputButton.East:
+                if (pressed)
+                    Close();
+                break;
+            case Input.GamepadInputButton.North:
+            case Input.GamepadInputButton.West:
+                if (pressed && _state != GameState.Playing)
+                    StartGame();
+                break;
+        }
     }
 
     // Input
@@ -750,7 +780,7 @@ public partial class ArcadeWindow : Window
             DrawText(Labels.Get("arcade_game_title"), CW / 2, 160, 28, TextBrush, true);
             DrawText(Labels.Get("arcade_move"), CW / 2, 270, 13, DimBrush, true);
             DrawText(Labels.Get("arcade_shoot"), CW / 2, 292, 13, DimBrush, true);
-            DrawText(Labels.Get("arcade_start"), CW / 2, 330, 16, TextBrush, true);
+            DrawText(Labels.Get("arcade_start") + "  (A)", CW / 2, 330, 16, TextBrush, true);
             DrawText(Labels.Get("arcade_quit"), CW / 2, 358, 12, DimBrush, true);
             // Draw player plane on menu as preview
             DrawPlayerPlane(CW / 2, 220);
@@ -820,7 +850,7 @@ public partial class ArcadeWindow : Window
             DrawText(Labels.Format("arcade_score_wave", _score, _waveNumber), CW / 2, CH / 2 + 10, 16, TextBrush, true);
             if (_score >= _highScore && _score > 0)
                 DrawText(Labels.Get("arcade_new_highscore"), CW / 2, CH / 2 + 36, 14, PlayerBody, true);
-            DrawText(Labels.Get("arcade_retry"), CW / 2, CH / 2 + 62, 14, DimBrush, true);
+            DrawText(Labels.Get("arcade_retry") + "  (A)", CW / 2, CH / 2 + 62, 14, DimBrush, true);
         }
     }
 

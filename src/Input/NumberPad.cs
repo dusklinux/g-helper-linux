@@ -256,8 +256,13 @@ public static class NumberPad
                 continue;
             if (!name.Contains("Touchpad"))
                 continue;
-            bool familyMatch = name.Contains("ASUE") || name.Contains("ELAN")
-                || name.Contains("ASUP") || name.Contains("ASUF");
+            // ASUE/ASUP/ASUF are ASUS-proprietary ACPI ids. ELAN touchpads
+            // exist on every vendor's laptops, so the generic ELAN name only
+            // counts on ASUS hardware; sending the NumberPad I2C magic to a
+            // Lenovo/HP ELAN controller is undefined behavior.
+            bool familyMatch = name.Contains("ASUE")
+                || name.Contains("ASUP") || name.Contains("ASUF")
+                || (name.Contains("ELAN") && Helpers.AppConfig.IsAsusDevice());
             if (!familyMatch)
                 continue;
             // Known false positives, excluded by the upstream driver too.

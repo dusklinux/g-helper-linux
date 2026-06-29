@@ -1,9 +1,107 @@
-# G-Helper Linux — udev rules for non-root access to ASUS hardware controls
+# G-Helper Linux udev rules for non-root access to hardware controls
 # Install: sudo cp 90-ghelper.rules /etc/udev/rules.d/ && sudo udevadm control --reload-rules
 # Version: VERSION_PLACEHOLDER
 #
-# These rules grant read/write access to ASUS sysfs attributes for members of
-# the "input" group (or any user with a login session via uaccess).
+# The file is organised in #@section blocks. The in-app installer writes a
+# filtered copy that only contains the blocks relevant to this machine
+# (universal + uinput + peripherals always; asus / lenovo / numberpad by
+# hardware; compat0666 only when the "udev_0666_fallback" config is set).
+# A plain `cp` of this file (install-local.sh) installs everything including
+# compat0666, which restores the historical world-writable uinput/i2c modes
+# so script installs keep working on distros with broken logind seats.
+
+#@section universal
+
+# ── Battery charge limit ──
+SUBSYSTEM=="power_supply", ATTR{type}=="Battery", \
+  RUN+="/bin/sh -c '[ -f $sys$devpath/charge_control_end_threshold ] && chmod 0666 $sys$devpath/charge_control_end_threshold'"
+
+# ── CPU boost ──
+# Intel (module trigger — works when intel_pstate is a loadable module)
+ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="intel_pstate", \
+  RUN+="/bin/sh -c '[ -f /sys/devices/system/cpu/intel_pstate/no_turbo ] && chmod 0666 /sys/devices/system/cpu/intel_pstate/no_turbo'"
+
+# AMD / generic cpufreq (module trigger)
+ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="acpi_cpufreq", \
+  RUN+="/bin/sh -c '[ -f /sys/devices/system/cpu/cpufreq/boost ] && chmod 0666 /sys/devices/system/cpu/cpufreq/boost'"
+
+# CPU device trigger — catches built-in drivers (intel_pstate, amd_pstate) that don't
+# fire module events. Also sets platform_profile permissions.
+SUBSYSTEM=="cpu", ACTION=="add", \
+  RUN+="/bin/sh -c '[ -f /sys/devices/system/cpu/intel_pstate/no_turbo ] && chmod 0666 /sys/devices/system/cpu/intel_pstate/no_turbo; [ -f /sys/devices/system/cpu/cpufreq/boost ] && chmod 0666 /sys/devices/system/cpu/cpufreq/boost; [ -f /sys/firmware/acpi/platform_profile ] && chmod 0666 /sys/firmware/acpi/platform_profile'"
+
+# ── ACPI platform profile ──
+# Allow non-root to set platform profile (balanced/performance/low-power)
+ACTION=="add|change", SUBSYSTEM=="acpi", \
+  RUN+="/bin/sh -c '[ -f /sys/firmware/acpi/platform_profile ] && chmod 0666 /sys/firmware/acpi/platform_profile'"
+
+# ── Backlight ──
+SUBSYSTEM=="backlight", ACTION=="add", \
+  RUN+="/bin/chmod 0666 /sys%p/brightness"
+# Fallback: chmod by class path (fires even if device existed before rule load)
+SUBSYSTEM=="backlight", \
+  RUN+="/bin/sh -c 'chmod 0666 /sys/class/backlight/%k/brightness 2>/dev/null'"
+
+# ── AMD GPU power/clock control ──
+SUBSYSTEM=="pci", DRIVERS=="amdgpu", \
+  RUN+="/bin/sh -c 'D=/sys%p; for n in pp_od_clk_voltage power_dpm_force_performance_level pp_dpm_sclk pp_dpm_mclk pp_power_profile_mode; do [ -e $$D/$$n ] && chmod 0666 $$D/$$n; done; for c in $$D/hwmon/hwmon*/power1_cap; do [ -e $$c ] && chmod 0666 $$c; done'"
+KERNEL=="hwmon*", SUBSYSTEM=="hwmon", ATTR{name}=="amdgpu", \
+  RUN+="/bin/sh -c 'chmod 0666 /sys%p/power1_cap 2>/dev/null'"
+
+# ── PCIe ASPM policy ──
+ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="pcie_aspm", \
+  RUN+="/bin/sh -c '[ -f /sys/module/pcie_aspm/parameters/policy ] && chmod 0666 /sys/module/pcie_aspm/parameters/policy'"
+
+# ── ryzen_smu (Curve Optimizer undervolting) ──
+# Only rsmu_cmd and smu_args need write access for sending CO commands.
+# Other attributes (codename, version, pm_table, …) remain read-only.
+ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="ryzen_smu", \
+  RUN+="/bin/sh -c 'chmod 0666 /sys/kernel/ryzen_smu_drv/rsmu_cmd /sys/kernel/ryzen_smu_drv/smu_args 2>/dev/null || true'"
+
+# Fallback via CPU device tree — module events don't re-fire on `udevadm trigger`
+# (installer path), so the rule above can miss on fresh install if ryzen_smu was
+# loaded at boot. CPU events fire on trigger (unlike module events); add|change
+# covers both boot-time add and the default `change` action trigger sends.
+SUBSYSTEM=="cpu", KERNEL=="cpu0", ACTION=="add|change", \
+  RUN+="/bin/sh -c '[ -f /sys/kernel/ryzen_smu_drv/rsmu_cmd ] && chmod 0666 /sys/kernel/ryzen_smu_drv/rsmu_cmd /sys/kernel/ryzen_smu_drv/smu_args'"
+
+# ── CPU online/offline (core toggling) ──
+SUBSYSTEM=="cpu", ACTION=="add", \
+  RUN+="/bin/sh -c 'for f in /sys/devices/system/cpu/cpu*/online; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
+
+# ── CPU energy_performance_preference (per-mode EPP) ──
+# cpufreq policy dirs appear after the cpu add event on some kernels, so also
+# trigger on cpu0 change (fired by `udevadm trigger` during install).
+SUBSYSTEM=="cpu", KERNEL=="cpu0", ACTION=="add|change", \
+  RUN+="/bin/sh -c 'for f in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
+
+#@section uinput
+
+# uinput (virtual input devices)
+# Needed by the FN-Lock remapper, the NumberPad driver and the on-screen
+# keyboard. uaccess grants the seated user an ACL; the input-group 0660 is
+# the fallback for setups without logind seats (the installer adds the
+# invoking user to "input"). The historical world-writable mode lives in
+# the compat0666 section below.
+KERNEL=="uinput", OPTIONS+="static_node=uinput", TAG+="uaccess", GROUP="input", MODE="0660"
+
+#@section numberpad
+
+# ── NumberPad (ASUS illuminated touchpad) ──
+# The in-app NumberPad driver needs:
+#   * /dev/i2c-*  - to send the LED-control packet to the touchpad
+#                   (requires the i2c-dev kernel module)
+#   * /dev/uinput - to create the virtual keyboard that emits KEY_KP* codes
+SUBSYSTEM=="i2c-dev", TAG+="uaccess", GROUP="input", MODE="0660"
+
+# The touchpad evdev node is opened read/write so the driver can grab it
+# while the illuminated NumberPad is active.
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="ASUE* Touchpad", MODE="0666"
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="ASUP* Touchpad", MODE="0666"
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="ASUF* Touchpad", MODE="0666"
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="ELAN* Touchpad", MODE="0666"
+
+#@section asus
 
 # ── asus-nb-wmi platform device ──
 # Performance modes, power limits, panel overdrive, etc.
@@ -92,10 +190,6 @@ SUBSYSTEM=="platform", DRIVER=="asus-nb-wmi", \
 SUBSYSTEM=="platform", DRIVER=="asus-nb-wmi", \
   RUN+="/bin/chmod 0666 /sys/bus/pci/rescan"
 
-# ── Battery charge limit ──
-SUBSYSTEM=="power_supply", ATTR{type}=="Battery", \
-  RUN+="/bin/sh -c '[ -f $sys$devpath/charge_control_end_threshold ] && chmod 0666 $sys$devpath/charge_control_end_threshold'"
-
 SUBSYSTEM=="leds", KERNEL=="asus::kbd_backlight*", \
   RUN+="/bin/sh -c 'chmod 0666 /sys/class/leds/%k/brightness 2>/dev/null'"
 
@@ -120,25 +214,6 @@ SUBSYSTEM=="hwmon", ATTR{name}=="asus_nb_wmi", \
 
 SUBSYSTEM=="hwmon", ATTR{name}=="asus_nb_wmi", \
   RUN+="/bin/sh -c 'for f in /sys/class/hwmon/%k/pwm*_enable; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
-
-# ── CPU boost ──
-# Intel (module trigger — works when intel_pstate is a loadable module)
-ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="intel_pstate", \
-  RUN+="/bin/sh -c '[ -f /sys/devices/system/cpu/intel_pstate/no_turbo ] && chmod 0666 /sys/devices/system/cpu/intel_pstate/no_turbo'"
-
-# AMD / generic cpufreq (module trigger)
-ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="acpi_cpufreq", \
-  RUN+="/bin/sh -c '[ -f /sys/devices/system/cpu/cpufreq/boost ] && chmod 0666 /sys/devices/system/cpu/cpufreq/boost'"
-
-# CPU device trigger — catches built-in drivers (intel_pstate, amd_pstate) that don't
-# fire module events. Also sets platform_profile permissions.
-SUBSYSTEM=="cpu", ACTION=="add", \
-  RUN+="/bin/sh -c '[ -f /sys/devices/system/cpu/intel_pstate/no_turbo ] && chmod 0666 /sys/devices/system/cpu/intel_pstate/no_turbo; [ -f /sys/devices/system/cpu/cpufreq/boost ] && chmod 0666 /sys/devices/system/cpu/cpufreq/boost; [ -f /sys/firmware/acpi/platform_profile ] && chmod 0666 /sys/firmware/acpi/platform_profile'"
-
-# ── ACPI platform profile ──
-# Allow non-root to set platform profile (balanced/performance/low-power)
-ACTION=="add|change", SUBSYSTEM=="acpi", \
-  RUN+="/bin/sh -c '[ -f /sys/firmware/acpi/platform_profile ] && chmod 0666 /sys/firmware/acpi/platform_profile'"
 
 # ── Fan curves (asus_custom_fan_curve hwmon, newer kernels) ──
 SUBSYSTEM=="hwmon", ATTR{name}=="asus_custom_fan_curve", \
@@ -166,23 +241,6 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="0b05", MODE="0666"
 SUBSYSTEM=="hidraw", ACTION=="add", \
   RUN+="/bin/sh -c 'grep -q 00000B05 /sys%p/device/uevent 2>/dev/null && chmod 0666 /dev/%k'"
 
-# ── Backlight ──
-SUBSYSTEM=="backlight", ACTION=="add", \
-  RUN+="/bin/chmod 0666 /sys%p/brightness"
-# Fallback: chmod by class path (fires even if device existed before rule load)
-SUBSYSTEM=="backlight", \
-  RUN+="/bin/sh -c 'chmod 0666 /sys/class/backlight/%k/brightness 2>/dev/null'"
-
-# ── AMD GPU power/clock control ──
-SUBSYSTEM=="pci", DRIVERS=="amdgpu", \
-  RUN+="/bin/sh -c 'D=/sys%p; for n in pp_od_clk_voltage power_dpm_force_performance_level pp_dpm_sclk pp_dpm_mclk pp_power_profile_mode; do [ -e $$D/$$n ] && chmod 0666 $$D/$$n; done; for c in $$D/hwmon/hwmon*/power1_cap; do [ -e $$c ] && chmod 0666 $$c; done'"
-KERNEL=="hwmon*", SUBSYSTEM=="hwmon", ATTR{name}=="amdgpu", \
-  RUN+="/bin/sh -c 'chmod 0666 /sys%p/power1_cap 2>/dev/null'"
-
-# ── PCIe ASPM policy ──
-ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="pcie_aspm", \
-  RUN+="/bin/sh -c '[ -f /sys/module/pcie_aspm/parameters/policy ] && chmod 0666 /sys/module/pcie_aspm/parameters/policy'"
-
 # ── ASUS firmware-attributes (asus-armoury, kernel 6.8+) ──
 # On newer kernels, ASUS WMI attributes move to firmware-attributes.
 # chmod all current_value files under the asus-armoury attributes dir.
@@ -195,44 +253,7 @@ ACTION=="add|change", SUBSYSTEM=="firmware-attributes", \
 ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="asus_armoury", \
   RUN+="/bin/sh -c 'sleep 1; for f in /sys/class/firmware-attributes/asus-armoury/attributes/*/current_value; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
 
-# ── ryzen_smu (Curve Optimizer undervolting) ──
-# Only rsmu_cmd and smu_args need write access for sending CO commands.
-# Other attributes (codename, version, pm_table, …) remain read-only.
-ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="ryzen_smu", \
-  RUN+="/bin/sh -c 'chmod 0666 /sys/kernel/ryzen_smu_drv/rsmu_cmd /sys/kernel/ryzen_smu_drv/smu_args 2>/dev/null || true'"
-
-# Fallback via CPU device tree — module events don't re-fire on `udevadm trigger`
-# (installer path), so the rule above can miss on fresh install if ryzen_smu was
-# loaded at boot. CPU events fire on trigger (unlike module events); add|change
-# covers both boot-time add and the default `change` action trigger sends.
-SUBSYSTEM=="cpu", KERNEL=="cpu0", ACTION=="add|change", \
-  RUN+="/bin/sh -c '[ -f /sys/kernel/ryzen_smu_drv/rsmu_cmd ] && chmod 0666 /sys/kernel/ryzen_smu_drv/rsmu_cmd /sys/kernel/ryzen_smu_drv/smu_args'"
-
-# ── CPU online/offline (core toggling) ──
-SUBSYSTEM=="cpu", ACTION=="add", \
-  RUN+="/bin/sh -c 'for f in /sys/devices/system/cpu/cpu*/online; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
-
-# ── CPU energy_performance_preference (per-mode EPP) ──
-# cpufreq policy dirs appear after the cpu add event on some kernels, so also
-# trigger on cpu0 change (fired by `udevadm trigger` during install).
-SUBSYSTEM=="cpu", KERNEL=="cpu0", ACTION=="add|change", \
-  RUN+="/bin/sh -c 'for f in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do [ -f \"$$f\" ] && chmod 0666 \"$$f\"; done'"
-
-# ── NumberPad (ASUS illuminated touchpad) ──
-# The in-app NumberPad driver needs:
-#   * /dev/i2c-*  - to send the LED-control packet to the touchpad
-#                   (requires the i2c-dev kernel module)
-#   * /dev/uinput - to create the virtual keyboard that emits KEY_KP* codes
-KERNEL=="uinput", OPTIONS+="static_node=uinput", MODE="0666"
-
-SUBSYSTEM=="i2c-dev", MODE="0666"
-
-# The touchpad evdev node is opened read/write so the driver can grab it
-# while the illuminated NumberPad is active.
-SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="ASUE* Touchpad", MODE="0666"
-SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="ASUP* Touchpad", MODE="0666"
-SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="ASUF* Touchpad", MODE="0666"
-SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="ELAN* Touchpad", MODE="0666"
+#@section lenovo
 
 # ── Lenovo (mainline kernel: ideapad-laptop + lenovo-wmi-*) ──
 # ideapad-laptop platform device (ACPI VPC2004): performance fallback,
@@ -282,14 +303,6 @@ SUBSYSTEM=="hwmon", ATTR{name}=="lenovo_wmi_other", \
 ACTION=="add|change", SUBSYSTEM=="module", KERNEL=="lenovo_wmi_other", \
   RUN+="/bin/sh -c 'sleep 1; for d in /sys/class/hwmon/hwmon*; do grep -q lenovo_wmi_other \"$$d/name\" 2>/dev/null && chmod 0666 \"$$d\"/fan*_target 2>/dev/null; done'"
 
-# ── Logitech HID++ peripherals (mice, receivers) ──
-# USB-connected Logitech receivers and devices (VID 046d)
-SUBSYSTEM=="hidraw", ATTRS{idVendor}=="046d", MODE="0666"
-# Bluetooth-connected Logitech devices (bus type 0005 = BT, VID 046D).
-# BT HID devices have no USB parent, so ATTRS{idVendor} won't match.
-# Match via KERNELS which includes the HID_ID "bus:vid:pid" path component.
-SUBSYSTEM=="hidraw", KERNELS=="0005:046D:*", MODE="0666"
-
 # Lenovo 4-zone / Spectrum RGB keyboards: ITE USB HID (VID 0x048D).
 # Same access pattern as the ASUS 0b05 rule above.
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="048d", MODE="0666"
@@ -303,3 +316,22 @@ SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="Lenovo WMI Camera Button", M
 # lenovo-wmi-hotkey-utilities, kernel 6.14+)
 SUBSYSTEM=="leds", KERNEL=="platform::fnlock|platform::micmute|platform::mute", \
   RUN+="/bin/sh -c 'chmod 0666 /sys/class/leds/%k/brightness 2>/dev/null'"
+
+#@section peripherals
+
+# ── Logitech HID++ peripherals (mice, receivers) ──
+# USB-connected Logitech receivers and devices (VID 046d)
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="046d", MODE="0666"
+# Bluetooth-connected Logitech devices (bus type 0005 = BT, VID 046D).
+# BT HID devices have no USB parent, so ATTRS{idVendor} won't match.
+# Match via KERNELS which includes the HID_ID "bus:vid:pid" path component.
+SUBSYSTEM=="hidraw", KERNELS=="0005:046D:*", MODE="0666"
+
+#@section compat0666
+
+# Compatibility: historical world-writable device nodes.
+# Overrides the uaccess/0660 rules above (later rules win). Installed by
+# plain-copy script installs, and by the app only when the config key
+# "udev_0666_fallback" is set (distros where logind seat/uaccess is broken).
+KERNEL=="uinput", OPTIONS+="static_node=uinput", MODE="0666"
+SUBSYSTEM=="i2c-dev", MODE="0666"

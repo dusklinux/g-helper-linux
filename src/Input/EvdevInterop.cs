@@ -46,6 +46,21 @@ internal static class EvdevInterop
     public const ushort ABS_RY = 0x04;  // right stick Y
     public const ushort ABS_RZ = 0x05;  // right analog trigger (RT)
 
+    // D-pad hat axes (gamepads report the d-pad as ABS_HAT0X/Y of -1/0/1).
+    public const ushort ABS_HAT0X = 0x10;
+    public const ushort ABS_HAT0Y = 0x11;
+
+    // BTN_* gamepad button codes (linux/input-event-codes.h).
+    public const ushort BTN_SOUTH = 0x130;  // A
+    public const ushort BTN_EAST = 0x131;   // B
+    public const ushort BTN_NORTH = 0x133;  // X (historical naming, Y on xbox layout)
+    public const ushort BTN_WEST = 0x134;   // Y (historical naming, X on xbox layout)
+    public const ushort BTN_TL = 0x136;     // LB
+    public const ushort BTN_TR = 0x137;     // RB
+    public const ushort BTN_SELECT = 0x13a; // View
+    public const ushort BTN_START = 0x13b;  // Menu
+    public const ushort BTN_MODE = 0x13c;   // Guide
+
     // MSC_* misc-event subcodes (used inside EV_MSC events).
     public const ushort MSC_SCAN = 0x04;
 
@@ -155,6 +170,19 @@ internal static class EvdevInterop
     public static readonly uint EVIOCGRAB = IOW('E', 0x90, sizeof(int));
     public static uint EVIOCGNAME(uint len) => IOC(_IOC_READ, 'E', 0x06, len);
     public static uint EVIOCGBIT(uint ev, uint len) => IOC(_IOC_READ, 'E', 0x20u + ev, len);
+    public static uint EVIOCGABS(uint abs) => IOC(_IOC_READ, 'E', 0x40u + abs, (uint)Marshal.SizeOf<InputAbsInfo>());
+
+    /// <summary>input_absinfo: axis value + range metadata (EVIOCGABS).</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct InputAbsInfo
+    {
+        public int value;
+        public int minimum;
+        public int maximum;
+        public int fuzz;
+        public int flat;
+        public int resolution;
+    }
 
     public static readonly uint UI_SET_EVBIT = IOW('U', 100, sizeof(int));
     public static readonly uint UI_SET_KEYBIT = IOW('U', 101, sizeof(int));

@@ -91,6 +91,10 @@ public partial class FansWindow : Window
     {
         if (Helpers.AppConfig.IsAsusDevice())
             return;
+        // Non-ASUS DMI with a writable ASUS curve hwmon (vendor override,
+        // exotic kernels): keep the editor, capability beats vendor.
+        if (Platform.Linux.SysfsHelper.FindHwmonByName("asus_custom_fan_curve") != null)
+            return;
 
         chartGrid.IsVisible = false;
         buttonApplyFans.IsVisible = false;
@@ -211,7 +215,9 @@ public partial class FansWindow : Window
     private int _dgpuProcessTick;
     private NvidiaProcessesWindow? _nvidiaProcessesWindow;
 
-    private void RefreshFansDgpuProcessCount()
+    private bool _dgpuCountBusy;
+
+    private async void RefreshFansDgpuProcessCount()
     {
         if (_activeTab != 1)
         {
@@ -228,10 +234,26 @@ public partial class FansWindow : Window
             rowFansDgpuProcesses.IsVisible = false;
             return;
         }
-        int count = Gpu.NVidia.NvidiaProcessScanner.CountHolders();
-        labelFansDgpuProcessCount.Text = Labels.Format("gpu_dgpu_users_count", count);
-        labelFansViewDgpuProcesses.Text = Labels.Get("gpu_dgpu_users_view");
-        rowFansDgpuProcesses.IsVisible = true;
+        // CountHolders spawns the privileged helper (or walks /proc): keep
+        // it off the UI thread so opening the GPU tab never stutters.
+        if (_dgpuCountBusy)
+            return;
+        _dgpuCountBusy = true;
+        try
+        {
+            int count = await Task.Run(Gpu.NVidia.NvidiaProcessScanner.CountHolders);
+            labelFansDgpuProcessCount.Text = Labels.Format("gpu_dgpu_users_count", count);
+            labelFansViewDgpuProcesses.Text = Labels.Get("gpu_dgpu_users_view");
+            rowFansDgpuProcesses.IsVisible = true;
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"FansWindow: dGPU holder count failed: {ex.Message}");
+        }
+        finally
+        {
+            _dgpuCountBusy = false;
+        }
     }
 
     private void ButtonFansViewDgpuProcesses_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -392,13 +414,46 @@ public partial class FansWindow : Window
     private void ButtonTabGpu_Click(object? sender, RoutedEventArgs e) => ToggleNavigation(1);
     private void ButtonTabAdvanced_Click(object? sender, RoutedEventArgs e) => ToggleNavigation(2);
 
-    private void LoadGpuTuning()
+    /// <summary>Prefetch the nvidia-smi/NVML-backed values on a worker (each
+    /// call forks; 2-3 of them used to stutter the window open on NVIDIA
+    /// machines), then build the rows on the UI thread. Prefetching
+    /// GetCapabilities also warms the nvml-info cache LoadClockOffsetRows
+    /// reads.</summary>
+    private async void LoadGpuTuning()
+    {
+        var nv = App.GpuControl as Gpu.NVidia.LinuxNvidiaGpuControl;
+        bool nvAvail = nv?.IsAvailable() == true;
+
+        (Gpu.NVidia.LinuxNvidiaGpuControl.GpuCapabilities caps,
+         (int core, int mem)? maxClocks,
+         (int defaultW, int minW, int maxW, int enforcedW)? limits,
+         string? name)? pre = null;
+        if (nvAvail)
+        {
+            try
+            {
+                pre = await Task.Run(() =>
+                    (nv!.GetCapabilities(), nv.GetMaxClocks(), nv.GetPowerLimits(), nv.GetGpuName()));
+            }
+            catch (Exception ex)
+            {
+                Helpers.Logger.WriteLine($"FansWindow: GPU tuning prefetch failed: {ex.Message}");
+                nvAvail = false;
+            }
+        }
+        LoadGpuTuningCore(nv, nvAvail, pre);
+    }
+
+    private void LoadGpuTuningCore(
+        Gpu.NVidia.LinuxNvidiaGpuControl? nv, bool nvAvail,
+        (Gpu.NVidia.LinuxNvidiaGpuControl.GpuCapabilities caps,
+         (int core, int mem)? maxClocks,
+         (int defaultW, int minW, int maxW, int enforcedW)? limits,
+         string? name)? pre)
     {
         _updatingGpu = true;
         try
         {
-            var nv = App.GpuControl as Gpu.NVidia.LinuxNvidiaGpuControl;
-            bool nvAvail = nv?.IsAvailable() == true;
             var wmi = App.Wmi;
 
             // Auto-apply ON for this mode  -> show the saved (persisted) tuning.
@@ -425,10 +480,10 @@ public partial class FansWindow : Window
                 gridGpuLive.IsVisible = false;
                 return;
             }
-            labelGpuTuningInfo.Text = nv!.GetGpuName() ?? Labels.Get("nvidia_gpu");
+            labelGpuTuningInfo.Text = pre?.name ?? Labels.Get("nvidia_gpu");
 
             // Only show tuning rows the card actually supports.
-            var caps = nv.GetCapabilities();
+            var caps = pre?.caps ?? new Gpu.NVidia.LinuxNvidiaGpuControl.GpuCapabilities(false, false, false, false);
             // Firmware TGP (ASUS dynamic boost or Lenovo cTGP/PPAB) arbitrates GPU
             // power, so nvidia-smi -pl is overridden - hide the (ineffective) row.
             bool dynamicBoost = wmi != null && (
@@ -436,7 +491,7 @@ public partial class FansWindow : Window
                 || wmi.IsFeatureSupported(Platform.Linux.LenovoAttributes.GpuNvPpab)
                 || wmi.IsFeatureSupported(Platform.Linux.LenovoAttributes.GpuNvCtgp));
 
-            var maxClocks = nv.GetMaxClocks();
+            var maxClocks = pre?.maxClocks;
             if (maxClocks != null)
             {
                 sliderGpuClockLock.Maximum = maxClocks.Value.core;
@@ -446,7 +501,7 @@ public partial class FansWindow : Window
             headerGpuLive.IsVisible = true;
             gridGpuLive.IsVisible = true;
 
-            var limits = nv.GetPowerLimits();
+            var limits = pre?.limits;
             if (caps.PowerLimit && !dynamicBoost && limits != null)
             {
                 var (defW, minW, maxW, _) = limits.Value;
@@ -497,7 +552,7 @@ public partial class FansWindow : Window
                     labelGpuMemClockLock.Text = Labels.Get("off");
             }
 
-            LoadClockOffsetRows(nv, autoApply);
+            LoadClockOffsetRows(nv!, autoApply);
             StartGpuBackgroundRefresh();
         }
         finally { _updatingGpu = false; }
@@ -1209,7 +1264,7 @@ public partial class FansWindow : Window
         // a fallback because legacy ppt_* sysfs attributes read back a bogus
         // minimum (5) on some models (e.g. FX517ZR). Seeding sliders from that
         // value ends up persisting a 5W limit that cripples the machine.
-        int pl1 = Helpers.AppConfig.GetMode("limit_slow");
+        int pl1 = SanitizedLimit("limit_slow", maxTotal);
         if (pl1 <= 0)
         {
             pl1 = wmi.GetPptLimit(Platform.Linux.AsusAttributes.PptPl1Spl);
@@ -1217,7 +1272,7 @@ public partial class FansWindow : Window
                 pl1 = Math.Min(maxTotal, (int)sliderPL1.Maximum);
         }
 
-        int pl2 = Helpers.AppConfig.GetMode("limit_fast");
+        int pl2 = SanitizedLimit("limit_fast", maxTotal);
         if (pl2 <= 0)
         {
             pl2 = wmi.GetPptLimit(Platform.Linux.AsusAttributes.PptPl2Sppt);
@@ -1236,7 +1291,7 @@ public partial class FansWindow : Window
         gridFppt.IsVisible = hasFppt;
         if (hasFppt)
         {
-            int fppt = Helpers.AppConfig.GetMode("limit_fppt");
+            int fppt = SanitizedLimit("limit_fppt", maxTotal);
             if (fppt <= 0)
             {
                 fppt = wmi.GetPptLimit(Platform.Linux.AsusAttributes.PptFppt);
@@ -1247,11 +1302,84 @@ public partial class FansWindow : Window
             labelFppt.Text = $"{fppt}W";
         }
 
-        _updatingPLSliders = false;
         checkApplyPower.IsChecked = Helpers.AppConfig.IsMode("auto_apply_power");
 
         // Lenovo extra CPU power tunables (APU/IPL/Tau/cross-loading).
         BuildTunableRows(panelLenovoCpuPpt, _cpuExtraDefs, wmi);
+
+        BuildTdpPresets();
+
+        // Guard stays up through the helper builds above: any slider change
+        // they cause must not reach SchedulePLWrite (issue #151).
+        _updatingPLSliders = false;
+    }
+
+    // Saved per-mode watt limit, or 0 when unset / poisoned. Values at or
+    // below the slider floor come from bogus firmware readbacks, not the
+    // user; drop them from config so auto-apply stops re-sending them
+    // (issue #151: persisted 5W capped the CPU at 2000 MHz).
+    private static int SanitizedLimit(string key, int maxTotal)
+    {
+        int v = Helpers.AppConfig.GetMode(key);
+        if (v <= 0)
+            return 0;
+        if (v <= Mode.ModeControl.MinTotal || v > maxTotal)
+        {
+            Helpers.Logger.WriteLine($"FansWindow: dropping poisoned {key}={v}W from config");
+            Helpers.AppConfig.SetMode(key, 0);
+            return 0;
+        }
+        return v;
+    }
+
+    /// <summary>
+    /// hhd-style one-tap TDP presets for handhelds (Ally, Legion Go): each
+    /// button sets PL1 = PL2 = W and fPPT = W * 4/3 through the sliders, so
+    /// the existing coupling, debounce, write and persistence all apply.
+    /// Watts outside the slider range are skipped (e.g. 30W on a device
+    /// whose firmware caps lower).
+    /// </summary>
+    private void BuildTdpPresets()
+    {
+        panelTdpPresets.Children.Clear();
+        if (!Helpers.AppConfig.IsHandheldDevice())
+        {
+            panelTdpPresets.IsVisible = false;
+            return;
+        }
+
+        // Per-family sweet spots: Ally Z1E steps vs Legion Go Z1/Z2 steps.
+        int[] watts = Helpers.AppConfig.IsAlly()
+            ? [10, 15, 25, 30]
+            : [8, 15, 22, 30];
+        foreach (int w in watts)
+        {
+            if (w < (int)sliderPL1.Minimum || w > (int)sliderPL1.Maximum)
+                continue;
+            int preset = w;
+            var button = new Button
+            {
+                Content = $"{preset}W",
+                MinWidth = 64,
+                Height = 30,
+                HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            };
+            button.Classes.Add("ghelper");
+            button.Click += (_, _) => ApplyTdpPreset(preset);
+            panelTdpPresets.Children.Add(button);
+        }
+        panelTdpPresets.IsVisible = panelTdpPresets.Children.Count > 0;
+    }
+
+    private void ApplyTdpPreset(int watts)
+    {
+        // fPPT first so the PL1/PL2 coupling never fights the boost value.
+        int fppt = Math.Min((int)sliderFppt.Maximum, watts * 4 / 3);
+        if (gridFppt.IsVisible)
+            sliderFppt.Value = fppt;
+        sliderPL2.Value = Math.Min((int)sliderPL2.Maximum, watts);
+        sliderPL1.Value = Math.Min((int)sliderPL1.Maximum, watts);
+        Helpers.Logger.WriteLine($"TDP preset: {watts}W (fppt={fppt})");
     }
 
     private void SliderPL1_ValueChanged(object? sender,

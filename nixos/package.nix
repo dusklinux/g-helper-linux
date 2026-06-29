@@ -32,8 +32,9 @@
   libxrender,
   libICE,
   libSM,
-  # gpu-helper build dep
+  # gpu-helper build deps
   glibc,
+  pciutils,
 }:
 
 let
@@ -134,14 +135,25 @@ in
   # Privileged GPU helper, built from vendored C source.
   # Runs as root via sudo/pkexec - must be a native Nix binary
   # so the dynamic loader works without nix-ld in root context.
+  # Build command mirrors build.sh (all ops + ryzenadj sources, libpci).
   gpu-helper = stdenv.mkDerivation {
     pname = "ghelper-gpu-helper";
     version = "1.0.0";
 
     src = ../vendor/gpu-helper;
 
+    buildInputs = [ pciutils ];
+
     buildPhase = ''
-      cc -O2 -Wall -o gpu-helper gpu-helper.c -ldl
+      cc -O2 -Wall -Wno-unused-result \
+         -D_LIBRYZENADJ_INTERNAL -DNDEBUG -I ryzen \
+         -o gpu-helper gpu-helper.c \
+         process_ops.c nvidia_ops.c pci_ops.c wmi_ops.c msr_ops.c \
+         lenovo_ops.c ryzen_ops.c \
+         ryzen/api.c ryzen/cpuid.c ryzen/nb_smu_ops.c \
+         ryzen/osdep_linux.c ryzen/osdep_linux_mem.c \
+         ryzen/osdep_linux_smu_kernel_module.c \
+         -ldl -lpci
     '';
 
     installPhase = ''

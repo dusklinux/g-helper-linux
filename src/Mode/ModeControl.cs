@@ -468,10 +468,13 @@ public class ModeControl
         int pl1 = Helpers.AppConfig.GetMode("limit_slow");
         int pl2 = Helpers.AppConfig.GetMode("limit_fast");
 
-        // Validate against model-specific bounds (matches Windows G-Helper)
-        if (pl1 > maxTotal || pl1 < MinTotal)
+        // Validate against model-specific bounds (matches Windows G-Helper).
+        // <= MinTotal: a floor value is never real user intent, it is a
+        // poisoned config entry from a bogus firmware readback (issue #151);
+        // applying it hard-caps the CPU at its lowest clock.
+        if (pl1 > maxTotal || pl1 <= MinTotal)
             pl1 = -1;
-        if (pl2 > maxTotal || pl2 < MinTotal)
+        if (pl2 > maxTotal || pl2 <= MinTotal)
             pl2 = -1;
 
         if (pl1 > 0)
@@ -520,7 +523,7 @@ public class ModeControl
 
         // fPPT (fast boost)
         int fppt = Helpers.AppConfig.GetMode("limit_fppt");
-        if (fppt > maxTotal || fppt < MinTotal)
+        if (fppt > maxTotal || fppt <= MinTotal)
             fppt = -1;
         if (fppt > 0 && wmi.IsFeatureSupported(Platform.Linux.AsusAttributes.PptFppt))
         {
@@ -546,6 +549,11 @@ public class ModeControl
     /// persists across mode switches, Eco->Standard and reboots. When OFF, return
     /// the dGPU to stock so each non-persisted mode runs at defaults.
     /// </summary>
+    // True after this session applied GPU tuning; gates the reset-to-stock
+    // path so a cold start with auto_apply_gpu off never clobbers GPU state
+    // set by external tools (issue #151).
+    private static bool _gpuTuningApplied;
+
     private void AutoGpuPower(int mode)
     {
         var wmi = App.Wmi;
@@ -556,7 +564,11 @@ public class ModeControl
 
         if (!Helpers.AppConfig.IsMode("auto_apply_gpu"))
         {
-            ResetGpuTuning(wmi, nvCtl);
+            if (_gpuTuningApplied)
+            {
+                ResetGpuTuning(wmi, nvCtl);
+                _gpuTuningApplied = false;
+            }
             return;
         }
 
@@ -611,10 +623,13 @@ public class ModeControl
                     gpuPowerLim > 0 ? gpuPowerLim : null,
                     gpuClockLock > 0 ? gpuClockLock : 0,
                     haveOffsets ? gpuClockCore : (int?)null,
-                    haveOffsets ? gpuClockMem : (int?)null);
+                    haveOffsets ? gpuClockMem : (int?)null,
+                    interactive: false);
             }
-            nvCtl.ApplyMemClockLock(gpuMemLock > 0 ? gpuMemLock : 0);
+            nvCtl.ApplyMemClockLock(gpuMemLock > 0 ? gpuMemLock : 0, interactive: false);
         }
+
+        _gpuTuningApplied = true;
     }
 
     /// <summary>Return the dGPU to stock: default boost/temp/TGP, default power
@@ -630,8 +645,8 @@ public class ModeControl
         {
             int? defaultW = nv.GetPowerLimits()?.defaultW;
             bool nvmlOk = nv.IsClockOffsetSupported();
-            nv.ApplyAll(defaultW, 0, nvmlOk ? 0 : (int?)null, nvmlOk ? 0 : (int?)null);
-            nv.ApplyMemClockLock(0);
+            nv.ApplyAll(defaultW, 0, nvmlOk ? 0 : (int?)null, nvmlOk ? 0 : (int?)null, interactive: false);
+            nv.ApplyMemClockLock(0, interactive: false);
         }
     }
 

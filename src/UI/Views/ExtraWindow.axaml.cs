@@ -205,7 +205,8 @@ public partial class ExtraWindow : Window
         checkBWIcon.Content = Labels.Get("bw_tray_icon");
         checkClamshell.Content = Labels.Get("clamshell_mode");
         // Ally has no lid - clamshell-mode toggle is meaningless on a handheld.
-        checkClamshell.IsVisible = !Helpers.AppConfig.IsAlly();
+        // No lid on any handheld (Ally or Legion Go), so no clamshell mode.
+        checkClamshell.IsVisible = !Helpers.AppConfig.IsHandheldDevice();
 
         labelDeepSleep.Text = Labels.Get("deep_sleep");
         ToolTip.SetTip(panelDeepSleep, Labels.Get("deep_sleep_tooltip"));
@@ -225,6 +226,11 @@ public partial class ExtraWindow : Window
         InitXgmPanel();
         checkSilentStart.Content = Labels.Get("start_minimized");
         checkSkipSysfilesPopup.Content = Labels.Get("sysfiles_skip_startup_label");
+        checkUdevPerMachine.Content = Labels.Get("udev_per_machine_label");
+        labelUdevPerMachineHint.Text = Labels.Get("udev_per_machine_hint");
+        labelRenderMode.Text = Labels.Get("render_mode_label");
+        labelRenderModeHint.Text = Labels.Get("render_mode_hint");
+        InitRenderModeCombo();
         checkSkipUpdatePrompt.Content = Labels.Get("skip_update_prompt_label");
         checkDisableAudio.Content = Labels.Get("disable_audio_label");
         checkDisableOsd.Content = Labels.Get("disable_osd_label");
@@ -1040,6 +1046,11 @@ public partial class ExtraWindow : Window
         // Skip the system-files integrity popup at startup
         checkSkipSysfilesPopup.IsChecked = Helpers.AppConfig.Is("sysfiles_skip_startup");
 
+        // Opt-in per-machine udev rules (filter by vendor / hardware, tighten
+        // uinput+i2c to uaccess+0660). Off by default keeps the historical
+        // full-template output that install-local.sh writes.
+        checkUdevPerMachine.IsChecked = Helpers.AppConfig.Is("udev_per_machine");
+
         checkSkipUpdatePrompt.IsChecked = Helpers.AppConfig.Is("skip_update_prompt");
 
         checkDisableAudio.IsChecked = Helpers.AppConfig.Is("disable_audio");
@@ -1626,6 +1637,52 @@ public partial class ExtraWindow : Window
         if (_suppressEvents)
             return;
         Helpers.AppConfig.Set("sysfiles_skip_startup", (checkSkipSysfilesPopup.IsChecked ?? false) ? 1 : 0);
+    }
+
+    /// <summary>Toggle per-machine udev tailoring. Config-only; the file
+    /// is rewritten next time the user runs Fix in the Updates window
+    /// (or on the next startup integrity check).</summary>
+    private void CheckUdevPerMachine_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        Helpers.AppConfig.Set("udev_per_machine", (checkUdevPerMachine.IsChecked ?? false) ? 1 : 0);
+    }
+
+    // Empty tag = Auto (Program.BuildX11Options picks EGL on Wayland, GLX on
+    // Xorg). Backend names are technical labels, not translated.
+    private void InitRenderModeCombo()
+    {
+        string current = Helpers.AppConfig.GetString("render_mode") ?? "";
+        (string Tag, string Label)[] items =
+        [
+            ("", Labels.Get("render_mode_auto")),
+            ("egl", "EGL"),
+            ("glx", "GLX"),
+            ("software", "Software"),
+        ];
+        comboRenderMode.Items.Clear();
+        int sel = 0;
+        for (int i = 0; i < items.Length; i++)
+        {
+            comboRenderMode.Items.Add(new ComboBoxItem { Content = items[i].Label, Tag = items[i].Tag });
+            if (items[i].Tag == current)
+                sel = i;
+        }
+        comboRenderMode.SelectedIndex = sel;
+    }
+
+    // Takes effect on next launch (read once in Program.Main).
+    private void ComboRenderMode_SelectionChanged(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        if (comboRenderMode.SelectedItem is not ComboBoxItem item || item.Tag is not string tag)
+            return;
+        if (string.IsNullOrEmpty(tag))
+            Helpers.AppConfig.Remove("render_mode");
+        else
+            Helpers.AppConfig.Set("render_mode", tag);
     }
 
     private void CheckSkipUpdatePrompt_Changed(object? sender, RoutedEventArgs e)

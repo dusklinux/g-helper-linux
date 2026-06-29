@@ -1,0 +1,48 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="GHelper.Linux.UI.Views.OnScreenKeyboardWindow"
+        Title="G-Helper Keyboard"
+        Width="1020" Height="380"
+        MinWidth="620" MinHeight="240"
+        WindowDecorations="None"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        CanResize="True"
+        Focusable="False"
+        Background="#F0181B20"
+        Icon="avares://ghelper/UI/Assets/favicon.ico">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <Grid Grid.Row="0" x:Name="dragBar" Background="Transparent"
+              ColumnDefinitions="Auto,*,Auto,Auto" Height="36"
+              PointerPressed="DragBar_PointerPressed">
+            <TextBlock Grid.Column="0" x:Name="labelTitle" Text="G-Helper"
+                       Margin="14,0,0,0" VerticalAlignment="Center"
+                       FontSize="13" FontWeight="SemiBold" Foreground="#8A93A0" />
+            <Button Grid.Column="2" x:Name="buttonPin" Content="&#x2913;"
+                    Click="ButtonPin_Click" Focusable="False"
+                    Width="44" Height="28" Margin="0,4,6,4"
+                    Background="#262B33" Foreground="#C7CFDA"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center" CornerRadius="6" />
+            <Button Grid.Column="3" x:Name="buttonHide" Content="×"
+                    Click="ButtonHide_Click" Focusable="False"
+                    Width="44" Height="28" Margin="0,4,6,4"
+                    Background="#262B33" Foreground="#C7CFDA"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center" CornerRadius="6" />
+        </Grid>
+        <TextBlock Grid.Row="1" x:Name="labelError" IsVisible="False"
+                   Margin="14,0,14,6" Foreground="#FF8A8A" FontSize="13"
+                   TextWrapping="Wrap" />
+        <Grid Grid.Row="2" x:Name="keysHost"
+              RowDefinitions="*,*,*,*,*" Margin="8,0,8,8" />
+        <Border Grid.Row="2" x:Name="resizeGrip" Width="20" Height="20"
+                HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Background="Transparent" Cursor="BottomRightCorner"
+                PointerPressed="ResizeGrip_PointerPressed">
+            <TextBlock Text="◢" FontSize="10" Foreground="#4A525E"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+    </Grid>
+</Window>

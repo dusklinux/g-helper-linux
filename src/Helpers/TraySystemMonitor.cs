@@ -216,6 +216,7 @@ public static class TraySystemMonitor
     /// </summary>
     private static void Tick()
     {
+        App.RefreshTrayDgpuStatus();
 
         int cpuTemp = -1;
         int gpuTemp = -1;

@@ -362,6 +362,24 @@
                               Margin="0,4"
                               IsCheckedChanged="CheckSkipSysfilesPopup_Changed" />
 
+                    <CheckBox x:Name="checkUdevPerMachine" Content="Tailor udev rules to this machine"
+                              Margin="0,4"
+                              IsCheckedChanged="CheckUdevPerMachine_Changed" />
+                    <TextBlock x:Name="labelUdevPerMachineHint"
+                               Classes="hint" Margin="24,0,0,4"
+                               TextWrapping="Wrap" />
+
+                    <Grid ColumnDefinitions="*,160" Margin="0,4">
+                        <TextBlock Grid.Column="0" x:Name="labelRenderMode" Text="Rendering backend"
+                                   VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" x:Name="comboRenderMode"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ComboRenderMode_SelectionChanged" />
+                    </Grid>
+                    <TextBlock x:Name="labelRenderModeHint"
+                               Classes="hint" Margin="0,0,0,4"
+                               TextWrapping="Wrap" />
+
                     <CheckBox x:Name="checkSkipUpdatePrompt" Content="Don't check for updates on startup"
                               Margin="0,4"
                               IsCheckedChanged="CheckSkipUpdatePrompt_Changed" />

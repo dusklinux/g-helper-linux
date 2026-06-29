@@ -434,6 +434,13 @@ public class LinuxAsusWmi : IHardwareControl
     /// </summary>
     public bool IsGpuEcoAvailable()
     {
+        // Single-GPU machines (iGPU-only handhelds, thin-and-lights) have
+        // nothing to switch: hide Eco/Standard/Ultimate everywhere. The
+        // probe is Eco-resilient, so a dGPU hidden by our own Eco still
+        // counts (see GPUModeControl.HasSecondGpu).
+        if (!Gpu.GPUModeControl.HasSecondGpu())
+            return false;
+
         if (IsFeatureSupported(AsusAttributes.DgpuDisable))
             return true;
 
@@ -540,6 +547,10 @@ public class LinuxAsusWmi : IHardwareControl
     /// </summary>
     public bool CanToggleGpuBackend()
     {
+        // Backend choice is only meaningful with a second GPU (same gate as
+        // the mode-switching UI).
+        if (!Gpu.GPUModeControl.HasSecondGpu())
+            return false;
         if (IsFeatureSupported(AsusAttributes.DgpuDisable))
             return true;
         if (HasDiscreteNvidiaGpu())
@@ -586,7 +597,15 @@ public class LinuxAsusWmi : IHardwareControl
         {
             // Permission denied / transient I/O - fall through
         }
-        return HasNvidiaModuleAvailable();
+        // Loaded nvidia/nouveau without a device = dGPU hot-removed (Eco),
+        // and a proprietary nvidia.ko is only installed for real hardware.
+        // Both stay sufficient. nouveau on disk alone proves nothing (it
+        // ships with virtually every distro kernel), so on iGPU-only
+        // machines (where gpu_backend auto-defaults to "pci") it needs
+        // independent second-GPU evidence.
+        if (HasNvidiaModuleLoaded() || HasNvidiaProprietaryOnDisk())
+            return true;
+        return HasNouveauOnDisk() && Gpu.GPUModeControl.HasSecondGpu();
     }
 
     /// <summary>
@@ -601,25 +620,46 @@ public class LinuxAsusWmi : IHardwareControl
     internal static void InvalidateGpuPresenceCache()
     {
         _hasDiscreteNvidiaCache = null;
-        _hasNvidiaModuleCache = null;
+        _nvidiaLoadedCache = null;
+        _nvidiaOnDiskCache = null;
+        _nouveauOnDiskCache = null;
     }
 
-    private static bool? _hasNvidiaModuleCache;
-    internal static bool HasNvidiaModuleAvailable()
+    private static bool? _nvidiaLoadedCache;
+    private static bool? _nvidiaOnDiskCache;
+    private static bool? _nouveauOnDiskCache;
+
+    /// <summary>Any nvidia/nouveau evidence at all (loaded or on disk).</summary>
+    internal static bool HasNvidiaModuleAvailable() =>
+        HasNvidiaModuleLoaded() || HasNvidiaProprietaryOnDisk() || HasNouveauOnDisk();
+
+    /// <summary>nvidia or nouveau bound right now. Without a matching PCI
+    /// device this means the dGPU was hot-removed (Eco): strong evidence.</summary>
+    internal static bool HasNvidiaModuleLoaded()
     {
-        if (_hasNvidiaModuleCache.HasValue)
-            return _hasNvidiaModuleCache.Value;
+        if (_nvidiaLoadedCache.HasValue)
+            return _nvidiaLoadedCache.Value;
+        string prefix = TestPathPrefix;
+        _nvidiaLoadedCache = Directory.Exists(prefix + "/sys/module/nvidia")
+            || Directory.Exists(prefix + "/sys/module/nouveau");
+        return _nvidiaLoadedCache.Value;
+    }
+
+    /// <summary>Proprietary nvidia*.ko installed for the running kernel.
+    /// Only present where a real NVIDIA card is (or was) expected.</summary>
+    internal static bool HasNvidiaProprietaryOnDisk() =>
+        _nvidiaOnDiskCache ??= ModuleOnDisk("nvidia*.ko*");
+
+    /// <summary>nouveau*.ko on disk. Weak evidence: it ships with virtually
+    /// every distro kernel, including iGPU-only machines.</summary>
+    internal static bool HasNouveauOnDisk() =>
+        _nouveauOnDiskCache ??= ModuleOnDisk("nouveau*.ko*");
+
+    private static bool ModuleOnDisk(string pattern)
+    {
         try
         {
             string prefix = TestPathPrefix;
-            // Loaded right now (driver bound)?
-            if (Directory.Exists(prefix + "/sys/module/nvidia") ||
-                Directory.Exists(prefix + "/sys/module/nouveau"))
-            {
-                _hasNvidiaModuleCache = true;
-                return true;
-            }
-            // Installed on disk for the running kernel?
             string release;
             try
             { release = File.ReadAllText(prefix + "/proc/sys/kernel/osrelease").Trim(); }
@@ -633,16 +673,8 @@ public class LinuxAsusWmi : IHardwareControl
                     continue;
                 try
                 {
-                    foreach (var f in Directory.EnumerateFiles(root, "nvidia*.ko*", SearchOption.AllDirectories))
-                    {
-                        _hasNvidiaModuleCache = true;
+                    foreach (var f in Directory.EnumerateFiles(root, pattern, SearchOption.AllDirectories))
                         return true;
-                    }
-                    foreach (var f in Directory.EnumerateFiles(root, "nouveau*.ko*", SearchOption.AllDirectories))
-                    {
-                        _hasNvidiaModuleCache = true;
-                        return true;
-                    }
                 }
                 catch
                 {
@@ -652,9 +684,8 @@ public class LinuxAsusWmi : IHardwareControl
         }
         catch (Exception ex)
         {
-            Helpers.Logger.WriteLine($"HasNvidiaModuleAvailable: scan failed: {ex.Message}");
+            Helpers.Logger.WriteLine($"ModuleOnDisk({pattern}): scan failed: {ex.Message}");
         }
-        _hasNvidiaModuleCache = false;
         return false;
     }
 
