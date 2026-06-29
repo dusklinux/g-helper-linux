@@ -8,6 +8,15 @@
 
 ### Changed
 
+## v1.0.86 (2026-06-29)
+
+### Fixed
+
+- Fixed install-folder permission regression from v1.0.84. Restored to v1.0.83's user-owned folder while
+  keeping the gpu-helper helper inside owned by root. (#145)
+- CI fix.`gpu-helper` was missing from the v1.0.84
+  binary because the build server didn't have a required library. (#144)
+
 ## v1.0.84 (2026-06-28)
 
 ### Added (Logitech peripherals)
