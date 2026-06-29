@@ -10,6 +10,21 @@
 
 ## v1.0.86 (2026-06-29)
 
+### Upgrading from v1.0.84?
+
+The in-app self-updater is broken in this version because the installation
+directory was created with incorrect ownership, preventing the updater from
+replacing itself.
+
+Run these commands once to fix it:
+
+```sh
+sudo chown -R $USER:$USER /opt/ghelper
+sudo chown root:root /opt/ghelper/gpu-helper
+```
+
+Alternatively, re-run the install script.
+
 ### Fixed
 
 - Fixed install-folder permission regression from v1.0.84. Restored to v1.0.83's user-owned folder while
