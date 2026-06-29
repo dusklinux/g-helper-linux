@@ -900,14 +900,7 @@ public static partial class Installer
         {
             var dir = Path.GetDirectoryName(f.Dest);
             if (!string.IsNullOrEmpty(dir))
-            {
                 Directory.CreateDirectory(dir);
-                if (f.RootOwned)
-                {
-                    Run("chown", "root:root", dir);
-                    Run("chmod", "755", dir);
-                }
-            }
 
             File.WriteAllBytes(tmp, data);
             File.SetUnixFileMode(tmp, f.Mode);

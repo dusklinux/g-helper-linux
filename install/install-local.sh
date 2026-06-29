@@ -483,11 +483,9 @@ if [[ "$MODE" == "install" ]]; then
     fi
 
     # Fix ownership so the real user can run ghelper without root
-    chown root:root "$INSTALL_DIR"
-    chmod 755 "$INSTALL_DIR"
     if [[ -n "$REAL_USER" ]]; then
-        chown "$REAL_USER:$REAL_USER" "$INSTALL_DIR/ghelper"
-        _info "ownership → ${BOLD}root:root${RESET} on $INSTALL_DIR/, ${BOLD}$REAL_USER${RESET} on ghelper"
+        chown -R "$REAL_USER:$REAL_USER" "$INSTALL_DIR"
+        _info "ownership → ${BOLD}$REAL_USER:$REAL_USER${RESET} on $INSTALL_DIR/"
     fi
 else
     _info "${DIM}AppImage mode — skipping binary installation${RESET}"
