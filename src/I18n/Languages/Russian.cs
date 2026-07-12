@@ -330,6 +330,8 @@ public static class Russian
         ["tray_icons_header"] = "Иконки в системном трее",
         ["cpu_temp_tray"] = "Показывать температуру CPU",
         ["gpu_temp_tray"] = "Показывать температуру GPU",
+        ["dgpu_status_tray"] = "Показывать состояние dGPU",
+        ["dgpu_status_tray_hint"] = "Зелёный = активна, серый = приостановлена, контур = выкл",
         ["tray_bg_color"] = "Цвет фона",
         ["tray_text_color"] = "Цвет текста",
         ["tray_bg_transparent"] = "Прозрачный",

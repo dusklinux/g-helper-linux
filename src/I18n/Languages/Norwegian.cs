@@ -333,6 +333,8 @@ public static class Norwegian
         ["tray_icons_header"] = "Systemstatusfelt-ikoner",
         ["cpu_temp_tray"] = "Vis CPU-temperatur",
         ["gpu_temp_tray"] = "Vis GPU-temperatur",
+        ["dgpu_status_tray"] = "Vis dGPU-status",
+        ["dgpu_status_tray_hint"] = "Grønn = aktiv, grå = suspendert, hul = av",
         ["tray_bg_color"] = "Bakgrunnsfarge",
         ["tray_text_color"] = "Tekstfarge",
         ["tray_bg_transparent"] = "Gjennomsiktig",

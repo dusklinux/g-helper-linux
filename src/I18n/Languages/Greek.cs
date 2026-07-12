@@ -333,6 +333,8 @@ public static class Greek
         ["tray_icons_header"] = "Εικονίδια περιοχής ειδοποιήσεων",
         ["cpu_temp_tray"] = "Εμφάνιση θερμοκρασίας CPU",
         ["gpu_temp_tray"] = "Εμφάνιση θερμοκρασίας GPU",
+        ["dgpu_status_tray"] = "Εμφάνιση κατάστασης dGPU",
+        ["dgpu_status_tray_hint"] = "Πράσινο = ενεργή, γκρι = σε αναστολή, κενό = ανενεργή",
         ["tray_bg_color"] = "Χρώμα φόντου",
         ["tray_text_color"] = "Χρώμα κειμένου",
         ["tray_bg_transparent"] = "Διαφανές",

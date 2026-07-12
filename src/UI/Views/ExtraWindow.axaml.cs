@@ -243,6 +243,8 @@ public partial class ExtraWindow : Window
         headerTrayIcons.Text = Labels.Get("tray_icons_header");
         checkCpuTrayIcon.Content = Labels.Get("cpu_temp_tray");
         checkGpuTrayIcon.Content = Labels.Get("gpu_temp_tray");
+        checkDgpuTrayIcon.Content = Labels.Get("dgpu_status_tray");
+        labelDgpuTrayHint.Text = Labels.Get("dgpu_status_tray_hint");
         checkCpuTrayTransparent.Content = Labels.Get("tray_bg_transparent");
         checkGpuTrayTransparent.Content = Labels.Get("tray_bg_transparent");
         ToolTip.SetTip(btnCpuTrayBg, Labels.Get("tray_bg_color"));
@@ -1486,6 +1488,7 @@ public partial class ExtraWindow : Window
         checkCpuTrayTransparent.IsChecked = Helpers.AppConfig.Is("cpu_tray_bg_transparent");
         checkGpuTrayIcon.IsChecked = Helpers.AppConfig.Is("gpu_tray_enabled");
         checkGpuTrayTransparent.IsChecked = Helpers.AppConfig.Is("gpu_tray_bg_transparent");
+        checkDgpuTrayIcon.IsChecked = Helpers.AppConfig.Is("dgpu_tray_enabled");
 
         // Color swatches: button background reflects the saved color so the
         // user sees the current state at a glance.
@@ -1495,6 +1498,12 @@ public partial class ExtraWindow : Window
         UpdateSwatch(btnGpuTrayText, Helpers.AppConfig.GetString("gpu_tray_text") ?? DefaultTextColor);
 
         rowGpuTray.IsVisible = App.GpuModeCtrl?.GetCurrentMode() != Gpu.GpuMode.Eco;
+
+        // dGPU status dot: only where a discrete GPU exists (any mode, incl.
+        // Eco where it reports "off").
+        bool hasDgpu = Gpu.GPUModeControl.HasSecondGpu();
+        rowDgpuTray.IsVisible = hasDgpu;
+        labelDgpuTrayHint.IsVisible = hasDgpu;
     }
 
     /// <summary>
@@ -1567,6 +1576,16 @@ public partial class ExtraWindow : Window
         Helpers.AppConfig.Set("gpu_tray_enabled", on ? 1 : 0);
         Helpers.TraySystemMonitor.SetGpuIconEnabled(on);
         Helpers.Logger.WriteLine($"GPU temp tray icon → {on}");
+    }
+
+    private void CheckDgpuTrayIcon_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents)
+            return;
+        bool on = checkDgpuTrayIcon.IsChecked ?? false;
+        Helpers.AppConfig.Set("dgpu_tray_enabled", on ? 1 : 0);
+        Helpers.TraySystemMonitor.SetDgpuIconEnabled(on);
+        Helpers.Logger.WriteLine($"dGPU status tray icon → {on}");
     }
 
     private void CheckGpuTrayTransparent_Changed(object? sender, RoutedEventArgs e)

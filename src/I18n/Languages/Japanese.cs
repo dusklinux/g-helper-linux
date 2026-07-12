@@ -333,6 +333,8 @@ public static class Japanese
         ["tray_icons_header"] = "システムトレイアイコン",
         ["cpu_temp_tray"] = "CPU 温度を表示",
         ["gpu_temp_tray"] = "GPU 温度を表示",
+        ["dgpu_status_tray"] = "dGPU の状態を表示",
+        ["dgpu_status_tray_hint"] = "緑 = 動作中、グレー = 休止、白抜き = オフ",
         ["tray_bg_color"] = "背景色",
         ["tray_text_color"] = "文字色",
         ["tray_bg_transparent"] = "透明",

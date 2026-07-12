@@ -468,6 +468,8 @@ public static class Slovenian
         ["tray_icons_header"] = "Ikone v sistemski vrstici",
         ["cpu_temp_tray"] = "Pokaži temperaturo CPU",
         ["gpu_temp_tray"] = "Pokaži temperaturo GPU",
+        ["dgpu_status_tray"] = "Pokaži stanje dGPU",
+        ["dgpu_status_tray_hint"] = "Zelena = aktivna, siva = v pripravljenosti, obris = izklopljeno",
         ["tray_bg_color"] = "Barva ozadja",
         ["tray_text_color"] = "Barva besedila",
         ["tray_bg_transparent"] = "Prosojno",

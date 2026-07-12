@@ -330,6 +330,8 @@ public static class Turkish
         ["tray_icons_header"] = "Sistem Tepsisi Simgeleri",
         ["cpu_temp_tray"] = "CPU sıcaklığını göster",
         ["gpu_temp_tray"] = "GPU sıcaklığını göster",
+        ["dgpu_status_tray"] = "dGPU durumunu göster",
+        ["dgpu_status_tray_hint"] = "Yeşil = etkin, gri = askıda, boş = kapalı",
         ["tray_bg_color"] = "Arka plan rengi",
         ["tray_text_color"] = "Yazı rengi",
         ["tray_bg_transparent"] = "Şeffaf",

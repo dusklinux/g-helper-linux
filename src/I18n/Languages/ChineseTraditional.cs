@@ -333,6 +333,8 @@ public static class ChineseTraditional
         ["tray_icons_header"] = "系統匣圖示",
         ["cpu_temp_tray"] = "顯示 CPU 溫度",
         ["gpu_temp_tray"] = "顯示 GPU 溫度",
+        ["dgpu_status_tray"] = "顯示 dGPU 狀態",
+        ["dgpu_status_tray_hint"] = "綠色 = 活動，灰色 = 暫停，空心 = 關閉",
         ["tray_bg_color"] = "背景顏色",
         ["tray_text_color"] = "文字顏色",
         ["tray_bg_transparent"] = "透明",

@@ -333,6 +333,8 @@ public static class Serbian
         ["tray_icons_header"] = "Иконе системске траке",
         ["cpu_temp_tray"] = "Прикажи температуру CPU",
         ["gpu_temp_tray"] = "Прикажи температуру GPU",
+        ["dgpu_status_tray"] = "Прикажи статус dGPU",
+        ["dgpu_status_tray_hint"] = "Зелено = активна, сиво = суспендована, шупље = искључено",
         ["tray_bg_color"] = "Боја позадине",
         ["tray_text_color"] = "Боја текста",
         ["tray_bg_transparent"] = "Провидно",

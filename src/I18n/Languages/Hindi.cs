@@ -468,6 +468,8 @@ public static class Hindi
         ["tray_icons_header"] = "सिस्टम ट्रे आइकन",
         ["cpu_temp_tray"] = "CPU तापमान दिखाएँ",
         ["gpu_temp_tray"] = "GPU तापमान दिखाएँ",
+        ["dgpu_status_tray"] = "dGPU स्थिति दिखाएँ",
+        ["dgpu_status_tray_hint"] = "हरा = सक्रिय, ग्रे = निलंबित, खोखला = बंद",
         ["tray_bg_color"] = "पृष्ठभूमि रंग",
         ["tray_text_color"] = "पाठ रंग",
         ["tray_bg_transparent"] = "पारदर्शी",

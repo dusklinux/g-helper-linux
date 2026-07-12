@@ -330,6 +330,8 @@ public static class Italian
         ["tray_icons_header"] = "Icone della barra delle applicazioni",
         ["cpu_temp_tray"] = "Mostra temperatura CPU",
         ["gpu_temp_tray"] = "Mostra temperatura GPU",
+        ["dgpu_status_tray"] = "Mostra stato dGPU",
+        ["dgpu_status_tray_hint"] = "Verde = attivo, grigio = sospeso, vuoto = spento",
         ["tray_bg_color"] = "Colore sfondo",
         ["tray_text_color"] = "Colore testo",
         ["tray_bg_transparent"] = "Trasparente",

@@ -58,6 +58,7 @@ public static class TraySystemMonitor
     private static TrayIcon? _mainTray;       // tooltip target (created by App)
     private static TrayIcon? _cpuTray;        // optional, created on demand
     private static TrayIcon? _gpuTray;        // optional, created on demand
+    private static TrayIcon? _dgpuTray;       // optional, dGPU status dot (#150)
 
     // Callback invoked when the user clicks any of the optional temp icons.
     // Mirrors the main tray icon's click behavior - all three icons toggle
@@ -84,6 +85,10 @@ public static class TraySystemMonitor
 
     private static IconKey _gpuLastKey;
     private static bool _gpuKeyValid;
+
+    // dGPU dot cache: keyed on the runtime-PM status string ("active" etc).
+    private static string _dgpuLastStatus = "";
+    private static bool _dgpuKeyValid;
 
     // 
     //  PUBLIC API
@@ -113,6 +118,8 @@ public static class TraySystemMonitor
                 EnsureCpuTray();
             if (AppConfig.Is("gpu_tray_enabled") && App.GpuControl?.IsAvailable() == true)
                 EnsureGpuTray();
+            if (AppConfig.Is("dgpu_tray_enabled") && Gpu.GPUModeControl.HasSecondGpu())
+                EnsureDgpuTray();
         }
         catch (Exception ex)
         {
@@ -159,8 +166,12 @@ public static class TraySystemMonitor
         try
         { if (_gpuTray != null) { _gpuTray.IsVisible = false; _gpuTray = null; } }
         catch { }
+        try
+        { if (_dgpuTray != null) { _dgpuTray.IsVisible = false; _dgpuTray = null; } }
+        catch { }
         _cpuKeyValid = false;
         _gpuKeyValid = false;
+        _dgpuKeyValid = false;
     }
 
     /// <summary>
@@ -188,6 +199,16 @@ public static class TraySystemMonitor
             EnsureGpuTray();
         else
             ReleaseGpuTray();
+        Tick();
+    }
+
+    /// <summary>Toggle the dGPU status dot on/off (#150). dGPU-only.</summary>
+    public static void SetDgpuIconEnabled(bool enabled)
+    {
+        if (enabled)
+            EnsureDgpuTray();
+        else
+            ReleaseDgpuTray();
         Tick();
     }
 
@@ -265,6 +286,15 @@ public static class TraySystemMonitor
             // Mirror of CPU tooltip - see above.
             TrySetSniTooltip(_gpuTray,
                 Labels.Format("tray_tooltip_gpu", gpuTemp > 0 ? TempHelper.FormatTemp(gpuTemp) : "--"));
+        }
+
+        // Surface 4: dGPU status dot (if active). Reading runtime_status never
+        // wakes the card. null => Eco/off.
+        if (_dgpuTray != null)
+        {
+            string? status = Gpu.GPUModeControl.DgpuRuntimeStatus();
+            UpdateDgpuIcon(status);
+            TrySetSniTooltip(_dgpuTray, "dGPU: " + (status ?? "off"));
         }
     }
 
@@ -441,6 +471,60 @@ public static class TraySystemMonitor
         _gpuKeyValid = false;
     }
 
+    /// <summary>Lazily create the dGPU status dot icon. See <see cref="EnsureCpuTray"/>.</summary>
+    private static void EnsureDgpuTray()
+    {
+        if (_dgpuTray != null)
+            return;
+        try
+        {
+            _dgpuTray = new TrayIcon { IsVisible = true };
+            _dgpuTray.Clicked += (_, _) => _toggleMainWindow?.Invoke();
+            _dgpuKeyValid = false;
+            Logger.WriteLine("TraySystemMonitor: dGPU status icon created");
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine($"TraySystemMonitor: dGPU icon create failed: {ex.Message}");
+            _dgpuTray = null;
+        }
+    }
+
+    /// <summary>Tear down the dGPU status dot icon.</summary>
+    private static void ReleaseDgpuTray()
+    {
+        if (_dgpuTray == null)
+            return;
+        try
+        { _dgpuTray.IsVisible = false; }
+        catch { }
+        _dgpuTray = null;
+        _dgpuKeyValid = false;
+    }
+
+    /// <summary>
+    /// Update the dGPU dot if the status changed since last tick. Color
+    /// encodes state: green=active, gray=suspended, hollow=off.
+    /// </summary>
+    private static void UpdateDgpuIcon(string? status)
+    {
+        if (_dgpuTray == null)
+            return;
+        string key = status ?? "off";
+        if (_dgpuKeyValid && key == _dgpuLastStatus)
+            return;
+        try
+        {
+            _dgpuTray.Icon = RenderDotIcon(key);
+            _dgpuLastStatus = key;
+            _dgpuKeyValid = true;
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine($"TraySystemMonitor: dGPU icon render failed: {ex.Message}");
+        }
+    }
+
     /// <summary>
     /// Update the CPU temp icon if the rendered tuple has changed since
     /// last tick. Defaults: blue (#3AAEEF) bg, white text, opaque.
@@ -611,6 +695,39 @@ public static class TraySystemMonitor
 
         // Hand the bytes to a MemoryStream that WindowIcon takes ownership
         // of. Avalonia disposes it when the icon ref is dropped.
+        var stream = new MemoryStream(data.ToArray());
+        return new WindowIcon(stream);
+    }
+
+    /// <summary>
+    /// Render the dGPU status dot (#150): a filled circle for active (green)
+    /// / suspended (gray), or a hollow ring for off. 44x44 PNG.
+    /// </summary>
+    private static WindowIcon RenderDotIcon(string status)
+    {
+        using var bitmap = new SKBitmap(IconSize, IconSize, SKColorType.Rgba8888, SKAlphaType.Premul);
+        using var canvas = new SKCanvas(bitmap);
+        canvas.Clear(SKColors.Transparent);
+
+        bool filled = status is "active" or "suspended";
+        SKColor color = status switch
+        {
+            "active" => SKColor.Parse("#2ECC71"),    // green
+            "suspended" => SKColor.Parse("#8A94A6"), // gray
+            _ => SKColor.Parse("#6E7B8B"),           // off (hollow, dim)
+        };
+
+        using var paint = new SKPaint
+        {
+            Color = color,
+            IsAntialias = true,
+            Style = filled ? SKPaintStyle.Fill : SKPaintStyle.Stroke,
+            StrokeWidth = 4f,
+        };
+        canvas.DrawCircle(IconSize / 2f, IconSize / 2f, 13f, paint);
+
+        using var image = SKImage.FromBitmap(bitmap);
+        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
         var stream = new MemoryStream(data.ToArray());
         return new WindowIcon(stream);
     }

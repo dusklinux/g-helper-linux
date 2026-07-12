@@ -468,6 +468,8 @@ public static class Latvian
         ["tray_icons_header"] = "Sistēmas paplātes ikonas",
         ["cpu_temp_tray"] = "Rādīt CPU temperatūru",
         ["gpu_temp_tray"] = "Rādīt GPU temperatūru",
+        ["dgpu_status_tray"] = "Rādīt dGPU statusu",
+        ["dgpu_status_tray_hint"] = "Zaļš = aktīvs, pelēks = apturēts, tukšs = izslēgts",
         ["tray_bg_color"] = "Fona krāsa",
         ["tray_text_color"] = "Teksta krāsa",
         ["tray_bg_transparent"] = "Caurspīdīgs",

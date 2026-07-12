@@ -468,6 +468,8 @@ public static class Nepali
         ["tray_icons_header"] = "सिस्टम ट्रे आइकनहरू",
         ["cpu_temp_tray"] = "CPU तापक्रम देखाउनुहोस्",
         ["gpu_temp_tray"] = "GPU तापक्रम देखाउनुहोस्",
+        ["dgpu_status_tray"] = "dGPU स्थिति देखाउनुहोस्",
+        ["dgpu_status_tray_hint"] = "हरियो = सक्रिय, खैरो = निलम्बित, खोक्रो = बन्द",
         ["tray_bg_color"] = "पृष्ठभूमि रङ",
         ["tray_text_color"] = "पाठ रङ",
         ["tray_bg_transparent"] = "पारदर्शी",

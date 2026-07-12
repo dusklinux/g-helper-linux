@@ -333,6 +333,8 @@ public static class Macedonian
         ["tray_icons_header"] = "Икони на системската лента",
         ["cpu_temp_tray"] = "Прикажи температура на CPU",
         ["gpu_temp_tray"] = "Прикажи температура на GPU",
+        ["dgpu_status_tray"] = "Прикажи статус на dGPU",
+        ["dgpu_status_tray_hint"] = "Зелено = активна, сиво = во мирување, шупливо = исклучено",
         ["tray_bg_color"] = "Боја на позадина",
         ["tray_text_color"] = "Боја на текст",
         ["tray_bg_transparent"] = "Проѕирно",

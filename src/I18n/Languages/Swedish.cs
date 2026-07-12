@@ -333,6 +333,8 @@ public static class Swedish
         ["tray_icons_header"] = "Systemfältsikoner",
         ["cpu_temp_tray"] = "Visa CPU-temperatur",
         ["gpu_temp_tray"] = "Visa GPU-temperatur",
+        ["dgpu_status_tray"] = "Visa dGPU-status",
+        ["dgpu_status_tray_hint"] = "Grön = aktiv, grå = vilande, ihålig = av",
         ["tray_bg_color"] = "Bakgrundsfärg",
         ["tray_text_color"] = "Textfärg",
         ["tray_bg_transparent"] = "Transparent",

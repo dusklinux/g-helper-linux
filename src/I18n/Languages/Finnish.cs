@@ -333,6 +333,8 @@ public static class Finnish
         ["tray_icons_header"] = "Ilmaisinalueen kuvakkeet",
         ["cpu_temp_tray"] = "Näytä CPU-lämpötila",
         ["gpu_temp_tray"] = "Näytä GPU-lämpötila",
+        ["dgpu_status_tray"] = "Näytä dGPU-tila",
+        ["dgpu_status_tray_hint"] = "Vihreä = aktiivinen, harmaa = lepotilassa, ontto = pois",
         ["tray_bg_color"] = "Taustaväri",
         ["tray_text_color"] = "Tekstin väri",
         ["tray_bg_transparent"] = "Läpinäkyvä",

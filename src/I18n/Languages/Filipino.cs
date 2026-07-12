@@ -468,6 +468,8 @@ public static class Filipino
         ["tray_icons_header"] = "Mga System Tray Icon",
         ["cpu_temp_tray"] = "Ipakita ang temperatura ng CPU",
         ["gpu_temp_tray"] = "Ipakita ang temperatura ng GPU",
+        ["dgpu_status_tray"] = "Ipakita ang status ng dGPU",
+        ["dgpu_status_tray_hint"] = "Berde = aktibo, gray = naka-suspend, hungkag = off",
         ["tray_bg_color"] = "Kulay ng background",
         ["tray_text_color"] = "Kulay ng teksto",
         ["tray_bg_transparent"] = "Transparent",

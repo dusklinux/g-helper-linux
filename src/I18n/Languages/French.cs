@@ -330,6 +330,8 @@ public static class French
         ["tray_icons_header"] = "Icônes de barre des tâches",
         ["cpu_temp_tray"] = "Afficher la température CPU",
         ["gpu_temp_tray"] = "Afficher la température GPU",
+        ["dgpu_status_tray"] = "Afficher l'état du dGPU",
+        ["dgpu_status_tray_hint"] = "Vert = actif, gris = suspendu, creux = éteint",
         ["tray_bg_color"] = "Couleur d'arrière-plan",
         ["tray_text_color"] = "Couleur du texte",
         ["tray_bg_transparent"] = "Transparent",

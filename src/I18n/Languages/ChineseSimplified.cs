@@ -333,6 +333,8 @@ public static class ChineseSimplified
         ["tray_icons_header"] = "系统托盘图标",
         ["cpu_temp_tray"] = "显示 CPU 温度",
         ["gpu_temp_tray"] = "显示 GPU 温度",
+        ["dgpu_status_tray"] = "显示 dGPU 状态",
+        ["dgpu_status_tray_hint"] = "绿色 = 活动，灰色 = 挂起，空心 = 关闭",
         ["tray_bg_color"] = "背景颜色",
         ["tray_text_color"] = "文字颜色",
         ["tray_bg_transparent"] = "透明",

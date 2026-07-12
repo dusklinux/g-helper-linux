@@ -330,6 +330,8 @@ public static class Dutch
         ["tray_icons_header"] = "Systeemvakpictogrammen",
         ["cpu_temp_tray"] = "CPU-temperatuur tonen",
         ["gpu_temp_tray"] = "GPU-temperatuur tonen",
+        ["dgpu_status_tray"] = "dGPU-status tonen",
+        ["dgpu_status_tray_hint"] = "Groen = actief, grijs = onderbroken, hol = uit",
         ["tray_bg_color"] = "Achtergrondkleur",
         ["tray_text_color"] = "Tekstkleur",
         ["tray_bg_transparent"] = "Transparant",

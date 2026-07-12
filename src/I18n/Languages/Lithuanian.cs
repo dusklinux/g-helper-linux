@@ -468,6 +468,8 @@ public static class Lithuanian
         ["tray_icons_header"] = "Sistemos dėklo piktogramos",
         ["cpu_temp_tray"] = "Rodyti CPU temperatūrą",
         ["gpu_temp_tray"] = "Rodyti GPU temperatūrą",
+        ["dgpu_status_tray"] = "Rodyti dGPU būseną",
+        ["dgpu_status_tray_hint"] = "Žalia = aktyvi, pilka = sustabdyta, tuščia = išjungta",
         ["tray_bg_color"] = "Fono spalva",
         ["tray_text_color"] = "Teksto spalva",
         ["tray_bg_transparent"] = "Skaidri",

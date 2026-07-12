@@ -333,6 +333,8 @@ public static class Indonesian
         ["tray_icons_header"] = "Ikon System Tray",
         ["cpu_temp_tray"] = "Tampilkan suhu CPU",
         ["gpu_temp_tray"] = "Tampilkan suhu GPU",
+        ["dgpu_status_tray"] = "Tampilkan status dGPU",
+        ["dgpu_status_tray_hint"] = "Hijau = aktif, abu-abu = ditangguhkan, kosong = mati",
         ["tray_bg_color"] = "Warna latar belakang",
         ["tray_text_color"] = "Warna teks",
         ["tray_bg_transparent"] = "Transparan",

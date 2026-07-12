@@ -333,6 +333,8 @@ public static class Thai
         ["tray_icons_header"] = "ไอคอนซิสเต็มเทรย์",
         ["cpu_temp_tray"] = "แสดงอุณหภูมิ CPU",
         ["gpu_temp_tray"] = "แสดงอุณหภูมิ GPU",
+        ["dgpu_status_tray"] = "แสดงสถานะ dGPU",
+        ["dgpu_status_tray_hint"] = "เขียว = ทำงาน, เทา = พัก, กลวง = ปิด",
         ["tray_bg_color"] = "สีพื้นหลัง",
         ["tray_text_color"] = "สีข้อความ",
         ["tray_bg_transparent"] = "โปร่งใส",

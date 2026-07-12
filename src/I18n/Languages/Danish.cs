@@ -333,6 +333,8 @@ public static class Danish
         ["tray_icons_header"] = "Systembakke-ikoner",
         ["cpu_temp_tray"] = "Vis CPU-temperatur",
         ["gpu_temp_tray"] = "Vis GPU-temperatur",
+        ["dgpu_status_tray"] = "Vis dGPU-status",
+        ["dgpu_status_tray_hint"] = "Grøn = aktiv, grå = suspenderet, hul = slukket",
         ["tray_bg_color"] = "Baggrundsfarve",
         ["tray_text_color"] = "Tekstfarve",
         ["tray_bg_transparent"] = "Gennemsigtig",

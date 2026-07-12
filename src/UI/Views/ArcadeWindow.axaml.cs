@@ -233,18 +233,32 @@ public partial class ArcadeWindow : Window, Input.IGamepadInput
 
     private void GameTick()
     {
-        _frame++;
-        UpdateStars();
-        if (_state == GameState.Playing)
+        // Guard the whole frame: an uncaught exception here would propagate to
+        // the dispatcher and take down the process (no global UI handler).
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        try
         {
-            UpdatePlayer();
-            UpdateBullets();
-            UpdateEnemies();
-            UpdatePowerUps();
-            RunWaveSpawner();
-            CheckCollisions();
+            _frame++;
+            UpdateStars();
+            if (_state == GameState.Playing)
+            {
+                UpdatePlayer();
+                UpdateBullets();
+                UpdateEnemies();
+                UpdatePowerUps();
+                RunWaveSpawner();
+                CheckCollisions();
+            }
+            Render();
         }
-        Render();
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"ArcadeWindow.GameTick error: {ex}");
+        }
+        // Watchdog: a slow frame means the UI thread stalled here (points the
+        // finger at whatever ran this tick, vs a dispatcher/render stall).
+        if (sw.ElapsedMilliseconds > 250)
+            Helpers.Logger.WriteLine($"ArcadeWindow.GameTick slow: {sw.ElapsedMilliseconds}ms (state={_state}, enemies={_enemies.Count}, bullets={_bullets.Count})");
     }
 
     private void UpdateStars()

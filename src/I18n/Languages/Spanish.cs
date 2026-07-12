@@ -330,6 +330,8 @@ public static class Spanish
         ["tray_icons_header"] = "Iconos de la bandeja del sistema",
         ["cpu_temp_tray"] = "Mostrar temperatura de CPU",
         ["gpu_temp_tray"] = "Mostrar temperatura de GPU",
+        ["dgpu_status_tray"] = "Mostrar estado de dGPU",
+        ["dgpu_status_tray_hint"] = "Verde = activo, gris = suspendido, hueco = apagado",
         ["tray_bg_color"] = "Color de fondo",
         ["tray_text_color"] = "Color de texto",
         ["tray_bg_transparent"] = "Transparente",

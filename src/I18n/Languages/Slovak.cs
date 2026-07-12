@@ -468,6 +468,8 @@ public static class Slovak
         ["tray_icons_header"] = "Ikony v systémovom paneli",
         ["cpu_temp_tray"] = "Zobraziť teplotu CPU",
         ["gpu_temp_tray"] = "Zobraziť teplotu GPU",
+        ["dgpu_status_tray"] = "Zobraziť stav dGPU",
+        ["dgpu_status_tray_hint"] = "Zelená = aktívna, sivá = pozastavená, obrys = vypnuté",
         ["tray_bg_color"] = "Farba pozadia",
         ["tray_text_color"] = "Farba textu",
         ["tray_bg_transparent"] = "Priehľadné",

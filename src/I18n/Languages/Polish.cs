@@ -330,6 +330,8 @@ public static class Polish
         ["tray_icons_header"] = "Ikony zasobnika systemowego",
         ["cpu_temp_tray"] = "Pokaż temperaturę CPU",
         ["gpu_temp_tray"] = "Pokaż temperaturę GPU",
+        ["dgpu_status_tray"] = "Pokaż stan dGPU",
+        ["dgpu_status_tray_hint"] = "Zielony = aktywny, szary = wstrzymany, pusty = wyłączony",
         ["tray_bg_color"] = "Kolor tła",
         ["tray_text_color"] = "Kolor tekstu",
         ["tray_bg_transparent"] = "Przezroczysty",

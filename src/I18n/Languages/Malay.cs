@@ -468,6 +468,8 @@ public static class Malay
         ["tray_icons_header"] = "Ikon dulang sistem",
         ["cpu_temp_tray"] = "Tunjuk suhu CPU",
         ["gpu_temp_tray"] = "Tunjuk suhu GPU",
+        ["dgpu_status_tray"] = "Tunjuk status dGPU",
+        ["dgpu_status_tray_hint"] = "Hijau = aktif, kelabu = digantung, kosong = mati",
         ["tray_bg_color"] = "Warna latar belakang",
         ["tray_text_color"] = "Warna teks",
         ["tray_bg_transparent"] = "Lutsinar",

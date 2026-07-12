@@ -330,6 +330,8 @@ public static class German
         ["tray_icons_header"] = "Tray-Symbole",
         ["cpu_temp_tray"] = "CPU-Temperatur anzeigen",
         ["gpu_temp_tray"] = "GPU-Temperatur anzeigen",
+        ["dgpu_status_tray"] = "dGPU-Status anzeigen",
+        ["dgpu_status_tray_hint"] = "Grün = aktiv, grau = ausgesetzt, hohl = aus",
         ["tray_bg_color"] = "Hintergrundfarbe",
         ["tray_text_color"] = "Textfarbe",
         ["tray_bg_transparent"] = "Transparent",

@@ -31,6 +31,16 @@ class Program
         if (args.Contains("--osk") && CommandIpc.TrySend("toggle-osk"))
             return;
 
+        // Last-resort logging: capture fatal exceptions to the log file before
+        // the process dies (stderr is swallowed under Steam game mode).
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            Logger.WriteLine($"FATAL unhandled exception: {e.ExceptionObject}");
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            Logger.WriteLine($"Unobserved task exception: {e.Exception}");
+            e.SetObserved();
+        };
+
         NativeLibExtractor.ExtractAndLoad();
 
         // Suppress X11 SMLib/ICELib noise on pure-Wayland sessions (COSMIC, niri).

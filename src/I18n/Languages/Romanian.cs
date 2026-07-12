@@ -330,6 +330,8 @@ public static class Romanian
         ["tray_icons_header"] = "Pictograme bară de sistem",
         ["cpu_temp_tray"] = "Afișează temperatura CPU",
         ["gpu_temp_tray"] = "Afișează temperatura GPU",
+        ["dgpu_status_tray"] = "Afișează starea dGPU",
+        ["dgpu_status_tray_hint"] = "Verde = activ, gri = suspendat, gol = oprit",
         ["tray_bg_color"] = "Culoare fundal",
         ["tray_text_color"] = "Culoare text",
         ["tray_bg_transparent"] = "Transparent",

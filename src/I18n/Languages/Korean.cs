@@ -333,6 +333,8 @@ public static class Korean
         ["tray_icons_header"] = "시스템 트레이 아이콘",
         ["cpu_temp_tray"] = "CPU 온도 표시",
         ["gpu_temp_tray"] = "GPU 온도 표시",
+        ["dgpu_status_tray"] = "dGPU 상태 표시",
+        ["dgpu_status_tray_hint"] = "녹색 = 활성, 회색 = 절전, 빈 원 = 꺼짐",
         ["tray_bg_color"] = "배경색",
         ["tray_text_color"] = "글자색",
         ["tray_bg_transparent"] = "투명",

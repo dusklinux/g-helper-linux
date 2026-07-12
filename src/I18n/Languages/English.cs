@@ -471,6 +471,8 @@ public static class English
         ["tray_icons_header"] = "System Tray Icons",
         ["cpu_temp_tray"] = "Show CPU temperature",
         ["gpu_temp_tray"] = "Show GPU temperature",
+        ["dgpu_status_tray"] = "Show dGPU status",
+        ["dgpu_status_tray_hint"] = "Green = active, gray = suspended, hollow = off",
         ["tray_bg_color"] = "Background color",
         ["tray_text_color"] = "Text color",
         ["tray_bg_transparent"] = "Transparent",

@@ -468,6 +468,8 @@ public static class Bengali
         ["tray_icons_header"] = "সিস্টেম ট্রে আইকন",
         ["cpu_temp_tray"] = "CPU তাপমাত্রা দেখান",
         ["gpu_temp_tray"] = "GPU তাপমাত্রা দেখান",
+        ["dgpu_status_tray"] = "dGPU স্ট্যাটাস দেখান",
+        ["dgpu_status_tray_hint"] = "সবুজ = সক্রিয়, ধূসর = স্থগিত, ফাঁপা = বন্ধ",
         ["tray_bg_color"] = "পটভূমির রঙ",
         ["tray_text_color"] = "টেক্সটের রঙ",
         ["tray_bg_transparent"] = "স্বচ্ছ",

@@ -330,6 +330,8 @@ public static class Vietnamese
         ["tray_icons_header"] = "Biểu tượng khay hệ thống",
         ["cpu_temp_tray"] = "Hiển thị nhiệt độ CPU",
         ["gpu_temp_tray"] = "Hiển thị nhiệt độ GPU",
+        ["dgpu_status_tray"] = "Hiển thị trạng thái dGPU",
+        ["dgpu_status_tray_hint"] = "Xanh = hoạt động, xám = tạm dừng, rỗng = tắt",
         ["tray_bg_color"] = "Màu nền",
         ["tray_text_color"] = "Màu chữ",
         ["tray_bg_transparent"] = "Trong suốt",

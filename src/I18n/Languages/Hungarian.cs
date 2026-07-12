@@ -330,6 +330,8 @@ public static class Hungarian
         ["tray_icons_header"] = "Tálcaikonok",
         ["cpu_temp_tray"] = "CPU hőmérséklet megjelenítése",
         ["gpu_temp_tray"] = "GPU hőmérséklet megjelenítése",
+        ["dgpu_status_tray"] = "dGPU állapot megjelenítése",
+        ["dgpu_status_tray_hint"] = "Zöld = aktív, szürke = felfüggesztve, üres = kikapcsolva",
         ["tray_bg_color"] = "Háttérszín",
         ["tray_text_color"] = "Szövegszín",
         ["tray_bg_transparent"] = "Átlátszó",

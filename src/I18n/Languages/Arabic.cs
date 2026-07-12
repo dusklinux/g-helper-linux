@@ -333,6 +333,8 @@ public static class Arabic
         ["tray_icons_header"] = "أيقونات شريط النظام",
         ["cpu_temp_tray"] = "عرض درجة حرارة المعالج",
         ["gpu_temp_tray"] = "عرض درجة حرارة بطاقة الرسومات",
+        ["dgpu_status_tray"] = "عرض حالة dGPU",
+        ["dgpu_status_tray_hint"] = "أخضر = نشطة، رمادي = معلّقة، مجوّف = متوقفة",
         ["tray_bg_color"] = "لون الخلفية",
         ["tray_text_color"] = "لون النص",
         ["tray_bg_transparent"] = "شفاف",

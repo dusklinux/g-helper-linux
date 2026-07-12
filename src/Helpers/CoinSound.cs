@@ -11,10 +11,13 @@ public static class CoinSound
 {
     private const int SampleRate = 22050;
 
+    private const int MinIntervalMs = 50;
+
     private static string? _wavPath;
     private static string? _player;
     private static bool _ready;
     private static Process? _currentProcess;
+    private static long _lastPlayTicks;
     private static readonly object _lock = new();
 
     /// <summary>Generate the coin WAV and detect audio player. Call once at startup.</summary>
@@ -54,35 +57,53 @@ public static class CoinSound
 
         lock (_lock)
         {
-            // Kill previous sound to prevent queue buildup
-            if (_currentProcess != null)
+            // Throttle on the caller: cheap, and avoids queueing tasks.
+            long now = Environment.TickCount64;
+            if (now - _lastPlayTicks < MinIntervalMs)
+                return;
+            _lastPlayTicks = now;
+        }
+
+        // Process.Start / Kill can block on audio-server negotiation. The
+        // arcade calls Play from its 16ms UI-thread game loop, so run the
+        // process work on a thread-pool thread to keep the loop smooth.
+        Task.Run(() =>
+        {
+            lock (_lock)
             {
+                // Reap the previous player: kill if running, then Dispose so
+                // its handle is released now, not at GC time.
+                if (_currentProcess != null)
+                {
+                    try
+                    {
+                        if (!_currentProcess.HasExited)
+                            _currentProcess.Kill();
+                    }
+                    catch { }
+                    try
+                    { _currentProcess.Dispose(); }
+                    catch { }
+                    _currentProcess = null;
+                }
+
                 try
                 {
-                    if (!_currentProcess.HasExited)
-                        _currentProcess.Kill();
+                    // No stdout/stderr redirection: unread redirect pipes fill
+                    // and leak fds. The player inherits our near-silent streams.
+                    _currentProcess = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = _player,
+                        Arguments = _wavPath,
+                        UseShellExecute = false,
+                    });
                 }
-                catch { }
-                _currentProcess = null;
-            }
-
-            try
-            {
-                var psi = new ProcessStartInfo
+                catch (Exception ex)
                 {
-                    FileName = _player,
-                    Arguments = _wavPath,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                _currentProcess = Process.Start(psi);
+                    Logger.WriteLine($"CoinSound.Play failed: {ex.Message}");
+                }
             }
-            catch (Exception ex)
-            {
-                Logger.WriteLine($"CoinSound.Play failed: {ex.Message}");
-            }
-        }
+        });
     }
 
     private static string? DetectPlayer()

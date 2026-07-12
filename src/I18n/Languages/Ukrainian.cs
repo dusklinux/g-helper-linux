@@ -330,6 +330,8 @@ public static class Ukrainian
         ["tray_icons_header"] = "Іконки в системному треї",
         ["cpu_temp_tray"] = "Показувати температуру CPU",
         ["gpu_temp_tray"] = "Показувати температуру GPU",
+        ["dgpu_status_tray"] = "Показувати стан dGPU",
+        ["dgpu_status_tray_hint"] = "Зелений = активна, сірий = призупинена, контур = вимк",
         ["tray_bg_color"] = "Колір фону",
         ["tray_text_color"] = "Колір тексту",
         ["tray_bg_transparent"] = "Прозорий",

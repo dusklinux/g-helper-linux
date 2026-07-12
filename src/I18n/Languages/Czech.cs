@@ -330,6 +330,8 @@ public static class Czech
         ["tray_icons_header"] = "Ikony v systémové liště",
         ["cpu_temp_tray"] = "Zobrazit teplotu CPU",
         ["gpu_temp_tray"] = "Zobrazit teplotu GPU",
+        ["dgpu_status_tray"] = "Zobrazit stav dGPU",
+        ["dgpu_status_tray_hint"] = "Zelená = aktivní, šedá = pozastavena, obrys = vypnuto",
         ["tray_bg_color"] = "Barva pozadí",
         ["tray_text_color"] = "Barva textu",
         ["tray_bg_transparent"] = "Průhledné",

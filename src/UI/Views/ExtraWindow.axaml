@@ -540,6 +540,17 @@
                                   VerticalAlignment="Center"
                                   IsCheckedChanged="CheckGpuTrayTransparent_Changed" />
                     </Grid>
+
+                    <!-- dGPU status dot row (visibility gated at runtime by dGPU presence) -->
+                    <Grid x:Name="rowDgpuTray" ColumnDefinitions="*" Margin="0,4">
+                        <CheckBox Grid.Column="0" x:Name="checkDgpuTrayIcon"
+                                  Content="Show dGPU status"
+                                  VerticalAlignment="Center"
+                                  IsCheckedChanged="CheckDgpuTrayIcon_Changed" />
+                    </Grid>
+                    <TextBlock x:Name="labelDgpuTrayHint" Classes="label-dim"
+                               Text="Green = active, gray = suspended, hollow = off"
+                               TextWrapping="Wrap" Margin="24,0,0,0" />
                 </StackPanel>
             </Border>
 
