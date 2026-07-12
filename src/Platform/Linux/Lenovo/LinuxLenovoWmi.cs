@@ -245,6 +245,15 @@ public class LinuxLenovoWmi : IHardwareControl
         return -1;
     }
 
+    /// <summary>True when only the conservation toggle (fixed ~60% cap)
+    /// backs the charge limit: no native percent threshold file. The
+    /// charge-limit slider then snaps to the two real outcomes (60/100).</summary>
+    public bool UsesConservationFallback =>
+        (_batteryDir == null
+            || !File.Exists(Path.Combine(_batteryDir, "charge_control_end_threshold")))
+        && (LenovoSysfs.BatteryChargeTypes() != null
+            || LenovoSysfs.IdeapadAttr("conservation_mode") != null);
+
     public bool SetBatteryChargeLimit(int percent)
     {
         percent = Math.Clamp(percent, 40, 100);
@@ -300,12 +309,10 @@ public class LinuxLenovoWmi : IHardwareControl
     public bool CanToggleGpuBackend()
     {
         // The PCI backend is the only Eco mechanism on Lenovo; offer the
-        // selector whenever a dGPU exists or PCI mode is already active.
-        if (Helpers.AppConfig.IsPciGpuBackend())
-            return true;
-        return Directory.Exists("/sys/module/nvidia")
-            || Directory.Exists("/sys/module/nouveau")
-            || SysfsHelper.FindHwmonByName("amdgpu") != null;
+        // selector only when a second GPU exists. The old fallbacks (loaded
+        // nouveau module, any amdgpu hwmon) matched iGPU-only machines like
+        // the Legion Go S, where backend choice is meaningless.
+        return Gpu.GPUModeControl.HasSecondGpu();
     }
 
     // Display - no mainline Lenovo equivalents

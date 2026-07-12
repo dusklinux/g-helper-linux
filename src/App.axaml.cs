@@ -50,6 +50,12 @@ public class App : Application
     public static TrayIcon? TrayIconInstance { get; set; }
 
     /// <summary>
+    /// On-screen keyboard window. Created on first use, then hidden/shown by
+    /// the tray toggle so its uinput device survives across uses.
+    /// </summary>
+    public static UI.Views.OnScreenKeyboardWindow? OskWindowInstance { get; private set; }
+
+    /// <summary>
     /// Software fn-lock remapper. Singleton instance, lifetime bound to the app.
     /// Null until <see cref="StartFnLock"/> is called for the first time.
     /// </summary>
@@ -61,6 +67,22 @@ public class App : Application
     /// Always present in the tray menu once <see cref="BuildTrayMenu"/> runs.
     /// </summary>
     private static NativeMenuItem? _trayFnLockItem;
+    private static NativeMenuItem? _trayDgpuStatusItem;
+
+    // Kernel runtime PM strings stay untranslated (technical labels).
+    // null status with a known second GPU means Eco removed it from the bus.
+    private static string BuildDgpuStatusHeader()
+        => "dGPU: " + (Gpu.GPUModeControl.DgpuRuntimeStatus() ?? "off");
+
+    /// <summary>Refresh the tray dGPU status row. Called from TraySystemMonitor's tick.</summary>
+    public static void RefreshTrayDgpuStatus()
+    {
+        if (_trayDgpuStatusItem == null)
+            return;
+        string header = BuildDgpuStatusHeader();
+        if ((_trayDgpuStatusItem.Header as string) != header)
+            _trayDgpuStatusItem.Header = header;
+    }
 
     /// <summary>
     /// Set to true when the app is on a shutdown path (tray Quit, MainWindow
@@ -150,8 +172,20 @@ public class App : Application
             if (AppConfig.Is("topmost"))
                 MainWindowInstance.Topmost = true;
 
-            // Show main window on startup unless "Start minimized to tray" is enabled
-            if (!AppConfig.Is("silent_start"))
+            bool oskStart = desktop.Args?.Contains("--osk") == true;
+            bool gameMode = Platform.Linux.SteamShortcuts.IsSteamDeckGameMode;
+
+            if (gameMode)
+            {
+                // gamescope (SteamOS game mode): run fullscreen like Heroic
+                // does - floating windows get broken input coordinate mapping
+                // under gamescope, and the session shows one app anyway.
+                MainWindowInstance.WindowState = WindowState.FullScreen;
+                desktop.MainWindow = MainWindowInstance;
+            }
+            // Show main window on startup unless "Start minimized to tray" is
+            // enabled. "--osk" also skips it: the user asked for the keyboard.
+            else if (!AppConfig.Is("silent_start") && !oskStart)
             {
                 WindowPositioner.BottomRight(MainWindowInstance);
                 desktop.MainWindow = MainWindowInstance;
@@ -162,6 +196,24 @@ public class App : Application
 
             // Start hotkey listener
             StartHotkeyListener();
+
+            // Command socket for follow-up "ghelper --osk" invocations, and
+            // the keyboard itself when this startup was osk-initiated.
+            CommandIpc.StartServer(cmd =>
+            {
+                if (cmd == "toggle-osk")
+                    Avalonia.Threading.Dispatcher.UIThread.Post(ToggleOskWindow);
+            });
+            if (oskStart)
+                Avalonia.Threading.Dispatcher.UIThread.Post(ToggleOskWindow);
+
+            // Controller-driven focus navigation (game mode / handhelds).
+            GHelper.Linux.Input.GamepadNav.Start();
+
+            // One-time "add to Steam library?" offer. Not in game mode: the
+            // app was just launched from Steam there.
+            if (!gameMode)
+                OfferSteamShortcutOnce();
 
             // Apply saved performance mode on startup
             Mode?.SetPerformanceMode();
@@ -189,7 +241,11 @@ public class App : Application
             Task.Run(() =>
             {
                 MainWindow.InitAuraHardware();
-                USB.XGM.InitHardware();
+                // XG Mobile docks only attach to ASUS laptops; skip the USB
+                // probe elsewhere. AURA still probes on Generic so external
+                // ASUS RGB keyboards keep working.
+                if (AppConfig.IsAsusDevice())
+                    USB.XGM.InitHardware();
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => MainWindowInstance?.RefreshKeyboard());
             });
 
@@ -202,6 +258,10 @@ public class App : Application
 
             // Poll for BT mouse reconnect even when the window is hidden.
             // HidSharp misses BT hidraw events, so periodic rescan is needed.
+            // Backs off to 5 min after 3 empty scans (most machines never
+            // have a supported mouse); hot-plug events still detect
+            // immediately, the timer only drives battery refresh cadence.
+            int emptyScans = 0;
             _peripheralPollTimer = new System.Threading.Timer(_ =>
             {
                 if (Interlocked.CompareExchange(ref _peripheralPollRunning, 1, 0) != 0)
@@ -210,6 +270,10 @@ public class App : Application
                 {
                     Peripherals.PeripheralsProvider.RefreshBatteryForAllDevices();
                     Peripherals.PeripheralsProvider.DetectAllMice();
+                    bool any = Peripherals.PeripheralsProvider.ConnectedMice.Count > 0;
+                    emptyScans = any ? 0 : Math.Min(emptyScans + 1, 3);
+                    var period = TimeSpan.FromSeconds(emptyScans >= 3 ? 300 : 20);
+                    _peripheralPollTimer?.Change(period, period);
                 }
                 catch (Exception ex)
                 {
@@ -361,6 +425,11 @@ public class App : Application
         }
         else
         {
+            // ASUS and Generic both use the ASUS backend: on Generic every
+            // ASUS attribute resolves to nothing and universal paths
+            // (platform_profile, charge threshold, backlight) still work.
+            if (Helpers.AppConfig.IsGenericDevice())
+                Logger.WriteLine($"Vendor: generic ({Helpers.AppConfig.GetDmiVendor()}) - universal features only");
             Wmi = new LinuxAsusWmi();
         }
         Power = new LinuxPowerManager();
@@ -757,6 +826,15 @@ public class App : Application
             menu.Add(new NativeMenuItemSeparator());
         }
 
+        // dGPU runtime PM status row (issue #150). Non-clickable text; the
+        // sysfs read never wakes the card. TraySystemMonitor refreshes it.
+        if (Gpu.GPUModeControl.HasSecondGpu())
+        {
+            _trayDgpuStatusItem = new NativeMenuItem(BuildDgpuStatusHeader()) { IsEnabled = false };
+            menu.Add(_trayDgpuStatusItem);
+            menu.Add(new NativeMenuItemSeparator());
+        }
+
         // Settings
         var settings = new NativeMenuItem(Labels.Get("settings"));
         settings.Click += (_, _) => ToggleMainWindow();
@@ -810,6 +888,12 @@ public class App : Application
         };
         menu.Add(fnItem);
 
+        // On-screen keyboard, for touch-only use (SteamOS desktop mode on
+        // handhelds). Types into the focused window via uinput.
+        var oskItem = new NativeMenuItem(Labels.Get("osk_tray_label"));
+        oskItem.Click += (_, _) => ToggleOskWindow();
+        menu.Add(oskItem);
+
         menu.Add(new NativeMenuItemSeparator());
 
         // Quit
@@ -829,8 +913,12 @@ public class App : Application
         if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
             return;
 
-        // Snapshot: Close() modifies the Windows collection during iteration
-        var visibleWindows = desktop.Windows.Where(w => w.IsVisible).ToList();
+        // Snapshot: Close() modifies the Windows collection during iteration.
+        // The on-screen keyboard lives outside this toggle; it has its own
+        // tray item and must not swallow a "show settings" click.
+        var visibleWindows = desktop.Windows
+            .Where(w => w.IsVisible && w is not UI.Views.OnScreenKeyboardWindow)
+            .ToList();
 
         // Any window visible → close them all (child windows get recreated on demand)
         if (visibleWindows.Count > 0)
@@ -856,6 +944,59 @@ public class App : Application
         WindowPositioner.BottomRight(MainWindowInstance);
         MainWindowInstance.Show();
         MainWindowInstance.Activate();
+    }
+
+    /// <summary>
+    /// One-time offer to add G-Helper to the Steam library. Shown when Steam
+    /// is installed and the shortcut is absent; remembered either way so it
+    /// never nags. The actual add runs through the same SteamShortcuts path
+    /// as the Updates-window toggle.
+    /// </summary>
+    private static void OfferSteamShortcutOnce()
+    {
+        if (AppConfig.Is("steam_offer_shown"))
+            return;
+        // Handheld-oriented feature: desktops add the shortcut from the
+        // Updates window instead of getting a first-launch dialog.
+        if (!AppConfig.IsHandheldDevice() && !Platform.Linux.ImmutableOs.IsSteamOs)
+            return;
+        Task.Run(() =>
+        {
+            try
+            {
+                if (!Platform.Linux.SteamShortcuts.IsSteamAvailable()
+                    || Platform.Linux.SteamShortcuts.IsAdded())
+                    return;
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    AppConfig.Set("steam_offer_shown", 1);
+                    new UI.Views.SteamOfferWindow().Show();
+                });
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine($"Steam offer check failed: {ex.Message}");
+            }
+        });
+    }
+
+    /// <summary>
+    /// Show/hide the on-screen keyboard. The window is created once and then
+    /// hidden on close so the virtual keyboard device stays registered.
+    /// Never activated: focus must stay on the window being typed into.
+    /// </summary>
+    public static void ToggleOskWindow()
+    {
+        if (OskWindowInstance == null || OskWindowInstance.PlatformImpl == null)
+        {
+            OskWindowInstance = new UI.Views.OnScreenKeyboardWindow();
+            OskWindowInstance.Show();
+            return;
+        }
+        if (OskWindowInstance.IsVisible)
+            OskWindowInstance.Hide();
+        else
+            OskWindowInstance.Show();
     }
 
     /// <summary>
@@ -1234,6 +1375,9 @@ public class App : Application
         _peripheralPollTimer?.Dispose();
         UI.Views.ExtraWindow.StopClamshellInhibit();
         FnLock?.Stop();
+        OskWindowInstance?.ShutdownDevice();
+        CommandIpc.Stop();
+        GHelper.Linux.Input.GamepadNav.Stop();
         AnimeMatrix?.Dispose();
         GHelper.Linux.Input.NumberPad.Stop();
         Platform.Linux.StatusLed.Shutdown();

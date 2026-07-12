@@ -159,6 +159,16 @@ public partial class MainWindow : Window
         });
         VisualizePeripherals();
 
+        // OSK header button: touch-first devices in desktop sessions only.
+        // Game mode has Steam's overlay keyboard; desktops use the tray item.
+        buttonOsk.IsVisible =
+            (Helpers.AppConfig.IsHandheldDevice() || Platform.Linux.ImmutableOs.IsSteamOs)
+            && !Platform.Linux.SteamShortcuts.IsSteamDeckGameMode;
+
+        // Arcade launcher: handhelds + SteamOS (gamepad-playable).
+        buttonArcade.IsVisible =
+            Helpers.AppConfig.IsHandheldDevice() || Platform.Linux.ImmutableOs.IsSteamOs;
+
         // Dev-only launchers for UI checks on machines without the
         // matching hardware: every app window, and force-show toggles
         // for hardware-gated panels.
@@ -275,6 +285,8 @@ public partial class MainWindow : Window
         SetButtonText(buttonSilent, Labels.Get("mode_silent"));
         SetButtonText(buttonBalanced, Labels.Get("mode_balanced"));
         SetButtonText(buttonTurbo, Labels.Get("mode_turbo"));
+
+        ToolTip.SetTip(buttonOsk, Labels.Get("osk_tray_label"));
 
         // Lenovo: the power button LED mirrors the firmware thermal mode -
         // surface the color mapping as tooltips for discoverability.
@@ -583,28 +595,7 @@ public partial class MainWindow : Window
     /// <summary>runtime PM status ("active"/"suspended") of the first non-boot
     /// discrete GPU on the PCI bus, or null when no dGPU is present.</summary>
     private static string? ReadDgpuRuntimeStatus()
-    {
-        try
-        {
-            foreach (var dev in Directory.EnumerateDirectories("/sys/bus/pci/devices"))
-            {
-                string cls = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(dev, "class")) ?? "";
-                if (!cls.StartsWith("0x0300", StringComparison.Ordinal)
-                    && !cls.StartsWith("0x0302", StringComparison.Ordinal))
-                    continue;
-                // Skip the boot display (iGPU)
-                if (Platform.Linux.SysfsHelper.ReadInt(Path.Combine(dev, "boot_vga"), 0) == 1)
-                    continue;
-                string vendor = Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(dev, "vendor")) ?? "";
-                if (!vendor.StartsWith("0x10de", StringComparison.OrdinalIgnoreCase)
-                    && !vendor.StartsWith("0x1002", StringComparison.OrdinalIgnoreCase))
-                    continue;
-                return Platform.Linux.SysfsHelper.ReadAttribute(Path.Combine(dev, "power/runtime_status"));
-            }
-        }
-        catch { }
-        return null;
-    }
+        => Gpu.GPUModeControl.DgpuRuntimeStatus();
 
     private void UpdateGpuButtons()
     {
@@ -1512,10 +1503,16 @@ public partial class MainWindow : Window
         if (_auraInitialized)
             return;
 
-        // Run hardware init if not already done (normal startup path).
-        // Don't set _auraInitialized until hardware is confirmed available
-        // if the background InitAuraHardware() hasn't finished yet, we'll retry
-        // when it posts RefreshKeyboard() back to the UI thread.
+        // The HID handshake runs on the startup worker (App posts
+        // RefreshKeyboard when it finishes); never do it inline on the UI
+        // thread - it used to stall the first window paint on ASUS.
+        if (!_auraHardwareInitialized)
+        {
+            panelAura.IsVisible = Helpers.AppConfig.Is("show_aura_dev");
+            return;
+        }
+
+        // Hardware init already ran; this is a cache-hit availability check.
         bool hasAura = InitAuraHardware();
         panelAura.IsVisible = hasAura || Helpers.AppConfig.Is("show_aura_dev");
         if (!hasAura)
@@ -2030,6 +2027,9 @@ public partial class MainWindow : Window
 
         // Version + model in footer
         labelVersion.Text = Labels.Format("version_prefix", Helpers.AppConfig.AppVersion, model);
+
+        // Play glyph + localized game title.
+        labelArcade.Text = "\u25B6  " + Labels.Get("arcade_game_title");
 
         // Check autostart status from config (suppress to avoid re-writing .desktop file)
         _suppressEvents = true;
@@ -2573,6 +2573,12 @@ public partial class MainWindow : Window
         RefreshFnLockButton();
     }
 
+    /// <summary>Show/hide the on-screen keyboard (same path as the tray item).
+    /// A visible button matters on handhelds where the tray is hard to reach
+    /// by touch.</summary>
+    private void ButtonOsk_Click(object? sender, RoutedEventArgs e)
+        => App.ToggleOskWindow();
+
     /// <summary>
     /// Update the FN-Lock title-row button visual to reflect remapper state.
     /// Always visible; styling flips between the default ghelper button (OFF /
@@ -2625,16 +2631,7 @@ public partial class MainWindow : Window
             if (_versionClickCount >= 7)
             {
                 _versionClickCount = 0;
-                if (_arcadeWindow == null || !_arcadeWindow.IsVisible)
-                {
-                    _arcadeWindow = new ArcadeWindow();
-                    WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_arcadeWindow);
-                    _arcadeWindow.Show();
-                }
-                else
-                {
-                    _arcadeWindow.Activate();
-                }
+                OpenArcade();
             }
         };
 
@@ -2653,6 +2650,22 @@ public partial class MainWindow : Window
         // Shake timer: runs at ~30ms for oscillation frames
         _coinShakeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(30) };
         _coinShakeTimer.Tick += CoinShake_Tick;
+    }
+
+    private void ButtonArcade_Click(object? sender, RoutedEventArgs e) => OpenArcade();
+
+    private void OpenArcade()
+    {
+        if (_arcadeWindow == null || !_arcadeWindow.IsVisible)
+        {
+            _arcadeWindow = new ArcadeWindow();
+            WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_arcadeWindow);
+            _arcadeWindow.Show();
+        }
+        else
+        {
+            _arcadeWindow.Activate();
+        }
     }
 
     private void ButtonDonate_Click(object? sender, RoutedEventArgs e)

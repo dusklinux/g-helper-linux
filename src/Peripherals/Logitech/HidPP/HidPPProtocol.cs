@@ -42,10 +42,11 @@ public static class HidPPProtocol
 
         // reply[2] = stateOfCharge (0-100)
         // reply[3] = batteryLevel bitfield (8=full, 4=good, 2=low, 1=critical)
-        // reply[4] = chargingStatus (0=discharging, 1=charging, 2=almostFull, 3=full)
+        // reply[4] = chargingStatus: 0=discharging, 1=charging, 2=chargingNearlyFull,
+        // 3=full, 4=chargingSlow, 5=invalidBattery, 6=thermalError, 7=chargingError
         int soc = reply[2];
         byte chargingStatus = reply[4];
-        bool charging = chargingStatus is 1 or 2 or 3;
+        bool charging = chargingStatus is 1 or 2 or 3 or 4;
 
         // If SoC is zero, estimate from batteryLevel bits.
         if (soc == 0)

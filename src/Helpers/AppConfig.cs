@@ -402,28 +402,51 @@ public static class AppConfig
         return _vendor;
     }
 
-    /// <summary>True on Lenovo hardware (DMI sys_vendor contains LENOVO, or
-    /// Motorola which Lenovo uses on some devices). Overridable with the
-    /// "vendor" config key set to "lenovo" or "asus".</summary>
-    public static bool IsLenovoDevice()
+    /// <summary>Hardware vendor class this build is running on. Generic
+    /// covers everything that is neither ASUS nor Lenovo (Dell, HP,
+    /// Framework, desktops): universal features only, no vendor-specific
+    /// provisioning or probes.</summary>
+    public enum DeviceVendor { Asus, Lenovo, Generic }
+
+    private static DeviceVendor? _vendorKind;
+
+    /// <summary>Detected vendor class. Overridable with the "vendor" config
+    /// key set to "asus", "lenovo" or "generic" (cached; restart to apply).</summary>
+    public static DeviceVendor Vendor => _vendorKind ??= DetectVendor();
+
+    private static DeviceVendor DetectVendor()
     {
         string? force = GetString("vendor");
         if (force != null)
         {
             if (force.Equals("lenovo", StringComparison.OrdinalIgnoreCase))
-                return true;
+                return DeviceVendor.Lenovo;
             if (force.Equals("asus", StringComparison.OrdinalIgnoreCase))
-                return false;
+                return DeviceVendor.Asus;
+            if (force.Equals("generic", StringComparison.OrdinalIgnoreCase))
+                return DeviceVendor.Generic;
         }
 
         string vendor = GetDmiVendor();
-        return vendor.Contains("LENOVO", StringComparison.OrdinalIgnoreCase)
-            || vendor.Contains("MOTOROLA", StringComparison.OrdinalIgnoreCase);
+        if (vendor.Contains("LENOVO", StringComparison.OrdinalIgnoreCase)
+            || vendor.Contains("MOTOROLA", StringComparison.OrdinalIgnoreCase))
+            return DeviceVendor.Lenovo;
+        if (vendor.Contains("ASUS", StringComparison.OrdinalIgnoreCase))
+            return DeviceVendor.Asus;
+        return DeviceVendor.Generic;
     }
 
-    /// <summary>True when the ASUS platform backend should be used (default
-    /// for everything that is not a detected Lenovo device).</summary>
-    public static bool IsAsusDevice() => !IsLenovoDevice();
+    /// <summary>True on Lenovo hardware (DMI sys_vendor contains LENOVO, or
+    /// Motorola which Lenovo uses on some devices).</summary>
+    public static bool IsLenovoDevice() => Vendor == DeviceVendor.Lenovo;
+
+    /// <summary>True on ASUS hardware only (DMI sys_vendor contains ASUS).
+    /// Non-ASUS, non-Lenovo machines are Generic, NOT ASUS: ASUS-only
+    /// features (fan curve editor, NumberPad, AURA hysteresis) stay off.</summary>
+    public static bool IsAsusDevice() => Vendor == DeviceVendor.Asus;
+
+    /// <summary>Neither ASUS nor Lenovo: universal feature set only.</summary>
+    public static bool IsGenericDevice() => Vendor == DeviceVendor.Generic;
 
     // Model detection (Linux: DMI sysfs)
 
@@ -487,7 +510,21 @@ public static class AppConfig
     public static bool IsVivoZenbook() => ContainsModel("Vivobook") || ContainsModel("Zenbook") || ContainsModel("EXPERTBOOK") || ContainsModel(" V16") || ContainsModel("ASUSLaptop");
     public static bool IsProArt() => ContainsModel("ProArt");
     public static bool IsDUO() => ContainsModel("Duo") || ContainsModel("GX550") || ContainsModel("GX551") || ContainsModel("GX650") || ContainsModel("UX840") || ContainsModel("UX482");
-    public static bool IsAlly() => ContainsModel("RC7");
+    /// <summary>ROG Ally family by explicit model prefixes (RC71L Ally,
+    /// RC72L Ally X, RC73 next-gen), not a bare "RC7" substring that could
+    /// match unrelated product names.</summary>
+    public static bool IsAlly() =>
+        ContainsModel("RC71") || ContainsModel("RC72") || ContainsModel("RC73");
+
+    /// <summary>Lenovo Legion Go family, by DMI product_name numbers (same
+    /// list hhd matches): Go 83E1, Go 2 83N0/83N1, Go S 83L3/83N6/83Q2/83Q3.</summary>
+    public static bool IsLegionGo() =>
+        ContainsModel("83E1") || ContainsModel("83N0") || ContainsModel("83N1")
+        || ContainsModel("83L3") || ContainsModel("83N6") || ContainsModel("83Q2")
+        || ContainsModel("83Q3");
+
+    /// <summary>Any supported gaming handheld (ROG Ally or Legion Go).</summary>
+    public static bool IsHandheldDevice() => IsAlly() || IsLegionGo();
     public static bool IsASUS() => ContainsModel("ROG") || ContainsModel("TUF") || ContainsModel("Vivobook") || ContainsModel("Zenbook");
     public static bool IsVivoZenPro() => ContainsModel("Vivobook") || ContainsModel("Zenbook") || ContainsModel("ProArt") || ContainsModel("EXPERTBOOK") || ContainsModel(" V16") || ContainsModel("ASUSLaptop");
 
@@ -519,6 +556,7 @@ public static class AppConfig
 
     public static bool IsForceSetGPUMode() => Is("gpu_mode_force_set") || (ContainsModel("503") && IsNotFalse("gpu_mode_force_set"));
     public static bool IsShutdownReset() => Is("shutdown_reset") || ContainsModel("FX507Z");
+    // NOT WIRED ON LINUX (upstream parity stub).
     public static bool IsStopAC() => IsAlly() || Is("stop_ac");
     public static bool IsChargeLimit6080() => ContainsModel("GU405") || ContainsModel("GU606") || ContainsModel("H760") || ContainsModel("GA403") || ContainsModel("GU605") || ContainsModel("GA605") || ContainsModel("GA503R") || (IsTUF() && !(ContainsModel("FX507Z") || ContainsModel("FA617") || ContainsModel("FA607")));
 
@@ -647,7 +685,10 @@ public static class AppConfig
     public static bool IsStrixNumpad() => ContainsModel("G713R");
     public static bool NoMKeys() => (ContainsModel("Z13") && !IsARCNM()) || ContainsModel("FX706") || ContainsModel("FA706") || ContainsModel("FA506") || ContainsModel("FX506") || ContainsModel("Duo") || ContainsModel("FX505");
     public static bool IsM4Button() => IsDUO() || ContainsModel("GZ302EA");
+    // NOT WIRED ON LINUX: FnLockKeymap.MediaKeysSubstrings is the live copy
+    // (a superset that adds NoAura models). Keep both in sync when editing.
     public static bool MediaKeys() => (ContainsModel("GA401I") && !ContainsModel("GA401IHR")) || ContainsModel("G712L") || ContainsModel("GX502L");
+    // NOT WIRED ON LINUX (upstream parity stub).
     public static bool IsHardwareHotkeys() => ContainsModel("FX506");
     public static bool IsHardwareTouchpadToggle() => ContainsModel("FA507");
     public static bool IsNoFNV() => ContainsModel("FX507") || ContainsModel("FX707");

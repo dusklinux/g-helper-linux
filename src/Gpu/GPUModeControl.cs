@@ -1592,6 +1592,8 @@ public class GPUModeControl
 
     private const string DgpuSlotKey = "dgpu_pci_slot";
     private const string DgpuBridgeKey = "dgpu_pci_bridge";
+    private const string DgpuBdfKey = "dgpu_pci_bdf";
+    private const string DgpuSlotMissKey = "dgpu_slot_miss";
 
     public void CacheDgpuSlotIfPresent()
     {
@@ -1599,8 +1601,47 @@ public class GPUModeControl
         {
             ResolveDgpuSlot();
             ResolveDgpuBridge();
+            ValidateDgpuCacheAtStartup();
         }
         catch (Exception ex) { Logger.WriteLine($"GPUModeControl: CacheDgpuSlotIfPresent failed: {ex.Message}"); }
+    }
+
+    /// <summary>
+    /// Once per app start: age out a dGPU cache that no longer matches this
+    /// machine (config imported from another system, or hardware swap).
+    /// While the dGPU is merely hidden (Eco artifacts / validated slot) the
+    /// cache is legitimate and the counter resets. After 3 consecutive
+    /// starts with no evidence, the cached keys are dropped so
+    /// <see cref="HasSecondGpu"/> stops reporting a phantom dGPU.
+    /// </summary>
+    private static void ValidateDgpuCacheAtStartup()
+    {
+        if (string.IsNullOrEmpty(AppConfig.GetString(DgpuSlotKey))
+            && string.IsNullOrEmpty(AppConfig.GetString(DgpuBdfKey)))
+            return;
+
+        bool evidence = FindDgpuPciDevice() != null
+            || EcoBlockArtifactsPresent()
+            || ValidatedDgpuSlotCached();
+        if (evidence)
+        {
+            if (AppConfig.Get(DgpuSlotMissKey, 0) != 0)
+                AppConfig.Set(DgpuSlotMissKey, 0);
+            return;
+        }
+
+        int misses = AppConfig.Get(DgpuSlotMissKey, 0) + 1;
+        if (misses < 3)
+        {
+            AppConfig.Set(DgpuSlotMissKey, misses);
+            Logger.WriteLine($"GPUModeControl: cached dGPU slot unverified ({misses}/3)");
+            return;
+        }
+        AppConfig.Remove(DgpuSlotKey);
+        AppConfig.Remove(DgpuBridgeKey);
+        AppConfig.Remove(DgpuBdfKey);
+        AppConfig.Set(DgpuSlotMissKey, 0);
+        Logger.WriteLine("GPUModeControl: cleared stale dGPU cache (no dGPU evidence on 3 consecutive starts)");
     }
 
     /// <summary>
@@ -1643,6 +1684,10 @@ public class GPUModeControl
         string? bdf = FindDgpuPciDevice()?.bdf;
         if (!string.IsNullOrEmpty(bdf))
         {
+            // Remember the dGPU BDF so the slot cache can later be validated
+            // against this machine (see ValidatedDgpuSlotCached).
+            if (AppConfig.GetString(DgpuBdfKey) != bdf)
+                AppConfig.Set(DgpuBdfKey, bdf!);
             string? slot = FindDgpuSlot(bdf!);
             if (!string.IsNullOrEmpty(slot))
             {
@@ -1658,33 +1703,102 @@ public class GPUModeControl
     }
 
     /// <summary>
-    /// Universal, vendor-neutral, Eco-resilient test for whether this machine has
-    /// a discrete GPU. Used to decide whether the GPU-mode boot integration
-    /// (ghelper-gpu-boot.service) is relevant on this hardware.
+    /// Universal, vendor-neutral, Eco-resilient test for whether this machine
+    /// has a second GPU at all. GPU mode switching (Eco / Standard / Ultimate),
+    /// the GPU backend selector and the GPU boot integration only make sense
+    /// with two GPUs; with a single (integrated) GPU only tuning applies.
     ///
-    ///   1. Live PCI scan (<see cref="FindDgpuPciDevice"/>): NVIDIA or non-iGPU
-    ///      AMD VGA/3D function - works on any vendor, no driver needed; NOT
-    ///      ASUS-specific.
-    ///   2. Cached dGPU slot (<see cref="DgpuSlotKey"/>): set whenever the dGPU was
-    ///      ever seen (<see cref="CacheDgpuSlotIfPresent"/> at startup). Survives
-    ///      Eco mode, where the dGPU is removed from the PCI bus and the live scan
-    ///      would otherwise miss it.
-    ///   3. ASUS firmware bonus: dgpu_disable / gpu_mux_mode attributes exist only
-    ///      on dGPU machines and persist in Eco. One extra signal, not the only one.
-    ///
-    /// Errs toward "true" when uncertain, so a dGPU laptop currently in Eco is
-    /// never misclassified as integrated-only.
+    ///   1. Live PCI scan: two or more display-class (0x03xxxx) functions on
+    ///      the bus, or <see cref="FindDgpuPciDevice"/> finds a non-boot dGPU.
+    ///   2. Our own Eco block artifacts: the dGPU was hot-removed by us, the
+    ///      switching UI must stay reachable to undo it.
+    ///   3. Cached dGPU slot, VALIDATED against the live slot list (address
+    ///      must match the cached BDF) so a config file imported from another
+    ///      machine cannot fake a dGPU. Survives Eco (slot dir persists).
+    ///   4. ASUS firmware: dgpu_disable / gpu_mux_mode attributes, vetoed by
+    ///      the NoGpu() model list (some iGPU-only firmwares expose the
+    ///      attribute anyway).
     /// </summary>
-    public static bool HasDiscreteGpu()
+    public static bool HasSecondGpu()
     {
+        if (CountDisplayClassFunctions() >= 2)
+            return true;
         if (FindDgpuPciDevice() != null)
             return true;
-        if (!string.IsNullOrEmpty(AppConfig.GetString(DgpuSlotKey)))
+        if (EcoBlockArtifactsPresent())
             return true;
-        var wmi = App.Wmi;
-        return wmi != null
-            && (wmi.IsFeatureSupported(AsusAttributes.DgpuDisable)
-                || wmi.IsFeatureSupported(AsusAttributes.GpuMuxMode));
+        // nvidia/nouveau bound with no matching device = dGPU hot-removed.
+        // These drivers never load on machines without NVIDIA hardware.
+        if (Platform.Linux.LinuxAsusWmi.HasNvidiaModuleLoaded())
+            return true;
+        if (ValidatedDgpuSlotCached())
+            return true;
+        if (!AppConfig.NoGpu())
+        {
+            var wmi = App.Wmi;
+            if (wmi != null
+                && (wmi.IsFeatureSupported(AsusAttributes.DgpuDisable)
+                    || wmi.IsFeatureSupported(AsusAttributes.GpuMuxMode)))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>Alias kept for the installer gate (ghelper-gpu-boot.service
+    /// applicability): identical semantics to <see cref="HasSecondGpu"/>.</summary>
+    public static bool HasDiscreteGpu() => HasSecondGpu();
+
+    /// <summary>Number of PCI functions with a display class (0x03xxxx: VGA,
+    /// 3D, other display controllers). Vendor-agnostic, driver not needed.</summary>
+    private static int CountDisplayClassFunctions()
+    {
+        int count = 0;
+        try
+        {
+            string devDir = TestPathPrefix + "/sys/bus/pci/devices";
+            if (!Directory.Exists(devDir))
+                return 0;
+            foreach (var dev in Directory.GetDirectories(devDir))
+            {
+                string clsPath = Path.Combine(dev, "class");
+                if (!File.Exists(clsPath))
+                    continue;
+                if (File.ReadAllText(clsPath).Trim()
+                    .StartsWith("0x03", StringComparison.Ordinal))
+                    count++;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteLine($"GPUModeControl: display-class count failed: {ex.Message}");
+        }
+        return count;
+    }
+
+    /// <summary>Our PCI-Eco block artifacts (modprobe blacklist + udev
+    /// hot-remove rule). Their presence means a dGPU exists but is hidden.</summary>
+    internal static bool EcoBlockArtifactsPresent() =>
+        File.Exists(ModprobeBlockPath) || File.Exists(UdevRemovePath);
+
+    /// <summary>
+    /// True when the cached dGPU slot refers to THIS machine: the slot dir
+    /// exists and its address matches the cached dGPU BDF. Old configs that
+    /// predate the BDF cache fall back to slot-dir existence only.
+    /// </summary>
+    private static bool ValidatedDgpuSlotCached()
+    {
+        string? slot = AppConfig.GetString(DgpuSlotKey);
+        if (string.IsNullOrEmpty(slot))
+            return false;
+        string slotDir = TestPathPrefix + $"/sys/bus/pci/slots/{slot}";
+        if (!Directory.Exists(slotDir))
+            return false;
+        string? cachedBdf = AppConfig.GetString(DgpuBdfKey);
+        if (string.IsNullOrEmpty(cachedBdf))
+            return true; // legacy cache: slot presence is all we have
+        string addr = SysfsHelper.ReadAttribute(Path.Combine(slotDir, "address")) ?? "";
+        return addr.Length > 0
+            && cachedBdf.StartsWith(addr, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -2576,6 +2690,38 @@ public class GPUModeControl
     {
         string path = TestPathPrefix + $"/sys/bus/pci/devices/{pciAddr}/power/runtime_status";
         return SysfsHelper.ReadAttribute(path) ?? "active";
+    }
+
+    /// <summary>
+    /// runtime PM status ("active"/"suspended") of the first non-boot
+    /// discrete GPU (NVIDIA or AMD) on the PCI bus, or null when none is
+    /// visible (no dGPU, or Eco removed it from the bus). Reading
+    /// runtime_status never wakes the device.
+    /// </summary>
+    public static string? DgpuRuntimeStatus()
+    {
+        try
+        {
+            string pciDir = TestPathPrefix + "/sys/bus/pci/devices";
+            if (!Directory.Exists(pciDir))
+                return null;
+            foreach (var dev in Directory.EnumerateDirectories(pciDir))
+            {
+                string cls = SysfsHelper.ReadAttribute(Path.Combine(dev, "class")) ?? "";
+                if (!cls.StartsWith("0x0300", StringComparison.Ordinal)
+                    && !cls.StartsWith("0x0302", StringComparison.Ordinal))
+                    continue;
+                if (SysfsHelper.ReadInt(Path.Combine(dev, "boot_vga"), 0) == 1)
+                    continue;
+                string vendor = SysfsHelper.ReadAttribute(Path.Combine(dev, "vendor")) ?? "";
+                if (!vendor.StartsWith("0x10de", StringComparison.OrdinalIgnoreCase)
+                    && !vendor.StartsWith("0x1002", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                return SysfsHelper.ReadAttribute(Path.Combine(dev, "power/runtime_status"));
+            }
+        }
+        catch { }
+        return null;
     }
 
     /// <summary>

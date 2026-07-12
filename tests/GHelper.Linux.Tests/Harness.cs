@@ -53,10 +53,11 @@ public static class Harness
             // WriteFakeNvidiaModuleOnDisk(). Cache is invalidated below so
             // the probes re-read the fresh state.
             string sysBusPci = Path.Combine(TempRoot, "sys", "bus", "pci", "devices");
+            string sysBusPciSlots = Path.Combine(TempRoot, "sys", "bus", "pci", "slots");
             string sysModule = Path.Combine(TempRoot, "sys", "module");
             string libModules = Path.Combine(TempRoot, "lib", "modules");
             string procKernel = Path.Combine(TempRoot, "proc", "sys", "kernel");
-            foreach (var d in new[] { sysBusPci, sysModule, libModules, procKernel })
+            foreach (var d in new[] { sysBusPci, sysBusPciSlots, sysModule, libModules, procKernel })
             {
                 if (Directory.Exists(d))
                     Directory.Delete(d, recursive: true);
@@ -173,6 +174,54 @@ public static class Harness
             Directory.CreateDirectory(updates);
             File.WriteAllText(Path.Combine(updates, "nvidia.ko"), "fake module\n");
             LinuxAsusWmi.InvalidateGpuPresenceCache();
+        }
+
+        // ---- GPU topology fixtures (HasSecondGpu) -------------------------
+
+        /// <summary>nouveau.ko on disk, the way every distro kernel ships
+        /// it, including iGPU-only machines. Weak dGPU evidence by design.</summary>
+        public void WriteFakeNouveauOnDisk()
+        {
+            string release = "test-kernel-1.0";
+            string osreleaseDir = Path.Combine(TempRoot, "proc", "sys", "kernel");
+            Directory.CreateDirectory(osreleaseDir);
+            File.WriteAllText(Path.Combine(osreleaseDir, "osrelease"), release + "\n");
+            string nouveau = Path.Combine(TempRoot, "lib", "modules", release,
+                "kernel", "drivers", "gpu", "drm", "nouveau");
+            Directory.CreateDirectory(nouveau);
+            File.WriteAllText(Path.Combine(nouveau, "nouveau.ko.zst"), "fake module\n");
+            LinuxAsusWmi.InvalidateGpuPresenceCache();
+        }
+
+        /// <summary>AMD iGPU: boot display, VGA class, vendor 0x1002.</summary>
+        public void WriteFakeAmdIgpuDevice()
+        {
+            string dev = Path.Combine(TempRoot, "sys", "bus", "pci", "devices", "0000:e2:00.0");
+            Directory.CreateDirectory(dev);
+            File.WriteAllText(Path.Combine(dev, "vendor"), "0x1002\n");
+            File.WriteAllText(Path.Combine(dev, "class"), "0x030000\n");
+            File.WriteAllText(Path.Combine(dev, "boot_vga"), "1\n");
+            LinuxAsusWmi.InvalidateGpuPresenceCache();
+        }
+
+        /// <summary>Second display-class function from a vendor the dGPU
+        /// scan does not know (Intel Arc): only the class count sees it.</summary>
+        public void WriteFakeIntelDisplayDevice()
+        {
+            string dev = Path.Combine(TempRoot, "sys", "bus", "pci", "devices", "0000:03:00.0");
+            Directory.CreateDirectory(dev);
+            File.WriteAllText(Path.Combine(dev, "vendor"), "0x8086\n");
+            File.WriteAllText(Path.Combine(dev, "class"), "0x038000\n");
+            File.WriteAllText(Path.Combine(dev, "boot_vga"), "0\n");
+            LinuxAsusWmi.InvalidateGpuPresenceCache();
+        }
+
+        /// <summary>PCIe slot dir with an address file, as pciehp exposes.</summary>
+        public void WriteFakeSlot(string slot, string address)
+        {
+            string dir = Path.Combine(TempRoot, "sys", "bus", "pci", "slots", slot);
+            Directory.CreateDirectory(dir);
+            File.WriteAllText(Path.Combine(dir, "address"), address + "\n");
         }
     }
 

@@ -299,13 +299,23 @@ if [[ -f /etc/NIXOS ]]; then
     _info "Fetching module + binary into ${GH_NIX_ROOT}/"
     rm -rf "$GH_NIX_ROOT"
     mkdir -p "$GH_NIX_ROOT/nixos" "$GH_NIX_ROOT/dist" \
-             "$GH_NIX_ROOT/vendor/gpu-helper" "$GH_NIX_ROOT/install"
+             "$GH_NIX_ROOT/vendor/gpu-helper/ryzen" "$GH_NIX_ROOT/install"
 
     _gh_nix_fetch "https://github.com/$REPO/releases/latest/download/ghelper" "$GH_NIX_ROOT/dist/ghelper" || exit 1
     chmod 755 "$GH_NIX_ROOT/dist/ghelper"
     _gh_nix_fetch "$RAW/nixos/module.nix"  "$GH_NIX_ROOT/nixos/module.nix"  || exit 1
     _gh_nix_fetch "$RAW/nixos/package.nix" "$GH_NIX_ROOT/nixos/package.nix" || exit 1
-    _gh_nix_fetch "$RAW/vendor/gpu-helper/gpu-helper.c" "$GH_NIX_ROOT/vendor/gpu-helper/gpu-helper.c" || exit 1
+    # Full gpu-helper source tree; package.nix compiles all of it.
+    for f in gpu-helper.c gpu-helper.h ryzen_ops.h process_ops.c nvidia_ops.c \
+             pci_ops.c wmi_ops.c msr_ops.c lenovo_ops.c ryzen_ops.c; do
+        _gh_nix_fetch "$RAW/vendor/gpu-helper/$f" "$GH_NIX_ROOT/vendor/gpu-helper/$f" || exit 1
+    done
+    for f in api.c cpuid.c nb_smu_ops.c nb_smu_ops.h osdep_linux.c \
+             osdep_linux_mem.c osdep_linux_mem.h \
+             osdep_linux_smu_kernel_module.c osdep_linux_smu_kernel_module.h \
+             ryzenadj.h ryzenadj_priv.h; do
+        _gh_nix_fetch "$RAW/vendor/gpu-helper/ryzen/$f" "$GH_NIX_ROOT/vendor/gpu-helper/ryzen/$f" || exit 1
+    done
     for f in 90-ghelper.rules gpu-block-helper.sh ghelper-gpu-boot.sh ghelper.desktop ghelper.png; do
         _gh_nix_fetch "$RAW/install/$f" "$GH_NIX_ROOT/install/$f" || exit 1
     done

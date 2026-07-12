@@ -61,7 +61,7 @@ public static partial class Installer
         public bool RootOwned;          // chown root:root after writing
         public bool PresenceOnly;       // existence is enough; don't hash (dynamic content)
         public string[] IgnoreLinePrefixes = []; // lines to drop (by left-trimmed prefix) before comparing
-        public Func<byte[]>? Generate;  // produce content in-process (sudoers rule)
+        public Func<byte[]?>? Generate; // produce content in-process (sudoers rule, filtered udev rules); null = resource unavailable
         public string[] Post = [];      // post-action tokens, run once after a root batch
         public Func<bool>? AppliesWhen; // null = always applies; else gate on hardware capability
 
@@ -87,6 +87,45 @@ public static partial class Installer
 
     private const int PermMask = 0x1FF; // low 9 bits (rwxrwxrwx)
     private const int PkexecCancelled = -2;
+    private const int PkexecNoAgent = -3;
+
+    // Set when pkexec failed because no polkit authentication agent is
+    // running in the session (Hyprland/sway without an agent: exit 127,
+    // "Not authorized", no dialog ever shown - issue #143). Appended to the
+    // failure message as a technical hint.
+    private static string? _lastAuthHint;
+
+    // comm values (15-char kernel truncation) of known polkit agents plus
+    // the shells that embed one.
+    private static readonly string[] PolkitAgentComms =
+    [
+        "polkit-gnome-au", "polkit-kde-auth", "polkit-mate-aut",
+        "lxpolkit", "lxqt-policykit", "xfce-polkit", "hyprpolkitagent",
+        "pantheon-agent", "dde-polkit-agen", "cosmic-osd", "gnome-shell",
+    ];
+
+    private static bool PolkitAgentPresent()
+    {
+        try
+        {
+            foreach (var dir in Directory.EnumerateDirectories("/proc"))
+            {
+                string name = Path.GetFileName(dir);
+                if (name.Length == 0 || name[0] < '0' || name[0] > '9')
+                    continue;
+                string comm;
+                try
+                { comm = File.ReadAllText(Path.Combine(dir, "comm")).Trim(); }
+                catch
+                { continue; }
+                foreach (var agent in PolkitAgentComms)
+                    if (comm.StartsWith(agent, StringComparison.Ordinal))
+                        return true;
+            }
+        }
+        catch { }
+        return false;
+    }
 
     // Post-action tokens
     private const string PostUdev = "udev";
@@ -95,9 +134,12 @@ public static partial class Installer
     private const string PostDesktopDb = "desktopdb";
     private const string PostIconCache = "iconcache";
     private const string PostModprobe = "modprobe";
+    private const string PostInputGroup = "inputgroup";
 
-    // Modules loaded unconditionally (NumberPad uinput + I2C LED control)
-    private static readonly string[] CommonModules = ["uinput", "i2c-dev"];
+    // uinput is loaded everywhere (FN-Lock remapper, NumberPad, OSK).
+    // i2c-dev is added only where the NumberPad can use it (see
+    // ModulesForThisMachine).
+    private static readonly string[] CommonModules = ["uinput"];
 
     // Lenovo-only modules (ideapad-laptop + WMI stack for profiles/PPT)
     private static readonly string[] LenovoModules =
@@ -130,15 +172,19 @@ public static partial class Installer
             new ManagedFile
             {
                 Id = "gpu_helper", NameKey = "sysfiles_name_gpu_helper",
-                Resource = "gpu-helper", Dest = "/opt/ghelper/gpu-helper",
+                Resource = "gpu-helper", Dest = GpuHelperDest,
                 Mode = M755, RootRequired = true, RootOwned = true,
             },
             new ManagedFile
             {
+                // GPU eco/block helper only matters on hybrid machines; on
+                // iGPU-only handhelds it must not show as Missing (and SteamOS
+                // cannot even write /usr/local/lib while readonly is on).
                 Id = "gpu_block_helper", NameKey = "sysfiles_name_gpu_block_helper",
                 Resource = "gpu-block-helper.sh",
                 Dest = "/usr/local/lib/ghelper/gpu-block-helper.sh",
                 Mode = M755, RootRequired = true, RootOwned = true,
+                AppliesWhen = BootGpuApplies,
             },
             new ManagedFile
             {
@@ -158,11 +204,17 @@ public static partial class Installer
             },
             new ManagedFile
             {
+                // Written as a per-machine filtered copy of the embedded
+                // template: vendor blocks (asus / lenovo) and the NumberPad
+                // i2c block are included only where the hardware exists, and
+                // the world-writable compat block only when the
+                // "udev_0666_fallback" config asks for it.
                 Id = "udev_rules", NameKey = "sysfiles_name_udev_rules",
                 Resource = "90-ghelper.rules",
+                Generate = UdevRulesContent,
                 Dest = "/etc/udev/rules.d/90-ghelper.rules",
                 Mode = M644, RootRequired = true, RootOwned = true,
-                IgnoreLinePrefixes = ["# Version:"], Post = [PostUdev],
+                IgnoreLinePrefixes = ["# Version:"], Post = [PostUdev, PostInputGroup],
             },
             new ManagedFile
             {
@@ -176,16 +228,24 @@ public static partial class Installer
             {
                 Id = "desktop", NameKey = "sysfiles_name_desktop",
                 Resource = "ghelper.desktop",
-                Dest = "/usr/share/applications/ghelper.desktop",
-                Mode = M644, RootRequired = true, RootOwned = true,
+                Dest = ImmutableOs.IsImmutable
+                    ? ImmutableOs.UserDesktopPath()
+                    : "/usr/share/applications/ghelper.desktop",
+                Mode = M644,
+                RootRequired = !ImmutableOs.IsImmutable,
+                RootOwned = !ImmutableOs.IsImmutable,
                 Post = [PostDesktopDb],
             },
             new ManagedFile
             {
                 Id = "icon", NameKey = "sysfiles_name_icon",
                 Resource = "ghelper.png",
-                Dest = "/usr/share/icons/hicolor/256x256/apps/ghelper.png",
-                Mode = M644, RootRequired = true, RootOwned = true,
+                Dest = ImmutableOs.IsImmutable
+                    ? ImmutableOs.UserIconPath()
+                    : "/usr/share/icons/hicolor/256x256/apps/ghelper.png",
+                Mode = M644,
+                RootRequired = !ImmutableOs.IsImmutable,
+                RootOwned = !ImmutableOs.IsImmutable,
                 Post = [PostIconCache],
             },
             new ManagedFile
@@ -209,25 +269,131 @@ public static partial class Installer
         ];
     }
 
-    private static byte[] KernelModulesContent()
+    /// <summary>Kernel modules this machine actually needs. Off-mode
+    /// (default) matches install-local.sh: uinput + i2c-dev + Lenovo
+    /// modules on Lenovo. Opt-in mode drops i2c-dev on hardware that
+    /// cannot use it (non-ASUS or ASUS without NumberPad).</summary>
+    private static List<string> ModulesForThisMachine()
     {
         var modules = new List<string>(CommonModules);
+        bool per = UdevPerMachineMode;
+        if (!per || (Helpers.AppConfig.IsAsusDevice() && NumberPadHardwarePresent()))
+            modules.Add("i2c-dev");
         if (Helpers.AppConfig.IsLenovoDevice())
             modules.AddRange(LenovoModules);
-        return System.Text.Encoding.UTF8.GetBytes(
-            "# Kernel modules required by G-Helper\n"
-            + string.Join('\n', modules) + "\n");
+        return modules;
     }
 
+    private static byte[] KernelModulesContent()
+    {
+        return System.Text.Encoding.UTF8.GetBytes(
+            "# Kernel modules required by G-Helper\n"
+            + string.Join('\n', ModulesForThisMachine()) + "\n");
+    }
+
+    /// <summary>NumberPad-capable touchpad present (probe finds the device,
+    /// regardless of whether i2c/uinput access currently works).</summary>
+    private static bool NumberPadHardwarePresent()
+    {
+        try
+        {
+            return GHelper.Linux.Input.NumberPad.Probe().Status
+                != GHelper.Linux.Input.NumberPad.ProbeStatus.NoHardware;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>Set by --udev-compat in the pkexec re-exec: the root process
+    /// cannot see the invoking user's config, so the flag travels on the CLI.</summary>
+    private static bool _udevCompatOverride;
+
+    /// <summary>Set by --udev-per-machine in the pkexec re-exec.</summary>
+    private static bool _udevPerMachineOverride;
+
+    private static bool UdevCompatMode =>
+        _udevCompatOverride || Helpers.AppConfig.Is("udev_0666_fallback");
+
+    /// <summary>Opt-in per-machine tailoring: filter udev rules by hardware
+    /// and vendor, load only the kernel modules this machine can use, and
+    /// tighten uinput/i2c to uaccess + input-group 0660. Default off keeps
+    /// byte-identical output to install-local.sh so the app and the shell
+    /// installer converge.</summary>
+    private static bool UdevPerMachineMode =>
+        _udevPerMachineOverride || Helpers.AppConfig.Is("udev_per_machine");
+
     /// <summary>
-    /// sudoers rule byte-identical to the one install-local.sh writes (echo adds
-    /// the trailing newline). References the two root-owned helper binaries that
-    /// are also managed here.
+    /// Udev rules for this install. Off-mode (default) writes the full
+    /// embedded template, marker comments stripped, so plain-copy script
+    /// installs and app installs converge. Opt-in mode filters by
+    /// #@section: universal / uinput / peripherals always; asus / lenovo
+    /// by vendor; numberpad only on ASUS with the touchpad present;
+    /// compat0666 (world-writable uinput+i2c) only when
+    /// <see cref="UdevCompatMode"/>.
     /// </summary>
-    private static byte[] SudoersContent() => Encoding.UTF8.GetBytes(
-        "# G-Helper: passwordless access to the root-owned helper binaries\n" +
-        "ALL ALL=(root) NOPASSWD: /usr/local/lib/ghelper/gpu-block-helper.sh\n" +
-        "ALL ALL=(root) NOPASSWD: /opt/ghelper/gpu-helper\n");
+    private static byte[]? UdevRulesContent()
+    {
+        var raw = GetEmbedded("90-ghelper.rules");
+        if (raw == null)
+            return null;
+
+        HashSet<string>? include = null;
+        if (UdevPerMachineMode)
+        {
+            include = new HashSet<string> { "universal", "uinput", "peripherals" };
+            if (Helpers.AppConfig.IsAsusDevice())
+            {
+                include.Add("asus");
+                if (NumberPadHardwarePresent())
+                    include.Add("numberpad");
+            }
+            if (Helpers.AppConfig.IsLenovoDevice())
+                include.Add("lenovo");
+            if (UdevCompatMode)
+                include.Add("compat0666");
+        }
+
+        var kept = new List<string>();
+        string section = "universal"; // header lines before the first marker
+        foreach (var line in Encoding.UTF8.GetString(raw).Split('\n'))
+        {
+            string trimmed = line.TrimStart();
+            if (trimmed.StartsWith("#@section ", StringComparison.Ordinal))
+            {
+                section = trimmed["#@section ".Length..].Trim();
+                continue;
+            }
+            // include == null in off-mode: keep every line (full template).
+            if (include == null || include.Contains(section))
+                kept.Add(line);
+        }
+        return Encoding.UTF8.GetBytes(string.Join("\n", kept));
+    }
+
+    /// <summary>Install location of the general privileged helper. Sealed
+    /// SteamOS relocates it to the writable /etc overlay.</summary>
+    internal static string GpuHelperDest => SysfsHelper.DefaultGpuHelperInstallPath;
+
+    /// <summary>
+    /// sudoers rule matching install-local.sh's (echo adds the trailing
+    /// newline). References the root-owned helpers that are also managed
+    /// here. The gpu-block-helper line is only emitted where the GPU boot
+    /// integration applies (dual-GPU machines): whitelisting a path that is
+    /// NotApplicable on this hardware would be inconsistent with the
+    /// manifest. The grant is ALL (not just the installing user) because
+    /// pkexec / other local admins invoke the helpers through the same rule.
+    /// </summary>
+    private static byte[] SudoersContent()
+    {
+        var sb = new StringBuilder();
+        sb.Append("# G-Helper: passwordless access to the root-owned helper binaries\n");
+        if (BootGpuApplies())
+            sb.Append("ALL ALL=(root) NOPASSWD: /usr/local/lib/ghelper/gpu-block-helper.sh\n");
+        sb.Append($"ALL ALL=(root) NOPASSWD: {GpuHelperDest}\n");
+        return Encoding.UTF8.GetBytes(sb.ToString());
+    }
 
     /// <summary>The GPU-mode boot integration (ghelper-gpu-boot.sh/.service) only
     /// applies to machines that have a discrete GPU. On iGPU/APU-only hardware the
@@ -472,7 +638,7 @@ public static partial class Installer
             return FileState.Unknown;
         }
 
-        string gpuHelperPath = "/opt/ghelper/gpu-helper";
+        string gpuHelperPath = GpuHelperDest;
         string blockHelperPath = "/usr/local/lib/ghelper/gpu-block-helper.sh";
 
         // NixOS: the sudoers rule references the nix store paths. The resolvers
@@ -485,7 +651,9 @@ public static partial class Installer
         }
 
         bool gpuHelper = HasNopasswd(listing, gpuHelperPath);
-        bool blockHelper = HasNopasswd(listing, blockHelperPath);
+        // The block helper only matters where the GPU boot integration
+        // applies; its sudoers line is not emitted elsewhere.
+        bool blockHelper = !BootGpuApplies() || HasNopasswd(listing, blockHelperPath);
         return gpuHelper && blockHelper ? FileState.Ok : FileState.Missing;
     }
 
@@ -564,6 +732,7 @@ public static partial class Installer
         if (todo.Count == 0)
             return (true, 0, false);
 
+        _lastAuthHint = null;
         int changed = 0;
 
         // User-level files first - never needs a prompt.
@@ -597,7 +766,7 @@ public static partial class Installer
             if (data == null)
                 return false;
             // Resolve the host-specific Exec= here (unprivileged: $APPIMAGE is visible).
-            if (f.Id == "autostart")
+            if (f.Id == "autostart" || f.Id == "desktop")
                 data = SubstituteExec(data, LinuxSystemIntegration.ResolveLauncherExecField());
             var dir = Path.GetDirectoryName(f.Dest);
             if (!string.IsNullOrEmpty(dir))
@@ -640,6 +809,13 @@ public static partial class Installer
                 psi.ArgumentList.Add("--desktop-exec");
                 psi.ArgumentList.Add(desktopExec);
             }
+            // The root re-exec cannot read this user's config; carry the
+            // udev choices on the CLI so both sides generate the same
+            // rules content.
+            if (Helpers.AppConfig.Is("udev_0666_fallback"))
+                psi.ArgumentList.Add("--udev-compat");
+            if (Helpers.AppConfig.Is("udev_per_machine"))
+                psi.ArgumentList.Add("--udev-per-machine");
 
             using var p = Process.Start(psi);
             if (p == null)
@@ -648,6 +824,15 @@ public static partial class Installer
             string errp = p.StandardError.ReadToEnd();
             p.WaitForExit(180000);
             Logger.WriteLine($"Installer: pkexec apply exit={p.ExitCode}; out={outp.Trim()}; err={errp.Trim()}");
+            if (p.ExitCode == 127 && errp.Contains("Not authorized", StringComparison.OrdinalIgnoreCase)
+                && !PolkitAgentPresent())
+            {
+                _lastAuthHint = "no polkit agent; run: sudo "
+                    + (Environment.ProcessPath ?? "ghelper")
+                    + " --apply-system-files " + string.Join(",", ids);
+                Logger.WriteLine($"Installer: {_lastAuthHint}");
+                return PkexecNoAgent;
+            }
             // 126 = user dismissed the auth dialog, 127 = auth failed / not authorized.
             if (p.ExitCode is 126 or 127)
                 return PkexecCancelled;
@@ -767,9 +952,15 @@ public static partial class Installer
         // Optional: the host-resolved .desktop Exec= field, passed by the
         // unprivileged caller (pkexec strips $APPIMAGE, so it can't be resolved here).
         string? desktopExec = null;
-        for (int i = 2; i + 1 < args.Length; i++)
-            if (args[i] == "--desktop-exec")
+        for (int i = 2; i < args.Length; i++)
+        {
+            if (args[i] == "--desktop-exec" && i + 1 < args.Length)
                 desktopExec = args[i + 1];
+            if (args[i] == "--udev-compat")
+                _udevCompatOverride = true;
+            if (args[i] == "--udev-per-machine")
+                _udevPerMachineOverride = true;
+        }
 
         var byId = Manifest.ToDictionary(f => f.Id);
         var post = new HashSet<string>();
@@ -951,11 +1142,21 @@ public static partial class Installer
         {
             // Best effort: load each module separately so one missing module
             // (older kernel without lenovo-wmi) doesn't block the others.
-            foreach (var module in CommonModules)
+            foreach (var module in ModulesForThisMachine())
                 Run("modprobe", module);
-            if (Helpers.AppConfig.IsLenovoDevice())
-                foreach (var module in LenovoModules)
-                    Run("modprobe", module);
+        }
+        if (post.Contains(PostInputGroup) && !UdevCompatMode)
+        {
+            // The uaccess/0660 uinput+i2c rules need the invoking user in the
+            // "input" group on setups without logind seats. pkexec exports
+            // the caller's uid; resolve it to a name and add the membership
+            // (takes effect on next login; uaccess covers the current one).
+            string? uidRaw = Environment.GetEnvironmentVariable("PKEXEC_UID")
+                ?? Environment.GetEnvironmentVariable("SUDO_UID");
+            if (int.TryParse(uidRaw, out int uid) && uid > 0)
+                Run("sh", "-c",
+                    $"u=$(getent passwd {uid} | cut -d: -f1); " +
+                    "[ -n \"$u\" ] && getent group input >/dev/null && usermod -aG input \"$u\" || true");
         }
 
         // Clean up legacy modules-load.d file superseded by ghelper.conf
@@ -1105,10 +1306,16 @@ public static partial class Installer
 
     // UI: startup popup
     public static void CheckAndPromptAtStartup(Window? owner)
+        => _ = CheckAndPromptAtStartupAsync(owner);
+
+    private static async Task CheckAndPromptAtStartupAsync(Window? owner)
     {
         try
         {
-            var status = ComputeStatus();
+            // ComputeStatus spawns `sudo -n -l` (up to 3 s) and hashes every
+            // managed file: keep it off the UI thread. The await resumes on
+            // the dispatcher, so the prompt below still runs on UI.
+            var status = await Task.Run(ComputeStatus);
             LogStatus(status);
 
             // NixOS: dependencies are provided declaratively by the nixos/
@@ -1281,7 +1488,9 @@ public static partial class Installer
         // reposition on Opened.
         WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(dialog);
 
-        if (owner != null)
+        // ShowDialog demands a visible owner; silent_start / --osk startups
+        // keep the main window hidden, so fall back to a free-standing show.
+        if (owner is { IsVisible: true })
             await dialog.ShowDialog(owner);
         else
             dialog.Show();
@@ -1295,9 +1504,14 @@ public static partial class Installer
     /// <paramref name="onRemove"/> is supplied, healthy (OK) rows get a per-item
     /// Remove button.</summary>
     public static void PopulateIntegrityPanel(Panel panel, Func<ManagedFile, Task>? onRepair = null, Func<ManagedFile, Task>? onRemove = null, Func<ManagedFile, Task>? onDiff = null)
+        => PopulateIntegrityPanel(panel, ComputeStatus(), onRepair, onRemove, onDiff);
+
+    /// <summary>Overload for callers that already computed the status on a
+    /// background thread (ComputeStatus spawns a sudo probe).</summary>
+    public static void PopulateIntegrityPanel(Panel panel, List<FileResult> results, Func<ManagedFile, Task>? onRepair = null, Func<ManagedFile, Task>? onRemove = null, Func<ManagedFile, Task>? onDiff = null)
     {
         panel.Children.Clear();
-        foreach (var r in ComputeStatus())
+        foreach (var r in results)
             panel.Children.Add(BuildRow(r, showPath: true, onRepair, onRemove, onDiff));
     }
 
@@ -1315,7 +1529,12 @@ public static partial class Installer
         if (cancelled)
             return Labels.Get("sysfiles_auth_cancelled");
         if (!ok)
-            return Labels.Get("sysfiles_apply_failed");
+        {
+            string msg = Labels.Get("sysfiles_apply_failed");
+            if (_lastAuthHint != null)
+                msg += "\n" + _lastAuthHint;
+            return msg;
+        }
         if (changed == 0)
             return Labels.Get("sysfiles_all_ok");
         return Labels.Format("sysfiles_applied", changed);

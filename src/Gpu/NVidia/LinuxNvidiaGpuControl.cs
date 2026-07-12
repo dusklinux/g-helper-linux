@@ -64,8 +64,9 @@ public class LinuxNvidiaGpuControl : IGpuControl
             return -1;
         try
         {
+            // Periodic poll: never escalate interactively (issue #146).
             string? output = SysfsHelper.RunSudoOrPkexec(
-                SysfsHelper.GpuHelperPath, new[] { "nvml-temp" });
+                SysfsHelper.GpuHelperPath, new[] { "nvml-temp" }, allowPkexec: false);
             if (string.IsNullOrWhiteSpace(output))
                 return -1;
             foreach (var token in output.Split(' ', StringSplitOptions.RemoveEmptyEntries))
@@ -225,7 +226,9 @@ public class LinuxNvidiaGpuControl : IGpuControl
     /// </summary>
     public void ApplyGpuSettings(int powerW, int clockLockMhz) => ApplyAll(powerW, clockLockMhz, null, null);
 
-    public void ApplyAll(int? powerW, int clockLockMhz, int? coreOffsetMhz, int? memOffsetMhz)
+    // interactive: false for auto-apply paths (startup, mode change) so a
+    // broken sudoers degrades to a logged skip instead of an auth dialog.
+    public void ApplyAll(int? powerW, int clockLockMhz, int? coreOffsetMhz, int? memOffsetMhz, bool interactive = true)
     {
         if (!_available)
             return;
@@ -240,7 +243,7 @@ public class LinuxNvidiaGpuControl : IGpuControl
             if (caps.PowerLimit)
             {
                 cmdCount++;
-                var r = SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "smi", "-pl", powerW.Value.ToString() });
+                var r = SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "smi", "-pl", powerW.Value.ToString() }, allowPkexec: interactive);
                 if (r != null)
                     okCount++;
                 else
@@ -251,7 +254,7 @@ public class LinuxNvidiaGpuControl : IGpuControl
         {
             cmdCount++;
             int lock_ = Math.Clamp(clockLockMhz, 200, 3000);
-            var r = SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "smi", "-lgc", $"0,{lock_}" });
+            var r = SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "smi", "-lgc", $"0,{lock_}" }, allowPkexec: interactive);
             if (r != null)
                 okCount++;
             else
@@ -260,7 +263,7 @@ public class LinuxNvidiaGpuControl : IGpuControl
         else if (clockLockMhz == 0)
         {
             cmdCount++;
-            var r = SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "smi", "-rgc" });
+            var r = SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "smi", "-rgc" }, allowPkexec: interactive);
             if (r != null)
                 okCount++;
             else
@@ -280,7 +283,8 @@ public class LinuxNvidiaGpuControl : IGpuControl
                 int reqMem = ClampMem(memOffsetMhz ?? 0);
                 var (stdout, stderr, _) = SysfsHelper.RunSudoOrPkexecEx(
                     SysfsHelper.GpuHelperPath,
-                    new[] { "nvml-clocks", reqCore.ToString(), reqMem.ToString() });
+                    new[] { "nvml-clocks", reqCore.ToString(), reqMem.ToString() },
+                    allowPkexec: interactive);
                 if (stdout != null)
                 {
                     okCount++;
@@ -341,7 +345,7 @@ public class LinuxNvidiaGpuControl : IGpuControl
         if (reqCore != 0 || reqMem != 0)
         {
             // Try to clear the offending offset and stop it being re-applied.
-            SysfsHelper.RunSudoOrPkexecEx(SysfsHelper.GpuHelperPath, new[] { "nvml-clocks", "0", "0" });
+            SysfsHelper.RunSudoOrPkexecEx(SysfsHelper.GpuHelperPath, new[] { "nvml-clocks", "0", "0" }, allowPkexec: false);
             Helpers.AppConfig.SetMode("gpu_clock_core", 0);
             Helpers.AppConfig.SetMode("gpu_clock_mem", 0);
         }
@@ -400,7 +404,8 @@ public class LinuxNvidiaGpuControl : IGpuControl
         if (!NvidiaProcessScanner.EnsureHelper())
             return null;
 
-        string? output = SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "nvml-info" });
+        // Capability probe: runs unprompted (startup, tab load), so no pkexec.
+        string? output = SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "nvml-info" }, allowPkexec: false);
         if (string.IsNullOrWhiteSpace(output))
             return null;
 
@@ -667,14 +672,14 @@ public class LinuxNvidiaGpuControl : IGpuControl
     }
 
     /// <summary>Lock or reset VRAM (memory) clocks. mhz &lt;= 0 resets (-rmc).</summary>
-    public void ApplyMemClockLock(int mhz)
+    public void ApplyMemClockLock(int mhz, bool interactive = true)
     {
         if (!_available || !NvidiaProcessScanner.EnsureHelper())
             return;
         if (mhz > 0)
-            SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "smi", "-lmc", $"0,{mhz}" });
+            SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "smi", "-lmc", $"0,{mhz}" }, allowPkexec: interactive);
         else
-            SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "smi", "-rmc" });
+            SysfsHelper.RunSudoOrPkexec(SysfsHelper.GpuHelperPath, new[] { "smi", "-rmc" }, allowPkexec: interactive);
     }
 
     /// <summary>Max supported graphics / memory clock (MHz) for lock-slider bounds.</summary>

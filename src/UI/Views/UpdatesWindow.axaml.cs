@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Text.Json;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -11,6 +12,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using GHelper.Linux.I18n;
 using GHelper.Linux.Install;
+using GHelper.Linux.Platform.Linux;
 
 namespace GHelper.Linux.UI.Views;
 
@@ -100,12 +102,17 @@ public partial class UpdatesWindow : Window
         LoadUpdates();
     }
 
-    private void RefreshSystemFiles()
+    private async void RefreshSystemFiles()
     {
         try
         {
-            Installer.PopulateIntegrityPanel(panelSystemFiles, OnRepairOneAsync, OnRemoveOneAsync, OnShowDiffAsync);
-            _sysFilesExpanded = Installer.ComputeStatus().Any(r =>
+            // One background status pass (spawns a sudo probe, hashes every
+            // managed file); the panel build resumes on the UI thread.
+            var results = await Task.Run(Installer.ComputeStatus);
+            Installer.PopulateIntegrityPanel(panelSystemFiles, results,
+                OnRepairOneAsync, OnRemoveOneAsync, OnShowDiffAsync);
+            AppendSteamRow();
+            _sysFilesExpanded = results.Any(r =>
                 r.State != Installer.FileState.Ok &&
                 r.State != Installer.FileState.Unknown &&
                 r.State != Installer.FileState.NotApplicable &&
@@ -115,6 +122,114 @@ public partial class UpdatesWindow : Window
         catch (Exception ex)
         {
             Helpers.Logger.WriteLine($"UpdatesWindow.RefreshSystemFiles failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>Optional "Steam library shortcut" row at the bottom of the
+    /// integrity list. Hidden when Steam is not installed. The toggle adds or
+    /// removes G-Helper as a non-Steam app (SteamShortcuts); it is never part
+    /// of Install / Repair and never triggers the auto-expand or the startup
+    /// popup.</summary>
+    private void AppendSteamRow()
+    {
+        if (!SteamShortcuts.IsSteamAvailable())
+            return;
+
+        bool added = SteamShortcuts.IsAdded();
+
+        var grid = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"),
+            Margin = new Avalonia.Thickness(0, 2, 0, 2),
+        };
+
+        var mark = new TextBlock
+        {
+            Text = added ? "\u2713" : "\u2013",
+            Foreground = added ? ColorGreen : ColorGray,
+            FontWeight = FontWeight.Bold,
+            FontSize = 14,
+            Width = 20,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextAlignment = TextAlignment.Center,
+        };
+        Grid.SetColumn(mark, 0);
+        grid.Children.Add(mark);
+
+        var info = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 1 };
+        info.Children.Add(new TextBlock
+        {
+            Text = Labels.Get("sysfiles_name_steam"),
+            FontSize = 13,
+            Foreground = ColorWhite,
+        });
+        info.Children.Add(new TextBlock
+        {
+            Text = SteamShortcuts.UserdataPath() ?? "",
+            FontSize = 10,
+            Foreground = new SolidColorBrush(Color.Parse("#888888")),
+            FontFamily = new FontFamily("monospace"),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        });
+        Grid.SetColumn(info, 1);
+        grid.Children.Add(info);
+
+        var status = new TextBlock
+        {
+            Text = added ? Labels.Get("sysfiles_status_ok") : "",
+            FontSize = 11,
+            Foreground = ColorGreen,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Avalonia.Thickness(8, 0, 0, 0),
+        };
+        Grid.SetColumn(status, 2);
+        grid.Children.Add(status);
+
+        // Content set to null so the default "On"/"Off" strings never show.
+        var toggle = new ToggleSwitch
+        {
+            IsChecked = added,
+            OnContent = null,
+            OffContent = null,
+            Margin = new Avalonia.Thickness(8, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Cursor = new Cursor(StandardCursorType.Hand),
+        };
+        toggle.IsCheckedChanged += async (_, _) => await OnSteamToggleAsync(toggle);
+        Grid.SetColumn(toggle, 3);
+        grid.Children.Add(toggle);
+
+        panelSystemFiles.Children.Add(grid);
+    }
+
+    private async Task OnSteamToggleAsync(ToggleSwitch toggle)
+    {
+        bool turnOn = toggle.IsChecked == true;
+        if (turnOn == SteamShortcuts.IsAdded())
+            return; // programmatic rebuild, no change
+
+        toggle.IsEnabled = false;
+        try
+        {
+            string error = "";
+            bool ok = await Task.Run(() =>
+                turnOn ? SteamShortcuts.Add(out error) : SteamShortcuts.Remove(out error));
+            labelSysFilesResult.Text = ok
+                ? Labels.Get(turnOn ? "steam_added" : "steam_removed")
+                : Labels.Get("steam_failed");
+            labelSysFilesResult.IsVisible = true;
+            if (!string.IsNullOrEmpty(error))
+                Helpers.Logger.WriteLine($"UpdatesWindow: Steam toggle error: {error}");
+        }
+        catch (Exception ex)
+        {
+            Helpers.Logger.WriteLine($"UpdatesWindow.OnSteamToggleAsync failed: {ex.Message}");
+            labelSysFilesResult.Text = Labels.Get("steam_failed");
+            labelSysFilesResult.IsVisible = true;
+        }
+        finally
+        {
+            RefreshSystemFiles();
         }
     }
 
@@ -234,6 +349,8 @@ public partial class UpdatesWindow : Window
         buttonSysFilesRecheck.IsEnabled = false;
         try
         {
+            // Best-effort: the shortcut points at the binary being removed.
+            await Task.Run(() => SteamShortcuts.Remove(out _));
             string msg = await Installer.RunRemoveFromUiAsync();
             // Expand the panel so the result line (which lives in the collapsed
             // body) is actually visible.
@@ -801,7 +918,8 @@ public partial class UpdatesWindow : Window
 
             // Fallback for bugged API (empty result)
             JsonDocument? doc2 = null;
-            if (result.ToString() == "" || !result.TryGetProperty("Obj", out var objProp) || objProp.GetArrayLength() == 0)
+            if (result.ToString() == "" || !result.TryGetProperty("Obj", out var objProp)
+                || objProp.ValueKind != System.Text.Json.JsonValueKind.Array || objProp.GetArrayLength() == 0)
             {
                 var urlFallback = url + "&tag=" + new Random().Next(10, 99);
                 Helpers.Logger.WriteLine($"Updates: retrying with fallback {urlFallback}");
@@ -810,10 +928,17 @@ public partial class UpdatesWindow : Window
                 data = doc2.RootElement;
             }
 
-            var groups = data.GetProperty("Result").GetProperty("Obj");
+            var resultObj = data.GetProperty("Result");
             var drivers = new List<DriverInfo>();
 
-            for (int i = 0; i < groups.GetArrayLength(); i++)
+            if (!resultObj.TryGetProperty("Obj", out var groups)
+                || groups.ValueKind != System.Text.Json.JsonValueKind.Array)
+            {
+                // API returned no data for this model (non-ASUS hardware, unknown model)
+                groups = default;
+            }
+
+            for (int i = 0; i < (groups.ValueKind == System.Text.Json.JsonValueKind.Array ? groups.GetArrayLength() : 0); i++)
             {
                 var categoryName = groups[i].GetProperty("Name").GetString() ?? "";
                 var files = groups[i].GetProperty("Files");

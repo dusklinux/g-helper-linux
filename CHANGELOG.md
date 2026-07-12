@@ -8,6 +8,59 @@
 
 ### Changed
 
+## v1.0.87 (2026-07-13)
+
+### Added
+
+- Gamepad UI navigation: evdev, D-pad focus, A/B confirm/back, X/Y OSK, right stick scrolls.
+- Steam shortcut: Updates toggle + handheld first-launch offer; writes `shortcuts.vdf` + 4-file grid art.
+- Tray dGPU status row: active / suspended / off from PCI runtime PM (#150).
+- TDP presets: Ally 10/15/25/30 W, Legion Go 8/15/22/30 W.
+- Gamescope FullScreen in game mode.
+- Immutable / OSTree / SteamOS detection: user-path desktop + icon; sealed SteamOS puts `gpu-helper` in `/etc/ghelper`.
+- Basic COSMIC DE support.
+- `HasSecondGpu()` topology probe: PCI class count, Eco artifacts, loaded nvidia/nouveau, BDF-validated slot cache, firmware attrs.
+- `DeviceVendor { Asus, Lenovo, Generic }`; Generic skips vendor probes.
+- `udev_per_machine` opt-in (default off): filters `90-ghelper.rules` by `#@section`, tightens uinput/i2c to input-group 0660.
+- Extra window: Rendering backend dropdown (Auto / EGL / GLX / Software, `render_mode` config). Auto uses EGL on Wayland (avoids the XWayland GLX freeze) and GLX on Xorg.
+- 8 topology test scenarios (106/106).
+- `osk_dock_tip` in 38 languages.
+- Hidden mini-game, now gamepad-playable.
+
+### Fixed
+
+`render_mode` config (software / egl / glx) overrides.
+- SteamOS gamescope Back closes the topmost child window (was hitting main).
+- Endless polkit password loop when sudoers is broken: pollers (`nvml-temp`, `nvml-info`, mode auto-apply) skip pkexec fallback (#146).
+- Poisoned 5 W PL1/PL2 config rejected and purged; capped CPUs at min clocks (#151).
+- Startup no longer resets externally-set GPU tuning; reset-to-stock only after in-session apply (#151).
+- Fans window load path can no longer write hardware via slider coupling (#151).
+- pkexec exit 127 with no polkit agent: message carries the manual `sudo ...` command (#143).
+- NixOS declarative install: gpu-helper built from full 21-source tree + libpci (was 1 file) (#138).
+- iGPU-only Lenovo (Legion Go S): GPU panel + tray Eco/Standard + backend selector hidden (nouveau.ko-on-disk leak).
+- NumberPad button hidden on non-ASUS ELAN touchpads.
+- Clamshell checkbox hidden on all handhelds (was Ally-only).
+- Startup prompt no longer crashes on `--osk` / silent-start.
+- Stale `dgpu_pci_slot` imports no longer fake a dGPU: BDF must match, ages out after 3 boots.
+- Steam Big Picture tile shows the icon (capsule / header / hero / logo).
+- Lenovo conservation fallback: battery slider snaps to 60/100.
+- Ally match narrowed to `RC71` / `RC72` / `RC73` (was bare `RC7` substring).
+
+### Changed
+
+- Avalonia 12.0.4 to 12.1.0; Svg.Controls.Skia.Avalonia to 12.0.0.13.
+- Startup integrity check async (was 3 s UI-thread block on `sudo -n -l`).
+- Updates window computes status once on a worker (was twice on UI).
+- Fans window: nvidia-smi prefetch + dGPU holder count off UI thread.
+- AURA HID handshake no longer inline on first paint.
+- GamepadNav default off on desktops (`gamepad_nav=1` to enable); OSK toggle suppressed in game mode.
+- Steam offer gated to handheld / SteamOS.
+- Peripheral poll backs off 20 s to 5 min after 3 empty scans.
+- `sudoers` gpu-block-helper line only when boot service applies.
+- `IsSteamDeckDesktopMode` via `os-release`, not `/home/deck`.
+- `i2c-dev` universal by default; ASUS + NumberPad only when `udev_per_machine=1`.
+- Under `udev_per_machine=1`: uinput / i2c set `TAG+="uaccess" GROUP="input" MODE="0660"`, user added to `input`; `udev_0666_fallback=1` restores world-writable.
+
 ## v1.0.86 (2026-06-29)
 
 ### Upgrading from v1.0.84?

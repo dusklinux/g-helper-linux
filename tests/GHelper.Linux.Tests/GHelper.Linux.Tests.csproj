@@ -56,6 +56,8 @@
     <!-- NixOS (gpu-helper resolve) + RyzenPower (PPT); SysfsHelper-only helpers -->
     <Compile Include="../../src/Platform/Linux/NixOS.cs" />
     <Compile Include="../../src/Platform/Linux/RyzenPower.cs" />
+    <!-- ImmutableOs: SysfsHelper.DefaultGpuHelperInstallPath (SteamOS sealed root) -->
+    <Compile Include="../../src/Platform/Linux/ImmutableOs.cs" />
     <!-- LinuxAsusWmi + AsusWmiDebugfs: needed by the direct unit tests for
          the GPU-panel visibility logic (IsGpuEcoAvailable, CanToggleGpuBackend,
          IsPciBackendUsable, InvalidateGpuPresenceCache). The class also has a

@@ -652,6 +652,13 @@ public static class SysfsHelper
 
     public static readonly string GpuHelperPath = ResolveGpuHelperPath();
 
+    /// <summary>Where gpu-helper should be installed on this machine.
+    /// Sealed-root SteamOS cannot write /opt; /etc is a writable overlay.</summary>
+    internal static string DefaultGpuHelperInstallPath =>
+        ImmutableOs.IsSteamOs && ImmutableOs.IsRootReadOnly()
+            ? "/etc/ghelper/gpu-helper"
+            : "/opt/ghelper/gpu-helper";
+
     private static string ResolveGpuHelperPath()
     {
         // NixOS: module puts a Nix-native gpu-helper on PATH
@@ -659,11 +666,12 @@ public static class SysfsHelper
         if (nixPath != null)
             return nixPath;
 
-        foreach (var p in new[] { "/opt/ghelper/gpu-helper", "/usr/local/lib/ghelper/gpu-helper" })
+        // /etc/ghelper is the sealed-root SteamOS location (writable overlay).
+        foreach (var p in new[] { "/opt/ghelper/gpu-helper", "/etc/ghelper/gpu-helper", "/usr/local/lib/ghelper/gpu-helper" })
             if (System.IO.File.Exists(p))
                 return p;
 
-        return "/opt/ghelper/gpu-helper";
+        return DefaultGpuHelperInstallPath;
     }
 
     private static string ResolveSudoPath()
@@ -703,7 +711,7 @@ public static class SysfsHelper
     /// systemd rate-limit, rmmod busy, etc.). Returns stdout on success or
     /// null on failure.
     /// </summary>
-    public static string? RunSudoOrPkexec(string command, string[] args, int sudoTimeoutMs = 5000, int pkexecTimeoutMs = 60000)
+    public static string? RunSudoOrPkexec(string command, string[] args, int sudoTimeoutMs = 5000, int pkexecTimeoutMs = 60000, bool allowPkexec = true)
     {
         var sudoArgs = new string[args.Length + 2];
         sudoArgs[0] = "-n";
@@ -730,6 +738,12 @@ public static class SysfsHelper
             return null;
         }
 
+        if (!allowPkexec)
+        {
+            LogEscalationSkip(command, args);
+            return null;
+        }
+
         Helpers.Logger.WriteLine($"sudo -n {command} not permitted - falling back to pkexec");
 
         var pkArgs = new string[args.Length + 1];
@@ -738,13 +752,30 @@ public static class SysfsHelper
         return RunCommandWithTimeout("pkexec", pkArgs, pkexecTimeoutMs);
     }
 
+    // Polling / auto-apply paths must never pop an auth dialog: with broken
+    // sudoers a periodic pkexec fallback becomes an endless prompt loop
+    // (issue #146). Logged once per subcommand.
+    private static readonly HashSet<string> _escalationSkipLogged = new();
+
+    private static void LogEscalationSkip(string command, string[] args)
+    {
+        string key = command + " " + (args.Length > 0 ? args[0] : "");
+        lock (_escalationSkipLogged)
+        {
+            if (!_escalationSkipLogged.Add(key))
+                return;
+        }
+        Helpers.Logger.WriteLine(
+            $"sudo -n {key} refused; non-interactive path, skipping pkexec (fix sudoers via Updates > Install/Repair)");
+    }
+
     /// <summary>
     /// Like <see cref="RunSudoOrPkexec"/> but also returns stderr and the exit
     /// code so callers can inspect command-side failures (e.g. an NVML error
     /// code reported by gpu-helper). stdout is null when the command failed.
     /// </summary>
     public static (string? stdout, string stderr, int exitCode) RunSudoOrPkexecEx(
-        string command, string[] args, int sudoTimeoutMs = 5000, int pkexecTimeoutMs = 60000)
+        string command, string[] args, int sudoTimeoutMs = 5000, int pkexecTimeoutMs = 60000, bool allowPkexec = true)
     {
         var sudoArgs = new string[args.Length + 2];
         sudoArgs[0] = "-n";
@@ -760,6 +791,12 @@ public static class SysfsHelper
                         || stderr.Contains("may not run sudo", StringComparison.Ordinal);
         if (!sudoRefused)
             return (null, stderr, exitCode);
+
+        if (!allowPkexec)
+        {
+            LogEscalationSkip(command, args);
+            return (null, stderr, exitCode);
+        }
 
         var pkArgs = new string[args.Length + 1];
         pkArgs[0] = command;

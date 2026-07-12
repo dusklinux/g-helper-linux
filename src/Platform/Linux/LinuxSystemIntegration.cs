@@ -329,9 +329,12 @@ public class LinuxSystemIntegration : ISystemIntegration
     // Touchpad Toggle
 
     /// <summary>Find the touchpad xinput device ID. Returns null if not found.
-    /// Requires xinput (works on X11 and Wayland with XWayland).</summary>
+    /// Requires xinput and an X11 or XWayland server (DISPLAY set).</summary>
     public static string? FindTouchpadId()
     {
+        // xinput needs an X server; skip on pure-Wayland DEs (COSMIC, niri)
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DISPLAY")))
+            return null;
         var fullList = SysfsHelper.RunCommand("xinput", "list");
         if (fullList == null)
             return null;
@@ -388,9 +391,12 @@ public class LinuxSystemIntegration : ISystemIntegration
 
     // Touchscreen Toggle
 
-    /// <summary>Find the touchscreen xinput device ID. Returns null if not found.</summary>
+    /// <summary>Find the touchscreen xinput device ID. Returns null if not found.
+    /// Requires xinput and an X11 or XWayland server (DISPLAY set).</summary>
     public static string? FindTouchscreenId()
     {
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DISPLAY")))
+            return null;
         var fullList = SysfsHelper.RunCommand("xinput", "list");
         if (fullList == null)
             return null;

@@ -97,6 +97,16 @@ public static class Scenarios
         Regression_ProArt_PciEco_PanelStaysVisible();
         Regression_DGpuLessLaptop_NoPanelEvenWithPciFlag();
         Regression_LivePciTransitionCallback_InvalidatesCache();
+
+        Console.WriteLine("\n GPU topology (single vs dual GPU) ");
+        Topo_IgpuOnly_NouveauOnDisk_NoSecondGpu_PciUnusable();
+        Topo_TwoDisplayFunctions_SecondGpu();
+        Topo_EcoArtifacts_SecondGpu();
+        Topo_LoadedNvidiaModule_SecondGpu();
+        Topo_ValidatedSlotCache_SecondGpu();
+        Topo_ForeignSlotCache_NotSecondGpu();
+        Topo_StaleSlotCache_ClearedAfterThreeStarts();
+        Topo_NouveauOnDisk_WithValidatedSlot_PciUsable();
     }
 
     // 
@@ -1115,5 +1125,136 @@ public static class Scenarios
             {
                 GPUModeControl.OnLivePciTransition = null;
             }
+        });
+
+    //
+    // GPU topology: HasSecondGpu decides whether the switching UI (panel,
+    // tray items, backend selector) exists at all. Single-GPU machines
+    // must never see it; a dGPU hidden by our own Eco must keep it.
+    //
+
+    static void Topo_IgpuOnly_NouveauOnDisk_NoSecondGpu_PciUnusable()
+        => Scenario(nameof(Topo_IgpuOnly_NouveauOnDisk_NoSecondGpu_PciUnusable), sb =>
+        {
+            // Legion Go S class machine: AMD iGPU only, gpu_backend
+            // auto-defaulted to pci, nouveau shipped by the distro kernel.
+            // The old module-on-disk fallback used to unhide the whole
+            // switching UI here.
+            AppConfig.Set("gpu_backend", "pci");
+            sb.WriteFakeAmdIgpuDevice();
+            sb.WriteFakeNouveauOnDisk();
+
+            Assert(!GPUModeControl.HasSecondGpu(),
+                "iGPU + nouveau.ko on disk is not a second GPU");
+            Assert(!LinuxAsusWmi.IsPciBackendUsable(),
+                "PCI backend unusable without second-GPU evidence");
+        });
+
+    static void Topo_TwoDisplayFunctions_SecondGpu()
+        => Scenario(nameof(Topo_TwoDisplayFunctions_SecondGpu), sb =>
+        {
+            // Vendor-agnostic count: AMD iGPU + Intel Arc dGPU. The
+            // NVIDIA/AMD-specific dGPU scan does not know Arc; the
+            // display-class count still reports two GPUs.
+            sb.WriteFakeAmdIgpuDevice();
+            sb.WriteFakeIntelDisplayDevice();
+
+            Assert(GPUModeControl.HasSecondGpu(),
+                "two display-class functions = second GPU");
+        });
+
+    static void Topo_EcoArtifacts_SecondGpu()
+        => Scenario(nameof(Topo_EcoArtifacts_SecondGpu), sb =>
+        {
+            // dGPU hot-removed by our own PCI Eco: only the block
+            // artifacts prove it exists. The switching UI must survive
+            // so the user can undo Eco.
+            sb.WriteFakeAmdIgpuDevice();
+            sb.WriteBlockArtifacts();
+
+            Assert(GPUModeControl.HasSecondGpu(),
+                "eco block artifacts = hidden dGPU");
+        });
+
+    static void Topo_LoadedNvidiaModule_SecondGpu()
+        => Scenario(nameof(Topo_LoadedNvidiaModule_SecondGpu), sb =>
+        {
+            // nvidia bound with no matching PCI device: the device was
+            // hot-removed after the driver loaded. Never happens on
+            // machines without NVIDIA hardware.
+            sb.WriteFakeAmdIgpuDevice();
+            sb.WriteFakeNvidiaModule();
+
+            Assert(GPUModeControl.HasSecondGpu(),
+                "loaded nvidia module = hidden dGPU");
+        });
+
+    static void Topo_ValidatedSlotCache_SecondGpu()
+        => Scenario(nameof(Topo_ValidatedSlotCache_SecondGpu), sb =>
+        {
+            // Cached slot whose address matches the cached dGPU BDF:
+            // this machine's dGPU, currently invisible (deep Eco).
+            sb.WriteFakeAmdIgpuDevice();
+            AppConfig.Set("dgpu_pci_slot", "1");
+            AppConfig.Set("dgpu_pci_bdf", "0000:01:00.0");
+            sb.WriteFakeSlot("1", "0000:01:00");
+
+            Assert(GPUModeControl.HasSecondGpu(),
+                "validated slot cache = second GPU");
+        });
+
+    static void Topo_ForeignSlotCache_NotSecondGpu()
+        => Scenario(nameof(Topo_ForeignSlotCache_NotSecondGpu), sb =>
+        {
+            // Config imported from another machine: slot name collides
+            // with a local slot but the address does not match the cached
+            // BDF. Must not fake a dGPU.
+            sb.WriteFakeAmdIgpuDevice();
+            AppConfig.Set("dgpu_pci_slot", "1");
+            AppConfig.Set("dgpu_pci_bdf", "0000:01:00.0");
+            sb.WriteFakeSlot("1", "0000:c4:00");
+
+            Assert(!GPUModeControl.HasSecondGpu(),
+                "foreign slot cache (address mismatch) is not a second GPU");
+        });
+
+    static void Topo_StaleSlotCache_ClearedAfterThreeStarts()
+        => Scenario(nameof(Topo_StaleSlotCache_ClearedAfterThreeStarts), sb =>
+        {
+            // Imported config on an iGPU-only machine: no slot dir at all.
+            // Three consecutive startups with no dGPU evidence age the
+            // cache out; the fourth sees a clean config.
+            sb.WriteFakeAmdIgpuDevice();
+            AppConfig.Set("dgpu_pci_slot", "9");
+            AppConfig.Set("dgpu_pci_bdf", "0000:99:00.0");
+
+            for (int i = 1; i <= 3; i++)
+                sb.Controller.CacheDgpuSlotIfPresent();
+
+            Assert(string.IsNullOrEmpty(AppConfig.GetString("dgpu_pci_slot")),
+                "slot cache cleared after 3 startups without evidence");
+            Assert(string.IsNullOrEmpty(AppConfig.GetString("dgpu_pci_bdf")),
+                "bdf cache cleared with it");
+            Assert(!GPUModeControl.HasSecondGpu(),
+                "no phantom dGPU after cache aged out");
+        });
+
+    static void Topo_NouveauOnDisk_WithValidatedSlot_PciUsable()
+        => Scenario(nameof(Topo_NouveauOnDisk_WithValidatedSlot_PciUsable), sb =>
+        {
+            // Weak module evidence + validated slot = real dual-GPU
+            // machine mid-Eco with artifacts already removed: the panel
+            // must stay reachable.
+            AppConfig.Set("gpu_backend", "pci");
+            sb.WriteFakeAmdIgpuDevice();
+            sb.WriteFakeNouveauOnDisk();
+            AppConfig.Set("dgpu_pci_slot", "1");
+            AppConfig.Set("dgpu_pci_bdf", "0000:01:00.0");
+            sb.WriteFakeSlot("1", "0000:01:00");
+
+            Assert(GPUModeControl.HasSecondGpu(),
+                "validated slot outweighs weak module evidence");
+            Assert(LinuxAsusWmi.IsPciBackendUsable(),
+                "PCI backend usable: nouveau on disk + validated slot");
         });
 }

@@ -92,6 +92,13 @@ public static class BatteryControl
             else
                 limit = 100;
         }
+        // Lenovo conservation fallback has exactly two outcomes: snap the
+        // request so the slider never claims an in-between percentage.
+        else if (App.Wmi is Platform.Linux.Lenovo.LinuxLenovoWmi lw
+            && lw.UsesConservationFallback)
+        {
+            limit = limit <= 60 ? 60 : 100;
+        }
 
         bool ok = App.Wmi?.SetBatteryChargeLimit(limit) ?? false;
 

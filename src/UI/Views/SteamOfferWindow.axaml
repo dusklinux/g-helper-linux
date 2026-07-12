@@ -1,0 +1,40 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctrl="clr-namespace:GHelper.Linux.UI.Controls"
+        x:Class="GHelper.Linux.UI.Views.SteamOfferWindow"
+        Title="G-Helper"
+        Width="420"
+        MinWidth="420"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Background="#1C1C1C"
+        Icon="avares://ghelper/UI/Assets/favicon.ico">
+    <Border Classes="panel" Padding="16" Margin="10">
+        <StackPanel Spacing="14">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <ctrl:Icon IconName="gamepad" Width="18" Height="18"
+                           VerticalAlignment="Center" />
+                <TextBlock x:Name="labelHeader" Text="Steam" FontSize="16"
+                           FontWeight="SemiBold" Foreground="White"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock x:Name="labelText" TextWrapping="Wrap"
+                       Foreground="#CCC" FontSize="13" />
+            <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
+                <Button Grid.Column="0" x:Name="buttonAdd" Classes="ghelper"
+                        Click="ButtonAdd_Click" Margin="0,0,4,0"
+                        HorizontalAlignment="Stretch" Height="34">
+                    <TextBlock x:Name="labelAdd" HorizontalAlignment="Center"
+                               FontSize="12" />
+                </Button>
+                <Button Grid.Column="1" x:Name="buttonNo" Classes="ghelper"
+                        Click="ButtonNo_Click" Margin="4,0,0,0"
+                        HorizontalAlignment="Stretch" Height="34">
+                    <TextBlock x:Name="labelNo" HorizontalAlignment="Center"
+                               FontSize="12" />
+                </Button>
+            </Grid>
+        </StackPanel>
+    </Border>
+</Window>
