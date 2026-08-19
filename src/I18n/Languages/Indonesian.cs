@@ -391,7 +391,6 @@ public static class Indonesian
         ["cpu_cores"] = "Inti CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} dari {1} thread aktif",
-        ["kernel_warning"] = "\u26A0 Kernel 6.2+ direkomendasikan untuk dukungan fitur penuh",
 
         // LANGUAGE
         ["language_header"] = "Bahasa",
@@ -491,8 +490,6 @@ public static class Indonesian
         ["restart_to_apply"] = "Mulai ulang untuk menerapkan",
         ["saved_to_downloads"] = "Disimpan ke ~/Downloads/{0}",
         ["download_failed"] = "Unduhan gagal",
-        ["update_nixos_button"] = "Perbarui & bangun ulang",
-        ["update_nixos_running"] = "Membangun ulang NixOS…",
         ["download_tooltip"] = "Unduh: {0}\nTerpasang: {1}",
         ["click_to_download"] = "Klik untuk mengunduh",
         ["no_entries"] = "Tidak ada entri ditemukan",

@@ -391,7 +391,6 @@ public static class Swedish
         ["cpu_cores"] = "CPU-kärnor",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} av {1} trådar aktiva",
-        ["kernel_warning"] = "\u26A0 Kernel 6.2+ rekommenderas för fullt funktionsstöd",
 
         // LANGUAGE
         ["language_header"] = "Språk",
@@ -491,8 +490,6 @@ public static class Swedish
         ["restart_to_apply"] = "Starta om för att tillämpa",
         ["saved_to_downloads"] = "Sparad i ~/Downloads/{0}",
         ["download_failed"] = "Nedladdning misslyckades",
-        ["update_nixos_button"] = "Uppdatera och bygg om",
-        ["update_nixos_running"] = "Bygger om NixOS…",
         ["download_tooltip"] = "Ladda ner: {0}\nInstallerad: {1}",
         ["click_to_download"] = "Klicka för att ladda ner",
         ["no_entries"] = "Inga poster hittades",

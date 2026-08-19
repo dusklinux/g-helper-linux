@@ -388,7 +388,6 @@ public static class Vietnamese
         ["cpu_cores"] = "Lõi CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} trong {1} luồng đang hoạt động",
-        ["kernel_warning"] = "\u26A0 Khuyến nghị kernel 6.2+ để hỗ trợ đầy đủ tính năng",
 
         // LANGUAGE
         ["language_header"] = "Ngôn ngữ",
@@ -488,8 +487,6 @@ public static class Vietnamese
         ["restart_to_apply"] = "Khởi động lại để áp dụng",
         ["saved_to_downloads"] = "Đã lưu vào ~/Downloads/{0}",
         ["download_failed"] = "Tải về thất bại",
-        ["update_nixos_button"] = "Cập nhật & dựng lại",
-        ["update_nixos_running"] = "Đang dựng lại NixOS…",
         ["download_tooltip"] = "Tải về: {0}\nĐã cài: {1}",
         ["click_to_download"] = "Nhấn để tải về",
         ["no_entries"] = "Không tìm thấy mục nào",

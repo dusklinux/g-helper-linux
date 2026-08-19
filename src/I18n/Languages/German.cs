@@ -388,7 +388,6 @@ public static class German
         ["cpu_cores"] = "CPU-Kerne",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} von {1} Threads aktiv",
-        ["kernel_warning"] = "\u26A0 Kernel 6.2+ empfohlen für volle Funktionsunterstützung",
 
         // LANGUAGE
         ["language_header"] = "Sprache",
@@ -488,8 +487,6 @@ public static class German
         ["restart_to_apply"] = "Neustart erforderlich",
         ["saved_to_downloads"] = "Gespeichert unter ~/Downloads/{0}",
         ["download_failed"] = "Download fehlgeschlagen",
-        ["update_nixos_button"] = "Aktualisieren & neu erstellen",
-        ["update_nixos_running"] = "NixOS wird neu erstellt…",
         ["download_tooltip"] = "Download: {0}\nInstalliert: {1}",
         ["click_to_download"] = "Klicken zum Herunterladen",
         ["no_entries"] = "Keine Einträge gefunden",

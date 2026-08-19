@@ -391,7 +391,6 @@ public static class Serbian
         ["cpu_cores"] = "CPU језгра",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} од {1} нити активно",
-        ["kernel_warning"] = "\u26A0 Препоручује се кернел 6.2+ за пуну подршку функција",
 
         // LANGUAGE
         ["language_header"] = "Језик",
@@ -491,8 +490,6 @@ public static class Serbian
         ["restart_to_apply"] = "Рестартујте за примену",
         ["saved_to_downloads"] = "Сачувано у ~/Downloads/{0}",
         ["download_failed"] = "Преузимање није успело",
-        ["update_nixos_button"] = "Ажурирај и поново изгради",
-        ["update_nixos_running"] = "Поновна изградња NixOS…",
         ["download_tooltip"] = "Преузми: {0}\nИнсталирано: {1}",
         ["click_to_download"] = "Кликните за преузимање",
         ["no_entries"] = "Нису пронађени записи",

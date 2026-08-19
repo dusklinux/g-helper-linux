@@ -391,7 +391,6 @@ public static class Norwegian
         ["cpu_cores"] = "CPU-kjerner",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} av {1} tråder aktive",
-        ["kernel_warning"] = "\u26A0 Kernel 6.2+ anbefales for full funksjonsstøtte",
 
         // LANGUAGE
         ["language_header"] = "Språk",
@@ -491,8 +490,6 @@ public static class Norwegian
         ["restart_to_apply"] = "Start på nytt for å ta i bruk",
         ["saved_to_downloads"] = "Lagret i ~/Downloads/{0}",
         ["download_failed"] = "Nedlasting mislyktes",
-        ["update_nixos_button"] = "Oppdater og bygg på nytt",
-        ["update_nixos_running"] = "Bygger NixOS på nytt…",
         ["download_tooltip"] = "Last ned: {0}\nInstallert: {1}",
         ["click_to_download"] = "Klikk for å laste ned",
         ["no_entries"] = "Ingen oppføringer funnet",

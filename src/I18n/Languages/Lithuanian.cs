@@ -526,7 +526,6 @@ public static class Lithuanian
         ["cpu_cores"] = "CPU branduoliai",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} iš {1} gijų aktyvios",
-        ["kernel_warning"] = "\u26A0 Visapusiškam funkcijų palaikymui rekomenduojamas branduolys 6.2+",
 
         // LANGUAGE
         ["language_header"] = "Kalba",
@@ -626,8 +625,6 @@ public static class Lithuanian
         ["restart_to_apply"] = "Paleiskite iš naujo, kad pritaikytumėte",
         ["saved_to_downloads"] = "Įrašyta į ~/Downloads/{0}",
         ["download_failed"] = "Atsisiuntimas nepavyko",
-        ["update_nixos_button"] = "Atnaujinti ir perkurti",
-        ["update_nixos_running"] = "Perkuriama NixOS…",
         ["download_tooltip"] = "Atsisiuntimas: {0}\nĮdiegta: {1}",
         ["click_to_download"] = "Spustelėkite, kad atsisiųstumėte",
         ["no_entries"] = "Įrašų nerasta",

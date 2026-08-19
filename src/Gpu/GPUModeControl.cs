@@ -2594,12 +2594,6 @@ public class GPUModeControl
     /// </summary>
     private static void ApplyVulkanIcd(bool dgpuAvailable)
     {
-        // NixOS: ICD/EGL vendor files live under /run/opengl-driver (read-only
-        // store), not /usr/share. The FHS paths don't exist and can't be
-        // renamed, so this is a no-op there.
-        if (NixOS.IsNixOS)
-            return;
-
         string verb = dgpuAvailable ? "show" : "hide";
         if (File.Exists(NvidiaVulkanIcd) || File.Exists(NvidiaVulkanIcd + "_inactive"))
             SysfsHelper.RunSudoOrPkexec(
@@ -3167,15 +3161,6 @@ public class GPUModeControl
         if (_helperPathScanned)
             return _cachedHelperPath;
         _helperPathScanned = true;
-
-        // NixOS: module puts gpu-block-helper.sh on PATH
-        var nixPath = Platform.Linux.NixOS.ResolveGpuBlockHelper();
-        if (nixPath != null)
-        {
-            _cachedHelperPath = nixPath;
-            Logger.WriteLine($"GPUModeControl: GPU block helper found at {nixPath} (NixOS)");
-            return nixPath;
-        }
 
         foreach (var path in HelperSearchPaths)
         {

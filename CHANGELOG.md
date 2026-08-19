@@ -1,20 +1,21 @@
 # Changelog
 
-## [Unreleased]
+## v2.0.0 (2026-08-19) - Modern Linux (7.1+ Baseline) & Hyprland Release
 
 ### Added
+- **Native Hyprland Display Backend**: Implemented `HyprlandBackend.cs` querying monitors directly via `hyprctl monitors -j` and dynamic refresh rate switching with the modern **Hyprland 0.56+ Lua engine** (`hl.monitor`).
+- **Hyprland Native Input Control**: Direct touchpad detection via `hyprctl devices -j` and toggling via `hl.device({ ... })`; touchscreen toggle via `hl.config({ input = { touchdevice = ... } })`.
+- **Pure Wayland UI**: Full migration to `Avalonia.Wayland` with EGL hardware acceleration and strict Wayland session validation.
+- **Pure PipeWire Audio**: `LinuxAudioControl.cs` controls audio exclusively via `wpctl`, integrating with the bundled low-latency PipeWire DSP engine.
+- **Dedicated Release Channel**: Automated self-updater points directly to `dusklinux/g-helper-linux`.
 
-- **Pure Wayland Architecture**: G-Helper is now 100% pure Wayland using `Avalonia.Wayland` with zero X11/XWayland dependencies.
-- **PipeWire Audio Control**: Direct PipeWire integration via `wpctl`, dropping legacy PulseAudio fallback.
-- **Native Wayland Input Controls**: Native Touchpad and Touchscreen toggle for Hyprland, Sway, KDE Plasma, GNOME, and COSMIC.
-
-### Removed
-
-- Removed all X11, XWayland, `libX11.so.6`, `xrandr`, `xinput`, and X11 strut code.
-- Removed legacy GLX rendering option (Wayland uses EGL and Software rendering).
-- Dropped PulseAudio `pactl` fallback.
-
-## v1.0.91 (2026-08-19)
+### Removed & Modernized
+- **Dropped Legacy Kernel Compatibility**: Target baseline modernized to Linux 7.1+; removed obsolete pre-6.2 kernel checks, warnings, and workarounds.
+- **Excised X11 & XWayland**: Completely removed `Avalonia.X11`, `libX11`, `libxcb`, `libXrandr`, `xinput`, GLX render modes, and X11 docking struts (`X11Strut.cs`).
+- **Excised Legacy Compositor Tooling**: Removed `vendor/wlr-randr`, `gdctl`, `kscreen-doctor`, and `KwinRules.cs`.
+- **Excised Legacy Distro Modules**: Removed `NixOS.cs` and `Cosmic.cs`.
+- **Excised PulseAudio**: Dropped all `pactl` fallbacks in favor of pure PipeWire.
+- **Cleaned Repository Footprint**: Removed `nixos/` directory and unused image assets.
 
 ### Added
 

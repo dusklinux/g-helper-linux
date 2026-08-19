@@ -391,7 +391,6 @@ public static class Danish
         ["cpu_cores"] = "CPU-kerner",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} af {1} tråde aktive",
-        ["kernel_warning"] = "\u26A0 Kernel 6.2+ anbefales for fuld funktionssupport",
 
         // LANGUAGE
         ["language_header"] = "Sprog",
@@ -491,8 +490,6 @@ public static class Danish
         ["restart_to_apply"] = "Genstart for at anvende",
         ["saved_to_downloads"] = "Gemt i ~/Downloads/{0}",
         ["download_failed"] = "Download mislykkedes",
-        ["update_nixos_button"] = "Opdater og genopbyg",
-        ["update_nixos_running"] = "Genopbygger NixOS…",
         ["download_tooltip"] = "Download: {0}\nInstalleret: {1}",
         ["click_to_download"] = "Klik for at downloade",
         ["no_entries"] = "Ingen poster fundet",

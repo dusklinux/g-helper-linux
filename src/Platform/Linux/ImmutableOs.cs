@@ -11,7 +11,7 @@ public static class ImmutableOs
     // True on systems where /usr is read-only: OSTree-based distros and
     // SteamOS (A/B image with steamos-readonly).
     public static bool IsImmutable => _detected ??=
-        !NixOS.IsNixOS && (File.Exists("/run/ostree-booted") || IsSteamOs);
+        File.Exists("/run/ostree-booted") || IsSteamOs;
 
     // SteamOS 3.x (Steam Deck, Legion Go S factory image and installs).
     public static bool IsSteamOs => _steamOs ??= DetectSteamOs();

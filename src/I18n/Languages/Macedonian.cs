@@ -391,7 +391,6 @@ public static class Macedonian
         ["cpu_cores"] = "CPU јадра",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} од {1} нишки активни",
-        ["kernel_warning"] = "\u26A0 Се препорачува кернел 6.2+ за целосна поддршка на функции",
 
         // LANGUAGE
         ["language_header"] = "Јазик",
@@ -491,8 +490,6 @@ public static class Macedonian
         ["restart_to_apply"] = "Рестартирајте за примена",
         ["saved_to_downloads"] = "Зачувано во ~/Downloads/{0}",
         ["download_failed"] = "Преземањето не успеа",
-        ["update_nixos_button"] = "Ажурирај и повторно изгради",
-        ["update_nixos_running"] = "Повторно се гради NixOS…",
         ["download_tooltip"] = "Преземи: {0}\nИнсталирано: {1}",
         ["click_to_download"] = "Кликнете за преземање",
         ["no_entries"] = "Не се најдени записи",

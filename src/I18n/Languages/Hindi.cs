@@ -526,7 +526,6 @@ public static class Hindi
         ["cpu_cores"] = "CPU कोर",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{1} में से {0} थ्रेड सक्रिय",
-        ["kernel_warning"] = "\u26A0 पूर्ण सुविधा समर्थन के लिए कर्नेल 6.2+ अनुशंसित",
 
         // LANGUAGE
         ["language_header"] = "भाषा",
@@ -626,8 +625,6 @@ public static class Hindi
         ["restart_to_apply"] = "लागू करने के लिए पुनः प्रारंभ करें",
         ["saved_to_downloads"] = "~/Downloads/{0} में सहेजा गया",
         ["download_failed"] = "डाउनलोड विफल",
-        ["update_nixos_button"] = "अपडेट और रीबिल्ड करें",
-        ["update_nixos_running"] = "NixOS रीबिल्ड हो रहा है…",
         ["download_tooltip"] = "डाउनलोड: {0}\nइंस्टॉल किया गया: {1}",
         ["click_to_download"] = "डाउनलोड करने के लिए क्लिक करें",
         ["no_entries"] = "कोई प्रविष्टि नहीं मिली",

@@ -526,7 +526,6 @@ public static class Filipino
         ["cpu_cores"] = "Mga CPU Core",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} sa {1} na thread ang aktibo",
-        ["kernel_warning"] = "\u26A0 Inirerekomenda ang Kernel 6.2+ para sa buong suporta ng feature",
 
         // LANGUAGE
         ["language_header"] = "Wika",
@@ -626,8 +625,6 @@ public static class Filipino
         ["restart_to_apply"] = "I-restart para ilapat",
         ["saved_to_downloads"] = "Na-save sa ~/Downloads/{0}",
         ["download_failed"] = "Nabigo ang download",
-        ["update_nixos_button"] = "I-update at i-rebuild",
-        ["update_nixos_running"] = "Muling binubuo ang NixOS…",
         ["download_tooltip"] = "Download: {0}\nNaka-install: {1}",
         ["click_to_download"] = "I-click para i-download",
         ["no_entries"] = "Walang natagpuang entry",

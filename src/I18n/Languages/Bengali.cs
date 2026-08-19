@@ -526,7 +526,6 @@ public static class Bengali
         ["cpu_cores"] = "CPU কোর",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{1}-এর মধ্যে {0}টি থ্রেড সক্রিয়",
-        ["kernel_warning"] = "\u26A0 সম্পূর্ণ বৈশিষ্ট্য সমর্থনের জন্য কার্নেল 6.2+ সুপারিশকৃত",
 
         // LANGUAGE
         ["language_header"] = "ভাষা",
@@ -626,8 +625,6 @@ public static class Bengali
         ["restart_to_apply"] = "প্রয়োগ করতে পুনরায় চালু করুন",
         ["saved_to_downloads"] = "~/Downloads/{0}-এ সংরক্ষিত",
         ["download_failed"] = "ডাউনলোড ব্যর্থ",
-        ["update_nixos_button"] = "আপডেট ও রিবিল্ড",
-        ["update_nixos_running"] = "NixOS রিবিল্ড হচ্ছে…",
         ["download_tooltip"] = "ডাউনলোড: {0}\nইনস্টল করা: {1}",
         ["click_to_download"] = "ডাউনলোড করতে ক্লিক করুন",
         ["no_entries"] = "কোনো এন্ট্রি পাওয়া যায়নি",

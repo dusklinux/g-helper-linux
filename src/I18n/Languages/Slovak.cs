@@ -526,7 +526,6 @@ public static class Slovak
         ["cpu_cores"] = "Jadrá CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} z {1} vlákien aktívnych",
-        ["kernel_warning"] = "\u26A0 Pre plnú podporu funkcií sa odporúča jadro 6.2+",
 
         // LANGUAGE
         ["language_header"] = "Jazyk",
@@ -626,8 +625,6 @@ public static class Slovak
         ["restart_to_apply"] = "Reštartujte na použitie",
         ["saved_to_downloads"] = "Uložené do ~/Downloads/{0}",
         ["download_failed"] = "Sťahovanie zlyhalo",
-        ["update_nixos_button"] = "Aktualizovať a prebudovať",
-        ["update_nixos_running"] = "Prebudovanie NixOS…",
         ["download_tooltip"] = "Stiahnuté: {0}\nNainštalované: {1}",
         ["click_to_download"] = "Kliknutím stiahnete",
         ["no_entries"] = "Nenašli sa žiadne položky",

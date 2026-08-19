@@ -388,7 +388,6 @@ public static class Romanian
         ["cpu_cores"] = "Nuclee CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} din {1} fire active",
-        ["kernel_warning"] = "\u26A0 Kernel 6.2+ recomandat pentru suport complet al funcțiilor",
 
         // LANGUAGE
         ["language_header"] = "Limbă",
@@ -488,8 +487,6 @@ public static class Romanian
         ["restart_to_apply"] = "Reporniți pentru a aplica",
         ["saved_to_downloads"] = "Salvat în ~/Downloads/{0}",
         ["download_failed"] = "Descărcarea a eșuat",
-        ["update_nixos_button"] = "Actualizează și reconstruiește",
-        ["update_nixos_running"] = "Se reconstruiește NixOS…",
         ["download_tooltip"] = "Descarcă: {0}\nInstalat: {1}",
         ["click_to_download"] = "Clic pentru a descărca",
         ["no_entries"] = "Nicio intrare găsită",

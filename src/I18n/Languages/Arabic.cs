@@ -391,7 +391,6 @@ public static class Arabic
         ["cpu_cores"] = "أنوية CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} من {1} سلسلة نشطة",
-        ["kernel_warning"] = "\u26A0 يُنصح بالنواة 6.2 أو أحدث لدعم كامل الميزات",
 
         // LANGUAGE
         ["language_header"] = "اللغة",
@@ -491,8 +490,6 @@ public static class Arabic
         ["restart_to_apply"] = "أعد التشغيل للتطبيق",
         ["saved_to_downloads"] = "تم الحفظ في ~/Downloads/{0}",
         ["download_failed"] = "فشل التنزيل",
-        ["update_nixos_button"] = "تحديث وإعادة البناء",
-        ["update_nixos_running"] = "إعادة بناء NixOS…",
         ["download_tooltip"] = "التنزيل: {0}\nالمثبّت: {1}",
         ["click_to_download"] = "انقر للتنزيل",
         ["no_entries"] = "لم يتم العثور على إدخالات",

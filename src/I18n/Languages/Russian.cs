@@ -388,7 +388,6 @@ public static class Russian
         ["cpu_cores"] = "Ядра CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} из {1} потоков активно",
-        ["kernel_warning"] = "\u26A0 Для полной поддержки функций рекомендуется ядро 6.2+",
 
         // LANGUAGE
         ["language_header"] = "Язык",
@@ -488,8 +487,6 @@ public static class Russian
         ["restart_to_apply"] = "Перезапустите для применения",
         ["saved_to_downloads"] = "Сохранено в ~/Downloads/{0}",
         ["download_failed"] = "Ошибка загрузки",
-        ["update_nixos_button"] = "Обновить и пересобрать",
-        ["update_nixos_running"] = "Пересборка NixOS…",
         ["download_tooltip"] = "Скачать: {0}\nУстановлено: {1}",
         ["click_to_download"] = "Нажмите для скачивания",
         ["no_entries"] = "Записи не найдены",

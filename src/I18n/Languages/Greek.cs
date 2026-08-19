@@ -391,7 +391,6 @@ public static class Greek
         ["cpu_cores"] = "Πυρήνες CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} από {1} νήματα ενεργά",
-        ["kernel_warning"] = "\u26A0 Συνιστάται Kernel 6.2+ για πλήρη υποστήριξη χαρακτηριστικών",
 
         // LANGUAGE
         ["language_header"] = "Γλώσσα",
@@ -491,8 +490,6 @@ public static class Greek
         ["restart_to_apply"] = "Επανεκκίνηση για εφαρμογή",
         ["saved_to_downloads"] = "Αποθηκεύτηκε στο ~/Downloads/{0}",
         ["download_failed"] = "Η λήψη απέτυχε",
-        ["update_nixos_button"] = "Ενημέρωση και αναδόμηση",
-        ["update_nixos_running"] = "Αναδόμηση NixOS…",
         ["download_tooltip"] = "Λήψη: {0}\nΕγκατεστημένο: {1}",
         ["click_to_download"] = "Κάντε κλικ για λήψη",
         ["no_entries"] = "Δεν βρέθηκαν καταχωρήσεις",

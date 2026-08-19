@@ -11,11 +11,6 @@ class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        // Early-start systemd units (COSMIC autostart) may lack session vars;
-        // import them from the systemd user manager before anything reads them.
-        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP")))
-            Cosmic.ImportSessionEnvironment();
-
         SetGpuPreferenceEnv();
 
         var rc = ResourceExtractorCli.TryDispatch(args);

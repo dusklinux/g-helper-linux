@@ -388,7 +388,6 @@ public static class Hungarian
         ["cpu_cores"] = "CPU magok",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} / {1} szál aktív",
-        ["kernel_warning"] = "\u26A0 Kernel 6.2+ ajánlott a teljes funkció támogatáshoz",
 
         // LANGUAGE
         ["language_header"] = "Nyelv",
@@ -488,8 +487,6 @@ public static class Hungarian
         ["restart_to_apply"] = "Indítsa újra az alkalmazáshoz",
         ["saved_to_downloads"] = "Mentve: ~/Downloads/{0}",
         ["download_failed"] = "Letöltés sikertelen",
-        ["update_nixos_button"] = "Frissítés és újraépítés",
-        ["update_nixos_running"] = "NixOS újraépítése…",
         ["download_tooltip"] = "Letöltés: {0}\nTelepítve: {1}",
         ["click_to_download"] = "Kattintson a letöltéshez",
         ["no_entries"] = "Nincs találat",

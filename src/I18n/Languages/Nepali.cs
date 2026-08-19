@@ -526,7 +526,6 @@ public static class Nepali
         ["cpu_cores"] = "CPU कोरहरू",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{1} मध्ये {0} थ्रेड सक्रिय",
-        ["kernel_warning"] = "\u26A0 पूर्ण सुविधा समर्थनका लागि कर्नेल 6.2+ सिफारिस गरिन्छ",
 
         // LANGUAGE
         ["language_header"] = "भाषा",
@@ -626,8 +625,6 @@ public static class Nepali
         ["restart_to_apply"] = "लागू गर्न पुनः सुरु गर्नुहोस्",
         ["saved_to_downloads"] = "~/Downloads/{0} मा बचत भयो",
         ["download_failed"] = "डाउनलोड असफल",
-        ["update_nixos_button"] = "अपडेट र रिबिल्ड गर्नुहोस्",
-        ["update_nixos_running"] = "NixOS रिबिल्ड हुँदै…",
         ["download_tooltip"] = "डाउनलोड: {0}\nस्थापित: {1}",
         ["click_to_download"] = "डाउनलोड गर्न क्लिक गर्नुहोस्",
         ["no_entries"] = "कुनै प्रविष्टि फेला परेन",

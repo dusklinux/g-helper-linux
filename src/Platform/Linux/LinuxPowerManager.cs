@@ -203,9 +203,8 @@ public class LinuxPowerManager : IPowerManager
             return;
         }
 
-        // Fallback: power-profiles-daemon CLI, then D-Bus (tuned-ppd on COSMIC/Atomic)
-        if (SysfsHelper.RunCommand("powerprofilesctl", $"set {profile}") == null)
-            Cosmic.SetPowerProfile(profile);
+        // Fallback: power-profiles-daemon CLI
+        SysfsHelper.RunCommand("powerprofilesctl", $"set {profile}");
     }
 
     /// <summary>
@@ -244,7 +243,6 @@ public class LinuxPowerManager : IPowerManager
             return SysfsHelper.ReadAttribute(SysfsHelper.PlatformProfile) ?? "balanced";
 
         return SysfsHelper.RunCommand("powerprofilesctl", "get")
-            ?? Cosmic.GetPowerProfile()
             ?? "balanced";
     }
 

@@ -391,7 +391,6 @@ public static class Korean
         ["cpu_cores"] = "CPU 코어",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{1} 스레드 중 {0} 활성",
-        ["kernel_warning"] = "\u26A0 전체 기능 지원을 위해 커널 6.2 이상을 권장합니다",
 
         // LANGUAGE
         ["language_header"] = "언어",
@@ -491,8 +490,6 @@ public static class Korean
         ["restart_to_apply"] = "재시작하여 적용",
         ["saved_to_downloads"] = "~/Downloads/{0}에 저장됨",
         ["download_failed"] = "다운로드 실패",
-        ["update_nixos_button"] = "업데이트 및 재빌드",
-        ["update_nixos_running"] = "NixOS 재빌드 중…",
         ["download_tooltip"] = "다운로드: {0}\n설치됨: {1}",
         ["click_to_download"] = "클릭하여 다운로드",
         ["no_entries"] = "항목을 찾을 수 없습니다",

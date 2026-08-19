@@ -526,7 +526,6 @@ public static class Malay
         ["cpu_cores"] = "Teras CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} daripada {1} bebenang aktif",
-        ["kernel_warning"] = "\u26A0 Kernel 6.2+ disyorkan untuk sokongan ciri penuh",
 
         // LANGUAGE
         ["language_header"] = "Bahasa",
@@ -626,8 +625,6 @@ public static class Malay
         ["restart_to_apply"] = "Mula semula untuk digunakan",
         ["saved_to_downloads"] = "Disimpan ke ~/Downloads/{0}",
         ["download_failed"] = "Muat turun gagal",
-        ["update_nixos_button"] = "Kemas kini & bina semula",
-        ["update_nixos_running"] = "Membina semula NixOS…",
         ["download_tooltip"] = "Muat turun: {0}\nDipasang: {1}",
         ["click_to_download"] = "Klik untuk muat turun",
         ["no_entries"] = "Tiada entri ditemui",

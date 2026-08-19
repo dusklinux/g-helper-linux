@@ -698,11 +698,6 @@ public static class SysfsHelper
 
     private static string ResolveGpuHelperPath()
     {
-        // NixOS: module puts a Nix-native gpu-helper on PATH
-        var nixPath = NixOS.ResolveGpuHelper();
-        if (nixPath != null)
-            return nixPath;
-
         // /etc/ghelper is the sealed-root SteamOS location (writable overlay).
         foreach (var p in new[] { "/opt/ghelper/gpu-helper", "/etc/ghelper/gpu-helper", "/usr/local/lib/ghelper/gpu-helper" })
             if (System.IO.File.Exists(p))
@@ -722,11 +717,6 @@ public static class SysfsHelper
 
     private static string ResolveRyzenadjPath()
     {
-        // NixOS: module puts the nixpkgs ryzenadj on PATH
-        var nixPath = NixOS.ResolveRyzenadj();
-        if (nixPath != null)
-            return nixPath;
-
         foreach (var p in new[] { "/opt/ghelper/ryzenadj", "/etc/ghelper/ryzenadj" })
             if (System.IO.File.Exists(p))
                 return p;

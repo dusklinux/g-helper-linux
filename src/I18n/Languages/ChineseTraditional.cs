@@ -391,7 +391,6 @@ public static class ChineseTraditional
         ["cpu_cores"] = "CPU 核心",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{1} 執行緒中有 {0} 個作用中",
-        ["kernel_warning"] = "\u26A0 建議使用核心 6.2 以上版本以獲得完整功能支援",
 
         // LANGUAGE
         ["language_header"] = "語言",
@@ -491,8 +490,6 @@ public static class ChineseTraditional
         ["restart_to_apply"] = "重新啟動以套用",
         ["saved_to_downloads"] = "已儲存至 ~/Downloads/{0}",
         ["download_failed"] = "下載失敗",
-        ["update_nixos_button"] = "更新並重建",
-        ["update_nixos_running"] = "正在重建 NixOS…",
         ["download_tooltip"] = "下載：{0}\n已安裝：{1}",
         ["click_to_download"] = "點擊下載",
         ["no_entries"] = "未找到項目",

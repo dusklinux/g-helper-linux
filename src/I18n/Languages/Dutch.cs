@@ -388,7 +388,6 @@ public static class Dutch
         ["cpu_cores"] = "CPU-kernen",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} van {1} threads actief",
-        ["kernel_warning"] = "\u26A0 Kernel 6.2+ aanbevolen voor volledige functieondersteuning",
 
         // LANGUAGE
         ["language_header"] = "Taal",
@@ -488,8 +487,6 @@ public static class Dutch
         ["restart_to_apply"] = "Herstart om toe te passen",
         ["saved_to_downloads"] = "Opgeslagen in ~/Downloads/{0}",
         ["download_failed"] = "Download mislukt",
-        ["update_nixos_button"] = "Bijwerken & herbouwen",
-        ["update_nixos_running"] = "NixOS herbouwen…",
         ["download_tooltip"] = "Downloaden: {0}\nGeïnstalleerd: {1}",
         ["click_to_download"] = "Klik om te downloaden",
         ["no_entries"] = "Geen items gevonden",

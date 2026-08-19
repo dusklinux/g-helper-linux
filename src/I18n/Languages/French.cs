@@ -388,7 +388,6 @@ public static class French
         ["cpu_cores"] = "Cœurs CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} sur {1} threads actifs",
-        ["kernel_warning"] = "\u26A0 Noyau 6.2+ recommandé pour un support complet des fonctionnalités",
 
         // LANGUAGE
         ["language_header"] = "Langue",
@@ -488,8 +487,6 @@ public static class French
         ["restart_to_apply"] = "Redémarrer pour appliquer",
         ["saved_to_downloads"] = "Enregistré dans ~/Downloads/{0}",
         ["download_failed"] = "Échec du téléchargement",
-        ["update_nixos_button"] = "Mettre à jour et reconstruire",
-        ["update_nixos_running"] = "Reconstruction de NixOS…",
         ["download_tooltip"] = "Télécharger : {0}\nInstallé : {1}",
         ["click_to_download"] = "Cliquer pour télécharger",
         ["no_entries"] = "Aucune entrée trouvée",

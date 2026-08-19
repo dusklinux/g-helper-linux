@@ -388,7 +388,6 @@ public static class Ukrainian
         ["cpu_cores"] = "Ядра CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} з {1} активних потоків",
-        ["kernel_warning"] = "\u26A0 Рекомендовано ядро 6.2+ для повної підтримки функцій",
 
         // LANGUAGE
         ["language_header"] = "Мова",
@@ -488,8 +487,6 @@ public static class Ukrainian
         ["restart_to_apply"] = "Перезапустіть для застосування",
         ["saved_to_downloads"] = "Збережено у ~/Downloads/{0}",
         ["download_failed"] = "Завантаження не вдалося",
-        ["update_nixos_button"] = "Оновити та перезібрати",
-        ["update_nixos_running"] = "Перезбірка NixOS…",
         ["download_tooltip"] = "Завантажити: {0}\nВстановлено: {1}",
         ["click_to_download"] = "Натисніть для завантаження",
         ["no_entries"] = "Записів не знайдено",

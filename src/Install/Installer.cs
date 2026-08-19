@@ -440,12 +440,6 @@ public static partial class Installer
 
     public static FileState ComputeState(ManagedFile f)
     {
-        // NixOS: files live at Nix-provided locations (PATH, system profile,
-        // declarative udev/sudoers/modules) instead of the FHS paths. Verify
-        // those instead of the hardcoded Dest so the panel reflects reality.
-        if (Platform.Linux.NixOS.IsNixOS)
-            return ComputeStateNixOS(f);
-
         // Capability-gated files (e.g. the GPU boot service on iGPU-only hardware)
         // are not relevant here: report Ok when present (so it can still be
         // Removed) or NotApplicable when absent - never Missing/Outdated, so it is
@@ -525,97 +519,7 @@ public static partial class Installer
         return FileState.Ok;
     }
 
-    /// <summary>
-    /// Verify a managed file against its Nix-provided location. On NixOS the
-    /// nixos/ module + package supply these via PATH, the system profile, and
-    /// declarative udev/sudoers/kernel-modules - not the FHS Dest paths. Each
-    /// dependency is checked where Nix actually puts it so the integrity panel
-    /// shows it as working (Ok) rather than missing or "not applicable".
-    /// </summary>
-    private static FileState ComputeStateNixOS(ManagedFile f)
-    {
-        switch (f.Id)
-        {
-            case "gpu_helper":
-                return Platform.Linux.NixOS.ResolveGpuHelper() != null
-                    ? FileState.Ok : FileState.Missing;
 
-            case "gpu_block_helper":
-                return Platform.Linux.NixOS.ResolveGpuBlockHelper() != null
-                    ? FileState.Ok : FileState.Missing;
-
-            case "ryzenadj":
-                // nixpkgs package, added to PATH by the module.
-                if (!f.Applies())
-                    return FileState.NotApplicable;
-                return Platform.Linux.NixOS.ResolveRyzenadj() != null
-                    ? FileState.Ok : FileState.Missing;
-
-            case "udev_rules":
-                // Module ships these via services.udev.packages (symlink into
-                // /etc/udev/rules.d from the read-only store).
-                return File.Exists(Platform.Linux.NixOS.UdevRulePath)
-                    ? FileState.Ok : FileState.Missing;
-
-            case "sudoers":
-                return ProbeSudoers();
-
-            case "kernel_modules":
-                return Platform.Linux.NixOS.KernelModulesLoaded()
-                    ? FileState.Ok : FileState.Missing;
-
-            case "desktop":
-                return Platform.Linux.NixOS.DesktopFilePath() != null
-                    ? FileState.Ok : FileState.Missing;
-
-            case "icon":
-                return Platform.Linux.NixOS.IconFilePath() != null
-                    ? FileState.Ok : FileState.Missing;
-
-            case "autostart":
-                // User-writable (~/.config/autostart); the app manages it itself.
-                if (!AppConfig.IsNotFalse("autostart"))
-                    return FileState.Ok;
-                return File.Exists(f.Dest) ? FileState.Ok : FileState.Missing;
-
-            case "gpu_boot_script":
-            case "gpu_boot_service":
-                // Optional early-boot GPU service (module option, dGPU only).
-                if (!f.Applies())
-                    return FileState.NotApplicable;
-                return File.Exists($"/etc/systemd/system/{BootService}")
-                    || File.Exists($"/etc/systemd/system/multi-user.target.wants/{BootService}")
-                    ? FileState.Ok : FileState.NotApplicable;
-
-            default:
-                return FileState.NotApplicable;
-        }
-    }
-
-    /// <summary>
-    /// The location to show for a managed file in the integrity panel. On
-    /// NixOS the files live at Nix-provided paths (PATH, system profile) or
-    /// are declarative (no file), so the hardcoded FHS Dest would be
-    /// misleading. Returns the real path, or a short label for declarative
-    /// items. Non-NixOS callers use f.Dest directly.
-    /// </summary>
-    private static string DisplayPathNixOS(ManagedFile f) => f.Id switch
-    {
-        "gpu_helper" => Platform.Linux.NixOS.ResolveGpuHelper() ?? f.Dest,
-        "gpu_block_helper" => Platform.Linux.NixOS.ResolveGpuBlockHelper() ?? f.Dest,
-        "ryzenadj" => Platform.Linux.NixOS.ResolveRyzenadj() ?? f.Dest,
-        "desktop" => Platform.Linux.NixOS.DesktopFilePath() ?? f.Dest,
-        "icon" => Platform.Linux.NixOS.IconFilePath() ?? f.Dest,
-        "udev_rules" => f.Dest,   // real (store symlink into /etc)
-        "autostart" => f.Dest,   // real (user dir)
-        "sudoers" => "security.sudo.extraRules (declarative)",
-        "kernel_modules" => "boot.kernelModules (uinput, i2c-dev)",
-        "gpu_boot_script" or "gpu_boot_service" =>
-            File.Exists($"/etc/systemd/system/{BootService}")
-                ? $"/etc/systemd/system/{BootService}"
-                : "module: services.ghelper.gpuBootService",
-        _ => f.Dest,
-    };
 
     /// <summary>
     /// Verify the passwordless sudoers rule by inspecting the effective sudo
@@ -685,15 +589,7 @@ public static partial class Installer
         string blockHelperPath = "/usr/local/lib/ghelper/gpu-block-helper.sh";
         string ryzenadjPath = RyzenadjDest;
 
-        // NixOS: the sudoers rule references the nix store paths. The resolvers
-        // already return the store path (symlink followed), which is what the
-        // app invokes and what the NOPASSWD rule grants - match against those.
-        if (Platform.Linux.NixOS.IsNixOS)
-        {
-            gpuHelperPath = Platform.Linux.NixOS.ResolveGpuHelper() ?? gpuHelperPath;
-            blockHelperPath = Platform.Linux.NixOS.ResolveGpuBlockHelper() ?? blockHelperPath;
-            ryzenadjPath = Platform.Linux.NixOS.ResolveRyzenadj() ?? ryzenadjPath;
-        }
+
 
         bool gpuHelper = HasNopasswd(listing, gpuHelperPath);
         // The block helper only matters where the GPU boot integration
@@ -1418,16 +1314,7 @@ public static partial class Installer
             var status = await Task.Run(ComputeStatus);
             LogStatus(status);
 
-            // NixOS: dependencies are provided declaratively by the nixos/
-            // module + package (verified above). /etc is read-only so the
-            // pkexec self-install can't run - skip the prompt. The Updates
-            // window integrity panel still shows real per-file status.
-            if (Platform.Linux.NixOS.SkipSelfInstall)
-            {
-                Logger.WriteLine("Installer: NixOS - integration provided by module, skipping prompt");
-                _startupGate.TrySetResult(true);
-                return;
-            }
+
 
             // User opted out of the startup check (Extra settings or the popup's
             // own "Don't show this again" box - both write sysfiles_skip_startup).
@@ -1691,7 +1578,7 @@ public static partial class Installer
         if (showPath)
             info.Children.Add(new TextBlock
             {
-                Text = Platform.Linux.NixOS.IsNixOS ? DisplayPathNixOS(r.File) : r.File.Dest,
+                Text = r.File.Dest,
                 FontSize = 10,
                 Foreground = new SolidColorBrush(Color.Parse("#888888")),
                 FontFamily = new FontFamily("monospace"),
@@ -1760,9 +1647,7 @@ public static partial class Installer
         // Per-row Remove button: only for healthy (OK) rows, and only when the
         // panel provided a remove handler. Shares column 3 with Repair - the two
         // are mutually exclusive (a row is either a problem or OK).
-        // NixOS: files are module-managed (declarative); per-file removal can't
-        // work (read-only /etc, or only deletes a non-existent FHS path), so hide.
-        if (onRemove != null && r.State == FileState.Ok && !Platform.Linux.NixOS.IsNixOS)
+        if (onRemove != null && r.State == FileState.Ok)
         {
             var remove = new Button
             {

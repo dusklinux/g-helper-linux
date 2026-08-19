@@ -388,7 +388,6 @@ public static class Polish
         ["cpu_cores"] = "Rdzenie CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} z {1} aktywnych wątków",
-        ["kernel_warning"] = "\u26A0 Zalecane jądro 6.2+ dla pełnej obsługi funkcji",
 
         // LANGUAGE
         ["language_header"] = "Język",
@@ -488,8 +487,6 @@ public static class Polish
         ["restart_to_apply"] = "Uruchom ponownie, aby zastosować",
         ["saved_to_downloads"] = "Zapisano w ~/Downloads/{0}",
         ["download_failed"] = "Pobieranie nie powiodło się",
-        ["update_nixos_button"] = "Aktualizuj i przebuduj",
-        ["update_nixos_running"] = "Przebudowywanie NixOS…",
         ["download_tooltip"] = "Do pobrania: {0}\nZainstalowano: {1}",
         ["click_to_download"] = "Kliknij, aby pobrać",
         ["no_entries"] = "Nie znaleziono wpisów",

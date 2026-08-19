@@ -2248,14 +2248,6 @@ public partial class ExtraWindow : Window
 
         labelFeatures.Text = features.Count > 0
             ? Labels.Format("features_prefix", string.Join(", ", features))
-            : Labels.Get("no_features");
-
-        // Kernel version check
-        var kernelVer = sys.GetKernelVersionParsed();
-        if (kernelVer < new Version(6, 2))
-        {
-            labelFeatures.Text += "\n" + Labels.Get("kernel_warning");
-        }
     }
 
     // ADVANCED

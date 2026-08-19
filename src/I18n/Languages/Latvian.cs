@@ -526,7 +526,6 @@ public static class Latvian
         ["cpu_cores"] = "CPU kodoli",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} no {1} pavedieniem aktīvi",
-        ["kernel_warning"] = "\u26A0 Pilnam funkciju atbalstam ieteicams kodols 6.2+",
 
         // LANGUAGE
         ["language_header"] = "Valoda",
@@ -626,8 +625,6 @@ public static class Latvian
         ["restart_to_apply"] = "Restartējiet, lai lietotu",
         ["saved_to_downloads"] = "Saglabāts ~/Downloads/{0}",
         ["download_failed"] = "Lejupielāde neizdevās",
-        ["update_nixos_button"] = "Atjaunināt un pārbūvēt",
-        ["update_nixos_running"] = "Pārbūvē NixOS…",
         ["download_tooltip"] = "Lejupielāde: {0}\nInstalēts: {1}",
         ["click_to_download"] = "Noklikšķiniet, lai lejupielādētu",
         ["no_entries"] = "Nav atrasts neviens ieraksts",

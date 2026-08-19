@@ -388,7 +388,6 @@ public static class Turkish
         ["cpu_cores"] = "CPU Çekirdekleri",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{1} iş parçacığından {0} aktif",
-        ["kernel_warning"] = "\u26A0 Tam özellik desteği için çekirdek 6.2+ önerilir",
 
         // LANGUAGE
         ["language_header"] = "Dil",
@@ -488,8 +487,6 @@ public static class Turkish
         ["restart_to_apply"] = "Uygulamak için yeniden başlatın",
         ["saved_to_downloads"] = "~/Downloads/{0} konumuna kaydedildi",
         ["download_failed"] = "İndirme başarısız",
-        ["update_nixos_button"] = "Güncelle ve yeniden derle",
-        ["update_nixos_running"] = "NixOS yeniden derleniyor…",
         ["download_tooltip"] = "İndir: {0}\nYüklü: {1}",
         ["click_to_download"] = "İndirmek için tıklayın",
         ["no_entries"] = "Kayıt bulunamadı",

@@ -391,7 +391,6 @@ public static class ChineseSimplified
         ["cpu_cores"] = "CPU 核心",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{1} 线程中有 {0} 个活跃",
-        ["kernel_warning"] = "\u26A0 建议使用内核 6.2 以上版本以获得完整功能支持",
 
         // LANGUAGE
         ["language_header"] = "语言",
@@ -491,8 +490,6 @@ public static class ChineseSimplified
         ["restart_to_apply"] = "重启以应用",
         ["saved_to_downloads"] = "已保存到 ~/Downloads/{0}",
         ["download_failed"] = "下载失败",
-        ["update_nixos_button"] = "更新并重建",
-        ["update_nixos_running"] = "正在重建 NixOS…",
         ["download_tooltip"] = "下载：{0}\n已安装：{1}",
         ["click_to_download"] = "点击下载",
         ["no_entries"] = "未找到条目",

@@ -391,7 +391,6 @@ public static class Japanese
         ["cpu_cores"] = "CPU コア",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{1} スレッド中 {0} がアクティブ",
-        ["kernel_warning"] = "\u26A0 完全な機能サポートにはカーネル 6.2 以上を推奨",
 
         // LANGUAGE
         ["language_header"] = "言語",
@@ -491,8 +490,6 @@ public static class Japanese
         ["restart_to_apply"] = "再起動して適用",
         ["saved_to_downloads"] = "~/Downloads/{0} に保存しました",
         ["download_failed"] = "ダウンロード失敗",
-        ["update_nixos_button"] = "更新して再構築",
-        ["update_nixos_running"] = "NixOS を再構築中…",
         ["download_tooltip"] = "ダウンロード: {0}\nインストール済み: {1}",
         ["click_to_download"] = "クリックしてダウンロード",
         ["no_entries"] = "エントリが見つかりません",

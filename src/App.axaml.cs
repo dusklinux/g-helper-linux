@@ -225,9 +225,7 @@ public class App : Application
             Fan.FanSensorControl.InitFanMax();
 
             // Warn if udev rules are not installed (sysfs writes will fail).
-            // NixOS: the module provides udev rules via services.udev.packages.
-            if (!Platform.Linux.NixOS.SkipUdevWarning
-                && !File.Exists("/etc/udev/rules.d/90-ghelper.rules"))
+            if (!File.Exists("/etc/udev/rules.d/90-ghelper.rules"))
             {
                 Logger.WriteLine("WARNING: udev rules not installed - sysfs writes will fail. Run install.sh for full functionality.");
                 System?.ShowNotification(Labels.Get("setup_required"),

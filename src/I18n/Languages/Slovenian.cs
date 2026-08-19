@@ -526,7 +526,6 @@ public static class Slovenian
         ["cpu_cores"] = "Jedra CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} od {1} niti aktivnih",
-        ["kernel_warning"] = "\u26A0 Za polno podporo funkcij je priporočeno jedro 6.2+",
 
         // LANGUAGE
         ["language_header"] = "Jezik",
@@ -626,8 +625,6 @@ public static class Slovenian
         ["restart_to_apply"] = "Znova zaženite za uporabo",
         ["saved_to_downloads"] = "Shranjeno v ~/Downloads/{0}",
         ["download_failed"] = "Prenos spodletel",
-        ["update_nixos_button"] = "Posodobi in znova zgradi",
-        ["update_nixos_running"] = "Ponovno grajenje NixOS…",
         ["download_tooltip"] = "Prenos: {0}\nNameščeno: {1}",
         ["click_to_download"] = "Kliknite za prenos",
         ["no_entries"] = "Najden ni noben vnos",

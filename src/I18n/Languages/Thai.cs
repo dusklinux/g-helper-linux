@@ -391,7 +391,6 @@ public static class Thai
         ["cpu_cores"] = "คอร์ CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} จาก {1} เธรดที่ทำงานอยู่",
-        ["kernel_warning"] = "\u26A0 แนะนำเคอร์เนล 6.2 ขึ้นไปเพื่อรองรับฟีเจอร์ทั้งหมด",
 
         // LANGUAGE
         ["language_header"] = "ภาษา",
@@ -491,8 +490,6 @@ public static class Thai
         ["restart_to_apply"] = "รีสตาร์ทเพื่อนำไปใช้",
         ["saved_to_downloads"] = "บันทึกไว้ที่ ~/Downloads/{0}",
         ["download_failed"] = "ดาวน์โหลดล้มเหลว",
-        ["update_nixos_button"] = "อัปเดตและสร้างใหม่",
-        ["update_nixos_running"] = "กำลังสร้าง NixOS ใหม่…",
         ["download_tooltip"] = "ดาวน์โหลด: {0}\nติดตั้งแล้ว: {1}",
         ["click_to_download"] = "คลิกเพื่อดาวน์โหลด",
         ["no_entries"] = "ไม่พบรายการ",

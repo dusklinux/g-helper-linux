@@ -388,7 +388,6 @@ public static class Czech
         ["cpu_cores"] = "Jádra CPU",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0} z {1} aktivních vláken",
-        ["kernel_warning"] = "\u26A0 Doporučeno jádro 6.2+ pro plnou podporu funkcí",
 
         // LANGUAGE
         ["language_header"] = "Jazyk",
@@ -488,8 +487,6 @@ public static class Czech
         ["restart_to_apply"] = "Restartujte pro použití",
         ["saved_to_downloads"] = "Uloženo do ~/Downloads/{0}",
         ["download_failed"] = "Stahování selhalo",
-        ["update_nixos_button"] = "Aktualizovat a přestavět",
-        ["update_nixos_running"] = "Přestavování NixOS…",
         ["download_tooltip"] = "Ke stažení: {0}\nNainstalováno: {1}",
         ["click_to_download"] = "Klikněte pro stažení",
         ["no_entries"] = "Žádné záznamy nenalezeny",

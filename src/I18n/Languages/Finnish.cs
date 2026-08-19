@@ -391,7 +391,6 @@ public static class Finnish
         ["cpu_cores"] = "CPU-ytimet",
         ["cpu_cores_format"] = "{0}/{1}",
         ["cpu_cores_info"] = "{0}/{1} säiettä aktiivisena",
-        ["kernel_warning"] = "\u26A0 Kernel 6.2+ suositellaan täyden ominaisuustuen saamiseksi",
 
         // LANGUAGE
         ["language_header"] = "Kieli",
@@ -491,8 +490,6 @@ public static class Finnish
         ["restart_to_apply"] = "Käynnistä uudelleen päivittääksesi",
         ["saved_to_downloads"] = "Tallennettu kansioon ~/Downloads/{0}",
         ["download_failed"] = "Lataus epäonnistui",
-        ["update_nixos_button"] = "Päivitä ja rakenna uudelleen",
-        ["update_nixos_running"] = "Rakennetaan NixOS uudelleen…",
         ["download_tooltip"] = "Lataa: {0}\nAsennettu: {1}",
         ["click_to_download"] = "Napsauta ladataksesi",
         ["no_entries"] = "Merkintöjä ei löytynyt",
