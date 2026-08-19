@@ -2248,6 +2248,7 @@ public partial class ExtraWindow : Window
 
         labelFeatures.Text = features.Count > 0
             ? Labels.Format("features_prefix", string.Join(", ", features))
+            : Labels.Get("no_features");
     }
 
     // ADVANCED
