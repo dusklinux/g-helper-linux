@@ -1,8 +1,8 @@
 namespace GHelper.Linux.Platform.Linux;
 
 /// <summary>
-/// AMD Ryzen SMU power/temp/current tuning via the upstream ryzenadj CLI
-/// (FlyGoat/RyzenAdj, bundled static build; nixpkgs package on NixOS).
+/// Wraps the bundled <c>ryzenadj</c> CLI for setting AMD CPU power limits
+/// (FlyGoat/RyzenAdj, bundled static build).
 /// Invoked elevated (sudo NOPASSWD rule installed by the app). Usage model
 /// mirrors Ryzen Controller and Universal x86 Tuning Utility:
 ///   - current limits are read from one `ryzenadj -i` table

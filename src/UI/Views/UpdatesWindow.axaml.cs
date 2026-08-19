@@ -91,10 +91,6 @@ public partial class UpdatesWindow : Window
         buttonSysFilesRecheck.Content = Labels.Get("sysfiles_recheck");
         buttonSysFilesFix.Content = Labels.Get("sysfiles_fix");
         buttonSysFilesUninstall.Content = Labels.Get("sysfiles_uninstall");
-        // NixOS: removal is declarative (services.ghelper.enable = false +
-        // rebuild, or install-local.sh --uninstall); the in-app uninstall
-        // can't remove module-managed files, so hide it.
-        buttonSysFilesUninstall.IsVisible = !Platform.Linux.NixOS.IsNixOS;
     }
 
     private void ButtonRefresh_Click(object? sender, RoutedEventArgs e)
@@ -626,8 +622,7 @@ public partial class UpdatesWindow : Window
 
                     var btnUpdate = new Button
                     {
-                        Content = Platform.Linux.NixOS.IsNixOS
-                            ? Labels.Get("update_nixos_button") : Labels.Get("download_install"),
+                        Content = Labels.Get("download_install"),
                         MinWidth = 130,
                         Foreground = ColorWhite,
                     };
@@ -1439,8 +1434,7 @@ public partial class UpdatesWindow : Window
 
         var btnUpdate = new Button
         {
-            Content = Platform.Linux.NixOS.IsNixOS
-                ? Labels.Get("update_nixos_button") : Labels.Get("update_now"),
+            Content = Labels.Get("update_now"),
             MinWidth = 130,
             Padding = new Avalonia.Thickness(14, 8),
             Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),

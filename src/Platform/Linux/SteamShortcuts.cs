@@ -294,8 +294,7 @@ public static class SteamShortcuts
             shortcuts.Items[i] = (i.ToString(), shortcuts.Items[i].Value);
     }
 
-    /// <summary>Launcher path for the Exe field. AppImage and NixOS aware;
-    /// a bare PATH name (NixOS) is resolved to an absolute path.</summary>
+    /// <summary>Launcher path for the Exe field. AppImage aware.</summary>
     private static string ResolveExePath()
     {
         string exe = LinuxSystemIntegration.ResolveLauncherExec();
@@ -318,13 +317,6 @@ public static class SteamShortcuts
     /// Empty string when nothing is available (Steam shows a default).</summary>
     private static string ResolveIconPath()
     {
-        if (NixOS.IsNixOS)
-        {
-            var nix = NixOS.IconFilePath();
-            if (nix != null)
-                return nix;
-        }
-
         const string system = "/usr/share/icons/hicolor/256x256/apps/ghelper.png";
         if (File.Exists(system))
             return system;
