@@ -439,7 +439,7 @@ The boot service unit was hardened. Updating the binary alone is not enough -
 re-run the install script so the new helper and sudoers file are deployed:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/utajum/g-helper-linux/master/install/install.sh | sudo bash
+curl -sL https://raw.githubusercontent.com/dusklinux/g-helper-linux/master/install/install.sh | sudo bash
 ```
 
 ### Added
@@ -524,7 +524,7 @@ Hotfix for release v1.0.75. On non Asus devices and non MUX Asus devices the GPU
 The GPU boot service files (`ghelper-gpu-boot.sh`, `gpu-block-helper.sh`, `ghelper-gpu-boot.service`) have been updated. Simply updating the binary is not enough - you must re-run the install script to get the new boot service:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/utajum/g-helper-linux/master/install/install.sh | sudo bash
+curl -sL https://raw.githubusercontent.com/dusklinux/g-helper-linux/master/install/install.sh | sudo bash
 ```
 
 ### GPU mode switching rework

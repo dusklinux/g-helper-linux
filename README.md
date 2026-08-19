@@ -1,23 +1,15 @@
-<p align="center">
-  <a href="https://g-helper-linux.elevatech.xyz">
-    <img src="https://capsule-render.vercel.app/api?type=venom&height=200&text=G-HELPER%20LINUX&fontSize=60&color=0:0d1117,100:00ff41&stroke=00ff41&fontColor=00ff41&animation=twinkling&desc=%3E_%20KERNEL%3A%20LINUX%20%7C%20STATUS%3A%20ONLINE&descAlignY=75&descSize=16&fontFamily=monospace" />
-  </a>
-</p>
-
 <div align="center">
 
-[![GitHub Release](https://img.shields.io/github/v/release/utajum/g-helper-linux?style=for-the-badge&color=4a9eff)](https://github.com/utajum/g-helper-linux/releases/latest)
-[![Total Binary Downloads](https://img.shields.io/github/downloads/utajum/g-helper-linux/ghelper?style=for-the-badge&color=28c840&label=total%20binary%20downloads)](https://github.com/utajum/g-helper-linux/releases)
-[![Total AppImage Downloads](https://img.shields.io/github/downloads/utajum/g-helper-linux/GHelper-x86_64.AppImage?style=for-the-badge&color=28c840&label=total%20appimage%20downloads)](https://github.com/utajum/g-helper-linux/releases)
-[![License](https://img.shields.io/github/license/utajum/g-helper-linux?style=for-the-badge&color=a0c8ff)](https://github.com/utajum/g-helper-linux/blob/master/LICENSE)
+# G-Helper Linux (Wayland / Hyprland Fork)
+
+**A debloated, dedicated fork of G-Helper targeted specifically for Wayland and Hyprland with pure PipeWire audio.**
+
+[![GitHub Release](https://img.shields.io/github/v/release/dusklinux/g-helper-linux?style=for-the-badge&color=4a9eff)](https://github.com/dusklinux/g-helper-linux/releases/latest)
+[![Total Binary Downloads](https://img.shields.io/github/downloads/dusklinux/g-helper-linux/ghelper?style=for-the-badge&color=28c840&label=total%20binary%20downloads)](https://github.com/dusklinux/g-helper-linux/releases)
+[![License](https://img.shields.io/github/license/dusklinux/g-helper-linux?style=for-the-badge&color=a0c8ff)](https://github.com/dusklinux/g-helper-linux/blob/master/LICENSE)
 [![Changelog](https://img.shields.io/badge/changelog-what's_new-ff8c42?style=for-the-badge)](CHANGELOG.md)
-[![Stars](https://img.shields.io/github/stars/utajum/g-helper-linux?style=for-the-badge&color=f0c040)](https://github.com/utajum/g-helper-linux/stargazers)
 
 </div>
-
-[![G-Helper for Linux](screenshot.png)](screenshot.png)
-
-*Click on the screenshot to view full size.*
 
 ```
  ██████╗       ██╗  ██╗███████╗██╗     ██████╗ ███████╗██████╗ 
@@ -35,7 +27,25 @@
  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
          ╔══[ SYSTEM ]════════════════════════════════╗
          ║  >_ KERNEL: LINUX                          ║ 
-         ║  >_ STATUS: ONLINE...                      ║
+         ║  >_ COMPOSITOR: WAYLAND / HYPRLAND         ║
+         ║  >_ AUDIO: PIPEWIRE                        ║
+         ╚═══════════════════════════════[ 0x1F4 ]════╝
+           ╔══════════════════════════════════════════╗
+           ║  ASUS LAPTOP CONTROL FOR HYPRLAND/WAYLAND║
+           ╚══════════════════════════════════════════╝
+```
+
+---
+
+## `░▒▓█ ╔══[ ABOUT THIS FORK ]══╗ █▓▒░`
+
+This is a dedicated fork of `g-helper-linux` targeted strictly for **Wayland** and **Hyprland**:
+- **Pure Wayland UI**: Driven by `Avalonia.Wayland` with zero X11/XWayland dependencies.
+- **Native Hyprland Backend**: Integrates directly with `hyprctl` and Hyprland 0.56+ Lua APIs (`hl.monitor`, `hl.device`, `hl.config`) for refresh rate and input management.
+- **Pure PipeWire Audio**: Native PipeWire audio control via `wpctl` and bundled DSP.
+- **Zero Bloat**: All X11, XWayland, Xrandr, PulseAudio, and non-Wayland baggage has been excised.
+
+---            ║
          ╚═══════════════════════════════[ 0x1F4 ]════╝
            ╔══════════════════════════════════════╗
            ║  ASUS LAPTOP CONTROL FOR LINUX       ║
@@ -230,13 +240,13 @@ lsmod | grep asus
 ### `╠══[ ONE-LINER INSTALL ]══╣`
 
 ```bash
-curl -sL https://raw.githubusercontent.com/utajum/g-helper-linux/master/install/install.sh | sudo bash
+curl -sL https://raw.githubusercontent.com/dusklinux/g-helper-linux/master/install/install.sh | sudo bash
 ```
 
 ### `╠══[ QUICK UNINSTALL ]══╣`
 
 ```bash
-curl -sL https://raw.githubusercontent.com/utajum/g-helper-linux/master/install/install.sh | sudo bash -s -- --uninstall
+curl -sL https://raw.githubusercontent.com/dusklinux/g-helper-linux/master/install/install.sh | sudo bash -s -- --uninstall
 ```
 
 Removes system files + udev rules + desktop entry. User config in `~/.config/ghelper` is preserved.
@@ -244,7 +254,7 @@ Removes system files + udev rules + desktop entry. User config in `~/.config/ghe
 ### `╠══[ MANUAL DOWNLOAD ]══╣`
 
 ```bash
-curl -sL https://github.com/utajum/g-helper-linux/releases/latest/download/ghelper -o ghelper
+curl -sL https://github.com/dusklinux/g-helper-linux/releases/latest/download/ghelper -o ghelper
 chmod +x ghelper
 ./ghelper
 ```
@@ -252,7 +262,7 @@ chmod +x ghelper
 ### `╠══[ APPIMAGE ]══╣`
 
 ```bash
-curl -sL https://github.com/utajum/g-helper-linux/releases/latest/download/GHelper-x86_64.AppImage -o GHelper-x86_64.AppImage
+curl -sL https://github.com/dusklinux/g-helper-linux/releases/latest/download/GHelper-x86_64.AppImage -o GHelper-x86_64.AppImage
 chmod +x GHelper-x86_64.AppImage
 ./GHelper-x86_64.AppImage
 ```
@@ -515,12 +525,12 @@ g-helper-linux/
 | `\\.\ATKACPI` DeviceIoControl | `/sys/devices/platform/asus-nb-wmi/` sysfs |
 | DSTS (read) / DEVS (write) | `cat` / `echo >` sysfs attributes |
 | WMI `Win32_*` queries | `/sys/class/dmi/id/` sysfs |
-| `user32.dll` EnumDisplaySettings | xrandr / wlr-randr / kscreen / gdctl (auto-detect) |
+| `user32.dll` EnumDisplaySettings | Native Hyprland backend (`hyprctl`) |
 | NvAPIWrapper.Net | gpu-helper (NVML) + nvidia-smi fallback |
 | `atiadlxx.dll` (AMD ADL) | amdgpu hwmon sysfs + gpu-helper PCI ops |
 | NAudio / CoreAudio | audio-helper (PipeWire native C, real-time DSP) |
 | Task Scheduler autostart | XDG `~/.config/autostart/*.desktop` |
-| WinForms UI | Avalonia UI (cross-platform) |
+| WinForms UI | Avalonia.Wayland |
 
 ---
 
@@ -543,8 +553,6 @@ Same license as the original G-Helper project.
 ---
 
 <div align="center">
-
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/utajum)
 
 ```
   ░▒▓█ END OF TRANSMISSION █▓▒░

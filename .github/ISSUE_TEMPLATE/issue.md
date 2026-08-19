@@ -9,7 +9,7 @@ assignees: ''
 <!--
 Please give as many details as possible.
 Incomplete reports may be closed without an answer.
-Read the README first: https://github.com/utajum/g-helper-linux#readme
+Read the README first: https://github.com/dusklinux/g-helper-linux#readme
 -->
 
 ### What's the issue?

@@ -6,7 +6,7 @@ set -euo pipefail
 # ║  Downloads latest release + installs system-wide                            ║
 # ║  100% idempotent — safe to re-run infinitely                                ║
 # ║                                                                              ║
-# ║  Install:    curl -sL https://raw.githubusercontent.com/utajum/g-helper-linux/master/install/install.sh | sudo bash
+# ║  Install:    curl -sL https://raw.githubusercontent.com/dusklinux/g-helper-linux/master/install/install.sh | sudo bash
 # ║  AppImage:   curl -sL ... | sudo bash -s -- --appimage                       ║
 # ║  Uninstall:  curl -sL ... | sudo bash -s -- --uninstall                      ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
@@ -42,7 +42,7 @@ else
 fi
 
 # ── Configuration ──────────────────────────────────────────────────────────────
-REPO="utajum/g-helper-linux"
+REPO="dusklinux/g-helper-linux"
 INSTALL_DIR="/opt/ghelper"
 UDEV_DEST="/etc/udev/rules.d/90-ghelper.rules"
 DESKTOP_DEST="/usr/share/applications/ghelper.desktop"
@@ -855,7 +855,7 @@ if [[ "$MODE" == "appimage" ]]; then
     _typeout "${YELLOW}${BOLD}  > HARDWARE ACCESS LAYER READY :: Launch your AppImage now${RESET}" 0.03
     echo ""
     echo "  ${DIM}To uninstall:${RESET}"
-    echo "  ${DIM}curl -sL https://raw.githubusercontent.com/utajum/g-helper-linux/master/install/install.sh | sudo bash -s -- --uninstall${RESET}"
+    echo "  ${DIM}curl -sL https://raw.githubusercontent.com/dusklinux/g-helper-linux/master/install/install.sh | sudo bash -s -- --uninstall${RESET}"
 else
     echo "${GREEN}${BOLD}  ╔════════════════════════════════════════════════════════════════╗${RESET}"
     echo "${GREEN}${BOLD}  ║                                                                ║${RESET}"
@@ -879,7 +879,7 @@ else
     _typeout "${GREEN}${BOLD}  > NEURAL LINK ESTABLISHED :: LAUNCH WITH: ghelper${RESET}" 0.03
     echo ""
     echo "  ${DIM}To uninstall:${RESET}"
-    echo "  ${DIM}curl -sL https://raw.githubusercontent.com/utajum/g-helper-linux/master/install/install.sh | sudo bash -s -- --uninstall${RESET}"
+    echo "  ${DIM}curl -sL https://raw.githubusercontent.com/dusklinux/g-helper-linux/master/install/install.sh | sudo bash -s -- --uninstall${RESET}"
 fi
 
 echo ""

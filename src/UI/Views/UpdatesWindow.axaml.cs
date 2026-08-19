@@ -52,7 +52,7 @@ public partial class UpdatesWindow : Window
         "ROG Font V1.5",
     };
 
-    private const string GitHubRepo = "utajum/g-helper-linux";
+    private const string GitHubRepo = "dusklinux/g-helper-linux";
 
     private string? _model;
     private string? _biosVersion;

@@ -2595,7 +2595,7 @@ public partial class MainWindow : Window
     }
 
 
-    private const string DonateUrl = "https://buymeacoffee.com/utajum";
+    private const string DonateUrl = "https://github.com/dusklinux/g-helper-linux";
 
     private void InitDonate()
     {
