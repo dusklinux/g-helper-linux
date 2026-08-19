@@ -1047,13 +1047,13 @@ public partial class MouseWindow : Window
             Height = 130,
             CanResize = false,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x1C)),
+            Background = Helpers.MatugenTheme.GetWindowBackgroundBrush(),
         };
 
         var msg = new TextBlock
         {
             Text = Labels.Format("mouse_host_switch_msg_fmt", hostIndex + 1),
-            Foreground = Brushes.White,
+            Foreground = Helpers.MatugenTheme.GetTextForegroundBrush(),
             TextWrapping = TextWrapping.Wrap,
             Margin = new Avalonia.Thickness(16, 16, 16, 8),
         };
@@ -1061,9 +1061,19 @@ public partial class MouseWindow : Window
         var btnSwitch = new Button
         {
             Content = Labels.Get("mouse_switch"),
+            Background = Helpers.MatugenTheme.GetAccentBrush(),
+            Foreground = Helpers.MatugenTheme.GetAccentForegroundBrush(),
+            FontWeight = Avalonia.Media.FontWeight.SemiBold,
+            CornerRadius = new Avalonia.CornerRadius(5),
             Margin = new Avalonia.Thickness(0, 0, 8, 0),
         };
-        var btnCancel = new Button { Content = Labels.Get("mouse_cancel") };
+        var btnCancel = new Button
+        {
+            Content = Labels.Get("mouse_cancel"),
+            Background = Helpers.MatugenTheme.GetPanelBackgroundBrush(),
+            Foreground = Helpers.MatugenTheme.GetTextForegroundBrush(),
+            CornerRadius = new Avalonia.CornerRadius(5),
+        };
         btnSwitch.Click += (_, _) => dialog.Close(true);
         btnCancel.Click += (_, _) => dialog.Close(false);
 

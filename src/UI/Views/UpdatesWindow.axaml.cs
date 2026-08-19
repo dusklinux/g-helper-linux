@@ -1394,7 +1394,7 @@ public partial class UpdatesWindow : Window
             WindowStartupLocation = WindowStartupLocation.Manual,
             CanResize = false,
             WindowDecorations = WindowDecorations.Full,
-            Background = new SolidColorBrush(Color.Parse("#1C1C1C")),
+            Background = Helpers.MatugenTheme.GetWindowBackgroundBrush(),
         };
         try
         { dialog.Icon = owner.Icon; }
@@ -1409,7 +1409,7 @@ public partial class UpdatesWindow : Window
             Text = Labels.Get("update_prompt_title"),
             FontSize = 15,
             FontWeight = FontWeight.Bold,
-            Foreground = new SolidColorBrush(Color.Parse("#F0F0F0")),
+            Foreground = Helpers.MatugenTheme.GetTextForegroundBrush(),
         });
 
         root.Children.Add(new TextBlock
@@ -1417,14 +1417,14 @@ public partial class UpdatesWindow : Window
             Text = Labels.Format("update_prompt_message", latestVersion, Helpers.AppConfig.AppVersion),
             TextWrapping = TextWrapping.Wrap,
             FontSize = 13,
-            Foreground = new SolidColorBrush(Color.Parse("#CCCCCC")),
+            Foreground = Helpers.MatugenTheme.GetTextDimBrush(),
         });
 
         var dontShow = new CheckBox
         {
             Content = Labels.Get("dont_show_again"),
             FontSize = 12,
-            Foreground = new SolidColorBrush(Color.Parse("#999999")),
+            Foreground = Helpers.MatugenTheme.GetTextDimBrush(),
             IsChecked = false,
             Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
         };
@@ -1435,17 +1435,26 @@ public partial class UpdatesWindow : Window
         var btnUpdate = new Button
         {
             Content = Labels.Get("update_now"),
+            Background = Helpers.MatugenTheme.GetAccentBrush(),
+            Foreground = Helpers.MatugenTheme.GetAccentForegroundBrush(),
+            FontWeight = FontWeight.SemiBold,
+            CornerRadius = new Avalonia.CornerRadius(5),
             MinWidth = 130,
             Padding = new Avalonia.Thickness(14, 8),
+            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
             Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
         };
 
         var btnLater = new Button
         {
             Content = Labels.Get("not_now"),
+            Background = Helpers.MatugenTheme.GetPanelBackgroundBrush(),
+            Foreground = Helpers.MatugenTheme.GetTextForegroundBrush(),
+            CornerRadius = new Avalonia.CornerRadius(5),
             MinWidth = 100,
             Padding = new Avalonia.Thickness(14, 8),
             Margin = new Avalonia.Thickness(8, 0, 0, 0),
+            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
             Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
         };
         btnLater.Click += (_, _) => dialog.Close();
@@ -1463,8 +1472,12 @@ public partial class UpdatesWindow : Window
         var btnChangelog = new Button
         {
             Content = Labels.Get("changelog_title"),
+            Background = Helpers.MatugenTheme.GetPanelBackgroundBrush(),
+            Foreground = Helpers.MatugenTheme.GetTextForegroundBrush(),
+            CornerRadius = new Avalonia.CornerRadius(5),
             MinWidth = 100,
             Padding = new Avalonia.Thickness(14, 8),
+            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
             Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
         };
         ChangelogWindow? changelog = null;

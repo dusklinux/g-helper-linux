@@ -284,6 +284,7 @@ public partial class NvidiaProcessesWindow : Window
             SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             CanResize = false,
+            Background = Helpers.MatugenTheme.GetWindowBackgroundBrush(),
         };
 
         var tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
@@ -294,7 +295,7 @@ public partial class NvidiaProcessesWindow : Window
             TextWrapping = TextWrapping.Wrap,
             FontSize = 13,
             Margin = new Thickness(20, 16, 20, 0),
-            Foreground = new SolidColorBrush(Color.Parse("#CCCCCC")),
+            Foreground = Helpers.MatugenTheme.GetTextDimBrush(),
         };
 
         var btnYes = new Button
@@ -315,8 +316,8 @@ public partial class NvidiaProcessesWindow : Window
         var btnNo = new Button
         {
             Content = Labels.Get("cancel"),
-            Background = new SolidColorBrush(Color.Parse("#2A2A2A")),
-            Foreground = new SolidColorBrush(Color.Parse("#CCCCCC")),
+            Background = Helpers.MatugenTheme.GetPanelBackgroundBrush(),
+            Foreground = Helpers.MatugenTheme.GetTextForegroundBrush(),
             Padding = new Thickness(14, 8),
             MinWidth = 110,
             CornerRadius = new CornerRadius(4),

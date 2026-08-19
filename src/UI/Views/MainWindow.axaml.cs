@@ -761,11 +761,12 @@ public partial class MainWindow : Window
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             CanResize = false,
             WindowDecorations = WindowDecorations.Full,
+            Background = Helpers.MatugenTheme.GetWindowBackgroundBrush(),
         };
 
         var card = new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#262626")),
+            Background = Helpers.MatugenTheme.GetPanelBackgroundBrush(),
             CornerRadius = new Avalonia.CornerRadius(8),
             Padding = new Avalonia.Thickness(20, 16),
             Margin = new Avalonia.Thickness(0, 0, 0, 18),
@@ -784,6 +785,7 @@ public partial class MainWindow : Window
             Text = Labels.Get("gpu_reenable_failed_title"),
             FontSize = 15,
             FontWeight = Avalonia.Media.FontWeight.Bold,
+            Foreground = Helpers.MatugenTheme.GetTextForegroundBrush(),
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
         };
         var titleRow = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Margin = new Avalonia.Thickness(0, 0, 0, 12) };
@@ -796,7 +798,7 @@ public partial class MainWindow : Window
             TextWrapping = Avalonia.Media.TextWrapping.Wrap,
             FontSize = 13,
             LineHeight = 20,
-            Foreground = new SolidColorBrush(Color.Parse("#CCCCCC")),
+            Foreground = Helpers.MatugenTheme.GetTextDimBrush(),
         };
 
         var cardContent = new StackPanel();
@@ -851,12 +853,13 @@ public partial class MainWindow : Window
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             CanResize = false,
             WindowDecorations = WindowDecorations.Full,
+            Background = Helpers.MatugenTheme.GetWindowBackgroundBrush(),
         };
 
-        // Content card - matches main window panel style (#262626)
+        // Content card - matches main window panel style
         var card = new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#262626")),
+            Background = Helpers.MatugenTheme.GetPanelBackgroundBrush(),
             CornerRadius = new Avalonia.CornerRadius(8),
             Padding = new Avalonia.Thickness(20, 16),
             Margin = new Avalonia.Thickness(0, 0, 0, 18),
@@ -876,6 +879,7 @@ public partial class MainWindow : Window
             Text = Labels.Get("gpu_driver_title"),
             FontSize = 15,
             FontWeight = Avalonia.Media.FontWeight.Bold,
+            Foreground = Helpers.MatugenTheme.GetTextForegroundBrush(),
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
         };
 
@@ -893,7 +897,7 @@ public partial class MainWindow : Window
             TextWrapping = Avalonia.Media.TextWrapping.Wrap,
             FontSize = 13,
             LineHeight = 20,
-            Foreground = new SolidColorBrush(Color.Parse("#CCCCCC")),
+            Foreground = Helpers.MatugenTheme.GetTextDimBrush(),
         };
 
         string ComposeHolderSummary()
@@ -1175,11 +1179,12 @@ public partial class MainWindow : Window
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             CanResize = false,
             WindowDecorations = WindowDecorations.Full,
+            Background = Helpers.MatugenTheme.GetWindowBackgroundBrush(),
         };
 
         var card = new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#262626")),
+            Background = Helpers.MatugenTheme.GetPanelBackgroundBrush(),
             CornerRadius = new Avalonia.CornerRadius(8),
             Padding = new Avalonia.Thickness(20, 16),
             Margin = new Avalonia.Thickness(0, 0, 0, 18),
@@ -1199,6 +1204,7 @@ public partial class MainWindow : Window
             Text = Labels.Get("gpu_kill_failure_title"),
             FontSize = 15,
             FontWeight = Avalonia.Media.FontWeight.Bold,
+            Foreground = Helpers.MatugenTheme.GetTextForegroundBrush(),
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
         };
 
@@ -1216,7 +1222,7 @@ public partial class MainWindow : Window
             TextWrapping = Avalonia.Media.TextWrapping.Wrap,
             FontSize = 13,
             LineHeight = 20,
-            Foreground = new SolidColorBrush(Color.Parse("#CCCCCC")),
+            Foreground = Helpers.MatugenTheme.GetTextDimBrush(),
             Margin = new Avalonia.Thickness(0, 0, 0, 10),
         };
 
@@ -1246,13 +1252,13 @@ public partial class MainWindow : Window
         cardContent.Children.Add(listScroll);
         card.Child = cardContent;
 
-        Button MakeBtn(string text, string bg, string fg, bool bold = false)
+        Button MakeBtn(string text, IBrush bg, IBrush fg, bool bold = false)
         {
             return new Button
             {
                 Content = text,
-                Background = new SolidColorBrush(Color.Parse(bg)),
-                Foreground = new SolidColorBrush(Color.Parse(fg)),
+                Background = bg,
+                Foreground = fg,
                 FontWeight = bold ? Avalonia.Media.FontWeight.Bold : Avalonia.Media.FontWeight.Normal,
                 FontSize = 13,
                 MinWidth = 130,
@@ -1267,8 +1273,8 @@ public partial class MainWindow : Window
             };
         }
 
-        var btnRetry = MakeBtn(Labels.Get("gpu_kill_failure_retry"), "#A82A2A", "#FFFFFF", bold: true);
-        var btnClose = MakeBtn(Labels.Get("cancel"), "#2A2A2A", "#888888");
+        var btnRetry = MakeBtn(Labels.Get("gpu_kill_failure_retry"), new SolidColorBrush(Color.Parse("#A82A2A")), Brushes.White, bold: true);
+        var btnClose = MakeBtn(Labels.Get("cancel"), Helpers.MatugenTheme.GetPanelBackgroundBrush(), Helpers.MatugenTheme.GetTextDimBrush());
         btnRetry.Margin = new Avalonia.Thickness(0, 0, 6, 0);
         btnClose.Margin = new Avalonia.Thickness(6, 0, 0, 0);
 
