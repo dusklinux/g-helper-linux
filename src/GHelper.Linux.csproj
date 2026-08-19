@@ -36,7 +36,7 @@
     <AssemblyName>ghelper</AssemblyName>
     <RootNamespace>GHelper.Linux</RootNamespace>
     <!-- ApplicationIcon is Windows-only; on Linux we use .desktop file icon -->
-    <Version>2.0.3</Version>
+    <Version>2.1.0</Version>
     <Description>G-Helper for Linux - ASUS laptop control utility</Description>
   </PropertyGroup>
 
