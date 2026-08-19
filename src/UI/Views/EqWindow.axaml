@@ -18,7 +18,7 @@
             <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
                 <TextBlock x:Name="labelHint"
                            Text="Drag handles for freq/gain. Scroll wheel over a handle adjusts Q (steepness). Shift+wheel = coarser."
-                           FontSize="11" Foreground="#888" VerticalAlignment="Center"
+                           FontSize="11" Foreground="{DynamicResource TextDim}" VerticalAlignment="Center"
                            TextWrapping="Wrap" MaxWidth="420" />
                 <Button x:Name="buttonReset" Content="Reset" Click="ButtonReset_Click"
                         Width="80" />

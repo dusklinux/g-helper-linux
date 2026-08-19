@@ -52,6 +52,21 @@ public static class MatugenTheme
     public static IBrush GetPanelBackgroundBrush() =>
         Application.Current?.Resources["PanelBackground"] as IBrush ?? new SolidColorBrush(Color.Parse("#262626"));
 
+    public static IBrush GetTextForegroundBrush() =>
+        Application.Current?.Resources["TextForeground"] as IBrush ?? new SolidColorBrush(Color.Parse("#F0F0F0"));
+
+    public static IBrush GetTextDimBrush() =>
+        Application.Current?.Resources["TextDim"] as IBrush ?? new SolidColorBrush(Color.Parse("#A0A0A0"));
+
+    public static IBrush GetAccentForegroundBrush() =>
+        Application.Current?.Resources["AccentForeground"] as IBrush ?? Brushes.Black;
+
+    public static string GetAccentHex()
+    {
+        var c = GetAccentColor();
+        return $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+    }
+
     public static bool ApplyTheme()
     {
         var app = Application.Current;
@@ -124,9 +139,31 @@ public static class MatugenTheme
             app.Resources["SystemControlHighlightListAccentHighBrush"] = new SolidColorBrush(accent);
             app.Resources["SystemControlHighlightAltAccentHighBrush"] = new SolidColorBrush(accentHover);
 
+            app.Resources["ComboBoxDropDownBackground"] = new SolidColorBrush(panelBg);
+            app.Resources["ComboBoxPopupBackground"] = new SolidColorBrush(panelBg);
+            app.Resources["ComboBoxBackground"] = new SolidColorBrush(buttonBg);
+            app.Resources["ComboBoxBackgroundPointerOver"] = new SolidColorBrush(buttonHover);
+            app.Resources["ComboBoxBackgroundPressed"] = new SolidColorBrush(buttonHover);
+            app.Resources["ComboBoxBorderBrush"] = new SolidColorBrush(separator);
+            app.Resources["ComboBoxBorderBrushPointerOver"] = new SolidColorBrush(accent);
+            app.Resources["ComboBoxBorderBrushPressed"] = new SolidColorBrush(accent);
+            app.Resources["ComboBoxForeground"] = new SolidColorBrush(textFg);
+            app.Resources["ComboBoxForegroundPointerOver"] = new SolidColorBrush(textFg);
+            app.Resources["ComboBoxItemBackground"] = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+            app.Resources["ComboBoxItemBackgroundPointerOver"] = new SolidColorBrush(buttonHover);
+            app.Resources["ComboBoxItemBackgroundPressed"] = new SolidColorBrush(buttonHover);
             app.Resources["ComboBoxItemBackgroundSelected"] = new SolidColorBrush(accent);
             app.Resources["ComboBoxItemBackgroundSelectedPointerOver"] = new SolidColorBrush(accentHover);
             app.Resources["ComboBoxItemBackgroundSelectedPressed"] = new SolidColorBrush(accent);
+            app.Resources["ComboBoxItemForeground"] = new SolidColorBrush(textFg);
+            app.Resources["ComboBoxItemForegroundPointerOver"] = new SolidColorBrush(textFg);
+            app.Resources["ComboBoxItemForegroundSelected"] = new SolidColorBrush(accentFg);
+            app.Resources["ComboBoxItemForegroundSelectedPointerOver"] = new SolidColorBrush(accentFg);
+
+            app.Resources["MenuFlyoutPresenterBackground"] = new SolidColorBrush(panelBg);
+            app.Resources["MenuFlyoutPresenterBorderBrush"] = new SolidColorBrush(separator);
+            app.Resources["FlyoutPresenterBackground"] = new SolidColorBrush(panelBg);
+            app.Resources["PopupBackground"] = new SolidColorBrush(panelBg);
 
             app.Resources["CheckBoxCheckBackgroundFillChecked"] = new SolidColorBrush(accent);
             app.Resources["CheckBoxCheckBackgroundFillCheckedPointerOver"] = new SolidColorBrush(accentHover);
@@ -192,9 +229,31 @@ public static class MatugenTheme
         app.Resources["SystemControlHighlightListAccentHighBrush"] = new SolidColorBrush(accent);
         app.Resources["SystemControlHighlightAltAccentHighBrush"] = new SolidColorBrush(accentHover);
 
+        app.Resources["ComboBoxDropDownBackground"] = new SolidColorBrush(Color.Parse("#262626"));
+        app.Resources["ComboBoxPopupBackground"] = new SolidColorBrush(Color.Parse("#262626"));
+        app.Resources["ComboBoxBackground"] = new SolidColorBrush(Color.Parse("#373737"));
+        app.Resources["ComboBoxBackgroundPointerOver"] = new SolidColorBrush(Color.Parse("#454545"));
+        app.Resources["ComboBoxBackgroundPressed"] = new SolidColorBrush(Color.Parse("#454545"));
+        app.Resources["ComboBoxBorderBrush"] = new SolidColorBrush(Color.Parse("#333333"));
+        app.Resources["ComboBoxBorderBrushPointerOver"] = new SolidColorBrush(accent);
+        app.Resources["ComboBoxBorderBrushPressed"] = new SolidColorBrush(accent);
+        app.Resources["ComboBoxForeground"] = new SolidColorBrush(Color.Parse("#F0F0F0"));
+        app.Resources["ComboBoxForegroundPointerOver"] = new SolidColorBrush(Color.Parse("#F0F0F0"));
+        app.Resources["ComboBoxItemBackground"] = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+        app.Resources["ComboBoxItemBackgroundPointerOver"] = new SolidColorBrush(Color.Parse("#454545"));
+        app.Resources["ComboBoxItemBackgroundPressed"] = new SolidColorBrush(Color.Parse("#454545"));
         app.Resources["ComboBoxItemBackgroundSelected"] = new SolidColorBrush(accent);
         app.Resources["ComboBoxItemBackgroundSelectedPointerOver"] = new SolidColorBrush(accentHover);
         app.Resources["ComboBoxItemBackgroundSelectedPressed"] = new SolidColorBrush(accent);
+        app.Resources["ComboBoxItemForeground"] = new SolidColorBrush(Color.Parse("#F0F0F0"));
+        app.Resources["ComboBoxItemForegroundPointerOver"] = new SolidColorBrush(Color.Parse("#F0F0F0"));
+        app.Resources["ComboBoxItemForegroundSelected"] = new SolidColorBrush(accentFg);
+        app.Resources["ComboBoxItemForegroundSelectedPointerOver"] = new SolidColorBrush(accentFg);
+
+        app.Resources["MenuFlyoutPresenterBackground"] = new SolidColorBrush(Color.Parse("#262626"));
+        app.Resources["MenuFlyoutPresenterBorderBrush"] = new SolidColorBrush(Color.Parse("#333333"));
+        app.Resources["FlyoutPresenterBackground"] = new SolidColorBrush(Color.Parse("#262626"));
+        app.Resources["PopupBackground"] = new SolidColorBrush(Color.Parse("#262626"));
 
         app.Resources["CheckBoxCheckBackgroundFillChecked"] = new SolidColorBrush(accent);
         app.Resources["CheckBoxCheckBackgroundFillCheckedPointerOver"] = new SolidColorBrush(accentHover);

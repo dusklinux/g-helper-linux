@@ -19,18 +19,18 @@
         </Style>
         <Style Selector="ScrollBar /template/ Thumb">
             <Setter Property="RenderTransform" Value="none" />
-            <Setter Property="Background" Value="#5A5A5A" />
+            <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
             <Setter Property="MinHeight" Value="30" />
         </Style>
         <Style Selector="ScrollBar /template/ Thumb:pointerover">
-            <Setter Property="Background" Value="#7A7A7A" />
+            <Setter Property="Background" Value="{DynamicResource ButtonHover}" />
         </Style>
         <Style Selector="ScrollBar /template/ Thumb:pressed">
-            <Setter Property="Background" Value="#909090" />
+            <Setter Property="Background" Value="{DynamicResource AccentColor}" />
         </Style>
         <Style Selector="ScrollBar /template/ Rectangle#TrackRect">
             <Setter Property="Opacity" Value="1" />
-            <Setter Property="Fill" Value="#2A2A2A" />
+            <Setter Property="Fill" Value="{DynamicResource SeparatorColor}" />
         </Style>
     </Window.Styles>
 

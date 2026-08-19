@@ -53,7 +53,7 @@
             <!-- Legend -->
             <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,4">
                 <StackPanel Orientation="Horizontal" Spacing="4">
-                    <Border Width="12" Height="12" CornerRadius="2" Background="#06B48A" />
+                    <Border Width="12" Height="12" CornerRadius="2" Background="{DynamicResource AccentColor}" />
                     <TextBlock x:Name="labelLegendUpToDate" Text="Up to date" Foreground="{DynamicResource TextDim}" FontSize="11" VerticalAlignment="Center" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="4">

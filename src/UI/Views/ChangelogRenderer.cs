@@ -18,14 +18,14 @@ namespace GHelper.Linux.UI.Views;
 // owning window can dispose decoded bitmaps when it closes.
 internal static class ChangelogRenderer
 {
-    private static readonly IBrush ColorText = new SolidColorBrush(Color.Parse("#F0F0F0"));
-    private static readonly IBrush ColorDim = new SolidColorBrush(Color.Parse("#999999"));
-    private static readonly IBrush ColorAccent = new SolidColorBrush(Color.Parse("#4A9EFF"));
-    private static readonly IBrush ColorSection = new SolidColorBrush(Color.Parse("#06B48A"));
-    private static readonly IBrush ColorLink = new SolidColorBrush(Color.Parse("#4A9EFF"));
-    private static readonly IBrush ColorCodeBg = new SolidColorBrush(Color.Parse("#262626"));
-    private static readonly IBrush ColorCodeText = new SolidColorBrush(Color.Parse("#E0E0E0"));
-    private static readonly IBrush ColorImageBg = new SolidColorBrush(Color.Parse("#222222"));
+    private static IBrush ColorText => MatugenTheme.GetTextForegroundBrush();
+    private static IBrush ColorDim => MatugenTheme.GetTextDimBrush();
+    private static IBrush ColorAccent => MatugenTheme.GetAccentBrush();
+    private static IBrush ColorSection => MatugenTheme.GetAccentBrush();
+    private static IBrush ColorLink => MatugenTheme.GetAccentBrush();
+    private static IBrush ColorCodeBg => MatugenTheme.GetPanelBackgroundBrush();
+    private static IBrush ColorCodeText => MatugenTheme.GetTextForegroundBrush();
+    private static IBrush ColorImageBg => MatugenTheme.GetWindowBackgroundBrush();
     private static readonly FontFamily MonoFont = new("monospace");
 
     public static void Render(List<ChangelogBlock> blocks, StackPanel target, List<Bitmap> bitmapSink)

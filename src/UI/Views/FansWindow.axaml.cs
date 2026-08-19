@@ -12,7 +12,7 @@ namespace GHelper.Linux.UI.Views;
 /// </summary>
 public partial class FansWindow : Window
 {
-    private static readonly IBrush AccentBrush = new SolidColorBrush(Color.Parse("#4CC2FF"));
+    private static IBrush AccentBrush => Helpers.MatugenTheme.GetAccentBrush();
     private static readonly IBrush TransparentBrush = Brushes.Transparent;
 
     private readonly DispatcherTimer _sensorTimer;

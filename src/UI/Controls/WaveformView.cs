@@ -12,7 +12,7 @@ namespace GHelper.Linux.UI.Controls;
 public sealed class WaveformView : Control
 {
     public float[]? Samples { get; set; }
-    public IBrush Stroke { get; set; } = new SolidColorBrush(Color.Parse("#4CC2FF"));
+    public IBrush Stroke { get; set; } = Helpers.MatugenTheme.GetAccentBrush();
     public IBrush Fill { get; set; } = new SolidColorBrush(Color.FromArgb(40, 76, 194, 255));
     public IBrush ZeroLine { get; set; } = new SolidColorBrush(Color.FromArgb(60, 160, 160, 160));
     public double StrokeThickness { get; set; } = 1.4;
@@ -24,6 +24,11 @@ public sealed class WaveformView : Control
         // into the spectrum panel below. Clipping at the edge is honest:
         // the user sees the signal hit the ceiling but it stays put.
         ClipToBounds = true;
+        Helpers.MatugenTheme.ThemeChanged += () =>
+        {
+            Stroke = Helpers.MatugenTheme.GetAccentBrush();
+            InvalidateVisual();
+        };
     }
 
     public override void Render(DrawingContext context)
@@ -35,7 +40,7 @@ public sealed class WaveformView : Control
             return;
 
         // background panel
-        context.FillRectangle(new SolidColorBrush(Color.Parse("#101418")),
+        context.FillRectangle(Helpers.MatugenTheme.GetWindowBackgroundBrush(),
                               new Rect(0, 0, w, h));
 
         // zero line

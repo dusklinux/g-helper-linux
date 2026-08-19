@@ -537,7 +537,7 @@ public static class TraySystemMonitor
         if (_cpuTray == null)
             return;
 
-        string bg = AppConfig.GetString("cpu_tray_bg") ?? "#3AAEEF";
+        string bg = AppConfig.GetString("cpu_tray_bg") ?? MatugenTheme.GetAccentHex();
         bool transparent = AppConfig.Is("cpu_tray_bg_transparent");
         string text = AppConfig.GetString("cpu_tray_text") ?? "#FFFFFF";
 
@@ -558,14 +558,14 @@ public static class TraySystemMonitor
     }
 
     /// <summary>
-    /// Update the GPU temp icon. Defaults: green (#06B48A) bg, white text.
+    /// Update the GPU temp icon.
     /// </summary>
     private static void UpdateGpuIcon(int temp)
     {
         if (_gpuTray == null)
             return;
 
-        string bg = AppConfig.GetString("gpu_tray_bg") ?? "#06B48A";
+        string bg = AppConfig.GetString("gpu_tray_bg") ?? MatugenTheme.GetAccentHex();
         bool transparent = AppConfig.Is("gpu_tray_bg_transparent");
         string text = AppConfig.GetString("gpu_tray_text") ?? "#FFFFFF";
 

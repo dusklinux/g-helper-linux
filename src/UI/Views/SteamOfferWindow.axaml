@@ -16,11 +16,11 @@
                 <ctrl:Icon IconName="gamepad" Width="18" Height="18"
                            VerticalAlignment="Center" />
                 <TextBlock x:Name="labelHeader" Text="Steam" FontSize="16"
-                           FontWeight="SemiBold" Foreground="White"
+                           FontWeight="SemiBold" Foreground="{DynamicResource TextForeground}"
                            VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock x:Name="labelText" TextWrapping="Wrap"
-                       Foreground="#CCC" FontSize="13" />
+                       Foreground="{DynamicResource TextDim}" FontSize="13" />
             <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
                 <Button Grid.Column="0" x:Name="buttonAdd" Classes="ghelper"
                         Click="ButtonAdd_Click" Margin="0,0,4,0"

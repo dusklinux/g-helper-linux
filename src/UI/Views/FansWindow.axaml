@@ -14,7 +14,7 @@
     <Grid ColumnDefinitions="350,*">
 
         <!-- ============ LEFT COLUMN: panelSliders ============ -->
-        <Border Grid.Column="0" BorderThickness="0,0,1,0" BorderBrush="#2A2A2A">
+        <Border Grid.Column="0" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource SeparatorColor}">
             <Grid RowDefinitions="Auto,*">
 
                 <!-- TAB NAV -->

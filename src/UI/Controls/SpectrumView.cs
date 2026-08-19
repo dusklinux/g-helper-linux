@@ -11,7 +11,16 @@ namespace GHelper.Linux.UI.Controls;
 public sealed class SpectrumView : Control
 {
     public float[]? Bins { get; set; }
-    public IBrush Fill { get; set; } = new SolidColorBrush(Color.Parse("#50C878"));
+    public IBrush Fill { get; set; } = Helpers.MatugenTheme.GetAccentBrush();
+
+    public SpectrumView()
+    {
+        Helpers.MatugenTheme.ThemeChanged += () =>
+        {
+            Fill = Helpers.MatugenTheme.GetAccentBrush();
+            InvalidateVisual();
+        };
+    }
 
     public override void Render(DrawingContext context)
     {
@@ -21,7 +30,7 @@ public sealed class SpectrumView : Control
         if (w <= 0 || h <= 0)
             return;
 
-        context.FillRectangle(new SolidColorBrush(Color.Parse("#101418")),
+        context.FillRectangle(Helpers.MatugenTheme.GetWindowBackgroundBrush(),
                               new Rect(0, 0, w, h));
 
         var bins = Bins;

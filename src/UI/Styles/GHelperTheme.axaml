@@ -158,6 +158,25 @@
         <Setter Property="Foreground" Value="{DynamicResource AccentForeground}" />
     </Style>
 
+    <Style Selector="ComboBox /template/ Border#PopupBorder">
+        <Setter Property="Background" Value="{DynamicResource PanelBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SeparatorColor}" />
+    </Style>
+
+    <Style Selector="ComboBox /template/ Popup#PART_Popup Border#PopupBorder">
+        <Setter Property="Background" Value="{DynamicResource PanelBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SeparatorColor}" />
+    </Style>
+
+    <Style Selector="PopupRoot">
+        <Setter Property="Background" Value="{DynamicResource PanelBackground}" />
+    </Style>
+
+    <Style Selector="MenuFlyoutPresenter">
+        <Setter Property="Background" Value="{DynamicResource PanelBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SeparatorColor}" />
+    </Style>
+
     <!-- Slider styling -->
     <Style Selector="Slider">
         <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
@@ -240,6 +259,21 @@
 
     <Style Selector="TextBlock.value">
         <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
+        <Setter Property="FontSize" Value="11" />
+    </Style>
+
+    <!-- SelectableTextBlock styling -->
+    <Style Selector="SelectableTextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
+    </Style>
+
+    <Style Selector="SelectableTextBlock.value">
+        <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
+        <Setter Property="FontSize" Value="11" />
+    </Style>
+
+    <Style Selector="SelectableTextBlock.label-dim">
+        <Setter Property="Foreground" Value="{DynamicResource TextDim}" />
         <Setter Property="FontSize" Value="11" />
     </Style>
 

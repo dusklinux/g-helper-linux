@@ -16,16 +16,16 @@
              body is a clickable Button that opens the effect detail window.
              A bright accent border highlights tiles where the effect is on. -->
         <Style Selector="Border.effect-tile">
-            <Setter Property="Background" Value="#262A30" />
-            <Setter Property="BorderBrush" Value="#3F4248" />
+            <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SeparatorColor}" />
             <Setter Property="BorderThickness" Value="2" />
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Padding" Value="8,6" />
             <Setter Property="MinWidth" Value="118" />
         </Style>
         <Style Selector="Border.effect-tile.on">
-            <Setter Property="BorderBrush" Value="#50C878" />
-            <Setter Property="Background" Value="#1E3328" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
+            <Setter Property="Background" Value="{DynamicResource ButtonHover}" />
         </Style>
         <Style Selector="Button.tile-body">
             <Setter Property="Background" Value="Transparent" />
@@ -35,7 +35,7 @@
             <Setter Property="HorizontalContentAlignment" Value="Center" />
         </Style>
         <Style Selector="Button.tile-body:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#33FFFFFF" />
+            <Setter Property="Background" Value="{DynamicResource ButtonHover}" />
         </Style>
     </Window.Styles>
 
@@ -49,7 +49,7 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8"
                             VerticalAlignment="Center">
                     <TextBlock x:Name="labelInputSource"
-                               Text="Input source:" Foreground="#AAA"
+                               Text="Input source:" Foreground="{DynamicResource TextDim}"
                                VerticalAlignment="Center" FontSize="12" />
                     <ComboBox x:Name="comboSource"
                               MinWidth="260" Height="34"
@@ -90,7 +90,7 @@
 
         <!-- Status strip -->
         <TextBlock Grid.Row="1" x:Name="labelStatus" Text="Helper offline"
-                   Margin="4,4,0,2" Foreground="#888" FontSize="11" />
+                   Margin="4,4,0,2" Foreground="{DynamicResource TextDim}" FontSize="11" />
 
         <!-- Chain: each tile has an enable CheckBox at top + clickable body
              that opens the effect detail window. -->
@@ -107,7 +107,7 @@
                                            HorizontalAlignment="Center" />
                                 <TextBlock x:Name="labelRnnSubtitle"
                                            Text="RNNoise" FontSize="10"
-                                           Foreground="#888"
+                                           Foreground="{DynamicResource TextDim}"
                                            HorizontalAlignment="Center" />
                             </StackPanel>
                         </Button>
@@ -115,7 +115,7 @@
                 </Border>
 
                 <TextBlock Grid.Column="1" Text="&#x2192;" VerticalAlignment="Center"
-                           Foreground="#666" Margin="4,0" />
+                           Foreground="{DynamicResource TextDim}" Margin="4,0" />
 
                 <Border Grid.Column="2" x:Name="tileVocoder" Classes="effect-tile">
                     <StackPanel Spacing="2">
@@ -128,7 +128,7 @@
                                            HorizontalAlignment="Center" />
                                 <TextBlock x:Name="labelVocoderSubtitle"
                                            Text="Robot" FontSize="10"
-                                           Foreground="#888"
+                                           Foreground="{DynamicResource TextDim}"
                                            HorizontalAlignment="Center" />
                             </StackPanel>
                         </Button>
@@ -136,7 +136,7 @@
                 </Border>
 
                 <TextBlock Grid.Column="3" Text="&#x2192;" VerticalAlignment="Center"
-                           Foreground="#666" Margin="4,0" />
+                           Foreground="{DynamicResource TextDim}" Margin="4,0" />
 
                 <Border Grid.Column="4" x:Name="tileEq" Classes="effect-tile">
                     <StackPanel Spacing="2">
@@ -149,7 +149,7 @@
                                            HorizontalAlignment="Center" />
                                 <TextBlock x:Name="labelEqSubtitle"
                                            Text="9-band" FontSize="10"
-                                           Foreground="#888"
+                                           Foreground="{DynamicResource TextDim}"
                                            HorizontalAlignment="Center" />
                             </StackPanel>
                         </Button>
@@ -157,7 +157,7 @@
                 </Border>
 
                 <TextBlock Grid.Column="5" Text="&#x2192;" VerticalAlignment="Center"
-                           Foreground="#666" Margin="4,0" />
+                           Foreground="{DynamicResource TextDim}" Margin="4,0" />
 
                 <Border Grid.Column="6" x:Name="tileDelay" Classes="effect-tile">
                     <StackPanel Spacing="2">
@@ -170,7 +170,7 @@
                                            HorizontalAlignment="Center" />
                                 <TextBlock x:Name="labelDelaySubtitle"
                                            Text="Echo line" FontSize="10"
-                                           Foreground="#888"
+                                           Foreground="{DynamicResource TextDim}"
                                            HorizontalAlignment="Center" />
                             </StackPanel>
                         </Button>
@@ -178,7 +178,7 @@
                 </Border>
 
                 <TextBlock Grid.Column="7" Text="&#x2192;" VerticalAlignment="Center"
-                           Foreground="#666" Margin="4,0" />
+                           Foreground="{DynamicResource TextDim}" Margin="4,0" />
 
                 <Border Grid.Column="8" x:Name="tileReverb" Classes="effect-tile">
                     <StackPanel Spacing="2">
@@ -191,7 +191,7 @@
                                            HorizontalAlignment="Center" />
                                 <TextBlock x:Name="labelReverbSubtitle"
                                            Text="Deep room" FontSize="10"
-                                           Foreground="#888"
+                                           Foreground="{DynamicResource TextDim}"
                                            HorizontalAlignment="Center" />
                             </StackPanel>
                         </Button>
@@ -213,46 +213,46 @@
                 <Grid ColumnDefinitions="*,5,*,5,*,5,*">
                     <StackPanel Grid.Column="0" ClipToBounds="True">
                         <TextBlock x:Name="labelMeterIn" Text="Input level"
-                                   FontSize="10" Foreground="#888"
+                                   FontSize="10" Foreground="{DynamicResource TextDim}"
                                    TextTrimming="CharacterEllipsis" />
                         <ProgressBar x:Name="meterIn" Minimum="0" Maximum="100"
                                      Height="10" Foreground="{DynamicResource AccentColor}"
                                      Background="{DynamicResource ButtonBackground}" />
                         <TextBlock x:Name="labelInDb" Text="-inf dB" FontSize="10"
-                                   Foreground="#AAA"
+                                   Foreground="{DynamicResource TextDim}"
                                    TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                     <StackPanel Grid.Column="2" ClipToBounds="True">
                         <TextBlock x:Name="labelMeterOut" Text="Output level"
-                                   FontSize="10" Foreground="#888"
+                                   FontSize="10" Foreground="{DynamicResource TextDim}"
                                    TextTrimming="CharacterEllipsis" />
                         <ProgressBar x:Name="meterOut" Minimum="0" Maximum="100"
-                                     Height="10" Foreground="#50C878"
-                                     Background="#202428" />
+                                     Height="10" Foreground="{DynamicResource AccentColor}"
+                                     Background="{DynamicResource ButtonBackground}" />
                         <TextBlock x:Name="labelOutDb" Text="-inf dB" FontSize="10"
-                                   Foreground="#AAA"
+                                   Foreground="{DynamicResource TextDim}"
                                    TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                     <StackPanel Grid.Column="4" ClipToBounds="True">
                         <TextBlock x:Name="labelMeterRed" Text="Reduction"
-                                   FontSize="10" Foreground="#888"
+                                   FontSize="10" Foreground="{DynamicResource TextDim}"
                                    TextTrimming="CharacterEllipsis" />
                         <ProgressBar x:Name="meterRed" Minimum="0" Maximum="40"
-                                     Height="10" Foreground="#FFA500"
-                                     Background="#202428" />
+                                     Height="10" Foreground="{DynamicResource AccentHover}"
+                                     Background="{DynamicResource ButtonBackground}" />
                         <TextBlock x:Name="labelRedDb" Text="0 dB" FontSize="10"
-                                   Foreground="#AAA"
+                                   Foreground="{DynamicResource TextDim}"
                                    TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                     <StackPanel Grid.Column="6" ClipToBounds="True">
                         <TextBlock x:Name="labelMeterVad" Text="Voice activity"
-                                   FontSize="10" Foreground="#888"
+                                   FontSize="10" Foreground="{DynamicResource TextDim}"
                                    TextTrimming="CharacterEllipsis" />
                         <ProgressBar x:Name="meterVad" Minimum="0" Maximum="100"
-                                     Height="10" Foreground="#C778DD"
-                                     Background="#202428" />
+                                     Height="10" Foreground="{DynamicResource AccentColor}"
+                                     Background="{DynamicResource ButtonBackground}" />
                         <TextBlock x:Name="labelVad" Text="0%" FontSize="10"
-                                   Foreground="#AAA"
+                                   Foreground="{DynamicResource TextDim}"
                                    TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                 </Grid>
@@ -263,7 +263,7 @@
                     <Grid RowDefinitions="Auto,*">
                         <TextBlock Grid.Row="0" x:Name="labelWaveIn"
                                    Text="Input waveform"
-                                   FontSize="10" Foreground="#888" Margin="0,0,0,2" />
+                                   FontSize="10" Foreground="{DynamicResource TextDim}" Margin="0,0,0,2" />
                         <ctrl:WaveformView Grid.Row="1" x:Name="waveIn" />
                     </Grid>
                 </Border>
@@ -271,7 +271,7 @@
                     <Grid RowDefinitions="Auto,*">
                         <TextBlock Grid.Row="0" x:Name="labelWaveOut"
                                    Text="Output waveform"
-                                   FontSize="10" Foreground="#888" Margin="0,0,0,2" />
+                                   FontSize="10" Foreground="{DynamicResource TextDim}" Margin="0,0,0,2" />
                         <ctrl:WaveformView Grid.Row="1" x:Name="waveOut" />
                     </Grid>
                 </Border>
@@ -282,7 +282,7 @@
                     <Grid RowDefinitions="Auto,*">
                         <TextBlock Grid.Row="0" x:Name="labelSpecIn"
                                    Text="Input spectrum"
-                                   FontSize="10" Foreground="#888" Margin="0,0,0,2" />
+                                   FontSize="10" Foreground="{DynamicResource TextDim}" Margin="0,0,0,2" />
                         <ctrl:SpectrumView Grid.Row="1" x:Name="specIn" />
                     </Grid>
                 </Border>
@@ -290,7 +290,7 @@
                     <Grid RowDefinitions="Auto,*">
                         <TextBlock Grid.Row="0" x:Name="labelSpecOut"
                                    Text="Output spectrum"
-                                   FontSize="10" Foreground="#888" Margin="0,0,0,2" />
+                                   FontSize="10" Foreground="{DynamicResource TextDim}" Margin="0,0,0,2" />
                         <ctrl:SpectrumView Grid.Row="1" x:Name="specOut" />
                     </Grid>
                 </Border>
@@ -300,7 +300,7 @@
         <!-- Footer hint -->
         <TextBlock Grid.Row="4" x:Name="labelHint"
                    Text="Tip: tick the checkbox to enable an effect. Click the icon to open its detail window."
-                   FontSize="10" Foreground="#666" Margin="0,8,0,0"
+                   FontSize="10" Foreground="{DynamicResource TextDim}" Margin="0,8,0,0"
                    TextWrapping="Wrap" />
     </Grid>
 

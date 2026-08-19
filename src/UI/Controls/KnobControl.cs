@@ -301,7 +301,7 @@ public sealed class KnobControl : Control
             FlowDirection.LeftToRight,
             Typeface.Default,
             10,
-            new SolidColorBrush(ValueColor));
+            new SolidColorBrush(AccentColor));
         ctx.DrawText(ft, new Point(l.KnobCx - ft.Width * 0.5, l.H - l.ValueH - 1));
     }
 

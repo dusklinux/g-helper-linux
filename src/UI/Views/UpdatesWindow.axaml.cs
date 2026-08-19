@@ -29,13 +29,13 @@ namespace GHelper.Linux.UI.Views;
 /// </summary>
 public partial class UpdatesWindow : Window
 {
-    private static readonly IBrush ColorGreen = new SolidColorBrush(Color.Parse("#06B48A"));
+    private static IBrush ColorGreen => Helpers.MatugenTheme.GetAccentBrush();
     private static readonly IBrush ColorRed = new SolidColorBrush(Color.Parse("#FF2020"));
-    private static readonly IBrush ColorGray = new SolidColorBrush(Color.Parse("#666666"));
-    private static readonly IBrush ColorWhite = new SolidColorBrush(Color.Parse("#F0F0F0"));
-    private static readonly IBrush ColorDim = new SolidColorBrush(Color.Parse("#999999"));
-    private static readonly IBrush RowBg1 = new SolidColorBrush(Color.Parse("#2A2A2A"));
-    private static readonly IBrush RowBg2 = new SolidColorBrush(Color.Parse("#232323"));
+    private static IBrush ColorGray => Helpers.MatugenTheme.GetPanelBackgroundBrush();
+    private static IBrush ColorWhite => Helpers.MatugenTheme.GetTextForegroundBrush();
+    private static IBrush ColorDim => Helpers.MatugenTheme.GetTextDimBrush();
+    private static IBrush RowBg1 => Helpers.MatugenTheme.GetPanelBackgroundBrush();
+    private static IBrush RowBg2 => Helpers.MatugenTheme.GetWindowBackgroundBrush();
     private static readonly Geometry ChevronCollapsed = Geometry.Parse("M 0,0 L 0,12 L 12,6 Z");
     private static readonly Geometry ChevronExpanded = Geometry.Parse("M 0,0 L 12,0 L 6,12 Z");
 
