@@ -125,8 +125,12 @@ if command -v cc &>/dev/null; then
         cd "$GPU_HELPER_DIR"
         HELPER_SRCS="process_ops.c nvidia_ops.c pci_ops.c \
                      wmi_ops.c msr_ops.c lenovo_ops.c"
+        MOLD_FLAG=""
+        if command -v mold &>/dev/null; then
+            MOLD_FLAG="-fuse-ld=mold"
+        fi
         cc -march=native -O2 -pipe -fno-plt -fexceptions -fstack-clash-protection -fcf-protection \
-           -Wl,-O1 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -fuse-ld=mold -flto=auto \
+           -Wl,-O1 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now $MOLD_FLAG -flto=auto \
            -Wall -Wno-unused-result -DNDEBUG \
            -o gpu-helper gpu-helper.c $HELPER_SRCS \
            -ldl

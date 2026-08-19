@@ -11,8 +11,15 @@ CFLAGS  += -I. -DRNNOISE_BUILD
 PW_CFLAGS = $(shell pkg-config --cflags libpipewire-0.3)
 PW_LIBS   = $(shell pkg-config --libs libpipewire-0.3)
 
+USE_MOLD ?= $(shell command -v mold >/dev/null 2>&1 && echo 1 || echo 0)
+ifeq ($(USE_MOLD),1)
+MOLD_FLAG = -fuse-ld=mold
+else
+MOLD_FLAG =
+endif
+
 LDLIBS  = $(PW_LIBS) -lm -lpthread
-LDFLAGS = -Wl,-O1 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,-z,pack-relative-relocs -fuse-ld=mold -flto=auto
+LDFLAGS = -Wl,-O1 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,-z,pack-relative-relocs $(MOLD_FLAG) -flto=auto
 
 RNN_SRCS = rnnoise/denoise.c rnnoise/rnn.c rnnoise/rnn_data.c \
            rnnoise/rnn_reader.c rnnoise/pitch.c rnnoise/kiss_fft.c \
