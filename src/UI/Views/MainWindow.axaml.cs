@@ -48,6 +48,14 @@ public partial class MainWindow : Window
         InitializeComponent();
         panelAudio.IsVisible = !Helpers.AppConfig.Is("disable_audio");
         Labels.LanguageChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(() => ApplyLabels());
+        Helpers.MatugenTheme.ThemeChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            UpdatePerfButtons();
+            UpdateGpuButtons();
+            RefreshScreen();
+            RefreshFnLockButton();
+            UpdateColorButtons();
+        });
         InitDonate();
 
         // Refresh timer for live sensor data
@@ -2744,9 +2752,10 @@ public partial class MainWindow : Window
 
     private static void SetButtonActive(Button button, bool active)
     {
+        button.Classes.Set("mode-active", active);
         if (active)
         {
-            button.BorderBrush = AccentBrush;
+            button.BorderBrush = Helpers.MatugenTheme.GetAccentBrush();
             button.BorderThickness = new Avalonia.Thickness(2);
         }
         else

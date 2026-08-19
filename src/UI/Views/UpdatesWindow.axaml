@@ -20,11 +20,11 @@
             <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
                 <TextBlock x:Name="labelTitle" Grid.Column="0"
                            Text="BIOS &amp; Driver Updates"
-                           Foreground="#F0F0F0" FontSize="16" FontWeight="Bold"
+                           Foreground="{DynamicResource TextForeground}" FontSize="16" FontWeight="Bold"
                            VerticalAlignment="Center" />
                 <TextBlock x:Name="labelUpdates" Grid.Column="1"
                            Text="Checking..."
-                           Foreground="#06B48A" FontSize="13"
+                           Foreground="{DynamicResource AccentColor}" FontSize="13"
                            VerticalAlignment="Center" Margin="0,0,12,0" />
                 <Button x:Name="buttonDiagnostics" Grid.Column="2"
                         Content="Copy Diagnostics" Click="ButtonDiagnostics_Click"
@@ -42,7 +42,7 @@
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBlock x:Name="labelAppVersion" Grid.Column="0"
                                Text="G-Helper Linux v2.0.0"
-                               Foreground="#F0F0F0" FontSize="12"
+                               Foreground="{DynamicResource TextForeground}" FontSize="12"
                                VerticalAlignment="Center" />
                     <Button x:Name="buttonChangelog" Grid.Column="1"
                             Content="What's new" Click="ButtonChangelog_Click"
@@ -54,15 +54,15 @@
             <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,4">
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <Border Width="12" Height="12" CornerRadius="2" Background="#06B48A" />
-                    <TextBlock x:Name="labelLegendUpToDate" Text="Up to date" Foreground="#999999" FontSize="11" VerticalAlignment="Center" />
+                    <TextBlock x:Name="labelLegendUpToDate" Text="Up to date" Foreground="{DynamicResource TextDim}" FontSize="11" VerticalAlignment="Center" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <Border Width="12" Height="12" CornerRadius="2" Background="#FF2020" />
-                    <TextBlock x:Name="labelLegendUpdateAvailable" Text="Update available" Foreground="#999999" FontSize="11" VerticalAlignment="Center" />
+                    <TextBlock x:Name="labelLegendUpdateAvailable" Text="Update available" Foreground="{DynamicResource TextDim}" FontSize="11" VerticalAlignment="Center" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="4">
-                    <Border Width="12" Height="12" CornerRadius="2" Background="#666666" />
-                    <TextBlock x:Name="labelLegendCantCheck" Text="Can't check" Foreground="#999999" FontSize="11" VerticalAlignment="Center" />
+                    <Border Width="12" Height="12" CornerRadius="2" Background="{DynamicResource SeparatorColor}" />
+                    <TextBlock x:Name="labelLegendCantCheck" Text="Can't check" Foreground="{DynamicResource TextDim}" FontSize="11" VerticalAlignment="Center" />
                 </StackPanel>
             </StackPanel>
 
@@ -74,11 +74,11 @@
                             PointerPressed="SysFilesHeader_PointerPressed">
                     <TextBlock x:Name="labelSystemFilesSection"
                                Text="System integration files"
-                               Foreground="#F0F0F0" FontSize="14" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextForeground}" FontSize="14" FontWeight="SemiBold"
                                VerticalAlignment="Center" />
                     <Path x:Name="iconSysFilesToggle"
                           Data="M 0,0 L 0,12 L 12,6 Z"
-                          Fill="#F0F0F0"
+                          Fill="{DynamicResource TextForeground}"
                           HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </StackPanel>
                 <Button x:Name="buttonSysFilesRecheck" Grid.Column="1"
@@ -96,32 +96,32 @@
                 <StackPanel Spacing="2">
                     <StackPanel x:Name="panelSystemFiles" Spacing="2" />
                     <TextBlock x:Name="labelSysFilesResult" Text=""
-                               Foreground="#999999" FontSize="11" Margin="0,6,0,0"
+                               Foreground="{DynamicResource TextDim}" FontSize="11" Margin="0,6,0,0"
                                IsVisible="False" TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
 
             <!-- G-Helper Linux self-update -->
-            <TextBlock x:Name="labelGHelperSection" Text="G-Helper Linux" Foreground="#F0F0F0" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,4" />
+            <TextBlock x:Name="labelGHelperSection" Text="G-Helper Linux" Foreground="{DynamicResource TextForeground}" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,4" />
             <Border Background="{DynamicResource PanelBackground}" CornerRadius="6" Padding="10,6">
                 <StackPanel x:Name="panelSelfUpdate" Spacing="4">
-                    <TextBlock x:Name="labelSelfUpdateStatus" Text="Checking for updates..." Foreground="#999999" FontSize="12" />
+                    <TextBlock x:Name="labelSelfUpdateStatus" Text="Checking for updates..." Foreground="{DynamicResource TextDim}" FontSize="12" />
                 </StackPanel>
             </Border>
 
             <!-- BIOS Section -->
-            <TextBlock x:Name="labelBiosSection" Text="BIOS" Foreground="#F0F0F0" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,4" />
+            <TextBlock x:Name="labelBiosSection" Text="BIOS" Foreground="{DynamicResource TextForeground}" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,4" />
             <Border Background="{DynamicResource PanelBackground}" CornerRadius="6" Padding="8">
                 <StackPanel x:Name="panelBios" Spacing="2">
-                    <TextBlock x:Name="labelBiosLoading" Text="Loading..." Foreground="#999999" FontSize="12" />
+                    <TextBlock x:Name="labelBiosLoading" Text="Loading..." Foreground="{DynamicResource TextDim}" FontSize="12" />
                 </StackPanel>
             </Border>
 
             <!-- Drivers Section -->
-            <TextBlock x:Name="labelDriversSection" Text="Drivers &amp; Software" Foreground="#F0F0F0" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,4" />
+            <TextBlock x:Name="labelDriversSection" Text="Drivers &amp; Software" Foreground="{DynamicResource TextForeground}" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,4" />
             <Border Background="{DynamicResource PanelBackground}" CornerRadius="6" Padding="8">
                 <StackPanel x:Name="panelDrivers" Spacing="2">
-                    <TextBlock x:Name="labelDriversLoading" Text="Loading..." Foreground="#999999" FontSize="12" />
+                    <TextBlock x:Name="labelDriversLoading" Text="Loading..." Foreground="{DynamicResource TextDim}" FontSize="12" />
                 </StackPanel>
             </Border>
 

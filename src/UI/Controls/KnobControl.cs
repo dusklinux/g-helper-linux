@@ -75,7 +75,7 @@ public sealed class KnobControl : Control
     /// (e.g. <see cref="KnobStyle.Moog"/> always uses amber). Default is
     /// the G-Helper cyan blue so the knob matches the rest of the UI.
     /// </summary>
-    public Color AccentColor { get; set; } = Color.Parse("#4CC2FF");
+    public Color AccentColor { get; set; } = Helpers.MatugenTheme.GetAccentColor();
 
     private int _value;
     public int Value

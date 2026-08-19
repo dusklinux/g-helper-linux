@@ -18,7 +18,7 @@
                                VerticalAlignment="Center" />
                     <TextBlock x:Name="labelHeader"
                                Text="Delay" FontSize="16"
-                               FontWeight="SemiBold" Foreground="White"
+                               FontWeight="SemiBold" Foreground="{DynamicResource TextForeground}"
                                VerticalAlignment="Center" />
                 </StackPanel>
                 <Button Grid.Column="1" x:Name="buttonReset" Content="Reset"
@@ -27,9 +27,9 @@
             <StackPanel Spacing="4">
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0" x:Name="labelTimeHeader"
-                               Text="Time" Foreground="#AAA" />
+                               Text="Time" Foreground="{DynamicResource TextDim}" />
                     <TextBlock Grid.Column="1" x:Name="labelTime" Text="250 ms"
-                               Foreground="#4CC2FF" />
+                               Foreground="{DynamicResource AccentColor}" />
                 </Grid>
                 <Slider x:Name="sliderTime" Minimum="20" Maximum="1000" Value="250"
                         ValueChanged="OnChanged" />
@@ -37,9 +37,9 @@
             <StackPanel Spacing="4">
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0" x:Name="labelFbHeader"
-                               Text="Feedback" Foreground="#AAA" />
+                               Text="Feedback" Foreground="{DynamicResource TextDim}" />
                     <TextBlock Grid.Column="1" x:Name="labelFb" Text="35%"
-                               Foreground="#4CC2FF" />
+                               Foreground="{DynamicResource AccentColor}" />
                 </Grid>
                 <Slider x:Name="sliderFb" Minimum="0" Maximum="900" Value="350"
                         ValueChanged="OnChanged" />
@@ -47,9 +47,9 @@
             <StackPanel Spacing="4">
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0" x:Name="labelMixHeader"
-                               Text="Mix" Foreground="#AAA" />
+                               Text="Mix" Foreground="{DynamicResource TextDim}" />
                     <TextBlock Grid.Column="1" x:Name="labelMix" Text="30%"
-                               Foreground="#4CC2FF" />
+                               Foreground="{DynamicResource AccentColor}" />
                 </Grid>
                 <Slider x:Name="sliderMix" Minimum="0" Maximum="1000" Value="300"
                         ValueChanged="OnChanged" />

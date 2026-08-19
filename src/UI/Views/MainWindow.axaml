@@ -21,7 +21,7 @@
         </Style>
         <Style Selector="Button.fnlock-on">
             <Setter Property="Background" Value="{DynamicResource AccentColor}" />
-            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentForeground}" />
             <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
             <Setter Property="BorderThickness" Value="1" />
         </Style>
@@ -29,22 +29,19 @@
             <Setter Property="Background" Value="{DynamicResource AccentHover}" />
         </Style>
         <Style Selector="Button.fnlock-on:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#3AAEEF" />
+            <Setter Property="Background" Value="{DynamicResource AccentColor}" />
         </Style>
-        <!-- audio-on mirrors fnlock-on but in a greener accent to signal
-             "noise suppression / DSP chain active" without clashing with
-             the existing perf / GPU blue. -->
         <Style Selector="Button.audio-on">
-            <Setter Property="Background" Value="#50C878" />
-            <Setter Property="Foreground" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#50C878" />
+            <Setter Property="Background" Value="{DynamicResource AccentColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentForeground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
             <Setter Property="BorderThickness" Value="1" />
         </Style>
         <Style Selector="Button.audio-on:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#67D48B" />
+            <Setter Property="Background" Value="{DynamicResource AccentHover}" />
         </Style>
         <Style Selector="Button.audio-on:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#3FB565" />
+            <Setter Property="Background" Value="{DynamicResource AccentColor}" />
         </Style>
     </Window.Styles>
 

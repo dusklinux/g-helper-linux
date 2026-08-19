@@ -50,7 +50,7 @@ public partial class OnScreenKeyboardWindow : Window
     private static readonly IBrush KeyBg = new SolidColorBrush(Color.Parse("#262B33"));
     private static readonly IBrush KeyBgSpecial = new SolidColorBrush(Color.Parse("#1F242B"));
     private static readonly IBrush KeyFg = new SolidColorBrush(Color.Parse("#E8EDF2"));
-    private static readonly IBrush LatchBg = new SolidColorBrush(Color.Parse("#4CC2FF"));
+    private static IBrush LatchBg => Helpers.MatugenTheme.GetAccentBrush();
     private static readonly IBrush LatchFg = new SolidColorBrush(Color.Parse("#10141A"));
 
     private readonly OskUinput _uinput = new();

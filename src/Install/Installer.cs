@@ -1385,7 +1385,7 @@ public static partial class Installer
             WindowStartupLocation = WindowStartupLocation.Manual,
             CanResize = false,
             WindowDecorations = WindowDecorations.Full,
-            Background = new SolidColorBrush(Color.Parse("#1C1C1C")),
+            Background = Helpers.MatugenTheme.GetWindowBackgroundBrush(),
         };
         try
         { dialog.Icon = owner?.Icon; }

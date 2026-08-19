@@ -38,6 +38,20 @@ public static class MatugenTheme
         WatchConfigFile();
     }
 
+    public static event Action? ThemeChanged;
+
+    public static IBrush GetAccentBrush() =>
+        Application.Current?.Resources["AccentColor"] as IBrush ?? new SolidColorBrush(Color.Parse("#4CC2FF"));
+
+    public static Color GetAccentColor() =>
+        Application.Current?.Resources["AccentColor"] is SolidColorBrush b ? b.Color : Color.Parse("#4CC2FF");
+
+    public static IBrush GetWindowBackgroundBrush() =>
+        Application.Current?.Resources["WindowBackground"] as IBrush ?? new SolidColorBrush(Color.Parse("#1C1C1C"));
+
+    public static IBrush GetPanelBackgroundBrush() =>
+        Application.Current?.Resources["PanelBackground"] as IBrush ?? new SolidColorBrush(Color.Parse("#262626"));
+
     public static bool ApplyTheme()
     {
         var app = Application.Current;
@@ -49,6 +63,7 @@ public static class MatugenTheme
         {
             Logger.WriteLine($"Matugen: config not found at '{path}' - using default colors");
             ApplyFallback(app);
+            ThemeChanged?.Invoke();
             return false;
         }
 
@@ -59,6 +74,7 @@ public static class MatugenTheme
             {
                 Logger.WriteLine("Matugen: no valid color entries found - using default colors");
                 ApplyFallback(app);
+                ThemeChanged?.Invoke();
                 return false;
             }
 
@@ -77,6 +93,9 @@ public static class MatugenTheme
             var accent = colors.GetValueOrDefault("primary", Color.Parse("#4CC2FF"));
             var accentHover = colors.GetValueOrDefault("primary_fixed",
                 colors.GetValueOrDefault("primary_fixed_dim", Color.Parse("#5FCDFF")));
+            var accentFg = colors.GetValueOrDefault("on_primary",
+                (accent.R * 0.299 + accent.G * 0.587 + accent.B * 0.114) > 150
+                    ? Color.Parse("#101010") : Color.Parse("#FFFFFF"));
             var separator = colors.GetValueOrDefault("outline_variant", Color.Parse("#333333"));
 
             app.Resources["WindowBackground"] = new SolidColorBrush(windowBg);
@@ -87,30 +106,115 @@ public static class MatugenTheme
             app.Resources["TextDim"] = new SolidColorBrush(textDim);
             app.Resources["AccentColor"] = new SolidColorBrush(accent);
             app.Resources["AccentHover"] = new SolidColorBrush(accentHover);
+            app.Resources["AccentForeground"] = new SolidColorBrush(accentFg);
             app.Resources["SeparatorColor"] = new SolidColorBrush(separator);
 
+            // Fluent theme system resource keys
+            app.Resources["SystemAccentColor"] = accent;
+            app.Resources["SystemAccentColorLight1"] = accentHover;
+            app.Resources["SystemAccentColorLight2"] = accentHover;
+            app.Resources["SystemAccentColorLight3"] = accentHover;
+            app.Resources["SystemAccentColorDark1"] = accent;
+            app.Resources["SystemAccentColorDark2"] = accent;
+            app.Resources["SystemAccentColorDark3"] = accent;
+
+            app.Resources["SystemControlHighlightAccentBrush"] = new SolidColorBrush(accent);
+            app.Resources["SystemControlHighlightListAccentLowBrush"] = new SolidColorBrush(Color.FromArgb(80, accent.R, accent.G, accent.B));
+            app.Resources["SystemControlHighlightListAccentMediumBrush"] = new SolidColorBrush(Color.FromArgb(140, accent.R, accent.G, accent.B));
+            app.Resources["SystemControlHighlightListAccentHighBrush"] = new SolidColorBrush(accent);
+            app.Resources["SystemControlHighlightAltAccentHighBrush"] = new SolidColorBrush(accentHover);
+
+            app.Resources["ComboBoxItemBackgroundSelected"] = new SolidColorBrush(accent);
+            app.Resources["ComboBoxItemBackgroundSelectedPointerOver"] = new SolidColorBrush(accentHover);
+            app.Resources["ComboBoxItemBackgroundSelectedPressed"] = new SolidColorBrush(accent);
+
+            app.Resources["CheckBoxCheckBackgroundFillChecked"] = new SolidColorBrush(accent);
+            app.Resources["CheckBoxCheckBackgroundFillCheckedPointerOver"] = new SolidColorBrush(accentHover);
+            app.Resources["CheckBoxCheckBackgroundFillCheckedPressed"] = new SolidColorBrush(accent);
+            app.Resources["CheckBoxCheckBackgroundStrokeChecked"] = new SolidColorBrush(accent);
+            app.Resources["CheckBoxCheckBackgroundStrokeCheckedPointerOver"] = new SolidColorBrush(accentHover);
+            app.Resources["CheckBoxCheckGlyphForegroundChecked"] = new SolidColorBrush(accentFg);
+
+            app.Resources["SliderThumbBackground"] = new SolidColorBrush(accent);
+            app.Resources["SliderThumbBackgroundPointerOver"] = new SolidColorBrush(accentHover);
+            app.Resources["SliderThumbBackgroundPressed"] = new SolidColorBrush(accent);
+            app.Resources["SliderTrackValueFill"] = new SolidColorBrush(accent);
+            app.Resources["SliderTrackValueFillPointerOver"] = new SolidColorBrush(accentHover);
+            app.Resources["SliderTrackValueFillPressed"] = new SolidColorBrush(accent);
+
+            app.Resources["ProgressBarForeground"] = new SolidColorBrush(accent);
+            app.Resources["ToggleSwitchFillOn"] = new SolidColorBrush(accent);
+            app.Resources["ToggleSwitchFillOnPointerOver"] = new SolidColorBrush(accentHover);
+            app.Resources["ToggleSwitchStrokeOn"] = new SolidColorBrush(accent);
+            app.Resources["TextControlSelectionHighlightColor"] = accent;
+
             Logger.WriteLine($"Matugen: applied colors from '{path}' (primary={accent}, bg={windowBg}, surface={panelBg})");
+            ThemeChanged?.Invoke();
             return true;
         }
         catch (Exception ex)
         {
             Logger.WriteLine($"Matugen: failed to load theme from '{path}': {ex.Message}");
             ApplyFallback(app);
+            ThemeChanged?.Invoke();
             return false;
         }
     }
 
     private static void ApplyFallback(Application app)
     {
+        var accent = Color.Parse("#4CC2FF");
+        var accentHover = Color.Parse("#5FCDFF");
+        var accentFg = Color.Parse("#000000");
+
         app.Resources["WindowBackground"] = new SolidColorBrush(Color.Parse("#1C1C1C"));
         app.Resources["PanelBackground"] = new SolidColorBrush(Color.Parse("#262626"));
         app.Resources["ButtonBackground"] = new SolidColorBrush(Color.Parse("#373737"));
         app.Resources["ButtonHover"] = new SolidColorBrush(Color.Parse("#454545"));
         app.Resources["TextForeground"] = new SolidColorBrush(Color.Parse("#F0F0F0"));
         app.Resources["TextDim"] = new SolidColorBrush(Color.Parse("#A0A0A0"));
-        app.Resources["AccentColor"] = new SolidColorBrush(Color.Parse("#4CC2FF"));
-        app.Resources["AccentHover"] = new SolidColorBrush(Color.Parse("#5FCDFF"));
+        app.Resources["AccentColor"] = new SolidColorBrush(accent);
+        app.Resources["AccentHover"] = new SolidColorBrush(accentHover);
+        app.Resources["AccentForeground"] = new SolidColorBrush(accentFg);
         app.Resources["SeparatorColor"] = new SolidColorBrush(Color.Parse("#333333"));
+
+        app.Resources["SystemAccentColor"] = accent;
+        app.Resources["SystemAccentColorLight1"] = accentHover;
+        app.Resources["SystemAccentColorLight2"] = accentHover;
+        app.Resources["SystemAccentColorLight3"] = accentHover;
+        app.Resources["SystemAccentColorDark1"] = accent;
+        app.Resources["SystemAccentColorDark2"] = accent;
+        app.Resources["SystemAccentColorDark3"] = accent;
+
+        app.Resources["SystemControlHighlightAccentBrush"] = new SolidColorBrush(accent);
+        app.Resources["SystemControlHighlightListAccentLowBrush"] = new SolidColorBrush(Color.FromArgb(80, accent.R, accent.G, accent.B));
+        app.Resources["SystemControlHighlightListAccentMediumBrush"] = new SolidColorBrush(Color.FromArgb(140, accent.R, accent.G, accent.B));
+        app.Resources["SystemControlHighlightListAccentHighBrush"] = new SolidColorBrush(accent);
+        app.Resources["SystemControlHighlightAltAccentHighBrush"] = new SolidColorBrush(accentHover);
+
+        app.Resources["ComboBoxItemBackgroundSelected"] = new SolidColorBrush(accent);
+        app.Resources["ComboBoxItemBackgroundSelectedPointerOver"] = new SolidColorBrush(accentHover);
+        app.Resources["ComboBoxItemBackgroundSelectedPressed"] = new SolidColorBrush(accent);
+
+        app.Resources["CheckBoxCheckBackgroundFillChecked"] = new SolidColorBrush(accent);
+        app.Resources["CheckBoxCheckBackgroundFillCheckedPointerOver"] = new SolidColorBrush(accentHover);
+        app.Resources["CheckBoxCheckBackgroundFillCheckedPressed"] = new SolidColorBrush(accent);
+        app.Resources["CheckBoxCheckBackgroundStrokeChecked"] = new SolidColorBrush(accent);
+        app.Resources["CheckBoxCheckBackgroundStrokeCheckedPointerOver"] = new SolidColorBrush(accentHover);
+        app.Resources["CheckBoxCheckGlyphForegroundChecked"] = new SolidColorBrush(accentFg);
+
+        app.Resources["SliderThumbBackground"] = new SolidColorBrush(accent);
+        app.Resources["SliderThumbBackgroundPointerOver"] = new SolidColorBrush(accentHover);
+        app.Resources["SliderThumbBackgroundPressed"] = new SolidColorBrush(accent);
+        app.Resources["SliderTrackValueFill"] = new SolidColorBrush(accent);
+        app.Resources["SliderTrackValueFillPointerOver"] = new SolidColorBrush(accentHover);
+        app.Resources["SliderTrackValueFillPressed"] = new SolidColorBrush(accent);
+
+        app.Resources["ProgressBarForeground"] = new SolidColorBrush(accent);
+        app.Resources["ToggleSwitchFillOn"] = new SolidColorBrush(accent);
+        app.Resources["ToggleSwitchFillOnPointerOver"] = new SolidColorBrush(accentHover);
+        app.Resources["ToggleSwitchStrokeOn"] = new SolidColorBrush(accent);
+        app.Resources["TextControlSelectionHighlightColor"] = accent;
     }
 
     private static Dictionary<string, Color> ParseColorsFile(string path)

@@ -18,7 +18,7 @@
                                VerticalAlignment="Center" />
                     <TextBlock x:Name="labelHeader"
                                Text="Vocoder"
-                               FontSize="16" FontWeight="SemiBold" Foreground="White"
+                               FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextForeground}"
                                VerticalAlignment="Center" />
                 </StackPanel>
                 <Button Grid.Column="1" x:Name="buttonReset" Content="Reset"
@@ -27,17 +27,17 @@
 
             <TextBlock x:Name="labelDescription"
                        Text="16-band filterbank vocoder. Speak into your mic - the analyser banks track your formants and modulate the internal carrier so the robot says what you say. Lower carrier = deeper voice, higher = chipmunk."
-                       TextWrapping="Wrap" FontSize="11" Foreground="#888" />
+                       TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource TextDim}" />
 
             <!-- Preset picker. Each entry stamps the whole vocoder parameter
                  set (mix, carrier, detune, attack, release, follow, shift)
                  to a different character. The combo's selection is cleared
                  (no highlighted entry) when the user starts adjusting any
                  slider so they can see they have diverged from the preset. -->
-            <Border CornerRadius="4" Padding="8,6" Background="#0F1419">
+            <Border CornerRadius="4" Padding="8,6" Background="{DynamicResource ButtonBackground}">
                 <StackPanel Spacing="4">
                     <TextBlock x:Name="labelPresetHeader"
-                               Text="Preset" Foreground="#FFFFFF"
+                               Text="Preset" Foreground="{DynamicResource TextForeground}"
                                FontWeight="SemiBold" />
                     <ComboBox x:Name="comboPreset"
                               HorizontalAlignment="Stretch"
@@ -46,14 +46,14 @@
             </Border>
 
             <!-- Dry / wet first: most-used knob, large prominent slider. -->
-            <Border CornerRadius="4" Padding="8,6" Background="#0F1419">
+            <Border CornerRadius="4" Padding="8,6" Background="{DynamicResource ButtonBackground}">
                 <StackPanel Spacing="4">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0" x:Name="labelDryWet"
-                                   Text="Dry / Wet" Foreground="#FFFFFF"
+                                   Text="Dry / Wet" Foreground="{DynamicResource TextForeground}"
                                    FontWeight="SemiBold" />
                         <TextBlock Grid.Column="1" x:Name="labelMix" Text="70%"
-                                   Foreground="#50C878" FontWeight="SemiBold" />
+                                   Foreground="{DynamicResource AccentColor}" FontWeight="SemiBold" />
                     </Grid>
                     <Slider x:Name="sliderMix" Minimum="0" Maximum="1000" Value="700"
                             ValueChanged="OnChanged" />
@@ -63,14 +63,14 @@
             <!-- Pitch follow toggle: when ON, the carrier tracks your voice
                  and the slider below becomes a +/- semitone transposition.
                  When OFF, the slider is the fixed carrier frequency in Hz. -->
-            <Border CornerRadius="4" Padding="8,6" Background="#0F1419">
+            <Border CornerRadius="4" Padding="8,6" Background="{DynamicResource ButtonBackground}">
                 <Grid ColumnDefinitions="Auto,*,Auto">
                     <CheckBox Grid.Column="0" x:Name="checkFollow"
                               IsCheckedChanged="CheckFollow_Changed"
                               Content="Follow voice pitch"
-                              Foreground="#FFFFFF" FontWeight="SemiBold" />
+                              Foreground="{DynamicResource TextForeground}" FontWeight="SemiBold" />
                     <TextBlock Grid.Column="2" x:Name="labelTrackedPitch"
-                               Text="-" Foreground="#888" FontSize="11"
+                               Text="-" Foreground="{DynamicResource TextDim}" FontSize="11"
                                VerticalAlignment="Center" />
                 </Grid>
             </Border>
@@ -78,9 +78,9 @@
             <StackPanel Spacing="4">
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0" x:Name="labelCarrierHeader"
-                               Text="Carrier pitch" Foreground="#AAA" />
+                               Text="Carrier pitch" Foreground="{DynamicResource TextDim}" />
                     <TextBlock Grid.Column="1" x:Name="labelCarrier" Text="110 Hz"
-                               Foreground="#4CC2FF" />
+                               Foreground="{DynamicResource AccentColor}" />
                 </Grid>
                 <Slider x:Name="sliderCarrier" Minimum="50" Maximum="440" Value="110"
                         TickFrequency="10" ValueChanged="SliderCarrier_Changed" />
@@ -89,9 +89,9 @@
             <StackPanel Spacing="4">
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0" x:Name="labelDetuneHeader"
-                               Text="Detune" Foreground="#AAA" />
+                               Text="Detune" Foreground="{DynamicResource TextDim}" />
                     <TextBlock Grid.Column="1" x:Name="labelDetune" Text="2%"
-                               Foreground="#4CC2FF" />
+                               Foreground="{DynamicResource AccentColor}" />
                 </Grid>
                 <Slider x:Name="sliderDetune" Minimum="0" Maximum="200" Value="20"
                         ValueChanged="OnChanged" />
@@ -100,11 +100,11 @@
             <StackPanel Spacing="4">
                 <Grid ColumnDefinitions="*,Auto,Auto">
                     <TextBlock Grid.Column="0" x:Name="labelAttackHeader"
-                               Text="Envelope attack" Foreground="#AAA" />
+                               Text="Envelope attack" Foreground="{DynamicResource TextDim}" />
                     <TextBlock Grid.Column="1" x:Name="labelAttack" Text="5 ms"
-                               Foreground="#4CC2FF" Margin="0,0,16,0" />
+                               Foreground="{DynamicResource AccentColor}" Margin="0,0,16,0" />
                     <TextBlock Grid.Column="2" x:Name="labelReleaseHeader"
-                               Text="Release" Foreground="#AAA" />
+                               Text="Release" Foreground="{DynamicResource TextDim}" />
                 </Grid>
                 <Grid ColumnDefinitions="*,8,*">
                     <Slider Grid.Column="0" x:Name="sliderAttack"
@@ -116,7 +116,7 @@
                 </Grid>
                 <TextBlock x:Name="labelRelease" Text="30 ms"
                            HorizontalAlignment="Right"
-                           Foreground="#4CC2FF" FontSize="10" />
+                           Foreground="{DynamicResource AccentColor}" FontSize="10" />
             </StackPanel>
         </StackPanel>
     </Border>

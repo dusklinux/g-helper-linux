@@ -39,7 +39,7 @@ public static class ColorPicker
             Width = 320,
             Height = 420,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Background = new SolidColorBrush(Color.Parse("#1C1C1C")),
+            Background = MatugenTheme.GetWindowBackgroundBrush(),
             CanResize = false,
             WindowDecorations = WindowDecorations.Full,
         };
@@ -125,7 +125,7 @@ public static class ColorPicker
             Margin = new Avalonia.Thickness(0, 12, 0, 0),
             MinWidth = 120,
             MinHeight = 34,
-            Background = new SolidColorBrush(Color.Parse("#4CC2FF")),
+            Background = MatugenTheme.GetAccentBrush(),
             Foreground = Brushes.Black,
             FontWeight = FontWeight.Bold,
         };

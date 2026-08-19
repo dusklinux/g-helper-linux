@@ -98,13 +98,64 @@
         <Setter Property="Background" Value="#FFE44D" />
     </Style>
 
+    <!-- Active mode button border styling -->
+    <Style Selector="Button.mode-active">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
+
+    <Style Selector="Button.fnlock-on">
+        <Setter Property="Background" Value="{DynamicResource AccentColor}" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentForeground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="Button.fnlock-on:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentHover}" />
+    </Style>
+
+    <Style Selector="Button.audio-on">
+        <Setter Property="Background" Value="{DynamicResource AccentColor}" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentForeground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="Button.audio-on:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentHover}" />
+    </Style>
+
     <!-- ComboBox styling -->
     <Style Selector="ComboBox">
         <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
         <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SeparatorColor}" />
         <Setter Property="CornerRadius" Value="5" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="ComboBox:pointerover /template/ Border#Background">
+        <Setter Property="Background" Value="{DynamicResource ButtonHover}" />
+    </Style>
+
+    <Style Selector="ComboBoxItem">
+        <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ButtonHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
+    </Style>
+
+    <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentColor}" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentForeground}" />
+    </Style>
+
+    <Style Selector="ComboBoxItem:selected:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentForeground}" />
     </Style>
 
     <!-- Slider styling -->
@@ -112,9 +163,62 @@
         <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
     </Style>
 
+    <Style Selector="Slider /template/ Thumb">
+        <Setter Property="Background" Value="{DynamicResource AccentColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentHover}" />
+    </Style>
+
+    <Style Selector="Slider:pointerover /template/ Thumb">
+        <Setter Property="Background" Value="{DynamicResource AccentHover}" />
+    </Style>
+
     <!-- CheckBox styling -->
     <Style Selector="CheckBox">
         <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
+    </Style>
+
+    <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
+        <Setter Property="Background" Value="{DynamicResource AccentColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
+    </Style>
+
+    <Style Selector="CheckBox:checked /template/ Path#CheckGlyph">
+        <Setter Property="Fill" Value="{DynamicResource AccentForeground}" />
+    </Style>
+
+    <Style Selector="CheckBox:checked:pointerover /template/ Border#NormalRectangle">
+        <Setter Property="Background" Value="{DynamicResource AccentHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentHover}" />
+    </Style>
+
+    <!-- RadioButton styling -->
+    <Style Selector="RadioButton">
+        <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
+    </Style>
+
+    <Style Selector="RadioButton:checked /template/ Ellipse#OuterEllipse">
+        <Setter Property="Stroke" Value="{DynamicResource AccentColor}" />
+        <Setter Property="Fill" Value="{DynamicResource AccentColor}" />
+    </Style>
+
+    <Style Selector="RadioButton:checked /template/ Ellipse#CheckGlyph">
+        <Setter Property="Fill" Value="{DynamicResource AccentForeground}" />
+    </Style>
+
+    <!-- ProgressBar styling -->
+    <Style Selector="ProgressBar">
+        <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
+        <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
+    </Style>
+
+    <!-- ToggleSwitch styling -->
+    <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
+        <Setter Property="Background" Value="{DynamicResource AccentColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
+    </Style>
+
+    <Style Selector="ToggleSwitch:checked /template/ Canvas#SwitchKnob">
+        <Setter Property="Background" Value="{DynamicResource AccentForeground}" />
     </Style>
 
     <!-- TextBlock defaults -->
@@ -158,6 +262,10 @@
 
     <Style Selector="TabItem:selected">
         <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
+    </Style>
+
+    <Style Selector="TabItem:selected /template/ Border#PART_SelectedPipe">
+        <Setter Property="Background" Value="{DynamicResource AccentColor}" />
     </Style>
 
 </Styles>

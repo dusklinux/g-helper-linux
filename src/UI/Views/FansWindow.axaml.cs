@@ -1224,7 +1224,7 @@ public partial class FansWindow : Window
             chartMid.Disabled = !midEnabled;
 
         // Toggle button visual - accent border when disabled (active state)
-        buttonDisable.BorderBrush = anyDisabled ? AccentBrush : TransparentBrush;
+        buttonDisable.BorderBrush = anyDisabled ? Helpers.MatugenTheme.GetAccentBrush() : TransparentBrush;
         buttonDisable.BorderThickness = new Avalonia.Thickness(2);
     }
 
@@ -1488,9 +1488,10 @@ public partial class FansWindow : Window
 
     private void SetBoostButtonState(bool boostOn)
     {
-        buttonBoostOn.BorderBrush = boostOn ? AccentBrush : TransparentBrush;
+        var accent = Helpers.MatugenTheme.GetAccentBrush();
+        buttonBoostOn.BorderBrush = boostOn ? accent : TransparentBrush;
         buttonBoostOn.BorderThickness = new Avalonia.Thickness(2);
-        buttonBoostOff.BorderBrush = !boostOn ? AccentBrush : TransparentBrush;
+        buttonBoostOff.BorderBrush = !boostOn ? accent : TransparentBrush;
         buttonBoostOff.BorderThickness = new Avalonia.Thickness(2);
     }
 

@@ -45,7 +45,15 @@ public partial class AudioWindow : Window
         // mode can re-enable headroom without breaking the protocol.
         // Label shows whole percent so non-engineers grok it.
         knobMaster.Style = Controls.KnobStyle.LedRing;
-        knobMaster.AccentColor = Avalonia.Media.Color.Parse("#4CC2FF");
+        knobMaster.AccentColor = Helpers.MatugenTheme.GetAccentColor();
+        Helpers.MatugenTheme.ThemeChanged += () =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                knobMaster.AccentColor = Helpers.MatugenTheme.GetAccentColor();
+                knobMaster.InvalidateVisual();
+            });
+        };
         knobMaster.Minimum = 0;
         knobMaster.Maximum = 1000;
         knobMaster.DefaultValue = 1000;
