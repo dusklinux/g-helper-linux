@@ -101,7 +101,7 @@ echo "Building ghelper-audio (PipeWire helper)..."
 (
     cd "$AUDIO_HELPER_DIR"
     make clean >/dev/null 2>&1
-    make -j"$(nproc 2>/dev/null || echo 2)"
+    make -j"$(nproc 2>/dev/null || echo 2)" -l"$(nproc 2>/dev/null || echo 2)"
 )
 if [[ -f "$AUDIO_HELPER_DIR/ghelper-audio" ]]; then
     AUDIO_HELPER_BIN="$AUDIO_HELPER_DIR/ghelper-audio"
@@ -125,10 +125,12 @@ if command -v cc &>/dev/null; then
         cd "$GPU_HELPER_DIR"
         HELPER_SRCS="process_ops.c nvidia_ops.c pci_ops.c \
                      wmi_ops.c msr_ops.c lenovo_ops.c"
-        cc -O2 -Wall -Wno-unused-result -DNDEBUG \
+        cc -march=native -O2 -pipe -fno-plt -fexceptions -fstack-clash-protection -fcf-protection \
+           -Wl,-O1 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -fuse-ld=mold -flto=auto \
+           -Wall -Wno-unused-result -DNDEBUG \
            -o gpu-helper gpu-helper.c $HELPER_SRCS \
            -ldl
-        strip gpu-helper
+        strip --strip-all gpu-helper
     )
     if [[ -f "$GPU_HELPER_DIR/gpu-helper" ]]; then
         GPU_HELPER_BIN="$GPU_HELPER_DIR/gpu-helper"
@@ -188,8 +190,8 @@ fi
 
 # Publish
 if (( USE_AOT )); then
-    echo "[3/4] Compiling native AOT binary (this may take a minute)..."
-    dotnet publish "$SRC_DIR" -c Release --no-restore 2>&1 \
+    echo "[3/4] Compiling native AOT binary for host CPU (-march=native)..."
+    dotnet publish "$SRC_DIR" -c Release --no-restore -p:IlcInstructionSet=native 2>&1 \
         | grep -v "^.*error : Deleting file" || true
 else
     echo "[3/4] Compiling (fast mode, no AOT)..."

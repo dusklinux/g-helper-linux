@@ -3,16 +3,16 @@
 # in the main ghelper AOT binary by build.sh.
 
 CC      ?= cc
-STRIP   ?= strip
+STRIP   ?= strip --strip-all
 
-CFLAGS  ?= -O2 -flto -fno-strict-aliasing -Wall -Wextra
+CFLAGS  ?= -march=native -O2 -pipe -fno-plt -fexceptions -fstack-clash-protection -fcf-protection -fno-strict-aliasing -flto=auto -Wall -Wextra
 CFLAGS  += -I. -DRNNOISE_BUILD
 
 PW_CFLAGS = $(shell pkg-config --cflags libpipewire-0.3)
 PW_LIBS   = $(shell pkg-config --libs libpipewire-0.3)
 
 LDLIBS  = $(PW_LIBS) -lm -lpthread
-LDFLAGS = -flto
+LDFLAGS = -Wl,-O1 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,-z,pack-relative-relocs -fuse-ld=mold -flto=auto
 
 RNN_SRCS = rnnoise/denoise.c rnnoise/rnn.c rnnoise/rnn_data.c \
            rnnoise/rnn_reader.c rnnoise/pitch.c rnnoise/kiss_fft.c \

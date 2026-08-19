@@ -30,6 +30,7 @@
     <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
     <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
     <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+    <IlcInstructionSet>native</IlcInstructionSet>
 
     <!-- App metadata -->
     <AssemblyName>ghelper</AssemblyName>
