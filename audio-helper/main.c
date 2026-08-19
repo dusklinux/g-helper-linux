@@ -2203,10 +2203,9 @@ static int stdin_len = 0;
 static void on_stdin(void *userdata, int fd, uint32_t mask)
 {
     struct app *app = userdata;
-    (void)app;
     if (mask & (SPA_IO_HUP | SPA_IO_ERR))
     {
-        kill(getpid(), SIGTERM);
+        pw_main_loop_quit(app->loop);
         return;
     }
     if (!(mask & SPA_IO_IN))
@@ -2215,7 +2214,7 @@ static void on_stdin(void *userdata, int fd, uint32_t mask)
     int n = (int)read(fd, stdin_buf + stdin_len, sizeof(stdin_buf) - 1 - stdin_len);
     if (n <= 0)
     {
-        kill(getpid(), SIGTERM);
+        pw_main_loop_quit(app->loop);
         return;
     }
     stdin_len += n;
@@ -2391,6 +2390,11 @@ int main(int argc, char *argv[])
             GHA_PROTOCOL_VERSION, SAMPLE_RATE, RNN_FRAME);
 
     pw_main_loop_run(app->loop);
+
+    if (app->stdin_src)
+        pw_loop_destroy_source(pw_main_loop_get_loop(app->loop), app->stdin_src);
+    if (app->timer)
+        pw_loop_destroy_source(pw_main_loop_get_loop(app->loop), app->timer);
 
     pw_stream_destroy(app->mon_stream);
     pw_stream_destroy(app->out_stream);
