@@ -921,7 +921,7 @@ public static class Bengali
         ["udev_per_machine_label"] = "এই মেশিনের জন্য udev নিয়ম তৈরি করুন",
         ["udev_per_machine_hint"] = "বন্ধ (ডিফল্ট): শেল ইনস্টলারের মতো সম্পূর্ণ নিয়মের ফাইল ইনস্টল করুন। চালু: ভেন্ডর এবং হার্ডওয়্যার অনুসারে ফিল্টার করুন এবং uinput/i2c কে input-group 0660 এ সীমাবদ্ধ করুন। পরবর্তী Fix-এ কার্যকর।",
         ["render_mode_label"] = "রেন্ডারিং ব্যাকএন্ড",
-        ["render_mode_hint"] = "উইন্ডো কীভাবে আঁকা হয়। অটো Wayland-এ EGL এবং Xorg-এ GLX ব্যবহার করে। উইন্ডো জমে গেলে বা ভুলভাবে দেখালে তবেই এটি পরিবর্তন করুন। পরবর্তী চালুতে কার্যকর হবে।",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "অটো (প্রস্তাবিত)",
         ["skip_update_prompt_label"] = "স্টার্টআপে আপডেট পরীক্ষা করবেন না",
         ["disable_audio_label"] = "ভার্চুয়াল মাইক্রোফোন অক্ষম করুন",

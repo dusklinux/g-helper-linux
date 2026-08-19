@@ -863,7 +863,7 @@ public static class Serbian
         ["udev_per_machine_label"] = "Прилагоди udev правила овој машини",
         ["udev_per_machine_hint"] = "Искључено (подразумевано): инсталирај целу датотеку правила, као shell инсталер. Укључено: филтрирај по произвођачу и хардверу и ограничи uinput/i2c на input-групу 0660. Ступа на снагу при следећој Поправци.",
         ["render_mode_label"] = "Позадина рендеровања",
-        ["render_mode_hint"] = "Како се црта прозор. Аутоматски користи EGL на Wayland-у и GLX на Xorg-у. Мењајте ово само ако се прозор замрзава или се погрешно приказује. Ступа на снагу при следећем покретању.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Аутоматски (препоручено)",
         ["skip_update_prompt_label"] = "Не проверавај ажурирања при покретању",
         ["disable_audio_label"] = "Онемогући виртуелни микрофон",

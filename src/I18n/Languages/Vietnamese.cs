@@ -860,7 +860,7 @@ public static class Vietnamese
         ["udev_per_machine_label"] = "Điều chỉnh quy tắc udev cho máy này",
         ["udev_per_machine_hint"] = "Tắt (mặc định): cài toàn bộ tệp quy tắc, giống như trình cài shell. Bật: lọc theo nhà cung cấp và phần cứng và hạn chế uinput/i2c đến nhóm input 0660. Có hiệu lực ở lần Sửa tiếp theo.",
         ["render_mode_label"] = "Bộ kết xuất",
-        ["render_mode_hint"] = "Cách cửa sổ được vẽ. Tự động dùng EGL trên Wayland và GLX trên Xorg. Chỉ thay đổi nếu cửa sổ bị treo hoặc hiển thị sai. Có hiệu lực trong lần khởi chạy tiếp theo.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Tự động (khuyến nghị)",
         ["skip_update_prompt_label"] = "Không kiểm tra cập nhật khi khởi động",
         ["disable_audio_label"] = "Tắt micrô ảo",

@@ -839,9 +839,7 @@ public partial class MainWindow : Window
     private void ShowDriverBlockingDialog(GpuMode target)
     {
         bool dgpuSoleDisplay = (App.Wmi?.GetGpuMuxMode() ?? -1) == 0;
-        // X11: Xorg holds nvidia_drm for PRIME offload, rmmod always fails
-        bool x11Session = !Display.DisplayBackendFactory.IsWaylandSession();
-        bool canSwitchNow = !dgpuSoleDisplay && !x11Session;
+        bool canSwitchNow = !dgpuSoleDisplay;
 
         var dialog = new Window
         {

@@ -863,7 +863,7 @@ public static class Swedish
         ["udev_per_machine_label"] = "Anpassa udev-regler till denna maskin",
         ["udev_per_machine_hint"] = "Av (standard): installera hela regelfilen, som skalinstalleraren. På: filtrera efter leverantör och hårdvara och begränsa uinput/i2c till input-gruppen 0660. Träder i kraft vid nästa Reparation.",
         ["render_mode_label"] = "Renderingsbackend",
-        ["render_mode_hint"] = "Hur fönstret ritas. Auto använder EGL på Wayland och GLX på Xorg. Ändra endast detta om fönstret fryser eller visas fel. Träder i kraft vid nästa start.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Auto (rekommenderas)",
         ["skip_update_prompt_label"] = "Kontrollera inte uppdateringar vid start",
         ["disable_audio_label"] = "Inaktivera virtuell mikrofon",

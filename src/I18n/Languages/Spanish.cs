@@ -860,7 +860,7 @@ public static class Spanish
         ["udev_per_machine_label"] = "Adaptar reglas udev a esta máquina",
         ["udev_per_machine_hint"] = "Desactivado (predeterminado): instalar el archivo de reglas completo, igual que el instalador de shell. Activado: filtrar por fabricante y hardware y restringir uinput/i2c al grupo input 0660. Se aplica en la próxima Reparación.",
         ["render_mode_label"] = "Backend de renderizado",
-        ["render_mode_hint"] = "Cómo se dibuja la ventana. Auto usa EGL en Wayland y GLX en Xorg. Cambia esto solo si la ventana se congela o se muestra mal. Se aplica en el próximo inicio.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Auto (recomendado)",
         ["skip_update_prompt_label"] = "No buscar actualizaciones al iniciar",
         ["disable_audio_label"] = "Desactivar micrófono virtual",

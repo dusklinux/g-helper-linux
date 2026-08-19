@@ -921,7 +921,7 @@ public static class Latvian
         ["udev_per_machine_label"] = "Pielāgot udev noteikumus šai iekārtai",
         ["udev_per_machine_hint"] = "Izslēgts (noklusējuma): instalēt pilnu noteikumu failu, kā čaulas instalētājs. Ieslēgts: filtrēt pēc razċtāja un aparatūras un ierobežot uinput/i2c uz input grupu 0660. Stājas spēkā pie nākamās Labošanas.",
         ["render_mode_label"] = "Renderēšanas aizmugure",
-        ["render_mode_hint"] = "Kā tiek zīmēts logs. Auto izmanto EGL Wayland vidē un GLX Xorg vidē. Mainiet to tikai tad, ja logs sasalst vai tiek attēlots nepareizi. Stājas spēkā nākamajā palaišanā.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Auto (ieteicams)",
         ["skip_update_prompt_label"] = "Nepārbaudīt atjauninājumus startēšanā",
         ["disable_audio_label"] = "Atspējot virtuālo mikrofonu",

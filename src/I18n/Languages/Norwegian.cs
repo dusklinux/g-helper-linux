@@ -863,7 +863,7 @@ public static class Norwegian
         ["udev_per_machine_label"] = "Tilpass udev-regler til denne maskinen",
         ["udev_per_machine_hint"] = "Av (standard): installer hele regelfilen, som skallinstallereren. På: filtrer etter leverandør og maskinvare og stram uinput/i2c til input-gruppe 0660. Trer i kraft ved neste Reparasjon.",
         ["render_mode_label"] = "Renderingsbackend",
-        ["render_mode_hint"] = "Hvordan vinduet tegnes. Auto bruker EGL på Wayland og GLX på Xorg. Endre dette bare hvis vinduet fryser eller vises feil. Trer i kraft ved neste oppstart.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Auto (anbefalt)",
         ["skip_update_prompt_label"] = "Ikke sjekk for oppdateringer ved oppstart",
         ["disable_audio_label"] = "Deaktiver virtuell mikrofon",

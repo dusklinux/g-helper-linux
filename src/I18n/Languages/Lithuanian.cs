@@ -921,7 +921,7 @@ public static class Lithuanian
         ["udev_per_machine_label"] = "Pritaikyti udev taisykles šiam kompiuteriui",
         ["udev_per_machine_hint"] = "Išjungta (numatytoji): įdiegti pilnaį taisyklių failą, kaip apvalkalo diegimo scenarijus. Įjungta: filtruoti pagal tiekėją ir aparatinę įrangą ir apriboti uinput/i2c iki input grupės 0660. Įsigalioja per kitą Taisymą.",
         ["render_mode_label"] = "Atvaizdavimo posistemė",
-        ["render_mode_hint"] = "Kaip piešiamas langas. Automatinis naudoja EGL Wayland aplinkoje ir GLX Xorg aplinkoje. Keiskite tik jei langas užstringa arba rodomas neteisingai. Įsigalioja kito paleidimo metu.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Automatinis (rekomenduojama)",
         ["skip_update_prompt_label"] = "Netikrinti atnaujinimų paleidžiant",
         ["disable_audio_label"] = "Išjungti virtualų mikrofoną",

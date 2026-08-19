@@ -921,7 +921,7 @@ public static class Hindi
         ["udev_per_machine_label"] = "इस मशीन के लिए udev नियम अनुकूलित करें",
         ["udev_per_machine_hint"] = "बंद (डिफ़ॉल्ट): शेल इंस्टॉलर की तरह पूरी नियम फ़ाइल स्थापित करें। चालू: विक्रेता और हार्डवेयर के अनुसार फ़िल्टर करें और uinput/i2c को input-group 0660 तक सीमित करें। अगली Fix पर प्रभावी होगा।",
         ["render_mode_label"] = "रेंडरिंग बैकएंड",
-        ["render_mode_hint"] = "विंडो कैसे बनाई जाती है। ऑटो Wayland पर EGL और Xorg पर GLX का उपयोग करता है। इसे केवल तभी बदलें जब विंडो फ़्रीज़ हो या गलत दिखे। अगली बार शुरू करने पर लागू होगा।",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "ऑटो (अनुशंसित)",
         ["skip_update_prompt_label"] = "स्टार्टअप पर अपडेट की जाँच न करें",
         ["disable_audio_label"] = "वर्चुअल माइक्रोफ़ोन अक्षम करें",

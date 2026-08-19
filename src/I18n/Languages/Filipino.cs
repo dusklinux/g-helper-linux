@@ -921,7 +921,7 @@ public static class Filipino
         ["udev_per_machine_label"] = "I-tailor ang udev rules sa makinang ito",
         ["udev_per_machine_hint"] = "Off (default): i-install ang buong rules file, katulad ng shell installer. On: i-filter ayon sa vendor at hardware at hinigpitan ang uinput/i2c sa input-group 0660. Magkakabisa sa susunod na Fix.",
         ["render_mode_label"] = "Rendering backend",
-        ["render_mode_hint"] = "Kung paano iginuguhit ang window. Ginagamit ng Auto ang EGL sa Wayland at GLX sa Xorg. Baguhin lang ito kung nagfe-freeze o maling nagre-render ang window. Magkakabisa sa susunod na paglunsad.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Auto (inirerekomenda)",
         ["skip_update_prompt_label"] = "Huwag suriin ang mga update sa startup",
         ["disable_audio_label"] = "I-disable ang virtual na mikropono",

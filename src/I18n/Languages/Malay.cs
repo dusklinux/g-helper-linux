@@ -921,7 +921,7 @@ public static class Malay
         ["udev_per_machine_label"] = "Sesuaikan peraturan udev untuk mesin ini",
         ["udev_per_machine_hint"] = "Mati (lalai): pasang fail peraturan penuh, sama seperti pemasang shell. Hidup: tapis mengikut vendor dan perkakasan dan hadkan uinput/i2c kepada kumpulan input 0660. Berkuat kuasa pada Baiki seterusnya.",
         ["render_mode_label"] = "Backend rendering",
-        ["render_mode_hint"] = "Cara tetingkap dilukis. Auto menggunakan EGL pada Wayland dan GLX pada Xorg. Ubah ini hanya jika tetingkap beku atau dipaparkan salah. Berkuat kuasa pada pelancaran seterusnya.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Auto (disyorkan)",
         ["skip_update_prompt_label"] = "Jangan semak kemas kini semasa permulaan",
         ["disable_audio_label"] = "Lumpuhkan mikrofon maya",

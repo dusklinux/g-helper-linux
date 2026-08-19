@@ -860,7 +860,7 @@ public static class Hungarian
         ["udev_per_machine_label"] = "udev-szabályok szabása erre a gépre",
         ["udev_per_machine_hint"] = "Kikapcsolva (alapértelmezett): a teljes szabályfájl telepítése, ahogy a shell-telepítő. Bekapcsolva: szűrés gyártó és hardver szerint, és a uinput/i2c szigorítása input-csoport 0660-ra. A következő Javításkor lép életbe.",
         ["render_mode_label"] = "Megjelenítési backend",
-        ["render_mode_hint"] = "Hogyan rajzolódik ki az ablak. Az Auto EGL-t használ Waylanden és GLX-et Xorgon. Csak akkor módosítsa, ha az ablak lefagy vagy hibásan jelenik meg. A következő indításkor lép életbe.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Auto (ajánlott)",
         ["skip_update_prompt_label"] = "Ne ellenőrizze a frissítéseket indításkor",
         ["disable_audio_label"] = "Virtuális mikrofon letiltása",

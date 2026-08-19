@@ -863,7 +863,7 @@ public static class Thai
         ["udev_per_machine_label"] = "ปรับกฎ udev ให้เข้ากับเครื่องนี้",
         ["udev_per_machine_hint"] = "ปิด (ค่าเริ่มต้น): ติดตั้งไฟล์กฎเต็ม เหมือนตัวติดตั้ง shell เปิด: กรองตามผู้ขายและฮาร์ดแวร์ และจำกัด uinput/i2c เป็นกลุ่ม input 0660 มีผลเมื่อซ่อมครั้งต่อไป",
         ["render_mode_label"] = "แบ็กเอนด์การเรนเดอร์",
-        ["render_mode_hint"] = "วิธีการวาดหน้าต่าง อัตโนมัติจะใช้ EGL บน Wayland และ GLX บน Xorg เปลี่ยนค่านี้เฉพาะเมื่อหน้าต่างค้างหรือแสดงผลผิดพลาด จะมีผลเมื่อเปิดครั้งถัดไป",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "อัตโนมัติ (แนะนำ)",
         ["skip_update_prompt_label"] = "ไม่ตรวจสอบการอัปเดตเมื่อเริ่มต้น",
         ["disable_audio_label"] = "ปิดการใช้งานไมโครโฟนเสมือน",

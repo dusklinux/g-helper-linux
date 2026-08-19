@@ -44,7 +44,7 @@
     <PackageReference Include="Avalonia" Version="12.1.1" />
     <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
-    <PackageReference Include="Avalonia.X11" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Wayland" Version="12.1.1" />
     <PackageReference Include="Avalonia.Skia" Version="12.1.1" />
     <PackageReference Include="Avalonia.HarfBuzz" Version="12.1.1" />
 
@@ -90,9 +90,6 @@
            by NativeLibExtractor to ~/.cache/ghelper/libs/ -->
       <EmbeddedResource Include="../build/embedded/libSkiaSharp.so" Condition="Exists('../build/embedded/libSkiaSharp.so')" LogicalName="libSkiaSharp.so" />
       <EmbeddedResource Include="../build/embedded/libHarfBuzzSharp.so" Condition="Exists('../build/embedded/libHarfBuzzSharp.so')" LogicalName="libHarfBuzzSharp.so" />
-      <!-- wlr-randr: Wayland display tool (vendored v0.5.0, MIT license).
-           Built by build.sh before dotnet publish. Only embedded if the binary exists. -->
-      <EmbeddedResource Include="../vendor/wlr-randr/wlr-randr" Condition="Exists('../vendor/wlr-randr/wlr-randr')" LogicalName="wlr-randr" />
       <!-- ghelper-audio: PipeWire helper with bundled rnnoise + parametric EQ + delay + reverb DSP.
            Built by build.sh from audio-helper/. Provides the virtual G-Helper Microphone source. -->
       <EmbeddedResource Include="../build/embedded/ghelper-audio" Condition="Exists('../build/embedded/ghelper-audio')" LogicalName="ghelper-audio" />

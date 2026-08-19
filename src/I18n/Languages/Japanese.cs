@@ -863,7 +863,7 @@ public static class Japanese
         ["udev_per_machine_label"] = "udev ルールをこのマシンに合わせる",
         ["udev_per_machine_hint"] = "オフ（既定）: シェルインストーラと同じ完全なルールファイルを導入します。オン: ベンダーとハードウェアでフィルタリングし、uinput/i2c を input グループ 0660 に制限します。次回の修復時に適用されます。",
         ["render_mode_label"] = "レンダリングバックエンド",
-        ["render_mode_hint"] = "ウィンドウの描画方法。自動は Wayland では EGL、Xorg では GLX を使用します。ウィンドウが固まる、または表示が乱れる場合のみ変更してください。次回起動時に有効になります。",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "自動（推奨）",
         ["skip_update_prompt_label"] = "起動時にアップデートを確認しない",
         ["disable_audio_label"] = "仮想マイクを無効にする",

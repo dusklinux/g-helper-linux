@@ -921,7 +921,7 @@ public static class Nepali
         ["udev_per_machine_label"] = "यस मेसिनको लागि udev नियमहरू मिलाउनुहोस्",
         ["udev_per_machine_hint"] = "बन्द (पूर्वनिर्धारित): शेल इन्स्टलरे जस्तै पूर्ण नियम फाइल स्थापना गर्नुहोस्। खुल्ला: विक्रेता र हार्डवेयर अनुसार फिल्टर गर्नुहोस् र uinput/i2c लाई input-ग्रुप 0660 मा सीमित गर्नुहोस्। अर्को Fix मा प्रभावी हुनेछ।",
         ["render_mode_label"] = "रेन्डरिङ ब्याकइन्ड",
-        ["render_mode_hint"] = "विन्डो कसरी कोरिन्छ। स्वतः ले Wayland मा EGL र Xorg मा GLX प्रयोग गर्छ। विन्डो जमेमा वा गलत देखिएमा मात्र यो परिवर्तन गर्नुहोस्। अर्को पटक सुरु गर्दा लागू हुन्छ।",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "स्वतः (सिफारिस गरिएको)",
         ["skip_update_prompt_label"] = "स्टार्टअपमा अपडेट जाँच नगर्नुहोस्",
         ["disable_audio_label"] = "भर्चुअल माइक्रोफोन अक्षम गर्नुहोस्",

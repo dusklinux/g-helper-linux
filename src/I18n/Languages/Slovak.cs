@@ -921,7 +921,7 @@ public static class Slovak
         ["udev_per_machine_label"] = "Prispôsobiť udev pravidlá tomuto počítaču",
         ["udev_per_machine_hint"] = "Vypnuté (predvolené): nainštalovať kompletný súbor pravidiel, ako shellový inštalátor. Zapnuté: filtrovať podľa výrobcu a hardvéru a obmedziť uinput/i2c na skupinu input 0660. Účinné pri ďalšej Oprave.",
         ["render_mode_label"] = "Vykresľovací backend",
-        ["render_mode_hint"] = "Ako sa okno vykresľuje. Automaticky používa EGL na Waylande a GLX na Xorgu. Zmeňte to len ak okno zamŕza alebo sa zobrazuje nesprávne. Prejaví sa pri ďalšom spustení.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Automaticky (odporúčané)",
         ["skip_update_prompt_label"] = "Nekontrolovať aktualizácie pri spustení",
         ["disable_audio_label"] = "Zakázať virtuálny mikrofón",

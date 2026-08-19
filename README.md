@@ -199,7 +199,7 @@ Curve Optimizer undervolting for AMD Ryzen CPUs via the [ryzen_smu](https://gith
 ╔══[ MINIMUM SPEC ]══════════════════════════════════════════════╗
 ║                                                                 ║
 ║  OS       Ubuntu 22.04+ / Debian 12+ / Fedora 38+ / Arch      ║
-║  Desktop  X11 or Wayland (X11 recommended for full xrandr)     ║
+║  Desktop  Wayland (KDE Plasma, GNOME, Sway, Hyprland, COSMIC)  ║
 ║  Kernel   6.2+ recommended, 6.9+ for all features              ║
 ║  Module   asus-nb-wmi (loaded by default on ASUS laptops)      ║
 ║                                                                 ║
@@ -417,8 +417,7 @@ g-helper-linux/
     Display/
       LinuxDisplayControl.cs              # Brightness, gamma, refresh rate
       DisplayBackendFactory.cs            # Auto-detect display backend
-      XrandrBackend.cs                    # X11 xrandr
-      WlrRandrBackend.cs                  # wlroots Wayland
+      WlrRandrBackend.cs                  # wlroots Wayland (Sway, Hyprland, etc.)
       KScreenBackend.cs                   # KDE Wayland
       GdctlBackend.cs                     # GNOME display control
       MiniLed.cs                          # MiniLED zone control

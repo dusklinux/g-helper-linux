@@ -924,7 +924,7 @@ public static class English
         ["udev_per_machine_label"] = "Tailor udev rules to this machine",
         ["udev_per_machine_hint"] = "Off (default): install the full rules file, same as the shell installer. On: filter by vendor and hardware and tighten uinput/i2c to input-group 0660. Takes effect on the next Fix.",
         ["render_mode_label"] = "Rendering backend",
-        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland and GLX on Xorg. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Auto (recommended)",
         ["skip_update_prompt_label"] = "Don't check for updates on startup",
         ["disable_audio_label"] = "Disable virtual microphone",

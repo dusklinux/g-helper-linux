@@ -863,7 +863,7 @@ public static class Korean
         ["udev_per_machine_label"] = "이 기기에 맞게 udev 규칙 맞춤",
         ["udev_per_machine_hint"] = "끕 (기본): 셔에 설치프로그램과 같은 전체 규칙 파일 설치. 켜짐: 공급업체와 하드웨어로 필터링하고 uinput/i2c를 input 그룹 0660으로 제한합니다. 다음 수정 시 적용됩니다.",
         ["render_mode_label"] = "렌더링 백엔드",
-        ["render_mode_hint"] = "창을 그리는 방식입니다. 자동은 Wayland에서 EGL, Xorg에서 GLX를 사용합니다. 창이 멈추거나 잘못 표시될 때만 변경하세요. 다음 실행 시 적용됩니다.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "자동(권장)",
         ["skip_update_prompt_label"] = "시작 시 업데이트 확인 안 함",
         ["disable_audio_label"] = "가상 마이크 비활성화",

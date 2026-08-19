@@ -863,7 +863,7 @@ public static class ChineseSimplified
         ["udev_per_machine_label"] = "为本机定制 udev 规则",
         ["udev_per_machine_hint"] = "关闭（默认）：安装完整规则文件，与 shell 安装器相同。开启：按厂商和硬件过滤，将 uinput/i2c 收紧至 input 组 0660。下次“修复”时生效。",
         ["render_mode_label"] = "渲染后端",
-        ["render_mode_hint"] = "窗口的绘制方式。自动模式在 Wayland 上使用 EGL，在 Xorg 上使用 GLX。仅在窗口冻结或显示异常时更改。下次启动时生效。",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "自动（推荐）",
         ["skip_update_prompt_label"] = "启动时不检查更新",
         ["disable_audio_label"] = "禁用虚拟麦克风",

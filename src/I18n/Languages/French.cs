@@ -860,7 +860,7 @@ public static class French
         ["udev_per_machine_label"] = "Adapter les règles udev à cette machine",
         ["udev_per_machine_hint"] = "Désactivé (par défaut) : installer le fichier de règles complet, comme l'installeur shell. Activé : filtrer selon le fournisseur et le matériel, et restreindre uinput/i2c au groupe input 0660. Prend effet lors de la prochaine Réparation.",
         ["render_mode_label"] = "Moteur de rendu",
-        ["render_mode_hint"] = "Comment la fenêtre est dessinée. Auto utilise EGL sur Wayland et GLX sur Xorg. Ne modifiez ceci que si la fenêtre se fige ou s'affiche mal. Prend effet au prochain démarrage.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Auto (recommandé)",
         ["skip_update_prompt_label"] = "Ne pas vérifier les mises à jour au démarrage",
         ["disable_audio_label"] = "Désactiver le microphone virtuel",

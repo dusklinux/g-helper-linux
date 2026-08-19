@@ -326,431 +326,106 @@ public class LinuxSystemIntegration : ISystemIntegration
         Helpers.Logger.WriteLine($"Camera {(enabled ? "enabled" : "disabled")}: {(result != null ? "OK (sudo or pkexec)" : "failed (needs root)")}");
     }
 
-    // Touchpad toggle. X11: xinput. Wayland: compositor D-Bus/config.
+    // Touchpad & Touchscreen toggle (Hyprland native: hyprctl devices -j and Lua hl.device / hl.config).
 
     /// <summary>Check if the touchpad is currently enabled.</summary>
     public static bool? IsTouchpadEnabled()
     {
-        if (Display.DisplayBackendFactory.IsWaylandSession())
-        {
-            string? compositor = Display.DisplayBackendFactory.DetectCompositor();
-            switch (compositor)
-            {
-                case "kwin":
-                    return IsTouchpadEnabledKwin();
-                case "gnome-shell":
-                    return IsTouchpadEnabledGnome();
-                case "cosmic":
-                    return IsTouchpadEnabledCosmic();
-            }
-        }
-        return IsTouchpadEnabledXinput();
+        return IsTouchpadEnabledHyprland();
     }
 
     /// <summary>Enable or disable the touchpad.</summary>
     public static void SetTouchpadEnabled(bool enabled)
     {
-        if (Display.DisplayBackendFactory.IsWaylandSession())
-        {
-            string? compositor = Display.DisplayBackendFactory.DetectCompositor();
-            switch (compositor)
-            {
-                case "kwin":
-                    SetTouchpadEnabledKwin(enabled);
-                    return;
-                case "gnome-shell":
-                    SetTouchpadEnabledGnome(enabled);
-                    return;
-                case "cosmic":
-                    SetTouchpadEnabledCosmic(enabled);
-                    return;
-            }
-        }
-        SetTouchpadEnabledXinput(enabled);
+        SetTouchpadEnabledHyprland(enabled);
     }
-
-    // xinput (X11 / XWayland fallback)
-
-    /// <summary>Find touchpad xinput device ID (needs DISPLAY).</summary>
-    private static string? FindTouchpadId()
-    {
-        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DISPLAY")))
-            return null;
-        var fullList = SysfsHelper.RunCommand("xinput", "list");
-        if (fullList == null)
-            return null;
-
-        foreach (var line in fullList.Split('\n'))
-        {
-            if (line.Contains("Touchpad", StringComparison.OrdinalIgnoreCase))
-            {
-                var match = System.Text.RegularExpressions.Regex.Match(line, @"id=(\d+)");
-                if (match.Success)
-                    return match.Groups[1].Value;
-            }
-        }
-        return null;
-    }
-
-    private static bool? IsTouchpadEnabledXinput()
-    {
-        var id = FindTouchpadId();
-        if (id == null)
-            return null;
-
-        var props = SysfsHelper.RunCommand("xinput", $"list-props {id}");
-        if (props == null)
-            return null;
-
-        foreach (var line in props.Split('\n'))
-        {
-            if (line.Contains("Device Enabled"))
-                return line.TrimEnd().EndsWith("1");
-        }
-        return null;
-    }
-
-    private static void SetTouchpadEnabledXinput(bool enabled)
-    {
-        var id = FindTouchpadId();
-        if (id == null)
-        {
-            Helpers.Logger.WriteLine("Touchpad not found in xinput");
-            return;
-        }
-
-        string action = enabled ? "enable" : "disable";
-        SysfsHelper.RunCommand("xinput", $"{action} {id}");
-        Helpers.Logger.WriteLine($"Touchpad {action}d (xinput id={id})");
-    }
-
-    // KDE Wayland: KWin InputDevice D-Bus (session bus, busctl --user)
-
-    /// <summary>First touchpad sysName from KWin D-Bus, or null.</summary>
-    private static string? FindKwinTouchpadSysName()
-    {
-        try
-        {
-            var result = SysfsHelper.RunCommandWithTimeout("busctl", new[]
-            {
-                "--user", "call", "org.kde.KWin",
-                "/org/kde/KWin/InputDevice",
-                "org.kde.KWin.InputDeviceManager", "ListPointers"
-            }, 3000);
-            if (result == null)
-                return null;
-
-            foreach (var name in ParseBusctlStringArray(result))
-            {
-                var tp = SysfsHelper.RunCommandWithTimeout("busctl", new[]
-                {
-                    "--user", "get-property", "org.kde.KWin",
-                    $"/org/kde/KWin/InputDevice/{name}",
-                    "org.kde.KWin.InputDevice", "touchpad"
-                }, 2000);
-                if (tp != null && tp.Contains("true", StringComparison.OrdinalIgnoreCase))
-                    return name;
-            }
-        }
-        catch (Exception ex)
-        {
-            Helpers.Logger.WriteLine($"KWin touchpad D-Bus query failed: {ex.Message}");
-        }
-        return null;
-    }
-
-    private static bool? IsTouchpadEnabledKwin()
-    {
-        var sysName = FindKwinTouchpadSysName();
-        if (sysName == null)
-            return null;
-
-        try
-        {
-            var result = SysfsHelper.RunCommandWithTimeout("busctl", new[]
-            {
-                "--user", "get-property", "org.kde.KWin",
-                $"/org/kde/KWin/InputDevice/{sysName}",
-                "org.kde.KWin.InputDevice", "enabled"
-            }, 2000);
-            if (result == null)
-                return null;
-            return result.Contains("true", StringComparison.OrdinalIgnoreCase);
-        }
-        catch (Exception ex)
-        {
-            Helpers.Logger.WriteLine($"KWin touchpad state query failed: {ex.Message}");
-            return null;
-        }
-    }
-
-    private static void SetTouchpadEnabledKwin(bool enabled)
-    {
-        var sysName = FindKwinTouchpadSysName();
-        if (sysName == null)
-        {
-            Helpers.Logger.WriteLine("Touchpad not found via KWin D-Bus");
-            return;
-        }
-
-        try
-        {
-            SysfsHelper.RunCommandWithTimeout("busctl", new[]
-            {
-                "--user", "set-property", "org.kde.KWin",
-                $"/org/kde/KWin/InputDevice/{sysName}",
-                "org.kde.KWin.InputDevice", "enabled", "b",
-                enabled ? "true" : "false"
-            }, 3000);
-            Helpers.Logger.WriteLine($"Touchpad {(enabled ? "enabled" : "disabled")} via KWin D-Bus ({sysName})");
-        }
-        catch (Exception ex)
-        {
-            Helpers.Logger.WriteLine($"KWin touchpad set failed: {ex.Message}");
-        }
-    }
-
-    // GNOME Wayland: gsettings send-events on touchpad schema
-
-    private static bool? IsTouchpadEnabledGnome()
-    {
-        try
-        {
-            var result = SysfsHelper.RunCommand("gsettings",
-                "get org.gnome.desktop.peripherals.touchpad send-events");
-            if (result == null)
-                return null;
-            return result.Contains("enabled") && !result.Contains("disabled");
-        }
-        catch (Exception ex)
-        {
-            Helpers.Logger.WriteLine($"GNOME touchpad state query failed: {ex.Message}");
-            return null;
-        }
-    }
-
-    private static void SetTouchpadEnabledGnome(bool enabled)
-    {
-        try
-        {
-            string mode = enabled ? "enabled" : "disabled";
-            SysfsHelper.RunCommand("gsettings",
-                $"set org.gnome.desktop.peripherals.touchpad send-events {mode}");
-            Helpers.Logger.WriteLine($"Touchpad {mode} via gsettings");
-        }
-        catch (Exception ex)
-        {
-            Helpers.Logger.WriteLine($"GNOME touchpad set failed: {ex.Message}");
-        }
-    }
-
-    // COSMIC Wayland: write config file, cosmic-comp watches it via inotify
-
-    private static readonly string CosmicTouchpadOverridePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-        ".config/cosmic/com.system76.CosmicComp/v1/input_touchpad_override");
-
-    private static bool? IsTouchpadEnabledCosmic()
-    {
-        try
-        {
-            if (!File.Exists(CosmicTouchpadOverridePath))
-                return true; // absent = enabled
-            var content = File.ReadAllText(CosmicTouchpadOverridePath).Trim().Trim('"');
-            return !content.Equals("ForceDisable", StringComparison.OrdinalIgnoreCase);
-        }
-        catch (Exception ex)
-        {
-            Helpers.Logger.WriteLine($"COSMIC touchpad state query failed: {ex.Message}");
-            return null;
-        }
-    }
-
-    private static void SetTouchpadEnabledCosmic(bool enabled)
-    {
-        try
-        {
-            string dir = Path.GetDirectoryName(CosmicTouchpadOverridePath)!;
-            if (!Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
-            string value = enabled ? "\"None\"" : "\"ForceDisable\"";
-            File.WriteAllText(CosmicTouchpadOverridePath, value);
-            Helpers.Logger.WriteLine($"Touchpad {(enabled ? "enabled" : "disabled")} via cosmic-config");
-        }
-        catch (Exception ex)
-        {
-            Helpers.Logger.WriteLine($"COSMIC touchpad set failed: {ex.Message}");
-        }
-    }
-
-    /// <summary>Parse busctl "as N str1 str2 ..." array output.</summary>
-    private static IEnumerable<string> ParseBusctlStringArray(string output)
-    {
-        foreach (var token in output.Split(new[] { ' ', '\n', '\r', '\t' },
-            StringSplitOptions.RemoveEmptyEntries))
-        {
-            var trimmed = token.Trim('"');
-            if (trimmed == "as" || int.TryParse(trimmed, out _))
-                continue;
-            if (trimmed.Length > 0)
-                yield return trimmed;
-        }
-    }
-
-    // Touchscreen toggle. KDE Wayland: KWin D-Bus. Others: xinput fallback.
 
     /// <summary>Check if the touchscreen is currently enabled.</summary>
     public static bool? IsTouchscreenEnabled()
     {
-        if (Display.DisplayBackendFactory.IsWaylandSession() &&
-            Display.DisplayBackendFactory.DetectCompositor() == "kwin")
-            return IsTouchscreenEnabledKwin();
-
-        return IsTouchscreenEnabledXinput();
+        return IsTouchscreenEnabledHyprland();
     }
 
     /// <summary>Enable or disable the touchscreen.</summary>
     public static void SetTouchscreenEnabled(bool enabled)
     {
-        if (Display.DisplayBackendFactory.IsWaylandSession() &&
-            Display.DisplayBackendFactory.DetectCompositor() == "kwin")
-        {
-            SetTouchscreenEnabledKwin(enabled);
-            return;
-        }
-        SetTouchscreenEnabledXinput(enabled);
+        SetTouchscreenEnabledHyprland(enabled);
     }
 
-    /// <summary>Find touchscreen xinput device ID (needs DISPLAY).</summary>
-    private static string? FindTouchscreenId()
+    private static string? FindHyprlandTouchpadName()
     {
-        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DISPLAY")))
-            return null;
-        var fullList = SysfsHelper.RunCommand("xinput", "list");
-        if (fullList == null)
-            return null;
-
-        foreach (var line in fullList.Split('\n'))
+        try
         {
-            if (line.Contains("Touchscreen", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("Touch Screen", StringComparison.OrdinalIgnoreCase) ||
-                (line.Contains("touch", StringComparison.OrdinalIgnoreCase) &&
-                 line.Contains("screen", StringComparison.OrdinalIgnoreCase)))
+            var json = SysfsHelper.RunCommand("hyprctl", "devices -j");
+            if (string.IsNullOrEmpty(json))
+                return null;
+
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("mice", out var mice) && mice.ValueKind == System.Text.Json.JsonValueKind.Array)
             {
-                var match = System.Text.RegularExpressions.Regex.Match(line, @"id=(\d+)");
-                if (match.Success)
-                    return match.Groups[1].Value;
+                foreach (var mouse in mice.EnumerateArray())
+                {
+                    var name = mouse.TryGetProperty("name", out var np) ? np.GetString() : null;
+                    if (name != null && name.Contains("touchpad", StringComparison.OrdinalIgnoreCase))
+                        return name;
+                }
             }
         }
-        return null;
-    }
-
-    private static bool? IsTouchscreenEnabledXinput()
-    {
-        var id = FindTouchscreenId();
-        if (id == null)
-            return null;
-
-        var props = SysfsHelper.RunCommand("xinput", $"list-props {id}");
-        if (props == null)
-            return null;
-
-        foreach (var line in props.Split('\n'))
+        catch (Exception ex)
         {
-            if (line.Contains("Device Enabled"))
-                return line.TrimEnd().EndsWith("1");
+            Helpers.Logger.WriteLine("FindHyprlandTouchpadName failed", ex);
         }
         return null;
     }
 
-    private static void SetTouchscreenEnabledXinput(bool enabled)
+    private static bool? IsTouchpadEnabledHyprland()
     {
-        var id = FindTouchscreenId();
-        if (id == null)
+        var tpName = FindHyprlandTouchpadName();
+        if (tpName == null)
+            return null;
+
+        return true;
+    }
+
+    private static void SetTouchpadEnabledHyprland(bool enabled)
+    {
+        var tpName = FindHyprlandTouchpadName();
+        if (tpName != null)
         {
-            Helpers.Logger.WriteLine("Touchscreen not found in xinput");
+            // 1. Try Lua hl.device
+            var luaCmd = $"hl.device({{ name = '{tpName}', enabled = {(enabled ? "true" : "false")} }})";
+            var evalRes = SysfsHelper.RunCommand("hyprctl", $"eval \"{luaCmd}\"");
+            if (evalRes != null && !evalRes.Contains("error:"))
+            {
+                Helpers.Logger.WriteLine($"Touchpad {(enabled ? "enabled" : "disabled")} via Hyprland Lua ({tpName})");
+                return;
+            }
+
+            // 2. Fallback to hyprctl keyword
+            SysfsHelper.RunCommand("hyprctl", $"keyword device[{tpName}]:enabled {(enabled ? "true" : "false")}");
+            Helpers.Logger.WriteLine($"Touchpad {(enabled ? "enabled" : "disabled")} via hyprctl keyword ({tpName})");
+        }
+    }
+
+    private static bool? IsTouchscreenEnabledHyprland()
+    {
+        return true;
+    }
+
+    private static void SetTouchscreenEnabledHyprland(bool enabled)
+    {
+        // 1. Try Lua hl.config
+        var luaCmd = $"hl.config({{ input = {{ touchdevice = {{ enabled = {(enabled ? "true" : "false")} }} }} }})";
+        var evalRes = SysfsHelper.RunCommand("hyprctl", $"eval \"{luaCmd}\"");
+        if (evalRes != null && !evalRes.Contains("error:"))
+        {
+            Helpers.Logger.WriteLine($"Touchscreen {(enabled ? "enabled" : "disabled")} via Hyprland Lua");
             return;
         }
 
-        string action = enabled ? "enable" : "disable";
-        SysfsHelper.RunCommand("xinput", $"{action} {id}");
-        Helpers.Logger.WriteLine($"Touchscreen {action}d (xinput id={id})");
-    }
-
-    /// <summary>First touchscreen sysName from KWin D-Bus, or null.</summary>
-    private static string? FindKwinTouchscreenSysName()
-    {
-        try
-        {
-            var result = SysfsHelper.RunCommandWithTimeout("busctl", new[]
-            {
-                "--user", "call", "org.kde.KWin",
-                "/org/kde/KWin/InputDevice",
-                "org.kde.KWin.InputDeviceManager", "ListTouch"
-            }, 3000);
-            if (result == null)
-                return null;
-
-            // Return the first touch device sysName
-            foreach (var name in ParseBusctlStringArray(result))
-                return name;
-        }
-        catch (Exception ex)
-        {
-            Helpers.Logger.WriteLine($"KWin touchscreen D-Bus query failed: {ex.Message}");
-        }
-        return null;
-    }
-
-    private static bool? IsTouchscreenEnabledKwin()
-    {
-        var sysName = FindKwinTouchscreenSysName();
-        if (sysName == null)
-            return null;
-
-        try
-        {
-            var result = SysfsHelper.RunCommandWithTimeout("busctl", new[]
-            {
-                "--user", "get-property", "org.kde.KWin",
-                $"/org/kde/KWin/InputDevice/{sysName}",
-                "org.kde.KWin.InputDevice", "enabled"
-            }, 2000);
-            if (result == null)
-                return null;
-            return result.Contains("true", StringComparison.OrdinalIgnoreCase);
-        }
-        catch (Exception ex)
-        {
-            Helpers.Logger.WriteLine($"KWin touchscreen state query failed: {ex.Message}");
-            return null;
-        }
-    }
-
-    private static void SetTouchscreenEnabledKwin(bool enabled)
-    {
-        var sysName = FindKwinTouchscreenSysName();
-        if (sysName == null)
-        {
-            Helpers.Logger.WriteLine("Touchscreen not found via KWin D-Bus");
-            return;
-        }
-
-        try
-        {
-            SysfsHelper.RunCommandWithTimeout("busctl", new[]
-            {
-                "--user", "set-property", "org.kde.KWin",
-                $"/org/kde/KWin/InputDevice/{sysName}",
-                "org.kde.KWin.InputDevice", "enabled", "b",
-                enabled ? "true" : "false"
-            }, 3000);
-            Helpers.Logger.WriteLine($"Touchscreen {(enabled ? "enabled" : "disabled")} via KWin D-Bus ({sysName})");
-        }
-        catch (Exception ex)
-        {
-            Helpers.Logger.WriteLine($"KWin touchscreen set failed: {ex.Message}");
-        }
+        // 2. Fallback to hyprctl keyword
+        SysfsHelper.RunCommand("hyprctl", $"keyword input:touchdevice:enabled {(enabled ? "true" : "false")}");
+        Helpers.Logger.WriteLine($"Touchscreen {(enabled ? "enabled" : "disabled")} via hyprctl keyword");
     }
 
     // CPU Core Control

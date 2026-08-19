@@ -863,7 +863,7 @@ public static class Finnish
         ["udev_per_machine_label"] = "Räälöi udev-säännöt tähän koneeseen",
         ["udev_per_machine_hint"] = "Pois (oletus): asenna täysi sääntötiedosto, kuten shell-asennin. Päällä: suodata valmistajan ja laitteiston mukaan ja kiristä uinput/i2c input-ryhmään 0660. Tulee voimaan seuraavassa korjauksessa.",
         ["render_mode_label"] = "Renderöintitausta",
-        ["render_mode_hint"] = "Kuinka ikkuna piirretään. Auto käyttää EGL:ää Waylandissa ja GLX:ää Xorgissa. Muuta tätä vain, jos ikkuna jumittuu tai piirtyy väärin. Tulee voimaan seuraavalla käynnistyksellä.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Auto (suositeltu)",
         ["skip_update_prompt_label"] = "Älä tarkista päivityksiä käynnistyksessä",
         ["disable_audio_label"] = "Poista virtuaalimikrofoni käytöstä",

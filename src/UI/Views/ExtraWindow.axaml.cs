@@ -1774,8 +1774,8 @@ public partial class ExtraWindow : Window
         Helpers.AppConfig.Set("udev_per_machine", (checkUdevPerMachine.IsChecked ?? false) ? 1 : 0);
     }
 
-    // Empty tag = Auto (Program.BuildX11Options picks EGL on Wayland, GLX on
-    // Xorg). Backend names are technical labels, not translated.
+    // Empty tag = Auto (picks EGL on Wayland with Software fallback).
+    // Backend names are technical labels, not translated.
     private void InitRenderModeCombo()
     {
         string current = Helpers.AppConfig.GetString("render_mode") ?? "";
@@ -1783,7 +1783,6 @@ public partial class ExtraWindow : Window
         [
             ("", Labels.Get("render_mode_auto")),
             ("egl", "EGL"),
-            ("glx", "GLX"),
             ("software", "Software"),
         ];
         comboRenderMode.Items.Clear();

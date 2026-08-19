@@ -860,7 +860,7 @@ public static class Czech
         ["udev_per_machine_label"] = "Přizpůsobit udev pravidla tomuto počítači",
         ["udev_per_machine_hint"] = "Vypnuto (výchozí): nainstalovat kompletní pravidla, stejně jako shellový instalátor. Zapnuto: filtrovat podle výrobce a hardwaru a zpřísnit uinput/i2c na skupinu input 0660. Projeví se při příští opravě.",
         ["render_mode_label"] = "Vykreslovací backend",
-        ["render_mode_hint"] = "Jak se okno vykresluje. Automaticky používá EGL na Waylandu a GLX na Xorgu. Měňte pouze pokud okno zamrzá nebo se zobrazuje špatně. Projeví se při příštím spuštění.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Automaticky (doporučeno)",
         ["skip_update_prompt_label"] = "Nekontrolovat aktualizace při spuštění",
         ["disable_audio_label"] = "Zakázat virtuální mikrofon",

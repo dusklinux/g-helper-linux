@@ -860,7 +860,7 @@ public static class Dutch
         ["udev_per_machine_label"] = "udev-regels afstemmen op deze machine",
         ["udev_per_machine_hint"] = "Uit (standaard): installeer het volledige regelbestand, zoals de shell-installer. Aan: filter op leverancier en hardware en beperk uinput/i2c tot input-groep 0660. Wordt actief bij de volgende Reparatie.",
         ["render_mode_label"] = "Renderbackend",
-        ["render_mode_hint"] = "Hoe het venster wordt getekend. Auto gebruikt EGL op Wayland en GLX op Xorg. Wijzig dit alleen als het venster vastloopt of verkeerd wordt weergegeven. Wordt van kracht bij de volgende start.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Auto (aanbevolen)",
         ["skip_update_prompt_label"] = "Niet controleren op updates bij opstarten",
         ["disable_audio_label"] = "Virtuele microfoon uitschakelen",

@@ -860,7 +860,7 @@ public static class Romanian
         ["udev_per_machine_label"] = "Adaptarea regulilor udev pentru această maşină",
         ["udev_per_machine_hint"] = "Oprit (implicit): instalează fişierul complet de reguli, la fel ca instalatorul shell. Pornit: filtrează după furnizor şi hardware şi restrânge uinput/i2c la grupul input 0660. Intră în vigoare la următoarea Reparaţie.",
         ["render_mode_label"] = "Backend de randare",
-        ["render_mode_hint"] = "Cum este desenată fereastra. Auto folosește EGL pe Wayland și GLX pe Xorg. Modificați aceasta doar dacă fereastra se blochează sau se afișează greșit. Intră în vigoare la următoarea pornire.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Auto (recomandat)",
         ["skip_update_prompt_label"] = "Nu verifica actualizări la pornire",
         ["disable_audio_label"] = "Dezactivează microfonul virtual",

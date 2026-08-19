@@ -921,7 +921,7 @@ public static class Slovenian
         ["udev_per_machine_label"] = "Prilagodi udev pravila temu računalniku",
         ["udev_per_machine_hint"] = "Izklopljeno (privzeto): namesti celotno datoteko pravil, enako kot lupinski namestitveni program. Vklopljeno: filtriraj po prodajalcu in strojni opremi ter omeji uinput/i2c na skupino input 0660. Začne veljati pri naslednji Popravi.",
         ["render_mode_label"] = "Zaledje izrisovanja",
-        ["render_mode_hint"] = "Kako se okno izriše. Samodejno uporablja EGL v Waylandu in GLX v Xorgu. Spremenite to samo, če okno zamrzne ali se napačno izriše. Začne veljati ob naslednjem zagonu.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Samodejno (priporočeno)",
         ["skip_update_prompt_label"] = "Ne preverjaj posodobitev ob zagonu",
         ["disable_audio_label"] = "Onemogoči navidezni mikrofon",

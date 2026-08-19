@@ -863,7 +863,7 @@ public static class Arabic
         ["udev_per_machine_label"] = "تخصيص قواعد udev لهذا الجهاز",
         ["udev_per_machine_hint"] = "إيقاف (افتراضي): تثبيت ملف القواعد الكامل، مثل مثبّت الأوامر. تشغيل: تصفية حسب المورد والأجهزة وتقييد uinput/i2c إلى مجموعة input 0660. يسري عند الإصلاح التالي.",
         ["render_mode_label"] = "خلفية العرض",
-        ["render_mode_hint"] = "طريقة رسم النافذة. تلقائي يستخدم EGL على Wayland و GLX على Xorg. غيّر هذا فقط إذا تجمّدت النافذة أو ظهرت بشكل خاطئ. يسري عند التشغيل التالي.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "تلقائي (موصى به)",
         ["skip_update_prompt_label"] = "عدم البحث عن تحديثات عند بدء التشغيل",
         ["disable_audio_label"] = "تعطيل الميكروفون الافتراضي",

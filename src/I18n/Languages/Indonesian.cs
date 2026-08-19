@@ -863,7 +863,7 @@ public static class Indonesian
         ["udev_per_machine_label"] = "Sesuaikan aturan udev untuk mesin ini",
         ["udev_per_machine_hint"] = "Mati (default): pasang berkas aturan penuh, sama seperti pemasang shell. Aktif: saring berdasarkan vendor dan perangkat keras dan perketat uinput/i2c ke grup input 0660. Berlaku pada Perbaikan berikutnya.",
         ["render_mode_label"] = "Backend rendering",
-        ["render_mode_hint"] = "Cara jendela digambar. Auto menggunakan EGL di Wayland dan GLX di Xorg. Ubah ini hanya jika jendela membeku atau tampil salah. Berlaku pada peluncuran berikutnya.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Auto (disarankan)",
         ["skip_update_prompt_label"] = "Jangan periksa pembaruan saat startup",
         ["disable_audio_label"] = "Nonaktifkan mikrofon virtual",

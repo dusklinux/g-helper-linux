@@ -863,7 +863,7 @@ public static class Greek
         ["udev_per_machine_label"] = "Προσαρμογή κανόνων udev σε αυτό το μηχάνημα",
         ["udev_per_machine_hint"] = "Απενεργοποιημένο (προεπιλογή): εγκατάσταση πλήρους αρχείου κανόνων, όπως ο shell installer. Ενεργό: φιλτράρισμα ανά προμηθευτή και υλικό και περιορισμός uinput/i2c σε ομάδα input 0660. Έναρξη με την επόμενη Επιδιόρθωση.",
         ["render_mode_label"] = "Backend απόδοσης",
-        ["render_mode_hint"] = "Πώς σχεδιάζεται το παράθυρο. Το Auto χρησιμοποιεί EGL στο Wayland και GLX στο Xorg. Αλλάξτε το μόνο αν το παράθυρο παγώνει ή εμφανίζεται λάθος. Ισχύει από την επόμενη εκκίνηση.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Αυτόματο (συνιστάται)",
         ["skip_update_prompt_label"] = "Να μην γίνεται έλεγχος ενημερώσεων κατά την εκκίνηση",
         ["disable_audio_label"] = "Απενεργοποίηση εικονικού μικροφώνου",

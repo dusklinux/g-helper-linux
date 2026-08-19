@@ -4,9 +4,15 @@
 
 ### Added
 
-### Fixed
+- **Pure Wayland Architecture**: G-Helper is now 100% pure Wayland using `Avalonia.Wayland` with zero X11/XWayland dependencies.
+- **PipeWire Audio Control**: Direct PipeWire integration via `wpctl`, dropping legacy PulseAudio fallback.
+- **Native Wayland Input Controls**: Native Touchpad and Touchscreen toggle for Hyprland, Sway, KDE Plasma, GNOME, and COSMIC.
 
-### Changed
+### Removed
+
+- Removed all X11, XWayland, `libX11.so.6`, `xrandr`, `xinput`, and X11 strut code.
+- Removed legacy GLX rendering option (Wayland uses EGL and Software rendering).
+- Dropped PulseAudio `pactl` fallback.
 
 ## v1.0.91 (2026-08-19)
 

@@ -1,11 +1,10 @@
 namespace GHelper.Linux.Display;
 
 /// <summary>
-/// Auto-detects the best display backend for the current session.
+/// Auto-detects the best display backend for the current Wayland session.
 ///
 /// Probe order:
-///   Wayland: wlr-randr → gdctl (GNOME 48+) → kscreen-doctor (KDE) → xrandr (XWayland fallback)
-///   X11:     xrandr
+///   wlr-randr → gdctl (GNOME 48+) → kscreen-doctor (KDE)
 ///
 /// Each backend is probed once at startup. The first one that succeeds is used
 /// for the lifetime of the session.
@@ -13,84 +12,24 @@ namespace GHelper.Linux.Display;
 public static class DisplayBackendFactory
 {
     /// <summary>
-    /// Detect the session type and probe for the best available backend.
+    /// Probe for the best available Wayland display backend.
     /// Returns null only if no backend works at all.
     /// </summary>
     public static IDisplayBackend? Create()
     {
-        bool isWayland = IsWaylandSession();
-
-        if (isWayland)
-            return CreateWayland();
-        else
-            return CreateX11();
+        return CreateWayland();
     }
 
     private static IDisplayBackend? CreateWayland()
     {
-        // 1. Try wlr-randr (widest Wayland support)
-        var wlrPath = Helpers.NativeLibExtractor.FindTool("wlr-randr");
-        if (wlrPath != null)
+        Helpers.Logger.WriteLine("Display: probing Hyprland backend (hyprctl)...");
+        if (HyprlandBackend.Probe())
         {
-            Helpers.Logger.WriteLine($"Display: probing wlr-randr at {wlrPath}...");
-            if (WlrRandrBackend.Probe(wlrPath))
-            {
-                Helpers.Logger.WriteLine($"Display: Wayland session, using wlr-randr");
-                return new WlrRandrBackend(wlrPath);
-            }
-            Helpers.Logger.WriteLine("Display: wlr-randr found but compositor doesn't support wlr-output-management");
+            Helpers.Logger.WriteLine("Display: Hyprland session, using native HyprlandBackend");
+            return new HyprlandBackend();
         }
 
-        string? compositor = DetectCompositor();
-
-        // 2. Try gdctl (GNOME 48+, uses org.gnome.Mutter.DisplayConfig D-Bus)
-        if (compositor == "gnome-shell" || compositor == null)
-        {
-            Helpers.Logger.WriteLine("Display: probing gdctl...");
-            if (GdctlBackend.Probe())
-            {
-                Helpers.Logger.WriteLine("Display: Wayland session, using gdctl (GNOME)");
-                return new GdctlBackend();
-            }
-            if (compositor == "gnome-shell")
-                Helpers.Logger.WriteLine("Display: gdctl unavailable (GNOME < 48 or mutter-common-bin not installed)");
-        }
-
-        // 3. Try kscreen-doctor (KDE Wayland, including Plasma 5.x)
-        if (compositor == "kwin" || compositor == null)
-        {
-            Helpers.Logger.WriteLine("Display: probing kscreen-doctor...");
-            if (KScreenBackend.Probe())
-            {
-                Helpers.Logger.WriteLine("Display: Wayland session, using kscreen-doctor (KDE)");
-                return new KScreenBackend();
-            }
-            if (compositor == "kwin")
-                Helpers.Logger.WriteLine("Display: kscreen-doctor unavailable on KDE Wayland");
-        }
-
-        // 4. Fallback: xrandr via XWayland (may work for reads on some compositors)
-        Helpers.Logger.WriteLine("Display: probing xrandr via XWayland...");
-        if (XrandrBackend.Probe())
-        {
-            Helpers.Logger.WriteLine("Display: Wayland session, falling back to xrandr (XWayland)");
-            return new XrandrBackend();
-        }
-
-        Helpers.Logger.WriteLine("Display: WARNING - no display backend available on this Wayland session");
-        return null;
-    }
-
-    private static IDisplayBackend? CreateX11()
-    {
-        Helpers.Logger.WriteLine("Display: X11 session, probing xrandr...");
-        if (XrandrBackend.Probe())
-        {
-            Helpers.Logger.WriteLine("Display: X11 session, using xrandr");
-            return new XrandrBackend();
-        }
-
-        Helpers.Logger.WriteLine("Display: WARNING - xrandr not available on this X11 session");
+        Helpers.Logger.WriteLine("Display: WARNING - no Hyprland backend available");
         return null;
     }
 

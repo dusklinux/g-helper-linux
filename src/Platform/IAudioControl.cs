@@ -2,8 +2,7 @@ namespace GHelper.Linux.Platform;
 
 /// <summary>
 /// Abstraction over audio control (mic mute, speaker mute).
-/// Windows: NAudio WASAPI/CoreAudio
-/// Linux: PulseAudio (pactl) or PipeWire (wpctl)
+/// Linux: PipeWire (wpctl)
 /// </summary>
 public interface IAudioControl
 {

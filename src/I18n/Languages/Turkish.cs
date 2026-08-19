@@ -860,7 +860,7 @@ public static class Turkish
         ["udev_per_machine_label"] = "udev kurallarını bu makineye uyarla",
         ["udev_per_machine_hint"] = "Kapalı (varsayılan): tam kural dosyasını shell yükleyicisi gibi kur. Açık: satıcı ve donanıma göre filtrele ve uinput/i2c'yi input grubu 0660'a sıkılaştır. Sonraki Onar'da etkin olur.",
         ["render_mode_label"] = "Görüntüleme arka ucu",
-        ["render_mode_hint"] = "Pencerenin nasıl çizileceği. Otomatik, Wayland'de EGL ve Xorg'da GLX kullanır. Bunu yalnızca pencere donarsa veya yanlış görüntülenirse değiştirin. Bir sonraki başlatmada etkinleşir.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Otomatik (önerilen)",
         ["skip_update_prompt_label"] = "Başlangıçta güncellemeleri kontrol etme",
         ["disable_audio_label"] = "Sanal mikrofonu devre dışı bırak",

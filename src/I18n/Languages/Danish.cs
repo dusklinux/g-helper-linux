@@ -863,7 +863,7 @@ public static class Danish
         ["udev_per_machine_label"] = "Tilpas udev-regler til denne maskine",
         ["udev_per_machine_hint"] = "Fra (standard): installer den fulde regelfil, som shell-installeren. Til: filtrer efter leverandør og hardware og stram uinput/i2c til input-gruppe 0660. Træder i kraft ved næste Reparation.",
         ["render_mode_label"] = "Renderingsbackend",
-        ["render_mode_hint"] = "Hvordan vinduet tegnes. Auto bruger EGL på Wayland og GLX på Xorg. Ændr kun dette, hvis vinduet fryser eller vises forkert. Træder i kraft ved næste opstart.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Auto (anbefalet)",
         ["skip_update_prompt_label"] = "Tjek ikke for opdateringer ved opstart",
         ["disable_audio_label"] = "Deaktiver virtuel mikrofon",

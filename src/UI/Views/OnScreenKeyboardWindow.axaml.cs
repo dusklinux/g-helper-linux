@@ -20,14 +20,10 @@ namespace GHelper.Linux.UI.Views;
 /// navigation, latching modifiers) for terminals.
 ///
 /// Keys are injected through a /dev/uinput virtual keyboard (OskUinput), so
-/// they reach whatever window the compositor has focused, on X11 and Wayland
-/// alike. The window itself must never take focus: it opts out via
+/// they reach whatever window the compositor has focused on Wayland.
+/// The window itself must never take focus: it opts out via
 /// ShowActivated/Focusable and, on KDE (SteamOS desktop mode), a KWin window
 /// rule forces "accept focus: no" so taps cannot activate it.
-///
-/// Dock mode (pin button) additionally marks the window as an EWMH dock
-/// with a bottom strut, so KWin pushes/resizes other windows above the
-/// keyboard the way the upstream virtual keyboards do.
 ///
 /// Labels show US QWERTY; the compositor applies the user's XKB layout to
 /// the emitted keycodes, exactly like a physical US keyboard would behave.
@@ -67,10 +63,6 @@ public partial class OnScreenKeyboardWindow : Window
     {
         InitializeComponent();
 
-        // The no-focus-steal rule must exist before the window is mapped;
-        // KWin evaluates rules when the surface appears.
-        KwinRules.EnsureOskRule(Title ?? "G-Helper Keyboard");
-
         ToolTip.SetTip(buttonPin, Labels.Get("osk_dock_tip"));
         _docked = Helpers.AppConfig.Is("osk_docked");
 
@@ -79,18 +71,15 @@ public partial class OnScreenKeyboardWindow : Window
         Loaded += (_, _) =>
         {
             TryStartDevice();
-            PositionBottomCenter();
-            RefreshPinButton();
             if (_docked)
-                Avalonia.Threading.Dispatcher.UIThread.Post(() => ApplyDock(),
-                    Avalonia.Threading.DispatcherPriority.Loaded);
+                PositionBottomCenter();
+            RefreshPinButton();
         };
         SizeChanged += (_, _) =>
         {
             if (_docked && IsVisible)
             {
                 PositionBottomCenter();
-                ApplyDock(remap: false);
             }
         };
         Closing += (_, e) =>
@@ -100,7 +89,6 @@ public partial class OnScreenKeyboardWindow : Window
             if (App.IsShuttingDown)
                 return;
             e.Cancel = true;
-            ClearDock();
             Hide();
         };
     }
@@ -129,12 +117,10 @@ public partial class OnScreenKeyboardWindow : Window
         base.Show();
         TryStartDevice();
         if (_docked)
-            Avalonia.Threading.Dispatcher.UIThread.Post(() => ApplyDock(),
-                Avalonia.Threading.DispatcherPriority.Loaded);
+            PositionBottomCenter();
     }
 
-    /// <summary>Bottom-center of the primary working area. Positioning is
-    /// honored on X11; Wayland compositors place the window themselves.</summary>
+    /// <summary>Bottom-center of the primary working area.</summary>
     private void PositionBottomCenter()
     {
         try
@@ -153,7 +139,7 @@ public partial class OnScreenKeyboardWindow : Window
         }
     }
 
-    // Dock mode (EWMH strut)
+    // Dock mode
 
     private void ButtonPin_Click(object? sender, RoutedEventArgs e)
     {
@@ -161,62 +147,13 @@ public partial class OnScreenKeyboardWindow : Window
         Helpers.AppConfig.Set("osk_docked", _docked ? 1 : 0);
         RefreshPinButton();
         if (_docked)
-        {
             PositionBottomCenter();
-            ApplyDock();
-        }
-        else
-        {
-            ClearDock(remap: true);
-        }
     }
 
     private void RefreshPinButton()
     {
         // Down-to-bar = dock, up-from-bar = float.
         buttonPin.Content = _docked ? "\u2912" : "\u2913";
-    }
-
-    /// <summary>Reserve the bottom screen band under the keyboard. A quick
-    /// remap makes KWin re-read the dock window type (it is only honored at
-    /// manage time); the strut itself updates dynamically.</summary>
-    private void ApplyDock(bool remap = true)
-    {
-        var handle = TryGetPlatformHandle();
-        if (handle == null)
-            return;
-        try
-        {
-            var screen = Screens.Primary?.Bounds;
-            if (screen is not { } s)
-                return;
-            var size = PixelSize.FromSize(ClientSize, DesktopScaling);
-            int bottom = s.Y + s.Height - Position.Y;
-            bool ok = X11Strut.Apply(handle.Handle, bottom,
-                Position.X, Position.X + size.Width - 1);
-            if (ok && remap && IsVisible)
-            {
-                base.Hide();
-                base.Show();
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.WriteLine($"OSK: dock failed: {ex.Message}");
-        }
-    }
-
-    private void ClearDock(bool remap = false)
-    {
-        var handle = TryGetPlatformHandle();
-        if (handle == null)
-            return;
-        X11Strut.Clear(handle.Handle);
-        if (remap && IsVisible)
-        {
-            base.Hide();
-            base.Show();
-        }
     }
 
     // Layout
@@ -497,7 +434,6 @@ public partial class OnScreenKeyboardWindow : Window
 
     private void ButtonHide_Click(object? sender, RoutedEventArgs e)
     {
-        ClearDock();
         Hide();
     }
 }

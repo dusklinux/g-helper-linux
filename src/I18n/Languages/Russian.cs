@@ -860,7 +860,7 @@ public static class Russian
         ["udev_per_machine_label"] = "Настроить правила udev под этот компьютер",
         ["udev_per_machine_hint"] = "Выкл (по умолчанию): установить полный файл правил, как shell-установщик. Вкл: фильтровать по производителю и оборудованию и ограничить uinput/i2c группой input 0660. Вступит в силу при следующей исправлении.",
         ["render_mode_label"] = "Движок отрисовки",
-        ["render_mode_hint"] = "Как отрисовывается окно. Авто использует EGL в Wayland и GLX в Xorg. Меняйте это только если окно зависает или отображается неправильно. Вступает в силу при следующем запуске.",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "Авто (рекомендуется)",
         ["skip_update_prompt_label"] = "Не проверять обновления при запуске",
         ["disable_audio_label"] = "Отключить виртуальный микрофон",

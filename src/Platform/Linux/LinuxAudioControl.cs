@@ -1,81 +1,43 @@
 namespace GHelper.Linux.Platform.Linux;
 
 /// <summary>
-/// Linux audio control via PulseAudio (pactl) or PipeWire (wpctl).
-/// Replaces NAudio WASAPI/CoreAudio on Windows.
+/// Linux audio control via PipeWire (wpctl).
 /// </summary>
 public class LinuxAudioControl : IAudioControl
 {
-    private enum AudioSystem { PulseAudio, PipeWire, None }
-
-    private readonly AudioSystem _system;
+    private readonly bool _hasPipewire;
 
     public LinuxAudioControl()
     {
-        // Detect available audio system
-        if (SysfsHelper.RunCommand("which", "wpctl") != null)
-            _system = AudioSystem.PipeWire;
-        else if (SysfsHelper.RunCommand("which", "pactl") != null)
-            _system = AudioSystem.PulseAudio;
-        else
-            _system = AudioSystem.None;
-
-        Helpers.Logger.WriteLine($"Audio system: {_system}");
+        _hasPipewire = SysfsHelper.RunCommand("which", "wpctl") != null;
+        Helpers.Logger.WriteLine($"Audio system: {(_hasPipewire ? "PipeWire (wpctl)" : "None")}");
     }
 
     public void ToggleMicMute()
     {
-        switch (_system)
-        {
-            case AudioSystem.PipeWire:
-                SysfsHelper.RunCommand("wpctl", "set-mute @DEFAULT_AUDIO_SOURCE@ toggle");
-                break;
-            case AudioSystem.PulseAudio:
-                SysfsHelper.RunCommand("pactl", "set-source-mute @DEFAULT_SOURCE@ toggle");
-                break;
-        }
+        if (_hasPipewire)
+            SysfsHelper.RunCommand("wpctl", "set-mute @DEFAULT_AUDIO_SOURCE@ toggle");
     }
 
     public bool IsMicMuted()
     {
-        switch (_system)
-        {
-            case AudioSystem.PipeWire:
-                var wpOutput = SysfsHelper.RunCommand("wpctl", "get-volume @DEFAULT_AUDIO_SOURCE@");
-                return wpOutput?.Contains("[MUTED]") ?? false;
-            case AudioSystem.PulseAudio:
-                var paOutput = SysfsHelper.RunCommand("pactl", "get-source-mute @DEFAULT_SOURCE@");
-                return paOutput?.Contains("yes") ?? false;
-            default:
-                return false;
-        }
+        if (!_hasPipewire)
+            return false;
+        var wpOutput = SysfsHelper.RunCommand("wpctl", "get-volume @DEFAULT_AUDIO_SOURCE@");
+        return wpOutput?.Contains("[MUTED]") ?? false;
     }
 
     public void ToggleSpeakerMute()
     {
-        switch (_system)
-        {
-            case AudioSystem.PipeWire:
-                SysfsHelper.RunCommand("wpctl", "set-mute @DEFAULT_AUDIO_SINK@ toggle");
-                break;
-            case AudioSystem.PulseAudio:
-                SysfsHelper.RunCommand("pactl", "set-sink-mute @DEFAULT_SINK@ toggle");
-                break;
-        }
+        if (_hasPipewire)
+            SysfsHelper.RunCommand("wpctl", "set-mute @DEFAULT_AUDIO_SINK@ toggle");
     }
 
     public bool IsSpeakerMuted()
     {
-        switch (_system)
-        {
-            case AudioSystem.PipeWire:
-                var wpOutput = SysfsHelper.RunCommand("wpctl", "get-volume @DEFAULT_AUDIO_SINK@");
-                return wpOutput?.Contains("[MUTED]") ?? false;
-            case AudioSystem.PulseAudio:
-                var paOutput = SysfsHelper.RunCommand("pactl", "get-sink-mute @DEFAULT_SINK@");
-                return paOutput?.Contains("yes") ?? false;
-            default:
-                return false;
-        }
+        if (!_hasPipewire)
+            return false;
+        var wpOutput = SysfsHelper.RunCommand("wpctl", "get-volume @DEFAULT_AUDIO_SINK@");
+        return wpOutput?.Contains("[MUTED]") ?? false;
     }
 }

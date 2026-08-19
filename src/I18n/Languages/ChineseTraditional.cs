@@ -863,7 +863,7 @@ public static class ChineseTraditional
         ["udev_per_machine_label"] = "為本機器調整 udev 規則",
         ["udev_per_machine_hint"] = "關閉（預設）：安裝完整規則檔，與 shell 安裝器相同。開啟：依廠商和硬體篩選，將 uinput/i2c 收緊至 input 群組 0660。下次「修復」時生效。",
         ["render_mode_label"] = "渲染後端",
-        ["render_mode_hint"] = "視窗的繪製方式。自動模式在 Wayland 上使用 EGL，在 Xorg 上使用 GLX。僅在視窗凍結或顯示異常時更改。下次啟動時生效。",
+        ["render_mode_hint"] = "How the window is drawn. Auto uses EGL on Wayland with Software fallback. Change this only if the window freezes or renders wrong. Takes effect on the next launch.",
         ["render_mode_auto"] = "自動（建議）",
         ["skip_update_prompt_label"] = "啟動時不檢查更新",
         ["disable_audio_label"] = "停用虛擬麥克風",
