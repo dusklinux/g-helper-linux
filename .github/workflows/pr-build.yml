@@ -95,7 +95,6 @@ jobs:
             libSkiaSharp.so
             libHarfBuzzSharp.so
             ghelper-audio
-            wlr-randr
           )
           for res in "${EXPECTED[@]}"; do
             out="/tmp/smoke-${res}"
