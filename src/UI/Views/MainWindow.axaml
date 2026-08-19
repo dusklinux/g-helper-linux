@@ -10,23 +10,23 @@
         WindowStartupLocation="CenterScreen"
         CanResize="True"
         WindowDecorations="Full"
-        Background="#1C1C1C"
+        Background="{DynamicResource WindowBackground}"
         Icon="avares://ghelper/UI/Assets/favicon.ico">
 
     <Window.Styles>
         <!-- Active button gets accent border (perf, GPU, screen modes) -->
         <Style Selector="Button.mode-active">
-            <Setter Property="BorderBrush" Value="#4CC2FF" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
             <Setter Property="BorderThickness" Value="2" />
         </Style>
         <Style Selector="Button.fnlock-on">
-            <Setter Property="Background" Value="#4CC2FF" />
+            <Setter Property="Background" Value="{DynamicResource AccentColor}" />
             <Setter Property="Foreground" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#4CC2FF" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}" />
             <Setter Property="BorderThickness" Value="1" />
         </Style>
         <Style Selector="Button.fnlock-on:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#5FCDFF" />
+            <Setter Property="Background" Value="{DynamicResource AccentHover}" />
         </Style>
         <Style Selector="Button.fnlock-on:pressed /template/ ContentPresenter">
             <Setter Property="Background" Value="#3AAEEF" />

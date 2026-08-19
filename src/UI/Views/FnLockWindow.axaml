@@ -9,7 +9,7 @@
         MinHeight="560"
         WindowStartupLocation="CenterScreen"
         CanResize="True"
-        Background="#1C1C1C"
+        Background="{DynamicResource WindowBackground}"
         Icon="avares://ghelper/UI/Assets/standard.ico">
 
     <Window.Styles>

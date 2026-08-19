@@ -159,17 +159,7 @@ detect_locale() {
 # otherwise it is unreachable by auto-detection and Audit D fails. Add a row
 # (using the actual glibc locale name) whenever you add a language.
 DETECT_FIXTURES=(
-    "en_US.UTF-8|en"    "ar_SA.UTF-8|ar"    "cs_CZ.UTF-8|cs"    "da_DK.UTF-8|da"
-    "de_DE.UTF-8|de"    "el_GR.UTF-8|el"    "es_ES.UTF-8|es"    "fi_FI.UTF-8|fi"
-    "fr_FR.UTF-8|fr"    "hu_HU.UTF-8|hu"    "id_ID.UTF-8|id"    "it_IT.UTF-8|it"
-    "ja_JP.UTF-8|ja"    "mk_MK.UTF-8|mk"    "ko_KR.UTF-8|ko"    "nl_NL.UTF-8|nl"
-    "nb_NO.UTF-8|nb"    "no_NO.UTF-8|nb"    "pl_PL.UTF-8|pl"    "pt_BR.UTF-8|pt-br"
-    "ro_RO.UTF-8|ro"    "ru_RU.UTF-8|ru"    "sr_RS.UTF-8|sr"    "sv_SE.UTF-8|sv"
-    "th_TH.UTF-8|th"    "tr_TR.UTF-8|tr"    "uk_UA.UTF-8|uk"    "vi_VN.UTF-8|vi"
-    "zh_CN.UTF-8|zh-cn" "zh_TW.UTF-8|zh-tw"
-    "ne_NP.UTF-8|ne"    "ms_MY.UTF-8|ms"    "bn_BD.UTF-8|bn"    "bn_IN.UTF-8|bn"
-    "sk_SK.UTF-8|sk"    "lt_LT.UTF-8|lt"    "lv_LV.UTF-8|lv"    "sl_SI.UTF-8|sl"
-    "hi_IN.UTF-8|hi"    "fil_PH.UTF-8|fil"  "tl_PH.UTF-8|fil"
+    "en_US.UTF-8|en"    "en_GB.UTF-8|en"
 )
 
 # ----- gather data -----

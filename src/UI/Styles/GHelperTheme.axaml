@@ -10,15 +10,15 @@
     -->
 
     <Style Selector="Window">
-        <Setter Property="Background" Value="#1C1C1C" />
-        <Setter Property="Foreground" Value="#F0F0F0" />
+        <Setter Property="Background" Value="{DynamicResource WindowBackground}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
         <Setter Property="FontFamily" Value="Segoe UI, Ubuntu, DejaVu Sans, Liberation Sans, sans-serif" />
         <Setter Property="FontSize" Value="12" />
     </Style>
 
-    <!-- Panel backgrounds matching G-Helper's dark theme -->
+    <!-- Panel backgrounds matching G-Helper's dark theme / Matugen surface -->
     <Style Selector="Border.panel">
-        <Setter Property="Background" Value="#262626" />
+        <Setter Property="Background" Value="{DynamicResource PanelBackground}" />
         <Setter Property="CornerRadius" Value="5" />
         <Setter Property="Padding" Value="10" />
         <Setter Property="Margin" Value="3" />
@@ -26,8 +26,8 @@
 
     <!-- Buttons matching RButton.cs rounded style (borderRadius=5) -->
     <Style Selector="Button.ghelper">
-        <Setter Property="Background" Value="#373737" />
-        <Setter Property="Foreground" Value="#F0F0F0" />
+        <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
         <Setter Property="CornerRadius" Value="5" />
         <Setter Property="Padding" Value="8,6" />
         <Setter Property="BorderThickness" Value="2" />
@@ -39,7 +39,7 @@
     </Style>
 
     <Style Selector="Button.ghelper:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="#454545" />
+        <Setter Property="Background" Value="{DynamicResource ButtonHover}" />
     </Style>
 
     <!-- Active state for ghelper buttons - red-orange border + slightly darker
@@ -56,8 +56,8 @@
 
     <!-- Tall mode-selector buttons (perf/GPU) with icon above text -->
     <Style Selector="Button.ghelper-tall">
-        <Setter Property="Background" Value="#373737" />
-        <Setter Property="Foreground" Value="#F0F0F0" />
+        <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
         <Setter Property="CornerRadius" Value="5" />
         <Setter Property="Padding" Value="4,8" />
         <Setter Property="MinHeight" Value="68" />
@@ -70,7 +70,7 @@
     </Style>
 
     <Style Selector="Button.ghelper-tall:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="#454545" />
+        <Setter Property="Background" Value="{DynamicResource ButtonHover}" />
     </Style>
 
     <!-- Wrap long translated labels inside mode buttons -->
@@ -100,8 +100,8 @@
 
     <!-- ComboBox styling -->
     <Style Selector="ComboBox">
-        <Setter Property="Background" Value="#373737" />
-        <Setter Property="Foreground" Value="#F0F0F0" />
+        <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
         <Setter Property="CornerRadius" Value="5" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -109,55 +109,55 @@
 
     <!-- Slider styling -->
     <Style Selector="Slider">
-        <Setter Property="Foreground" Value="#4CC2FF" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
     </Style>
 
     <!-- CheckBox styling -->
     <Style Selector="CheckBox">
-        <Setter Property="Foreground" Value="#F0F0F0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
     </Style>
 
     <!-- TextBlock defaults -->
     <Style Selector="TextBlock">
-        <Setter Property="Foreground" Value="#F0F0F0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
     </Style>
 
     <Style Selector="TextBlock.header">
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="#F0F0F0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
     </Style>
 
     <Style Selector="TextBlock.label-dim">
-        <Setter Property="Foreground" Value="#A0A0A0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextDim}" />
         <Setter Property="FontSize" Value="11" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
 
     <Style Selector="TextBlock.value">
-        <Setter Property="Foreground" Value="#4CC2FF" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
         <Setter Property="FontSize" Value="11" />
     </Style>
 
     <!-- Separator -->
     <Style Selector="Separator">
-        <Setter Property="Background" Value="#333333" />
+        <Setter Property="Background" Value="{DynamicResource SeparatorColor}" />
         <Setter Property="Height" Value="1" />
         <Setter Property="Margin" Value="0,5" />
     </Style>
 
     <!-- TabControl styling for main sections -->
     <Style Selector="TabControl">
-        <Setter Property="Background" Value="#1C1C1C" />
+        <Setter Property="Background" Value="{DynamicResource WindowBackground}" />
     </Style>
 
     <Style Selector="TabItem">
-        <Setter Property="Foreground" Value="#A0A0A0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextDim}" />
         <Setter Property="FontSize" Value="12" />
     </Style>
 
     <Style Selector="TabItem:selected">
-        <Setter Property="Foreground" Value="#F0F0F0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextForeground}" />
     </Style>
 
 </Styles>

@@ -23,90 +23,15 @@ public static class Labels
     /// </summary>
     public static readonly Dictionary<string, Func<Dictionary<string, string>>> LanguageLoaders = new()
     {
-        { "en",    () => Languages.English.Translations },
-        { "ar",    () => Languages.Arabic.Translations },
-        { "cs",    () => Languages.Czech.Translations },
-        { "da",    () => Languages.Danish.Translations },
-        { "de",    () => Languages.German.Translations },
-        { "el",    () => Languages.Greek.Translations },
-        { "es",    () => Languages.Spanish.Translations },
-        { "fi",    () => Languages.Finnish.Translations },
-        { "fr",    () => Languages.French.Translations },
-        { "hu",    () => Languages.Hungarian.Translations },
-        { "id",    () => Languages.Indonesian.Translations },
-        { "it",    () => Languages.Italian.Translations },
-        { "ja",    () => Languages.Japanese.Translations },
-        { "mk",    () => Languages.Macedonian.Translations },
-        { "ko",    () => Languages.Korean.Translations },
-        { "nl",    () => Languages.Dutch.Translations },
-        { "nb",    () => Languages.Norwegian.Translations },
-        { "pl",    () => Languages.Polish.Translations },
-        { "pt-br", () => Languages.PortugueseBR.Translations },
-        { "ro",    () => Languages.Romanian.Translations },
-        { "ru",    () => Languages.Russian.Translations },
-        { "sr",    () => Languages.Serbian.Translations },
-        { "sv",    () => Languages.Swedish.Translations },
-        { "th",    () => Languages.Thai.Translations },
-        { "tr",    () => Languages.Turkish.Translations },
-        { "uk",    () => Languages.Ukrainian.Translations },
-        { "vi",    () => Languages.Vietnamese.Translations },
-        { "zh-cn", () => Languages.ChineseSimplified.Translations },
-        { "zh-tw", () => Languages.ChineseTraditional.Translations },
-        { "bn",    () => Languages.Bengali.Translations },
-        { "fil",   () => Languages.Filipino.Translations },
-        { "hi",    () => Languages.Hindi.Translations },
-        { "lt",    () => Languages.Lithuanian.Translations },
-        { "lv",    () => Languages.Latvian.Translations },
-        { "ms",    () => Languages.Malay.Translations },
-        { "ne",    () => Languages.Nepali.Translations },
-        { "sk",    () => Languages.Slovak.Translations },
-        { "sl",    () => Languages.Slovenian.Translations },
+        { "en", () => Languages.English.Translations },
     };
 
     /// <summary>
-    /// Display names for each language (in their native script).
-    /// Order matches dropdown display order.
+    /// Display names for each language.
     /// </summary>
     public static readonly (string Code, string NativeName)[] AvailableLanguages =
     {
-        ("en",    "English"),
-        ("ar",    "\u0627\u0644\u0639\u0631\u0628\u064a\u0629"),           // العربية
-        ("cs",    "\u010ce\u0161tina"),               // Čeština
-        ("da",    "Dansk"),
-        ("de",    "Deutsch"),
-        ("el",    "\u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac"),     // Ελληνικά
-        ("es",    "Espa\u00f1ol"),                    // Español
-        ("fi",    "Suomi"),
-        ("fr",    "Fran\u00e7ais"),                   // Français
-        ("hu",    "Magyar"),
-        ("id",    "Bahasa Indonesia"),
-        ("it",    "Italiano"),
-        ("ja",    "\u65e5\u672c\u8a9e"),              // 日本語
-        ("ko",    "\ud55c\uad6d\uc5b4"),              // 한국어
-        ("mk",    "\u041c\u0430\u043a\u0435\u0434\u043e\u043d\u0441\u043a\u0438"), // Македонски
-        ("nl",    "Nederlands"),
-        ("nb",    "Norsk"),
-        ("pl",    "Polski"),
-        ("pt-br", "Portugu\u00eas (Brasil)"),         // Português (Brasil)
-        ("ro",    "Rom\u00e2n\u0103"),                // Română
-        ("ru",    "\u0420\u0443\u0441\u0441\u043a\u0438\u0439"),  // Русский
-        ("sr",    "\u0421\u0440\u043f\u0441\u043a\u0438"),    // Српски
-        ("sv",    "Svenska"),
-        ("th",    "\u0e44\u0e17\u0e22"),              // ไทย
-        ("tr",    "T\u00fcrk\u00e7e"),                // Türkçe
-        ("uk",    "\u0423\u043a\u0440\u0430\u0457\u043d\u0441\u044c\u043a\u0430"), // Українська
-        ("vi",    "Ti\u1ebfng Vi\u1ec7t"),            // Tiếng Việt
-        ("zh-cn", "\u7b80\u4f53\u4e2d\u6587"),        // 简体中文
-        ("zh-tw", "\u7e41\u9ad4\u4e2d\u6587"),        // 繁體中文
-        ("bn",    "\u09ac\u09be\u0982\u09b2\u09be"),  // বাংলা
-        ("fil",   "Filipino"),
-        ("hi",    "\u0939\u093f\u0928\u094d\u0926\u0940"), // हिन्दी
-        ("lt",    "Lietuvi\u0173"),                   // Lietuvių
-        ("lv",    "Latvie\u0161u"),                   // Latviešu
-        ("ms",    "Bahasa Melayu"),
-        ("ne",    "\u0928\u0947\u092a\u093e\u0932\u0940"), // नेपाली
-        ("sk",    "Sloven\u010dina"),                 // Slovenčina
-        ("sl",    "Sloven\u0161\u010dina"),           // Slovenščina
+        ("en", "English"),
     };
 
     /// <summary>

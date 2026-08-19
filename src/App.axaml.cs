@@ -153,6 +153,9 @@ public class App : Application
         // Initialize i18n before any UI
         Labels.Initialize();
 
+        // Initialize dynamic Matugen theming with fallback
+        Helpers.MatugenTheme.Initialize();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Keep running when window is closed (tray icon keeps app alive)

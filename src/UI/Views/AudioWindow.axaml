@@ -8,7 +8,7 @@
         MinWidth="700"
         MinHeight="480"
         WindowStartupLocation="CenterScreen"
-        Background="#1C1C1C"
+        Background="{DynamicResource WindowBackground}"
         Icon="avares://ghelper/UI/Assets/favicon.ico">
 
     <Window.Styles>

@@ -8,7 +8,7 @@
         MinHeight="300"
         WindowStartupLocation="CenterScreen"
         CanResize="False"
-        Background="#1C1C1C"
+        Background="{DynamicResource WindowBackground}"
         Icon="avares://ghelper/UI/Assets/standard.ico">
 
     <StackPanel Margin="16" Spacing="12">

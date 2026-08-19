@@ -3,6 +3,18 @@
              x:Class="GHelper.Linux.App"
              RequestedThemeVariant="Dark">
 
+    <Application.Resources>
+        <SolidColorBrush x:Key="WindowBackground">#1C1C1C</SolidColorBrush>
+        <SolidColorBrush x:Key="PanelBackground">#262626</SolidColorBrush>
+        <SolidColorBrush x:Key="ButtonBackground">#373737</SolidColorBrush>
+        <SolidColorBrush x:Key="ButtonHover">#454545</SolidColorBrush>
+        <SolidColorBrush x:Key="TextForeground">#F0F0F0</SolidColorBrush>
+        <SolidColorBrush x:Key="TextDim">#A0A0A0</SolidColorBrush>
+        <SolidColorBrush x:Key="AccentColor">#4CC2FF</SolidColorBrush>
+        <SolidColorBrush x:Key="AccentHover">#5FCDFF</SolidColorBrush>
+        <SolidColorBrush x:Key="SeparatorColor">#333333</SolidColorBrush>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://ghelper/UI/Styles/GHelperTheme.axaml" />
