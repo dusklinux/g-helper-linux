@@ -39,47 +39,34 @@
 
 ## `░▒▓█ ╔══[ ABOUT THIS FORK ]══╗ █▓▒░`
 
-This is a dedicated fork of `g-helper-linux` targeted strictly for **Wayland** and **Hyprland**:
-- **Pure Wayland UI**: Driven by `Avalonia.Wayland` with zero X11/XWayland dependencies.
-- **Native Hyprland Backend**: Integrates directly with `hyprctl` and Hyprland 0.56+ Lua APIs (`hl.monitor`, `hl.device`, `hl.config`) for refresh rate and input management.
-- **Pure PipeWire Audio**: Native PipeWire audio control via `wpctl` and bundled DSP.
-- **Zero Bloat**: All X11, XWayland, Xrandr, PulseAudio, and non-Wayland baggage has been excised.
+This is a dedicated fork of `g-helper-linux` targeted specifically for **Wayland** and **Hyprland** (including Hyprland 0.56+ with the Aquamarine display backend and Lua configuration).
 
----            ║
-         ╚═══════════════════════════════[ 0x1F4 ]════╝
-           ╔══════════════════════════════════════╗
-           ║  ASUS LAPTOP CONTROL FOR LINUX       ║
-            ╚══════════════════════════════════════╝
-```
+### 🚀 What Was Added & Modernized
 
-<!-- star-history:start -->
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/star-history/star-history-dark.svg">
-  <img alt="Star history" src="assets/star-history/star-history-light.svg">
-</picture>
-<!-- star-history:end -->
-
-## `░▒▓█ ╔══[ WEBSITE ]══╗ █▓▒░`
-
-**[g-helper-linux.elevatech.xyz](https://g-helper-linux.elevatech.xyz)**
+| Component | Implementation Details |
+|---|---|
+| **Pure Wayland UI** | Migrated UI runtime to `Avalonia.Wayland` with Wayland-native windowing and EGL acceleration. |
+| **Native Hyprland Display Backend** | [`HyprlandBackend.cs`](src/Display/HyprlandBackend.cs) queries monitor state directly via `hyprctl monitors -j` and applies refresh rates natively using the **Hyprland 0.56+ Lua API** (`hl.monitor({ ... })`) with keyword fallback. |
+| **Native Hyprland Input Control** | Touchpad discovery via `hyprctl devices -j` and dynamic toggling via `hl.device({ name = "...", enabled = true/false })`; touchscreen toggle via `hl.config({ input = { touchdevice = ... } })`. |
+| **Pure PipeWire Audio** | Rewritten [`LinuxAudioControl.cs`](src/Platform/Linux/LinuxAudioControl.cs) using `wpctl` exclusively for speaker & microphone controls, backed by the bundled real-time PipeWire DSP engine (`ghelper-audio`). |
+| **Dedicated DuskLinux Release Channel** | In-app self-updater and changelog window point directly to [`dusklinux/g-helper-linux`](https://github.com/dusklinux/g-helper-linux). |
 
 ---
 
-## `░▒▓█ ╔══[ MOTIVATION ]══╗ █▓▒░`
+### 🗑️ What Was Deprecated & Removed (Debloating)
 
-Since `asusctl` doesn't really care about Ubuntu, I decided to port most functionality from the original [G-Helper](https://github.com/seerge/g-helper) for Windows.
+To keep the binary minimal, fast, and 100% Wayland/Hyprland-specific, the following legacy components were completely ripped out:
 
-The application is tested on KDE but other desktop environments should also work.
-
-Pull requests and feature requests are welcome!
-
----
-
-<div align="center">
-
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/utajum)
-
-</div>
+| Deprecated / Removed Feature | Reason for Removal |
+|---|---|
+| **X11 / XWayland Windowing** (`Avalonia.X11`) | Ripped out all X11 windowing, `libX11`, `libxcb`, and XWayland runtime wrappers. The binary links with zero X11 dynamic libraries. |
+| **Xrandr & xinput** (`XrandrBackend.cs`) | Deprecated in favor of native Hyprland IPC calls. |
+| **GLX Rendering** | Removed GLX rendering mode from Extra settings (`Auto`, `EGL`, and `Software` only). |
+| **Multi-Compositor Randr Tooling** (`wlr-randr`, `gdctl`, `kscreen-doctor`) | Excised `vendor/wlr-randr` and external tool compilation; Hyprland's `hyprctl` / Aquamarine handles all display modes directly. |
+| **KWin Window Rules & X11 Struts** (`KwinRules.cs`, `X11Strut.cs`) | Removed KDE KWin-specific D-Bus scripts and X11 OSK window docking structs. |
+| **PulseAudio Fallback** (`pactl`) | Removed all PulseAudio commands and legacy `pactl` fallbacks in favor of pure PipeWire (`wpctl`). |
+| **NixOS Configurations** (`nixos/`) | Removed unused Nix packaging files and flakes. |
+| **Unused Assets & Images** | Cleaned up unused PNGs and star-history assets from the repository. |
 
 ---
 
