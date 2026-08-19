@@ -526,18 +526,7 @@
 
                     <!-- Version -->
                     <TextBlock x:Name="labelVersion" Classes="label-dim" Cursor="Hand"
-                               Text="G-Helper Linux v1.0.0" FontSize="12" Margin="0,0,0,6" />
-
-                    <!-- Arcade (handhelds / SteamOS) -->
-                    <Button x:Name="buttonArcade" Classes="ghelper"
-                            IsVisible="False"
-                            HorizontalAlignment="Stretch" Height="44"
-                            Margin="0,0,0,6"
-                            Click="ButtonArcade_Click">
-                        <TextBlock x:Name="labelArcade" Text="ROG FIGHTER"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   FontSize="15" FontWeight="SemiBold" />
-                    </Button>
+                               Text="G-Helper Linux v2.0.0" FontSize="12" Margin="0,0,0,6" />
 
                     <!-- Donate + Updates + Quit -->
                     <Grid ColumnDefinitions="Auto,*,Auto,Auto">

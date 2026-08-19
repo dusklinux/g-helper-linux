@@ -41,7 +41,7 @@
             <Border Background="{DynamicResource PanelBackground}" CornerRadius="6" Padding="10,6">
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBlock x:Name="labelAppVersion" Grid.Column="0"
-                               Text="G-Helper Linux v1.0.0"
+                               Text="G-Helper Linux v2.0.0"
                                Foreground="#F0F0F0" FontSize="12"
                                VerticalAlignment="Center" />
                     <Button x:Name="buttonChangelog" Grid.Column="1"

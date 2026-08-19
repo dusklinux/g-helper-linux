@@ -636,24 +636,7 @@ public static class English
         ["updates_title_format"] = "BIOS & Driver Updates: {0} ({1} BIOS {2})",
         ["app_version_format"] = "G-Helper Linux v{0} - {1}",
 
-        // ARCADE GAME
-        ["arcade_game_title"] = "ROG FIGHTER",
-        ["arcade_move"] = "\u2190 \u2192 \u2191 \u2193 / W A S D  move",
-        ["arcade_shoot"] = "SPACE  shoot",
-        ["arcade_start"] = "ENTER  start",
-        ["arcade_quit"] = "ESC  quit",
-        ["arcade_highscore"] = "High Score: {0}",
-        ["arcade_score"] = "Score: {0}",
-        ["arcade_high"] = "High: {0}",
-        ["arcade_wave"] = "Wave {0}",
-        ["arcade_spread"] = "SPREAD {0}s",
-        ["arcade_rapid"] = "RAPID {0}s",
-        ["arcade_magnet"] = "MAGNET {0}s",
-        ["arcade_shield"] = "SHIELD",
-        ["arcade_game_over"] = "GAME OVER",
-        ["arcade_score_wave"] = "Score: {0}  Wave: {1}",
-        ["arcade_new_highscore"] = "NEW HIGH SCORE!",
-        ["arcade_retry"] = "ENTER to retry",
+
 
         // HARDWARE MONITOR
         ["monitor_button"] = "Monitor",

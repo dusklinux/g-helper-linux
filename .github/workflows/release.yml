@@ -17,29 +17,38 @@ jobs:
       new_version: ${{ steps.version.outputs.new_version }}
       prev_version: ${{ steps.version.outputs.prev_version }}
     steps:
-      - name: Get latest release version from GitHub API
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine release version
         id: version
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Use GitHub API to get the latest release
-          # gh release view exits non-zero if no releases exist
-          LATEST_RELEASE=""
-          if gh release view --repo ${{ github.repository }} --json tagName -q '.tagName' > /tmp/latest_tag 2>/dev/null; then
-            LATEST_RELEASE=$(cat /tmp/latest_tag)
-          fi
-          echo "Latest release: '${LATEST_RELEASE}'"
+          CSPROJ_VER=$(grep -oPm1 "(?<=<Version>)[^<]+" src/GHelper.Linux.csproj || echo "2.0.0")
+          echo "Base version from .csproj: ${CSPROJ_VER}"
+
+          # Query existing releases from GitHub
+          LATEST_RELEASE=$(gh release list --repo ${{ github.repository }} --limit 10 | grep -oE "v[0-9]+\.[0-9]+\.[0-9]+" | head -n1 || echo "")
+          echo "Latest GitHub release tag: '${LATEST_RELEASE}'"
           echo "prev_version=${LATEST_RELEASE}" >> $GITHUB_OUTPUT
 
-          if [ -z "$LATEST_RELEASE" ] || ! echo "$LATEST_RELEASE" | grep -qE '^v?[0-9]+\.[0-9]+\.[0-9]+$'; then
-            NEW_VERSION="v1.0.0"
+          if [ -z "$LATEST_RELEASE" ]; then
+            NEW_VERSION="v${CSPROJ_VER}"
           else
             VERSION=${LATEST_RELEASE#v}
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-            NEW_PATCH=$((PATCH + 1))
-            NEW_VERSION="v${MAJOR}.${MINOR}.${NEW_PATCH}"
+            IFS='.' read -r L_MAJOR L_MINOR L_PATCH <<< "$VERSION"
+            IFS='.' read -r C_MAJOR C_MINOR C_PATCH <<< "$CSPROJ_VER"
+
+            if [ "${C_MAJOR:-0}" -gt "${L_MAJOR:-0}" ] || ([ "${C_MAJOR:-0}" -eq "${L_MAJOR:-0}" ] && [ "${C_MINOR:-0}" -gt "${L_MINOR:-0}" ]); then
+              NEW_VERSION="v${CSPROJ_VER}"
+            else
+              NEW_PATCH=$((L_PATCH + 1))
+              NEW_VERSION="v${L_MAJOR}.${L_MINOR}.${NEW_PATCH}"
+            fi
           fi
-          echo "New version: $NEW_VERSION"
+
+          echo "Determined release version: ${NEW_VERSION}"
           echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
 
   # Build the native AOT binary

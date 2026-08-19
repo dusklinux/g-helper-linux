@@ -29,11 +29,6 @@ public partial class MainWindow : Window
     private int _currentPerfMode = -1;
     private int _currentGpuMode = -1;  // 0=Eco, 1=Standard, 2=Optimized (auto), 3=Ultimate (MUX=0)
 
-    // Easter egg: click version label 7 times → arcade game
-    private int _versionClickCount;
-    private DateTime _versionClickStart;
-    private ArcadeWindow? _arcadeWindow;
-
     // Donate button state
     private int _coinClickCount;
     private bool _coinMuted;
@@ -162,9 +157,7 @@ public partial class MainWindow : Window
             (Helpers.AppConfig.IsHandheldDevice() || Platform.Linux.ImmutableOs.IsSteamOs)
             && !Platform.Linux.SteamShortcuts.IsSteamDeckGameMode;
 
-        // Arcade launcher: handhelds + SteamOS (gamepad-playable).
-        buttonArcade.IsVisible =
-            Helpers.AppConfig.IsHandheldDevice() || Platform.Linux.ImmutableOs.IsSteamOs;
+
 
         // Dev-only launchers for UI checks on machines without the
         // matching hardware: every app window, and force-show toggles
@@ -2019,8 +2012,7 @@ public partial class MainWindow : Window
         // Version + model in footer
         labelVersion.Text = Labels.Format("version_prefix", Helpers.AppConfig.AppVersion, model);
 
-        // Play glyph + localized game title.
-        labelArcade.Text = "\u25B6  " + Labels.Get("arcade_game_title");
+
 
         // Check autostart status from config (suppress to avoid re-writing .desktop file)
         _suppressEvents = true;
@@ -2607,25 +2599,6 @@ public partial class MainWindow : Window
         _coinTransform = new TranslateTransform();
         buttonDonate.RenderTransform = _coinTransform;
 
-        // Easter egg: 7 clicks on version label within 3 seconds
-        labelVersion.PointerPressed += (_, _) =>
-        {
-            var now = DateTime.UtcNow;
-            if ((now - _versionClickStart).TotalSeconds > 3)
-            {
-                _versionClickCount = 0;
-                _versionClickStart = now;
-            }
-            _versionClickCount++;
-            if (_versionClickCount == 5)
-                Helpers.Logger.WriteLine("Easter egg: 🎮 getting close...");
-            if (_versionClickCount >= 7)
-            {
-                _versionClickCount = 0;
-                OpenArcade();
-            }
-        };
-
         // Hover events
         buttonDonate.PointerEntered += ButtonDonate_PointerEntered;
         buttonDonate.PointerExited += ButtonDonate_PointerExited;
@@ -2641,22 +2614,6 @@ public partial class MainWindow : Window
         // Shake timer: runs at ~30ms for oscillation frames
         _coinShakeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(30) };
         _coinShakeTimer.Tick += CoinShake_Tick;
-    }
-
-    private void ButtonArcade_Click(object? sender, RoutedEventArgs e) => OpenArcade();
-
-    private void OpenArcade()
-    {
-        if (_arcadeWindow == null || !_arcadeWindow.IsVisible)
-        {
-            _arcadeWindow = new ArcadeWindow();
-            WindowPositioner.CenterOfMainWindowOrPrimaryMonitor(_arcadeWindow);
-            _arcadeWindow.Show();
-        }
-        else
-        {
-            _arcadeWindow.Activate();
-        }
     }
 
     private void ButtonDonate_Click(object? sender, RoutedEventArgs e)

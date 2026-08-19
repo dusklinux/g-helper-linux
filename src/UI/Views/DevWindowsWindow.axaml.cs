@@ -30,7 +30,6 @@ public partial class DevWindowsWindow : Window
         ("Delay", () => new DelayWindow()),
         ("Reverb", () => new ReverbWindow()),
         ("Changelog", () => new ChangelogWindow()),
-        ("Arcade", () => new ArcadeWindow()),
     };
 
     public DevWindowsWindow()

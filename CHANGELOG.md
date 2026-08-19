@@ -1,21 +1,25 @@
 # Changelog
 
-## v2.0.0 (2026-08-19) - Modern Linux (7.1+ Baseline) & Hyprland Release
+## v2.0.0 (2026-08-19) - Modern Linux (7.1+ Baseline), Hyprland, Dynamic Matugen & Debloat Release
 
 ### Added
+- **Dynamic Matugen (Material You) Theming**: Real-time hot-reloading theme engine parsing colors from `$XDG_CONFIG_HOME/matugen/generated/hyprland-colors.lua` (with automatic fallback to G-Helper dark palette when absent).
 - **Native Hyprland Display Backend**: Implemented `HyprlandBackend.cs` querying monitors directly via `hyprctl monitors -j` and dynamic refresh rate switching with the modern **Hyprland 0.56+ Lua engine** (`hl.monitor`).
 - **Hyprland Native Input Control**: Direct touchpad detection via `hyprctl devices -j` and toggling via `hl.device({ ... })`; touchscreen toggle via `hl.config({ input = { touchdevice = ... } })`.
 - **Pure Wayland UI**: Full migration to `Avalonia.Wayland` with EGL hardware acceleration and strict Wayland session validation.
 - **Pure PipeWire Audio**: `LinuxAudioControl.cs` controls audio exclusively via `wpctl`, integrating with the bundled low-latency PipeWire DSP engine.
-- **Dedicated Release Channel**: Automated self-updater points directly to `dusklinux/g-helper-linux`.
+- **Papirus Default Icon Set**: Modern Papirus vector icons configured as the primary default icon theme.
+- **Dedicated Release Channel**: Automated CI/CD release workflow targeting `dusklinux/g-helper-linux` with automated `v2.0.x` semantic versioning.
 
-### Removed & Modernized
+### Removed & Debloated
+- **Excised Non-English Language Dictionaries**: Debloated 37 non-English language files (`Arabic.cs`, `Russian.cs`, `Chinese.cs`, `German.cs`, `French.cs`, etc.) to run on pure English canonical schema.
+- **Excised Arcade Game Easter Egg**: Removed `ArcadeWindow.axaml` / `ArcadeWindow.axaml.cs` (`~1,100 lines` of space shooter canvas code).
 - **Dropped Legacy Kernel Compatibility**: Target baseline modernized to Linux 7.1+; removed obsolete pre-6.2 kernel checks, warnings, and workarounds.
 - **Excised X11 & XWayland**: Completely removed `Avalonia.X11`, `libX11`, `libxcb`, `libXrandr`, `xinput`, GLX render modes, and X11 docking struts (`X11Strut.cs`).
 - **Excised Legacy Compositor Tooling**: Removed `vendor/wlr-randr`, `gdctl`, `kscreen-doctor`, and `KwinRules.cs`.
 - **Excised Legacy Distro Modules**: Removed `NixOS.cs` and `Cosmic.cs`.
 - **Excised PulseAudio**: Dropped all `pactl` fallbacks in favor of pure PipeWire.
-- **Cleaned Repository Footprint**: Removed `nixos/` directory and unused image assets.
+- **Cleaned Repository Footprint**: Removed `nixos/` directory and unused image assets. Binary footprint reduced to 46 MB.
 
 ### Added
 
